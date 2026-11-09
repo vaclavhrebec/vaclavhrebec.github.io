@@ -1,6 +1,6 @@
 // Keeps Cantare super librum working offline.
 // Bump VERSION whenever index.html changes so devices pick up the new app.
-const VERSION = 'cantare-v1';
+const VERSION = 'cantare-v2';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
