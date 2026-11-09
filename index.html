@@ -117,6 +117,10 @@
   .event p { margin: .1rem 0 0; color: var(--muted); }
   .past .event { opacity: .7; }
   .event .reg { margin: .6rem 0 0; }
+  .event .thumb { display: block; margin: .6rem 0 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
+  .event .thumb img { display: block; width: 110px; height: auto; border-radius: 4px;
+    box-shadow: 0 6px 16px -8px rgba(0,0,0,.45); transition: transform .2s ease; }
+  .event .thumb:hover img { transform: scale(1.04); }
   .event .poster { grid-column: 1 / -1; display: block; max-width: 620px; width: 100%; margin: .6rem auto .2rem; }
   .event .poster img { display: block; width: 100%; height: auto; border-radius: 6px;
     box-shadow: 0 14px 34px -14px rgba(0,0,0,.45); transition: transform .3s ease; }
@@ -254,7 +258,8 @@
 
       <li class="event" data-end="2026-10-23">
         <div class="date"><b>23 Oct 2026</b><span>18:15</span></div>
-        <div class="what"><h4 data-i18n>Concert</h4><p data-i18n>Leonhardskirche, Basel</p></div>
+        <div class="what"><h4 data-i18n>Concert</h4><p data-i18n>Leonhardskirche, Basel</p>
+          <button class="thumb" type="button" aria-label="Enlarge programme"><img src="posters/leonhardskirche-2026-10-23.jpg" alt="Programme: Orgelspiel zum Feierabend, Leonhardskirche Basel, 23 October 2026" loading="lazy"></button></div>
       </li>
 
       <li class="event" data-end="2026-08-30">
@@ -338,7 +343,7 @@
     try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
   });
   const lb = document.getElementById('lb'), lbImg = lb.querySelector('img');
-  document.querySelectorAll('.gallery button, button.poster').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.gallery button, button.poster, .event .thumb').forEach(b => b.addEventListener('click', () => {
     const i = b.querySelector('img'); lbImg.src = i.src; lbImg.alt = i.alt; lb.showModal();
   }));
   lb.addEventListener('click', () => lb.close());
