@@ -98,6 +98,17 @@
   .card p { margin: .3rem 0 .9rem; }
   .btn { display: inline-block; text-decoration: none; font-weight: 500; font-size: .95rem;
     color: #fff; background: var(--accent); padding: .45rem .95rem; border-radius: 6px; }
+  .contact-form { display: grid; gap: .9rem; max-width: 560px; }
+  .contact-form label { display: grid; gap: .3rem; font-size: .9rem; color: var(--muted); }
+  .contact-form input, .contact-form textarea { font: inherit; color: var(--fg); background: var(--card);
+    border: 1px solid var(--line); border-radius: 6px; padding: .55rem .7rem; width: 100%; }
+  .contact-form textarea { min-height: 9rem; resize: vertical; }
+  .contact-form input:focus, .contact-form textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .contact-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  .contact-form button.btn { border: 0; cursor: pointer; justify-self: start; font-family: inherit; }
+  .contact-form button.btn:disabled { opacity: .6; cursor: wait; }
+  .form-status { margin: 0; font-size: .95rem; min-height: 1.4em; }
+  .form-status.ok { color: #2e7d32; } .form-status.err { color: var(--accent); }
   .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 
   .links { display: flex; flex-wrap: wrap; gap: .6rem; }
@@ -182,6 +193,7 @@
     <a href="#projects" data-i18n>Projects</a>
     <a href="cantare/">Cantare super librum</a>
     <a href="#socials" data-i18n>Socials</a>
+    <a href="#contact" data-i18n>Contact</a>
   </nav>
 
   <div class="staff" aria-hidden="true"></div>
@@ -362,6 +374,19 @@
     </div>
   </section>
 
+  <section id="contact">
+    <h2 data-i18n>Contact</h2>
+    <p data-i18n>For concerts, courses, workshops or lectures, write me a message.</p>
+    <form class="contact-form" id="contact-form" novalidate>
+      <label><span data-i18n>Name</span><input name="name" type="text" autocomplete="name" required maxlength="120"></label>
+      <label><span data-i18n>Email</span><input name="email" type="email" autocomplete="email" required maxlength="200"></label>
+      <label><span data-i18n>Message</span><textarea name="message" required maxlength="5000"></textarea></label>
+      <div class="hp" aria-hidden="true"><input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off"></div>
+      <button class="btn" type="submit" data-i18n>Send</button>
+      <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+    </form>
+  </section>
+
   <footer>
     <span>© <span id="yr"></span> Václav Hřebec · <span data-i18n>Photos</span> © Edoardo Gatta, Marie Štefanová, Valentin Richter</span>
     <button id="theme" type="button" data-i18n>Light / dark</button>
@@ -411,6 +436,16 @@
    anything without a translation simply stays in English. */
 const T = {
 de: {
+  "Contact": "Kontakt",
+  "For concerts, courses, workshops or lectures, write me a message.": "Für Konzerte, Kurse, Workshops oder Vorträge schreiben Sie mir gerne eine Nachricht.",
+  "Name": "Name",
+  "Email": "E-Mail",
+  "Message": "Nachricht",
+  "Send": "Senden",
+  "Sending…": "Wird gesendet …",
+  "Thank you, your message has been sent.": "Vielen Dank, Ihre Nachricht wurde gesendet.",
+  "Please fill in your name, a valid email address and a message.": "Bitte geben Sie Ihren Namen, eine gültige E-Mail-Adresse und eine Nachricht ein.",
+  "Sorry, the message could not be sent. Please try again later.": "Die Nachricht konnte leider nicht gesendet werden. Bitte versuchen Sie es später erneut.",
   "Photo: Edoardo Gatta": "Foto: Edoardo Gatta",
   "Photos: Edoardo Gatta (lute), Marie Štefanová (organ), Valentin Richter": "Fotos: Edoardo Gatta (Laute), Marie Štefanová (Orgel), Valentin Richter",
   "Photo: Valentin Richter": "Foto: Valentin Richter",
@@ -461,6 +496,16 @@ de: {
   "Open the app": "App öffnen"
 },
 cs: {
+  "Contact": "Kontakt",
+  "For concerts, courses, workshops or lectures, write me a message.": "Ohledně koncertů, kurzů, workshopů či přednášek mi napište zprávu.",
+  "Name": "Jméno",
+  "Email": "E-mail",
+  "Message": "Zpráva",
+  "Send": "Odeslat",
+  "Sending…": "Odesílám…",
+  "Thank you, your message has been sent.": "Děkuji, vaše zpráva byla odeslána.",
+  "Please fill in your name, a valid email address and a message.": "Vyplňte prosím jméno, platnou e-mailovou adresu a zprávu.",
+  "Sorry, the message could not be sent. Please try again later.": "Zprávu se bohužel nepodařilo odeslat. Zkuste to prosím později.",
   "Photo: Edoardo Gatta": "Foto: Edoardo Gatta",
   "Photos: Edoardo Gatta (lute), Marie Štefanová (organ), Valentin Richter": "Fotografie: Edoardo Gatta (loutna), Marie Štefanová (varhany), Valentin Richter",
   "Photo: Valentin Richter": "Foto: Valentin Richter",
@@ -552,6 +597,44 @@ cs: {
   }
   setLang(lang);
   document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+})();
+</script>
+<script>
+/* CONTACT FORM — messages are delivered by Web3Forms to the email registered with this key.
+   The key is not the email address; visitors never see where the message goes.
+   Until a key is pasted here, the Contact section stays hidden. */
+const WEB3FORMS_KEY = '';
+(function () {
+  const sec = document.getElementById('contact');
+  if (!WEB3FORMS_KEY) { sec.hidden = true; document.querySelector('nav a[href="#contact"]').hidden = true; return; }
+  const f = document.getElementById('contact-form'), st = document.getElementById('form-status');
+  const btn = f.querySelector('button[type=submit]');
+  const tr = en => { const l = document.documentElement.lang; return (l !== 'en' && T[l] && T[l][en]) || en; };
+  const show = (en, cls) => { st.textContent = tr(en); st.className = 'form-status ' + (cls || ''); };
+  f.addEventListener('submit', async ev => {
+    ev.preventDefault();
+    if (f.botcheck.checked) return;
+    if (!f.checkValidity() || !f.name.value.trim() || !f.message.value.trim()) {
+      show('Please fill in your name, a valid email address and a message.', 'err'); f.reportValidity(); return;
+    }
+    btn.disabled = true; show('Sending…');
+    try {
+      const r = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: 'Website message from ' + f.name.value.trim(),
+          from_name: 'vaclavhrebec.github.io',
+          name: f.name.value.trim(), email: f.email.value.trim(), replyto: f.email.value.trim(),
+          message: f.message.value.trim()
+        })
+      });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.success) { f.reset(); show('Thank you, your message has been sent.', 'ok'); }
+      else show('Sorry, the message could not be sent. Please try again later.', 'err');
+    } catch (e) { show('Sorry, the message could not be sent. Please try again later.', 'err'); }
+    btn.disabled = false;
+  });
 })();
 </script>
 </body>
