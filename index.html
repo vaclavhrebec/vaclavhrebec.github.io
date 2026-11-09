@@ -105,6 +105,9 @@
     margin: 0; line-height: 1.2; }
   .event p { margin: .1rem 0 0; color: var(--muted); }
   .past .event { opacity: .7; }
+  .event h4 a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent);
+    text-underline-offset: 3px; }
+  .event h4 a:hover, .event p a { color: var(--accent); }
   .empty { color: var(--muted); font-style: italic; padding: .9rem 0; }
   @media (max-width: 480px) { .event { grid-template-columns: 1fr; gap: .2rem; } }
 </style>
@@ -150,7 +153,7 @@
 
       <li class="event" data-end="2026-12-12">
         <div class="date"><b>12 Dec 2026</b><span>19:00</span></div>
-        <div class="what"><h4>Guitar and Lute Recital</h4><p>Freiburg im Breisgau</p></div>
+        <div class="what"><h4><a href="https://www.depot-k.com/Konzerte" target="_blank" rel="noopener">Guitar and Lute Recital</a></h4><p>Depot K, Freiburg im Breisgau · <a href="https://www.depot-k.com/Konzerte" target="_blank" rel="noopener">depot-k.com</a></p></div>
       </li>
 
       <li class="event" data-end="2027-02-28">
