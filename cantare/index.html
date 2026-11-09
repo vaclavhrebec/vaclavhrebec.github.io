@@ -156,6 +156,7 @@ label.ctl{display:flex;align-items:center;gap:8px;color:var(--muted)}
 #score svg{display:block;overflow:visible}
 #cbBtn[hidden]{display:none}
 #score.cb{display:grid;grid-template-columns:1fr 1fr;row-gap:22px;cursor:default;pointer-events:none}
+.sitenav{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;margin:2px 0 10px;font:italic 1rem/1.3 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--muted)}.sitenav a{color:inherit;text-decoration:none;border-bottom:1px solid transparent}.sitenav a:hover,.sitenav a:focus-visible{color:var(--text);border-bottom-color:currentColor}
 .cbnav{grid-column:1/-1;display:flex;align-items:center;justify-content:center;gap:16px;pointer-events:auto;font:italic 1rem/1 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--leaf-ink);margin:2px 0 -10px}
 .cbnav button{pointer-events:auto;font:inherit;font-size:1.5rem;line-height:1;width:44px;height:38px;border:1px solid var(--rule);border-radius:6px;background:transparent;color:inherit;cursor:pointer}
 .cbnav button:disabled{opacity:.3;cursor:default}
@@ -462,6 +463,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
 <svg id="glyph-defs" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"></svg>
 
 <main class="wrap">
+  <nav class="sitenav" aria-label="Václav Hřebec's website"><a href="https://vaclavhrebec.github.io/">&#8592; Václav Hřebec</a><span aria-hidden="true">&middot;</span><a href="https://vaclavhrebec.github.io/#agenda">Agenda</a><span aria-hidden="true">&middot;</span><a href="https://vaclavhrebec.github.io/#projects">Projects</a><span aria-hidden="true">&middot;</span><a href="https://vaclavhrebec.github.io/#gallery">Gallery</a></nav>
   <header class="top">
     <h1>Cantare super librum</h1>
     <p class="lede">The ultimate counterpoint gym.</p><script>(function(){var T=["The ultimate counterpoint gym.","This is the new start page of your browser.","Do you hear your counterpoint muscles growing?","Tinctoris rated this page: sesquidecima stars.","Getting ready for the job at the Toledo cathedral?","Jean Taisnier wrote about this webpage in his unpublished treatise on music.","Come here and join Leonin and Perotin for a beer.","Ready for some pro-crastination?","Counterpoint is not dead.","Do you hear voices in your head?"];var e=document.querySelector('.lede');if(e)e.textContent=T[Math.floor(Math.random()*T.length)];})();</script>
