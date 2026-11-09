@@ -105,6 +105,11 @@
     margin: 0; line-height: 1.2; }
   .event p { margin: .1rem 0 0; color: var(--muted); }
   .past .event { opacity: .7; }
+  .event .reg { margin: .6rem 0 0; }
+  .event .poster { grid-column: 1 / -1; display: block; max-width: 620px; width: 100%; margin: .6rem auto .2rem; }
+  .event .poster img { display: block; width: 100%; height: auto; border-radius: 6px;
+    box-shadow: 0 14px 34px -14px rgba(0,0,0,.45); transition: transform .3s ease; }
+  .event .poster:hover img { transform: scale(1.01); }
   .event h4 a { color: inherit; text-decoration: underline; text-decoration-color: var(--accent);
     text-underline-offset: 3px; }
   .event h4 a:hover, .event p a { color: var(--accent); }
@@ -158,7 +163,9 @@
 
       <li class="event" data-end="2027-02-28">
         <div class="date"><b>22–28 Feb 2027</b></div>
-        <div class="what"><h4>Music course</h4><p>Reformed Church, Rheinfelden</p></div>
+        <div class="what"><h4><a href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Renaissance Music Course</a></h4><p>Reformed Church, Rheinfelden · vocal and instrumental polyphony, cantare super librum, organ and lute improvisation</p>
+          <p class="reg"><a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Registration</a></p></div>
+        <a class="poster" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener" aria-label="Poster: Renaissance Music Course Rheinfelden, open the registration form"><img src="posters/rheinfelden-2027.jpg" alt="" loading="lazy"></a>
       </li>
 
       <li class="event" data-end="2027-04-16">
