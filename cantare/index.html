@@ -166,6 +166,15 @@ body.playing .transport{position:sticky;bottom:0;z-index:30;background:var(--gro
 #score .cbq{min-width:0;padding:0 14px}
 #score .cbq:nth-child(odd){padding-left:0}
 #score .cbq:nth-child(even){padding-right:0;border-left:1px solid var(--rule)}
+.voicebar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0 4px;font:italic 1rem/1.2 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--ink,#EDE0BC)}
+.voicebar[hidden],.cbnav[hidden]{display:none}
+.voicebar .vt{opacity:.7}
+.voicebar .vc{display:inline-flex;align-items:center;gap:2px;border:1px solid rgba(237,224,188,.28);border-radius:999px;padding:2px 3px 2px 12px}
+.voicebar .vc.off{opacity:.8;border-color:rgba(237,224,188,.5)}
+.voicebar .vc button{min-height:32px;min-width:32px;border:0;border-radius:999px;background:transparent;color:inherit;font:inherit;font-size:.85rem;padding:0 9px;cursor:pointer}
+.voicebar .vc button[aria-pressed="true"]{background:#8d1f2c;color:#fff}
+.voicebar .vc button:focus-visible{outline:2px solid #EDE0BC;outline-offset:1px}
+#score .cbq.vh .it,#score .cbq.vh .lyr,#score .cbq.vh .lyx,#score .cbq.vh use[href="#g-cu"]{visibility:hidden}
 #score .cbl{font:italic 1.05rem/1.2 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--leaf-ink);opacity:.62;margin:0 0 -4px 2px}
 #score .staff{stroke:var(--rule)}
 #score .ledger{stroke:var(--leaf-ink)}
@@ -538,6 +547,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
     </div>
   </section>
 
+  <div id="voiceBar" class="voicebar" hidden></div>
   <section class="leaf" aria-label="Score">
     <div class="handbox" id="handBox" title="The tactus: the hand drops on one beat and lifts on the next" aria-hidden="true"><svg viewBox="-20 -36 236 190"><g id="handRot"></g></svg></div><div class="handbox pendbox" id="pendBox" aria-hidden="true"><svg viewBox="-20 -36 236 190"><g id="pendG"><path d="M66 158 H130 L120 142 H76Z" fill="currentColor"/><g id="pendRot"><line x1="98" y1="150" x2="98" y2="-16" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><rect x="84" y="14" width="28" height="34" rx="4" fill="currentColor"/></g></g></svg></div>
     <input id="title" type="text" maxlength="120" placeholder="Untitled cantus firmus" aria-label="Title" spellcheck="false">
@@ -628,7 +638,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
 
   <details class="help">
     <summary>How to enter and edit</summary>
-    <p>The mouse changes the music only while the Edit button is on; the buttons and the keys always work. A click on a note selects it, with Edit off as well. Pick a note value, then left-click on the staff where the note should go: between two notes inserts it there, after the last note adds it at the end. A left-click on a rest puts a note in its place. Right-click a note to turn it into a rest of the same value; right-click a rest to remove it. Left-click a note to select it (Play and the space bar then start from it); to change its pitch with the arrow keys or by dragging it up or down, press the Edit button first (everything else works without it). Click the clef to change it, or the faint B flat beside it to add one.</p>
+    <p>The mouse changes the music only while the Edit button is on; the buttons and the keys always work. A click on a note selects it, with Edit off as well. In music with several voices, Mute silences a voice you still see, so you can sing it from the notation; Hide takes a voice away from the page and from the sound, so you can improvise it yourself. Both work in the score and in the choir book. Pick a note value, then left-click on the staff where the note should go: between two notes inserts it there, after the last note adds it at the end. A left-click on a rest puts a note in its place. Right-click a note to turn it into a rest of the same value; right-click a rest to remove it. Left-click a note to select it (Play and the space bar then start from it); to change its pitch with the arrow keys or by dragging it up or down, press the Edit button first (everything else works without it). Click the clef to change it, or the faint B flat beside it to add one.</p>
     <p>With a note selected, the value, rest and accidental buttons change that note. With nothing selected, they apply to the next note you enter. On a touch screen, tap a note to select it. Tap an empty place on the staff to put a note down there; the Undo, Redo and Delete buttons are at the top. Press and hold a note to turn it into a rest, or to remove a rest. Scrolling the page with a finger on the score does nothing to it.</p>
     <table>
       <tr><td><kbd>A</kbd> to <kbd>G</kbd></td><td>Add that note, in the octave closest to the previous note</td></tr>
@@ -817,7 +827,7 @@ function sanitizeDoc(d){
       ...(typeof n.l === 'string' && n.l ? {l: n.l.slice(0, 40), ...(n.lh ? {lh: true} : {})} : {}),
       ...(Array.isArray(n.g) ? {g: n.g.slice(0, 4).map(g => ({s: clampStep(Number(g && g.s) || 26), a: g && ACC[g.a] ? g.a : '', d: g && DUR[g.d] ? g.d : 'M', p: !!(g && g.p), r: !!(g && g.r), c: !!(g && g.c), ...(g && typeof g.l === 'string' && g.l ? {l: g.l.slice(0, 40), ...(g.lh ? {lh: true} : {})} : {})}))} : {}),
       ...(typeof n.u === 'number' && n.u > 0 ? {u: n.u} : {}),
-      ...(Array.isArray(n.ev) ? {ev: n.ev.slice(0, 8).map(e => ({s: clampStep(Number(e && e.s) || 26), a: e && ACC[e.a] ? e.a : '', u: Number(e && e.u) > 0 ? Number(e.u) : 1}))} : {}),
+      ...(Array.isArray(n.ev) ? {ev: n.ev.slice(0, 8).map(e => ({v: Number(e && e.v) > 0 ? Math.min(7, Number(e.v) | 0) : 0, s: clampStep(Number(e && e.s) || 26), a: e && ACC[e.a] ? e.a : '', u: Number(e && e.u) > 0 ? Number(e.u) : 1}))} : {}),
       ...(Array.isArray(n.x) && !n.r ? {x: n.x.slice(0, 3).map(v => ({s: clampStep(Number(v && v.s) || 26), a: v && ACC[v.a] ? v.a : ''}))} : {})
     }))
   };
@@ -1162,13 +1172,15 @@ function drawItem(it, top, exp){
   if (it.gv) {
     it.gv.forEach((gv, v) => {
       const tp = v === 0 ? top : (it.subs && it.subs[v - 1] ? it.subs[v - 1].top : null), g = gv.g;
-      if (tp === null || g.c) return;
+      if (tp === null || g.c || vHidS(v)) return;
       if (g.r) { s += restGlyph(g.d, it.hx + it.headW / 2, tp); return; }
       s += ledgers(gv.pos, it.hx, it.headW, tp);
       if (g.a && ACC[g.a]) s += use(ACC[g.a].g, it.hx - gw(ACC[g.a].g) - 0.3, tp + 4 - gv.pos * 0.5);
       s += noteGlyph(g.d, gv.pos, gv.flip, it.hx, tp);
       if (g.p) s += dotMark(it.hx + it.headW + 0.32, gv.pos, tp);
     });
+  } else if (vHidS(0)) {
+    /* hidden voice: nothing to see */
   } else if (n.r) {
     s += restGlyph(n.d, it.hx + it.w / 2, top);
   } else {
@@ -1177,7 +1189,7 @@ function drawItem(it, top, exp){
     s += noteGlyph(n.d, it.pos, it.flip, it.hx, top);
     if (n.p) s += dotMark(it.hx + it.headW + 0.32, it.pos, top);
     if (it.subs) it.subs.forEach(sb => {
-      const x = it.xs && it.xs[sb.k]; if (!x) return;
+      const x = it.xs && it.xs[sb.k]; if (!x || vHidS(sb.k + 1)) return;
       if (x.a && ACC[x.a]) s += use(ACC[x.a].g, it.hx - gw(ACC[x.a].g) - 0.3, sb.top + 4 - x.pos * 0.5);
       s += ledgers(x.pos, it.hx, it.headW, sb.top) + noteGlyph(n.d, x.pos, x.flip, it.hx, sb.top);
     });
@@ -1248,8 +1260,8 @@ function drawScore(L, exp){
     }
     for (const it of line.items) o += drawItem(it, top, exp);
     { /* the text underlay: one row for the top voice and one under each further staff; a dash joins the syllables of one word */
-      const lyRows = [{y: top + line.lyOff, get: it => it.n.l ? {l: it.n.l, h: it.n.lh} : null}];
-      (line.sub || []).forEach(sb => { if (sb.lyOff !== null && sb.lyOff !== undefined) lyRows.push({y: sb.top + sb.lyOff, get: it => { const g = it.gv && it.gv[sb.k + 1]; return g && g.g.l ? {l: g.g.l, h: g.g.lh} : null; }}); });
+      const lyRows = [{y: top + line.lyOff, get: it => it.n.l && !vHidS(0) ? {l: it.n.l, h: it.n.lh} : null}];
+      (line.sub || []).forEach(sb => { if (sb.lyOff !== null && sb.lyOff !== undefined) lyRows.push({y: sb.top + sb.lyOff, get: it => { const g = it.gv && it.gv[sb.k + 1]; return g && g.g.l && !vHidS(sb.k + 1) ? {l: g.g.l, h: g.g.lh} : null; }}); });
       const tw = t => t.length * 0.5 + 0.35;
       lyRows.forEach(r => {
         const arr = line.items.map(it => ({it, v: r.get(it)})).filter(q => q.v);
@@ -1297,6 +1309,35 @@ function drawScore(L, exp){
 
 let defsMarkup = '';
 /* Choir book: each voice gets its own block, Cantus and Tenor on the left page, Altus and Bassus on the right. */
+/* Voices: each one can be muted (still seen, not heard: sing it from the notation) or hidden (neither seen nor heard: improvise it) */
+const nVoices = () => doc.stv && doc.stv.length ? doc.stv.length + 1 : 1;
+const VNAMES = n => n === 2 ? ['Cantus', 'Tenor'] : n === 3 ? ['Cantus', 'Tenor', 'Bassus'] : n === 4 ? ['Cantus', 'Altus', 'Tenor', 'Bassus'] : Array.from({length: n}, (_, i) => 'Voice ' + (i + 1));
+const vHid = v => !!(ui.vm && ui.vm.hide[v]);
+const vHidS = v => !ui.inCB && vHid(v);
+const vOff = v => !!(ui.vm && (ui.vm.hide[v] || ui.vm.mute[v]));
+function syncVoices(){
+  const bar = $('#voiceBar'); if (!bar) return;
+  const n = nVoices(), key = n + '|' + (doc.stv || []).join(',') + '|' + doc.notes.length;
+  if (!ui.vm || ui.vm.key !== key) ui.vm = {key, mute: [], hide: []};
+  if (n < 2) { bar.hidden = true; bar.innerHTML = ''; bar.dataset.h = ''; return; }
+  const names = VNAMES(n);
+  bar.hidden = false;
+  const html = '<span class="vt">Voices</span>' + names.map((nm, v) => {
+    const m = !!ui.vm.mute[v], h = !!ui.vm.hide[v];
+    return `<span class="vc${m || h ? ' off' : ''}">${nm}<button type="button" data-v="${v}" data-k="mute" aria-pressed="${m}" title="Mute: you still see the ${nm} but do not hear it, so you can sing it from the notation">Mute</button><button type="button" data-v="${v}" data-k="hide" aria-pressed="${h}" title="Hide: you neither see nor hear the ${nm}, so you can improvise it in its place">Hide</button></span>`;
+  }).join('');
+  if (bar.dataset.h !== html) { bar.dataset.h = html; bar.innerHTML = html; }
+}
+function toggleVoice(v, k){
+  if (!ui.vm) return;
+  ui.vm[k][v] = !ui.vm[k][v];
+  /* a hidden voice is silent anyway; the buttons just keep what you chose */
+  render();
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('#voiceBar button[data-k]');
+  if (b) toggleVoice(Number(b.dataset.v), b.dataset.k);
+});
 const cbAvail = () => !!(doc.cbv && doc.cbv.length >= 2 && doc.cbSig === JSON.stringify(doc.notes));
 function syncCB(){
   const lb = $('#longaBtn'); if (lb) lb.setAttribute('aria-pressed', ui.longaUp ? 'true' : 'false');
@@ -1314,12 +1355,12 @@ function cbMarkup(){
   const qpx = Math.max(180, scoreEl.clientWidth / cols - 16);
   const blockH = Math.max(150, (window.innerHeight * 0.8 - 70 - 28 * rowsN) / rowsN);
   const keep = {doc, sel: ui.sel, hover: ui.hover, playing: ui.playing, edit: ui.edit};
-  const names = ['Cantus', 'Altus', 'Tenor', 'Bassus'];
+  const names = VNAMES(keep.doc.cbv.length);
   const cbv = keep.doc.cbv, ncol = keep.doc.notes.length;
   let html = '';
   scoreEl.classList.toggle('cb1', narrow);
   try {
-    ui.sel = null; ui.hover = null; ui.playing = -1; ui.size = S;
+    ui.sel = null; ui.hover = null; ui.playing = -1; ui.size = S; ui.inCB = true;
     const key = [qpx | 0, S, blockH | 0, ncol, cbv.length].join('|');
     if (!ui.cbPg || ui.cbPg.doc !== keep.doc || ui.cbPg.key !== key) {
       const on = cbv.map(v => { const fst = []; v.at.forEach((j, c) => { if (fst[j] === undefined) fst[j] = c; }); return fst; });
@@ -1347,9 +1388,9 @@ function cbMarkup(){
     cbv.forEach((v, k) => {
       doc = {title: '', clef: v.clef, bflat: keep.doc.bflat, lines: 5, notes: pg.sl[k].notes};
       const L = layout(true, qpx);
-      html += `<div class="cbq"><div class="cbl">${names[k] || ''}</div><svg xmlns="http://www.w3.org/2000/svg" data-v="${k}" viewBox="0 0 ${f(L.W)} ${f(L.H)}" width="${f(L.W * S)}" height="${f(L.H * S)}" aria-hidden="true">${drawScore(L, false)}</svg></div>`;
+      html += `<div class="cbq${vHid(k) ? ' vh' : ''}"><div class="cbl">${names[k] || ''}${vHid(k) ? ' · hidden' : ui.vm && ui.vm.mute[k] ? ' · muted' : ''}</div><svg xmlns="http://www.w3.org/2000/svg" data-v="${k}" viewBox="0 0 ${f(L.W)} ${f(L.H)}" width="${f(L.W * S)}" height="${f(L.H * S)}" aria-hidden="true">${drawScore(L, false)}</svg></div>`;
     });
-  } finally { ui.size = S0; doc = keep.doc; ui.sel = keep.sel; ui.hover = keep.hover; ui.playing = keep.playing; }
+  } finally { ui.inCB = false; ui.size = S0; doc = keep.doc; ui.sel = keep.sel; ui.hover = keep.hover; ui.playing = keep.playing; }
   const np = ui.cbPg.pages.length, cur = Math.max(0, Math.min(ui.cbPage || 0, np - 1)); ui.cbPage = cur;
   const nav = `<div class="cbnav"><button type="button" data-d="-1" aria-label="Previous page"${cur === 0 ? ' disabled' : ''}>&#8249;</button><span>Page ${cur + 1} of ${np}</span><button type="button" data-d="1" aria-label="Next page"${cur >= np - 1 ? ' disabled' : ''}>&#8250;</button></div>`;
   return nav + html;
@@ -1427,7 +1468,7 @@ function render(){
   lay = layout();
   const S = ui.size;
   if (ui.cb && !cbAvail()) ui.cb = false;
-  syncCB();
+  syncCB(); syncVoices();
   if (ui.cb) { $('#spnav').hidden = true; placeHand(true); scoreEl.classList.add('cb'); renderCB(); markPlayCB(ui.playing); syncTools(); updateStatus(); return; }
   scoreEl.classList.remove('cb');
   const g = ghostInfo();
@@ -2390,9 +2431,9 @@ function feedVoices(ctx, ahead){
   const lim = ctx.currentTime + ahead;
   while (T.k < T.jobs.length && T.jobs[T.k].t < lim) {
     const {i, t, d} = T.jobs[T.k++], n = doc.notes[i], spm = T.spm;
-    if (n.ev) n.ev.forEach(e => audio.voices.push(Synth.voice(ctx, audio.bus, freqOf({s: e.s, a: e.a || ''}), t, t + e.u * spm - 0.012)));
-    else if (!n.r) audio.voices.push(Synth.voice(ctx, audio.bus, freqOf(n), t, t + d - 0.012));
-    if (!n.ev && !n.r && n.x) n.x.forEach(v => audio.voices.push(Synth.voice(ctx, audio.bus, freqOf({s: v.s, a: v.a || ''}), t, t + d - 0.012)));
+    if (n.ev) n.ev.forEach(e => { if (!vOff(e.v | 0)) audio.voices.push(Synth.voice(ctx, audio.bus, freqOf({s: e.s, a: e.a || ''}), t, t + e.u * spm - 0.012)); });
+    else if (!n.r && !vOff(0)) audio.voices.push(Synth.voice(ctx, audio.bus, freqOf(n), t, t + d - 0.012));
+    if (!n.ev && !n.r && n.x) n.x.forEach((v, xi) => vOff(xi + 1) || audio.voices.push(Synth.voice(ctx, audio.bus, freqOf({s: v.s, a: v.a || ''}), t, t + d - 0.012)));
   }
   if (ui.beatTick) {
     while (T.origin + T.ck * T.beat < Math.min(lim, T.end - 0.02)) { const ct = T.origin + T.ck * T.beat; T.ck++; if (ct >= ctx.currentTime - 0.02) audio.voices.push(metroClick(ctx, audio.master, ct)); }
@@ -3646,7 +3687,7 @@ function gridNotes(item){
       const gl = !held && vi > 0 ? sylAts[vi].get(e.t0) : null;
       const go = {s: e.n.r ? last[vi] : e.n.s, a: e.n.a || '', d: e.n.d, p: !!e.n.p, r: !!e.n.r, c: held}; if (gl) lyrSet(go, gl);
       g.push(go);
-      if (!held && !e.n.r) ev.push({s: e.n.s, a: e.n.a || '', u: e.u});
+      if (!held && !e.n.r) ev.push({v: vi, s: e.n.s, a: e.n.a || '', u: e.u});
     });
     let d = 'L', best = 1e9;
     [['Sm', 0.5], ['M', 1], ['S', 2], ['B', 4], ['L', 8]].forEach(([c, m]) => { const dist = Math.abs(Math.log(U / m)); if (dist < best) { best = dist; d = c; } });
