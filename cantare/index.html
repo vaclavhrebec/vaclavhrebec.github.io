@@ -628,7 +628,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
 
   <details class="help">
     <summary>How to enter and edit</summary>
-    <p>Pick a note value, then left-click on the staff where the note should go: between two notes inserts it there, after the last note adds it at the end. A left-click on a rest puts a note in its place. Right-click a note to turn it into a rest of the same value; right-click a rest to remove it. Left-click a note to select it (Play and the space bar then start from it); to change its pitch with the arrow keys or by dragging it up or down, press the Edit button first (everything else works without it). Click the clef to change it, or the faint B flat beside it to add one.</p>
+    <p>The mouse changes the music only while the Edit button is on; the buttons and the keys always work. A click on a note selects it, with Edit off as well. Pick a note value, then left-click on the staff where the note should go: between two notes inserts it there, after the last note adds it at the end. A left-click on a rest puts a note in its place. Right-click a note to turn it into a rest of the same value; right-click a rest to remove it. Left-click a note to select it (Play and the space bar then start from it); to change its pitch with the arrow keys or by dragging it up or down, press the Edit button first (everything else works without it). Click the clef to change it, or the faint B flat beside it to add one.</p>
     <p>With a note selected, the value, rest and accidental buttons change that note. With nothing selected, they apply to the next note you enter. On a touch screen, tap a note to select it. Tap an empty place on the staff to put a note down there; the Undo, Redo and Delete buttons are at the top. Press and hold a note to turn it into a rest, or to remove a rest. Scrolling the page with a finger on the score does nothing to it.</p>
     <table>
       <tr><td><kbd>A</kbd> to <kbd>G</kbd></td><td>Add that note, in the octave closest to the previous note</td></tr>
@@ -813,7 +813,7 @@ function sanitizeDoc(d){
     lines: d.lines === 4 ? 4 : 5,
     ...(Array.isArray(d.stv) && d.stv.some(k => CLEFS[k]) ? {stv: d.stv.filter(k => CLEFS[k]).slice(0, 3)} : {}),
     notes: d.notes.filter(n => n && DUR[n.d]).slice(0, 3000).map(n => ({
-      d: n.d, r: !!n.r, s: clampStep(Number(n.s) || 26), a: ACC[n.a] ? n.a : '', p: !!n.p && !n.r,
+      d: n.d, r: !!n.r, s: clampStep(Number(n.s) || 26), a: ACC[n.a] ? n.a : '', p: !!n.p,
       ...(typeof n.l === 'string' && n.l ? {l: n.l.slice(0, 40), ...(n.lh ? {lh: true} : {})} : {}),
       ...(Array.isArray(n.g) ? {g: n.g.slice(0, 4).map(g => ({s: clampStep(Number(g && g.s) || 26), a: g && ACC[g.a] ? g.a : '', d: g && DUR[g.d] ? g.d : 'M', p: !!(g && g.p), r: !!(g && g.r), c: !!(g && g.c), ...(g && typeof g.l === 'string' && g.l ? {l: g.l.slice(0, 40), ...(g.lh ? {lh: true} : {})} : {})}))} : {}),
       ...(typeof n.u === 'number' && n.u > 0 ? {u: n.u} : {}),
@@ -1188,7 +1188,7 @@ function drawItem(it, top, exp){
 /* Where the preview of the next note sits while hovering a gap */
 function ghostInfo(){
   const h = ui.hover;
-  if (!h || (h.type !== 'gap' && h.type !== 'repl') || drag) return null;
+  if (!ui.edit || !h || (h.type !== 'gap' && h.type !== 'repl') || drag) return null;
   const line = lay.lines[h.li], items = line.items, rep = h.type === 'repl';
   const d = rep ? doc.notes[h.i].d : ui.inDur, asRest = rep ? false : ui.inRest;
   const w = asRest ? (d === 'Mx' ? 1.6 : 1.1) : (d === 'Mx' ? 2.5 : (d === 'L' || d === 'B') ? 1.3 : 1.28);
@@ -1229,7 +1229,7 @@ function drawScore(L, exp){
     const xr = (exp && isLast && L.finalX !== null) ? L.finalX + 0.9 : L.staffR;
     const t0 = 5 - (doc.lines === 4 ? 4 : 5);
     for (let k = t0; k < 5; k++) o += hline(L.staffL, xr, top + k, 'staff', 0.12);
-    const hv = !exp && ui.hover && ui.hover.li === li ? ui.hover.type : '';
+    const hv = !exp && ui.edit && ui.hover && ui.hover.li === li ? ui.hover.type : '';
     o += clefUse(clef, L.clefX, top, hv === 'clef' ? ' class="clefhov"' : '');
     const fy = top + 4 - L.sigPos * 0.5;
     if (doc.bflat) o += use('fl', L.sigX, fy, hv === 'sig' ? ' class="clefhov"' : '');
@@ -1408,12 +1408,27 @@ function scorePages(){
   nav.innerHTML = `<button type="button" data-d="-1" aria-label="Previous page"${ui.spPage === 0 ? ' disabled' : ''}>&#8249;</button><span>Page ${ui.spPage + 1} of ${pages.length}</span><button type="button" data-d="1" aria-label="Next page"${ui.spPage >= pages.length - 1 ? ' disabled' : ''}>&#8250;</button>`;
   return {y0: ui.spPage === 0 ? 0 : lines[cur.a].bandTop - 0.3, y1: ui.spPage === pages.length - 1 ? lay.H : lines[cur.b - 1].bandBot};
 }
+/* the tactus hand lives in the space between the first two staves of the page (between the voices of a polyphonic piece,
+   or between the first two systems of a single line), at the right, behind the notes and clear of the staff lines */
+function placeHand(reset){
+  const hb = $('#handBox'); if (!hb) return;
+  if (reset || !lay || !lay.lines.length) { hb.style.top = hb.style.height = hb.style.width = ''; return; }
+  const svg = scoreEl.firstElementChild, leaf = hb.offsetParent; if (!svg || !leaf) return;
+  const a = lay.pages ? lay.pages[ui.spPage || 0].a : 0, ln = lay.lines[a], S = ui.size, y0 = lay.pgY0 || 0;
+  const nextTop = ln.sub && ln.sub.length ? ln.sub[0].top : (lay.lines[a + 1] ? lay.lines[a + 1].staffTop : null);
+  const hasLy = ln.lyOff !== null && ln.lyOff !== undefined;
+  const gA = ln.staffTop + (hasLy ? ln.lyOff + 1.3 : 4.8), gB = nextTop !== null ? nextTop - 0.5 : gA + 7;
+  const H = Math.max(70, Math.min(202, (gB - gA) * S)), W = 250 * H / 202;
+  const r = svg.getBoundingClientRect(), lr = leaf.getBoundingClientRect();
+  hb.style.height = H + 'px'; hb.style.width = W + 'px';
+  hb.style.top = (r.top - lr.top + ((gA + gB) / 2 - y0) * S - H / 2) + 'px';
+}
 function render(){
   lay = layout();
   const S = ui.size;
   if (ui.cb && !cbAvail()) ui.cb = false;
   syncCB();
-  if (ui.cb) { $('#spnav').hidden = true; scoreEl.classList.add('cb'); renderCB(); markPlayCB(ui.playing); syncTools(); updateStatus(); return; }
+  if (ui.cb) { $('#spnav').hidden = true; placeHand(true); scoreEl.classList.add('cb'); renderCB(); markPlayCB(ui.playing); syncTools(); updateStatus(); return; }
   scoreEl.classList.remove('cb');
   const g = ghostInfo();
   if (g && g.atEnd && g.line === lay.lines[lay.lines.length - 1]) lay.barX = Math.max(lay.finalX ?? 0, g.x + g.w + 1.2);
@@ -1426,9 +1441,10 @@ function render(){
   const y0 = pg ? pg.y0 : 0, y1 = pg ? pg.y1 : lay.H;
   lay.pgY0 = y0;
   scoreEl.innerHTML =
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${f(y0)} ${f(lay.W)} ${f(y1 - y0)}" width="${f(lay.W * S)}" height="${f((y1 - y0) * S)}" aria-hidden="true">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 ${f(y0)} ${f(lay.W)} ${f(y1 - y0)}" width="${f(lay.W * S)}" height="${f((y1 - y0) * S)}"${pg ? ' style="overflow:hidden"' : ''} aria-hidden="true">` +
     drawScore(lay, false) + drawGhost(g) + drawCaret() + '<g id="micG" class="mic"></g></svg>';
   mic.drawn = ''; if (mic.on) drawMic();
+  placeHand();
   syncTools();
   updateStatus();
 }
@@ -1870,7 +1886,7 @@ function touchDown(e){
   scoreEl.focus({preventScroll: true});
   const t = touchPress = {h, x: e.clientX, y: e.clientY, id: e.pointerId, held: false};
   t.timer = setTimeout(() => {
-    if (touchPress !== t || t.h.type !== 'item') return;
+    if (touchPress !== t || t.h.type !== 'item' || !ui.edit) return;
     t.held = true;
     const i = t.h.i;
     mutate(() => {
@@ -1889,6 +1905,7 @@ function touchUp(cancelled){
   const h = t.h;
   const wasOpen = !$('#clefMenu').hidden;
   closeClefMenu(false);
+  if (!ui.edit && h.type !== 'item' && h.type !== 'none') { toast('Turn on Edit to place or change notes on the staff.'); return; }
   if (h.type === 'clef') { if (!wasOpen) openClefMenu(h.li); return; }
   if (h.type === 'mens') { setTempus(ui.tempus === 'O' ? 'C' : 'O'); return; }
   if (h.type === 'sig') { mutate(() => { doc.bflat = !doc.bflat; }); return; }
@@ -1912,6 +1929,7 @@ scoreEl.addEventListener('pointerdown', e => {
   const wasOpen = !$('#clefMenu').hidden;
   closeClefMenu(false);
   if (h.type === 'none') return;
+  if (!ui.edit) { if (h.type === 'item') selectItem(h.i); else toast('Turn on Edit to place or change notes on the staff.'); return; }
   if (h.type === 'clef') { if (e.button === 0 && !wasOpen) openClefMenu(h.li); return; }
   if (h.type === 'mens') { if (e.button === 0) setTempus(ui.tempus === 'O' ? 'C' : 'O'); return; }
   if (h.type === 'sig') { if (e.button === 0) mutate(() => { doc.bflat = !doc.bflat; }); return; }
@@ -1959,7 +1977,7 @@ scoreEl.addEventListener('pointermove', e => {
   }
   if (e.pointerType === 'touch') return;
   const h = hit(p.x, p.y);
-  scoreEl.style.cursor = h.type === 'none' ? 'default' : (h.type === 'gap' || h.type === 'repl') ? 'crosshair' : 'pointer';
+  scoreEl.style.cursor = h.type === 'none' ? 'default' : (h.type === 'gap' || h.type === 'repl') ? (ui.edit ? 'crosshair' : 'default') : 'pointer';
   if (!sameHover(h, ui.hover)) { ui.hover = h; render(); }
 });
 function endPress(cancelled){
@@ -3590,7 +3608,7 @@ function parseTokens(str){
     const m = /^(r)?(\d+)?([bn#])?(Mx|Sm|L|B|S|M|F)(\.)?$/.exec(tok);
     if (!m) throw new Error('bad token ' + tok);
     const s = m[2] ? Number(m[2]) : prev;
-    out.push({d: m[4], r: !!m[1], s, a: m[1] ? '' : (m[3] || ''), p: !m[1] && !!m[5]});
+    out.push({d: m[4], r: !!m[1], s, a: m[1] ? '' : (m[3] || ''), p: !!m[5]});
     if (!m[1]) prev = s;
   });
   return out;
