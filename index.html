@@ -107,6 +107,8 @@
   .contact-form .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
   .contact-form button.btn { border: 0; cursor: pointer; justify-self: start; font-family: inherit; }
   .contact-form button.btn:disabled { opacity: .6; cursor: wait; }
+  .form-acts { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.2rem; }
+  .direct { font-size: .95rem; color: var(--muted); } .direct a { color: var(--accent); }
   .form-status { margin: 0; font-size: .95rem; min-height: 1.4em; }
   .form-status.ok { color: #2e7d32; } .form-status.err { color: var(--accent); }
   .btn.big { font-size: 1.05rem; padding: .8rem 1.6rem; }
@@ -432,7 +434,10 @@
       <label><span data-i18n>Email</span><input name="email" type="email" autocomplete="email" required maxlength="200"></label>
       <label><span data-i18n>Message</span><textarea name="message" required maxlength="5000"></textarea></label>
       <div class="hp" aria-hidden="true"><input type="checkbox" name="botcheck" tabindex="-1" autocomplete="off"></div>
-      <button class="btn" type="submit" data-i18n>Send</button>
+      <div class="form-acts">
+        <button class="btn" type="submit" data-i18n>Send</button>
+        <span class="direct"><span data-i18n>or write directly:</span> <a href="mailto:vaclavhrebec2000@gmail.com">vaclavhrebec2000@gmail.com</a></span>
+      </div>
       <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
     </form>
   </section>
@@ -519,7 +524,7 @@ de: {
   "For concerts, courses, workshops or lectures, write me a message.": "Für Konzerte, Kurse, Workshops oder Vorträge schreiben Sie mir gerne eine Nachricht.",
   "Name": "Name",
   "Email": "E-Mail",
-  "Message": "Nachricht",
+  "Message": "Nachricht", "or write directly:": "oder direkt an:",
   "Send": "Senden",
   "Sending…": "Wird gesendet …",
   "Thank you, your message has been sent.": "Vielen Dank, Ihre Nachricht wurde gesendet.",
@@ -594,7 +599,7 @@ cs: {
   "For concerts, courses, workshops or lectures, write me a message.": "Ohledně koncertů, kurzů, workshopů či přednášek mi napište zprávu.",
   "Name": "Jméno",
   "Email": "E-mail",
-  "Message": "Zpráva",
+  "Message": "Zpráva", "or write directly:": "nebo napište přímo:",
   "Send": "Odeslat",
   "Sending…": "Odesílám…",
   "Thank you, your message has been sent.": "Děkuji, vaše zpráva byla odeslána.",
@@ -709,13 +714,11 @@ cs: {
 })();
 </script>
 <script>
-/* CONTACT FORM — messages are delivered by Web3Forms to the email registered with this key.
-   The key is not the email address; visitors never see where the message goes.
-   Until a key is pasted here, the Contact section stays hidden. */
-const WEB3FORMS_KEY = '';
+/* CONTACT FORM — messages are delivered by FormSubmit (formsubmit.co) to the address below.
+   The very first message triggers a one-time activation email from FormSubmit: click "Activate Form". */
+const CONTACT_TO = 'vaclavhrebec2000@gmail.com';
 (function () {
   const sec = document.getElementById('contact');
-  if (!WEB3FORMS_KEY) { sec.hidden = true; document.querySelector('nav a[href="#contact"]').hidden = true; return; }
   const f = document.getElementById('contact-form'), st = document.getElementById('form-status');
   const btn = f.querySelector('button[type=submit]');
   const tr = en => { const l = document.documentElement.lang; return (l !== 'en' && T[l] && T[l][en]) || en; };
@@ -728,18 +731,17 @@ const WEB3FORMS_KEY = '';
     }
     btn.disabled = true; show('Sending…');
     try {
-      const r = await fetch('https://api.web3forms.com/submit', {
+      const r = await fetch('https://formsubmit.co/ajax/' + CONTACT_TO, {
         method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({
-          access_key: WEB3FORMS_KEY,
-          subject: 'Website message from ' + f.name.value.trim(),
-          from_name: 'vaclavhrebec.github.io',
-          name: f.name.value.trim(), email: f.email.value.trim(), replyto: f.email.value.trim(),
+          _subject: 'Website message from ' + f.name.value.trim(),
+          _template: 'table', _captcha: 'false', _replyto: f.email.value.trim(),
+          name: f.name.value.trim(), email: f.email.value.trim(),
           message: f.message.value.trim()
         })
       });
       const j = await r.json().catch(() => ({}));
-      if (r.ok && j.success) { f.reset(); show('Thank you, your message has been sent.', 'ok'); }
+      if (r.ok && String(j.success) === 'true') { f.reset(); show('Thank you, your message has been sent.', 'ok'); }
       else show('Sorry, the message could not be sent. Please try again later.', 'err');
     } catch (e) { show('Sorry, the message could not be sent. Please try again later.', 'err'); }
     btn.disabled = false;
