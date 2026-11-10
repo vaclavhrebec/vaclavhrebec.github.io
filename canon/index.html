@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canon alla mente</title>
+<meta name="description" content="Improvise a canon: sing the dux, and the comes follows you at the fifth, fourth, octave or unison, in two, three or four voices.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2; --fg: #1c1a17; --muted: #6b655c; --line: #e4ddd1;
+    --accent: #c8102e; --card: #ffffff; --soft: #f3eee6;
+    --v1: #c8102e; --v2: #2f62a3; --v3: #3f8a52;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824;
+      --accent: #e5394f; --card: #1b1916; --soft: #221f1b;
+      --v1: #ef5a6c; --v2: #6b9be0; --v3: #6fbf84;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824;
+    --accent: #e5394f; --card: #1b1916; --soft: #221f1b;
+    --v1: #ef5a6c; --v2: #6b9be0; --v3: #6fbf84;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 "Inter", system-ui, sans-serif; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 48px; }
+  header { padding: 1.4rem 0 1rem; }
+  .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
+  .back:hover { color: var(--accent); }
+  h1 { font-family: "EB Garamond", Georgia, serif; font-weight: 600; font-size: clamp(2.2rem, 6vw, 3.2rem);
+    line-height: 1.05; margin: .5rem 0 .2rem; }
+  .tagline { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--muted); margin: 0; }
+  .staff { height: 25px; margin: 1rem 0 1.4rem; opacity: .5;
+    background: repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 6px); }
+
+  .stage { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+  .trace { position: relative; }
+  canvas { display: block; width: 100%; height: 280px; border-radius: 8px; background: var(--soft); }
+  .hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none;
+    font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); padding: 1rem; }
+  .hint[hidden] { display: none; }
+  .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: .7rem 2px 0; font-size: .85rem; color: var(--muted); }
+  .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px;
+    background: var(--c); margin-right: 6px; vertical-align: middle; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 14px; }
+  #start { height: 54px; padding: 0 26px; border-radius: 27px; border: 0; background: var(--accent); color: #fff;
+    font: 500 1.05rem/1 "Inter", system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
+  #start:hover { filter: brightness(1.08); }
+  #start svg { width: 16px; height: 16px; fill: currentColor; }
+  #start.on { background: var(--fg); color: var(--bg); }
+  .beats { display: flex; gap: 8px; }
+  .beats i { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--line); transition: background .06s; }
+  .beats i.acc { border-color: var(--muted); }
+  .beats i.on { background: var(--accent); border-color: var(--accent); }
+  .meter { flex: 1 1 120px; max-width: 220px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
+  .meter b { display: block; height: 100%; width: 0; background: var(--fg); opacity: .55; transition: width .05s; }
+  #status { font-size: .9rem; color: var(--muted); flex-basis: 100%; min-height: 1.4em; }
+  #status.err { color: var(--accent); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
+  h2 { font-family: "EB Garamond", Georgia, serif; font-weight: 600; font-size: 1.45rem; margin: 0 0 .7rem;
+    display: flex; align-items: baseline; gap: .55rem; }
+  h2::before { content: "◆"; color: var(--accent); font-size: .7rem; transform: translateY(-.12rem); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
+  .row > label:first-child, .row > .lbl { min-width: 7.5rem; color: var(--muted); font-size: .92rem; }
+  select, input[type=number] { font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; height: 38px; padding: 0 10px; }
+  select { max-width: 100%; }
+  input[type=number] { width: 5.2em; text-align: center; }
+  input[type=range] { accent-color: var(--accent); width: 150px; }
+  input[type=checkbox] { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; }
+  .check { display: flex; align-items: center; gap: 9px; margin: 0 0 10px; cursor: pointer; }
+  button.b { font: inherit; font-size: .95rem; color: var(--fg); background: var(--bg); border: 1px solid var(--line);
+    border-radius: 8px; height: 38px; padding: 0 14px; cursor: pointer; }
+  button.b:hover { border-color: var(--fg); }
+  .seg { display: inline-flex; }
+  .seg button { border-radius: 0; margin-left: -1px; }
+  .seg button:first-child { border-radius: 8px 0 0 8px; margin-left: 0; }
+  .seg button:last-child { border-radius: 0 8px 8px 0; }
+  .seg button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; position: relative; }
+  .stepper { display: inline-flex; }
+  .stepper button { width: 38px; padding: 0; font-size: 1.2rem; border-radius: 0; }
+  .stepper button:first-child { border-radius: 8px 0 0 8px; }
+  .stepper button:last-child { border-radius: 0 8px 8px 0; }
+  .stepper input { border-radius: 0; border-left: 0; border-right: 0; -moz-appearance: textfield; appearance: textfield; }
+  .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .note { font-size: .85rem; color: var(--muted); margin: .2rem 0 0; }
+
+  .voices { list-style: none; margin: 4px 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .voices li { display: grid; grid-template-columns: 14px 1fr auto; gap: 10px; align-items: center; padding: 9px 0;
+    border-bottom: 1px solid var(--line); }
+  .voices .sw { width: 14px; height: 14px; border-radius: 50%; background: var(--c); }
+  .voices .nm { font-weight: 500; }
+  .voices .ds { display: block; font-size: .85rem; color: var(--muted); }
+  .voices input[type=range] { width: 90px; }
+
+  details.help { margin-top: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
+  details.help summary { cursor: pointer; font-family: "EB Garamond", Georgia, serif; font-size: 1.25rem; }
+  .help p, .help li { color: var(--muted); }
+  .help ol { padding-left: 1.2rem; }
+  footer { margin-top: 26px; color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
+  footer a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <a class="back" href="../">← Václav Hřebec</a>
+    <h1>Canon alla mente</h1>
+    <p class="tagline">Sing the dux. The comes follows.</p>
+  </header>
+  <div class="staff" aria-hidden="true"></div>
+
+  <section class="stage" aria-label="Singing">
+    <div class="trace">
+      <canvas id="trace" aria-label="Pitch of your voice and of the following voices over time"></canvas>
+      <div class="hint" id="hint">Put on headphones, press Start and sing.<br>The comes answers you after the entry you chose.</div>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="controls">
+      <button id="start" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1 13 7 2 13Z"/></svg><span>Start</span></button>
+      <div class="beats" id="beats" aria-hidden="true"></div>
+      <div class="meter" title="Microphone level" aria-hidden="true"><b id="meter"></b></div>
+      <p id="status" role="status"></p>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-canon">
+      <h2 id="h-canon">Canon</h2>
+      <div class="row"><label for="preset">Type</label><select id="preset"></select></div>
+      <div class="row"><label for="entry">Entry</label><select id="entry"></select></div>
+      <ul class="voices" id="voices"></ul>
+    </section>
+
+    <section class="card" aria-labelledby="h-tempo">
+      <h2 id="h-tempo">Tempo</h2>
+      <div class="row">
+        <label for="bpm">Beats per minute</label>
+        <span class="stepper"><button class="b" id="bpmDown" type="button" aria-label="Slower">−</button><input type="number" id="bpm" min="20" max="240" step="1" inputmode="numeric"><button class="b" id="bpmUp" type="button" aria-label="Faster">+</button></span>
+        <button class="b" id="tap" type="button" title="Tap the beat a few times">Tap</button>
+      </div>
+      <div class="row"><label for="bar">Beats per bar</label><select id="bar"></select></div>
+      <label class="check"><input type="checkbox" id="metro"> Metronome</label>
+      <div class="row"><label for="metroVol">Metronome volume</label><input type="range" id="metroVol" min="0" max="100"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-sound">
+      <h2 id="h-sound">Sound</h2>
+      <div class="row"><span class="lbl">The comes sings with</span>
+        <span class="seg" role="group" aria-label="Sound of the following voices"><button class="b" type="button" data-mode="voice">Your voice</button><button class="b" type="button" data-mode="organ">Organ</button></span></div>
+      <div class="row"><span class="lbl">Intervals</span>
+        <span class="seg" role="group" aria-label="Tuning of the intervals"><button class="b" type="button" data-tune="pure" title="Pure fifths 3:2, fourths 4:3, octaves 2:1">Pure</button><button class="b" type="button" data-tune="equal" title="Equal temperament">Equal</button></span></div>
+      <label class="check" id="snapRow"><input type="checkbox" id="snap"> Organ: settle on the nearest note, a′ =&nbsp;<input type="number" id="ref" min="380" max="480" step="1" aria-label="Pitch of a′ in Hz">&nbsp;Hz</label>
+      <label class="check"><input type="checkbox" id="hear"> Hear my own voice too</label>
+      <label class="check"><input type="checkbox" id="speakers"> I am using speakers, not headphones</label>
+      <div class="row"><label for="vol">Volume</label><input type="range" id="vol" min="0" max="100"></div>
+    </section>
+
+    <section class="card" aria-labelledby="h-lat">
+      <h2 id="h-lat">Latency</h2>
+      <div class="row"><label for="lat">Latency</label><input type="range" id="latR" min="0" max="500" step="1" aria-label="Latency in milliseconds"><input type="number" id="lat" min="0" max="500" step="1" inputmode="numeric"> ms</div>
+      <div class="row"><button class="b" id="clap" type="button">Clap test</button><span class="note" id="clapMsg"></span></div>
+      <p class="note">Every device needs a little time between the sound leaving it and your voice coming back in. Raise this until the comes enters exactly with the metronome. Or press Clap test and clap along with the eight clicks: it measures the latency for you.</p>
+    </section>
+  </div>
+
+  <details class="help">
+    <summary>How it works</summary>
+    <ol>
+      <li>Put on headphones, so that the microphone hears only you.</li>
+      <li>Choose the canon and the entry, set the tempo, and press Start. Allow the microphone when the browser asks.</li>
+      <li>Sing the dux with the metronome. Each comes repeats what you sang, after its entry and at its interval: you hear yourself in imitation and can improvise the canon against it.</li>
+      <li>In the picture, your line is dark and each comes has its own colour, so you can see the consonances and the parallels as they happen.</li>
+    </ol>
+    <p><strong>Your voice</strong> shifts the recording of your singing to the new pitch. <strong>Organ</strong> follows the pitch you sing with a soft organ stop, which sounds cleaner in the higher voices.</p>
+    <p>For three voices in the usual way, choose <em>fifth below, then fourth above</em> with an entry of one beat: the first comes enters one beat after you a fifth lower, the second two beats after you a fourth higher. For four voices, choose <em>rising fourths</em> and sing the lowest part: each comes enters one beat later and a fourth higher than the one before.</p>
+  </details>
+
+  <footer>
+    <span>© <span id="yr"></span> Václav Hřebec</span>
+    <span>Inspired by Pablo Palau Cano’s <em>Software Contrapunt Improvisat</em> (València)</span>
+  </footer>
+</div>
+
+<!-- The audio engine. It runs in its own thread (AudioWorklet): it keeps the last 40 seconds of the
+     microphone, follows the pitch of the voice, and plays every comes from that memory after its entry,
+     either the recording shifted in pitch or an organ tone following the pitch. -->
+<script type="text/plain" id="worklet">
+class CanonProcessor extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    const sr = sampleRate;
+    this.sr = sr;
+    this.N = 1 << 21; this.M = this.N - 1;               // ~43 s of input at 48 kHz
+    this.buf = new Float32Array(this.N); this.w = 0;
+    this.W = Math.round(0.045 * sr);                      // pitch-shift grain
+    this.hop = 512; this.HN = 1 << 13; this.HM = this.HN - 1;
+    this.raw = new Float32Array(this.HN); this.hf = new Float32Array(this.HN);
+    // pitch tracking at a quarter of the sample rate
+    this.dsN = 2048; this.ds = new Float32Array(this.dsN); this.dsw = 0;
+    this.acc = 0; this.accn = 0; this.lp1 = 0; this.lp2 = 0;
+    this.lpa = 1 - Math.exp(-2 * Math.PI * 1800 / sr);
+    this.dsRate = sr / 4;
+    this.yW = Math.round(0.025 * this.dsRate);
+    this.tMin = Math.max(2, Math.floor(this.dsRate / 1100));
+    this.tMax = Math.ceil(this.dsRate / 62);
+    this.win = new Float32Array(this.yW + this.tMax + 2);
+    this.dd = new Float32Array(this.tMax + 2);
+    this.sq = 0; this.peak = 0;
+    this.lag = Math.round((this.yW + this.tMax) * 2 / this.hop);   // window centre, in hops
+    // output
+    this.voices = []; this.mode = 'voice'; this.snap = false; this.ref = 440; this.hear = 0; this.mute = false;
+    this.fs = 1 - Math.exp(-1 / (0.012 * sr));
+    this.atk = 1 - Math.exp(-1 / (0.012 * sr));
+    this.rel = 1 - Math.exp(-1 / (0.06 * sr));
+    // clap test
+    this.onsets = false; this.nf = 0.01; this.lastOn = -1e12;
+    this.fOff = 0;
+    this.port.onmessage = e => this.msg(e.data);
+  }
+  msg(d) {
+    if (d.type === 'config') {
+      const old = this.voices, W = this.W;
+      this.voices = d.voices.map((v, i) => {
+        const o = old[i] || {};
+        return { delay: v.delay, ratio: v.ratio, gain: v.gain, pl: v.pl, pr: v.pr,
+          off: o.ratio === v.ratio && o.off !== undefined ? o.off : W / 2,
+          ph: o.ph || 0, f: o.f || 0, a: o.a || 0 };
+      });
+      this.mode = d.mode; this.snap = d.snap; this.ref = d.ref; this.hear = d.hear;
+    } else if (d.type === 'reset') {
+      this.buf.fill(0); this.raw.fill(0); this.hf.fill(0); this.ds.fill(0);
+      for (const v of this.voices) { v.off = this.W / 2; v.a = 0; }
+    } else if (d.type === 'mute') this.mute = d.on;
+    else if (d.type === 'onsets') { this.onsets = d.on; this.lastOn = -1e12; }
+  }
+  read(p) {
+    const i = Math.floor(p), f = p - i, M = this.M;
+    return this.buf[i & M] * (1 - f) + this.buf[(i + 1) & M] * f;
+  }
+  shift(v, now) {
+    const W = this.W;
+    if (v.ratio === 1) return this.read(now - v.delay);
+    v.off += 1 - v.ratio;
+    if (v.off >= W) v.off -= W; else if (v.off < 0) v.off += W;
+    const o1 = v.off, o2 = o1 >= W / 2 ? o1 - W / 2 : o1 + W / 2;
+    const base = now - v.delay + W / 2;
+    const g1 = Math.sin(Math.PI * o1 / W), g2 = Math.sin(Math.PI * o2 / W);
+    return this.read(base - o1) * g1 * g1 + this.read(base - o2) * g2 * g2;
+  }
+  organ(v, now) {
+    const pos = (now - v.delay) / this.hop, k = Math.floor(pos), fr = pos - k, HM = this.HM;
+    let f = 0;
+    if (k >= 0) {
+      const f1 = this.hf[k & HM], f2 = this.hf[(k + 1) & HM];
+      if (f1 > 0 && f2 > 0) f = f1 * Math.pow(f2 / f1, fr); else f = fr < 0.5 ? f1 : f2;
+    }
+    let target = 0;
+    if (f > 0) {
+      target = 1;
+      if (this.snap) f = this.ref * Math.pow(2, Math.round(12 * Math.log2(f / this.ref)) / 12);
+      const ff = f * v.ratio;
+      if (v.a < 0.02) v.f = ff; else v.f += (ff - v.f) * this.fs;
+    }
+    v.a += (target - v.a) * (target > v.a ? this.atk : this.rel);
+    if (v.a < 1e-4) return 0;
+    v.ph += v.f / this.sr; if (v.ph >= 1) v.ph -= 1;
+    const p = 2 * Math.PI * v.ph;
+    return v.a * 0.16 * (Math.sin(p) + 0.05 * Math.sin(2 * p) + 0.2 * Math.sin(3 * p) + 0.06 * Math.sin(5 * p));
+  }
+  analyse() {
+    const n = this.yW + this.tMax, dsM = this.dsN - 1, x = this.win, end = this.dsw;
+    for (let j = 0; j < n; j++) x[j] = this.ds[(end - n + j) & dsM];
+    const rms = Math.sqrt(this.sq / this.hop); this.sq = 0;
+    let f0 = 0;
+    if (rms > 0.004) {
+      const d = this.dd, W = this.yW; let run = 0, best = -1;
+      d[0] = 1;
+      for (let t = 1; t <= this.tMax; t++) {
+        let s = 0;
+        for (let j = 0; j < W; j++) { const q = x[j] - x[j + t]; s += q * q; }
+        run += s; d[t] = run > 0 ? s * t / run : 1;
+      }
+      for (let t = this.tMin; t < this.tMax; t++) {
+        if (d[t] < 0.15) { while (t + 1 < this.tMax && d[t + 1] < d[t]) t++; best = t; break; }
+      }
+      if (best < 0) {
+        let mi = 1e9;
+        for (let t = this.tMin; t < this.tMax; t++) if (d[t] < mi) { mi = d[t]; best = t; }
+        if (mi > 0.3) best = -1;
+      }
+      if (best > 0) {
+        const a = d[best - 1], b = d[best], c = d[best + 1], den = a - 2 * b + c;
+        f0 = this.dsRate / (best + (den > 0 ? 0.5 * (a - c) / den : 0));
+      }
+    }
+    const HM = this.HM, k = Math.floor(this.w / this.hop) - this.lag;
+    this.raw[k & HM] = f0;
+    // median of three hops, one hop behind, to remove single octave jumps
+    const c1 = k - 1, a = this.raw[(c1 - 1) & HM], b = this.raw[c1 & HM], c = this.raw[k & HM];
+    let m;
+    if (a > 0 && b > 0 && c > 0) m = Math.max(Math.min(a, b), Math.min(Math.max(a, b), c));
+    else m = b > 0 && (a > 0 || c > 0) ? b : 0;
+    this.hf[c1 & HM] = m;
+    this.port.postMessage({ type: 'p', t: (c1 * this.hop + this.fOff) / this.sr, f: m, lv: this.peak });
+    this.peak = 0;
+  }
+  process(inputs, outputs) {
+    const inp = inputs[0] && inputs[0][0];
+    const out = outputs[0], L = out[0], R = out[1] || null;
+    const n = L.length, M = this.M, buf = this.buf, hop = this.hop;
+    this.fOff = currentFrame - this.w;
+    for (let i = 0; i < n; i++) {
+      const x = inp ? inp[i] : 0;
+      buf[this.w & M] = x;
+      // two gentle low-passes, then keep every fourth sample for the pitch tracker
+      this.lp1 += this.lpa * (x - this.lp1); this.lp2 += this.lpa * (this.lp1 - this.lp2);
+      this.acc += this.lp2;
+      if (++this.accn === 4) { this.ds[this.dsw & (this.dsN - 1)] = this.acc / 4; this.dsw++; this.acc = 0; this.accn = 0; }
+      this.sq += x * x;
+      const ax = x < 0 ? -x : x; if (ax > this.peak) this.peak = ax;
+      if (this.onsets) {
+        if (ax > Math.max(0.06, this.nf * 10) && this.w - this.lastOn > 0.25 * this.sr) {
+          this.lastOn = this.w; this.port.postMessage({ type: 'on', t: (currentFrame + i) / this.sr });
+        } else this.nf = this.nf * 0.9995 + ax * 0.0005;
+      }
+      const now = this.w;
+      this.w++;
+      if (this.w % hop === 0) this.analyse();
+      let l = 0, r = 0;
+      if (!this.mute) {
+        const vs = this.voices, organ = this.mode === 'organ';
+        for (let j = 0; j < vs.length; j++) {
+          const v = vs[j]; if (v.gain <= 0) continue;
+          const s = (organ ? this.organ(v, now) : this.shift(v, now)) * v.gain;
+          l += s * v.pl; r += s * v.pr;
+        }
+        if (this.hear > 0) { l += x * this.hear; r += x * this.hear; }
+      }
+      L[i] = l; if (R) R[i] = r;
+    }
+    return true;
+  }
+}
+registerProcessor('canon', CanonProcessor);
+</script>
+
+<script>
+(() => {
+const $ = id => document.getElementById(id);
+
+// ---------- the canons ----------
+// Each comes: [semitones, pure ratio]. Comes number i enters after (i+1) × entry beats.
+const PRESETS = [
+  { g: 'Two voices', id: 'u',  name: 'Unison', v: [[0, 1]] },
+  { g: 'Two voices', id: '5u', name: 'Fifth above', v: [[7, 3 / 2]] },
+  { g: 'Two voices', id: '5d', name: 'Fifth below', v: [[-7, 2 / 3]] },
+  { g: 'Two voices', id: '4u', name: 'Fourth above', v: [[5, 4 / 3]] },
+  { g: 'Two voices', id: '4d', name: 'Fourth below', v: [[-5, 3 / 4]] },
+  { g: 'Two voices', id: '8u', name: 'Octave above', v: [[12, 2]] },
+  { g: 'Two voices', id: '8d', name: 'Octave below', v: [[-12, 1 / 2]] },
+  { g: 'Three voices', id: '3a', name: 'Fifth below, then fourth above', v: [[-7, 2 / 3], [5, 4 / 3]], entry: 1 },
+  { g: 'Three voices', id: '3b', name: 'Fifth below, then octave above', v: [[-7, 2 / 3], [12, 2]], entry: 1 },
+  { g: 'Three voices', id: '3c', name: 'Octave below, then fifth above', v: [[-12, 1 / 2], [7, 3 / 2]], entry: 1 },
+  { g: 'Four voices', id: '4r', name: 'Rising fourths (you sing the lowest)', v: [[5, 4 / 3], [10, 16 / 9], [15, 64 / 27]], entry: 1 },
+];
+const IV = { 0: 'at the unison', 12: 'an octave above', '-12': 'an octave below', 7: 'a fifth above', '-7': 'a fifth below',
+  5: 'a fourth above', '-5': 'a fourth below', 10: 'two fourths above (a seventh)', 15: 'three fourths above (a tenth)' };
+const ROMAN = ['I', 'II', 'III'];
+const COLORS = ['--v1', '--v2', '--v3'];
+
+// ---------- settings ----------
+const DEF = { preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',
+  snap: false, ref: 440, hear: false, speakers: false, vol: 70, lat: null, gains: [80, 80, 80], mutes: [false, false, false] };
+let S = { ...DEF };
+try { Object.assign(S, JSON.parse(localStorage.getItem('canon-settings') || '{}')); } catch (e) {}
+const save = () => { try { localStorage.setItem('canon-settings', JSON.stringify(S)); } catch (e) {} };
+const preset = () => PRESETS.find(p => p.id === S.preset) || PRESETS[1];
+
+// ---------- build the controls ----------
+const selP = $('preset');
+for (const g of [...new Set(PRESETS.map(p => p.g))]) {
+  const og = document.createElement('optgroup'); og.label = g;
+  for (const p of PRESETS.filter(p => p.g === g)) og.append(new Option(p.name, p.id));
+  selP.append(og);
+}
+for (let i = 1; i <= 8; i++) $('entry').append(new Option(i === 1 ? 'every 1 beat' : `every ${i} beats`, i));
+for (let i = 1; i <= 6; i++) $('bar').append(new Option(String(i), i));
+
+function renderVoices() {
+  const p = preset(), ul = $('voices'), lg = $('legend');
+  ul.innerHTML = ''; lg.innerHTML = '';
+  const li0 = document.createElement('li');
+  li0.innerHTML = `<span class="sw" style="--c:var(--fg)"></span><span><span class="nm">Dux</span><span class="ds">You</span></span><span></span>`;
+  ul.append(li0);
+  const l0 = document.createElement('span'); l0.style.setProperty('--c', 'var(--fg)'); l0.textContent = 'Dux (you)'; lg.append(l0);
+  p.v.forEach(([st], i) => {
+    const beats = (i + 1) * S.entry;
+    const li = document.createElement('li');
+    li.style.setProperty('--c', `var(${COLORS[i]})`);
+    li.innerHTML = `<span class="sw"></span><span><span class="nm">Comes ${ROMAN[i]}</span><span class="ds">${beats} ${beats === 1 ? 'beat' : 'beats'} later, ${IV[st]}</span></span>
+      <span><input type="range" min="0" max="100" value="${S.gains[i]}" aria-label="Volume of comes ${ROMAN[i]}"></span>`;
+    li.querySelector('input').addEventListener('input', e => { S.gains[i] = +e.target.value; save(); sendConfig(); });
+    ul.append(li);
+    const l = document.createElement('span'); l.style.setProperty('--c', `var(${COLORS[i]})`); l.textContent = `Comes ${ROMAN[i]}`; lg.append(l);
+  });
+}
+
+function syncUI() {
+  selP.value = S.preset; $('entry').value = S.entry; $('bpm').value = S.bpm; $('bar').value = S.bar;
+  $('metro').checked = S.metro; $('metroVol').value = S.metroVol; $('snap').checked = S.snap; $('ref').value = S.ref;
+  $('hear').checked = S.hear; $('speakers').checked = S.speakers; $('vol').value = S.vol;
+  $('lat').value = S.lat ?? ''; $('latR').value = S.lat ?? 0;
+  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === S.mode));
+  document.querySelectorAll('[data-tune]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tune === S.tune));
+  $('snapRow').style.opacity = S.mode === 'organ' ? 1 : .5;
+  renderVoices(); renderBeats();
+}
+
+// ---------- audio ----------
+let ctx = null, node = null, master = null, metroBus = null, src = null, stream = null, running = false;
+const status = (t, err) => { const s = $('status'); s.textContent = t || ''; s.className = err ? 'err' : ''; };
+
+async function ensureAudio() {
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    ctx = new AC({ latencyHint: 'interactive' });
+    const url = URL.createObjectURL(new Blob([$('worklet').textContent], { type: 'application/javascript' }));
+    await ctx.audioWorklet.addModule(url);
+    node = new AudioWorkletNode(ctx, 'canon', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
+    node.port.onmessage = onMsg;
+    master = ctx.createGain(); node.connect(master).connect(ctx.destination);
+    metroBus = ctx.createGain(); metroBus.connect(ctx.destination);
+    if (S.lat == null) {   // first visit: a guess from what the browser reports
+      S.lat = Math.round(((ctx.baseLatency || 0.01) + (ctx.outputLatency || 0.02)) * 1000 + 15);
+      syncUI(); save();
+    }
+  }
+  if (ctx.state !== 'running') await ctx.resume();
+  applyVolumes(); sendConfig();
+}
+
+async function openMic() {
+  closeMic();
+  stream = await navigator.mediaDevices.getUserMedia({ audio: {
+    echoCancellation: S.speakers, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  src = ctx.createMediaStreamSource(stream); src.connect(node);
+}
+function closeMic() {
+  if (src) { try { src.disconnect(); } catch (e) {} src = null; }
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+
+function beatSec() { return 60 / S.bpm; }
+function sendConfig() {
+  if (!node) return;
+  const p = preset(), sr = ctx.sampleRate;
+  const minDelay = Math.round(0.06 * sr) + 3 * 512;
+  const pans = p.v.length === 1 ? [0.35] : p.v.length === 2 ? [-0.45, 0.45] : [-0.5, 0.5, 0];
+  const voices = p.v.map(([st, pure], i) => {
+    const ratio = st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12);
+    const delay = Math.max(minDelay, ((i + 1) * S.entry * beatSec() - (S.lat || 0) / 1000) * sr);
+    const a = (pans[i] + 1) * Math.PI / 4;
+    const g = Math.pow(S.gains[i] / 100, 1.6) * 1.4;
+    return { delay, ratio, gain: g, pl: Math.cos(a) * 1.41, pr: Math.sin(a) * 1.41 };
+  });
+  node.port.postMessage({ type: 'config', voices, mode: S.mode, snap: S.snap, ref: S.ref, hear: S.hear ? 0.8 : 0 });
+}
+function applyVolumes() {
+  if (!master) return;
+  master.gain.setTargetAtTime(Math.pow(S.vol / 100, 1.5) * 2.2, ctx.currentTime, 0.02);
+  metroBus.gain.setTargetAtTime(S.metro ? Math.pow(S.metroVol / 100, 1.5) * 0.9 : 0, ctx.currentTime, 0.02);
+}
+
+// ---------- metronome ----------
+let nextBeat = 0, beatNo = 0, schedTimer = null, beatTimes = [];
+function click(t, acc, bus) {
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = 'triangle'; o.frequency.value = acc ? 1760 : 1320;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(acc ? 0.9 : 0.55, t + 0.002);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+  o.connect(g).connect(bus); o.start(t); o.stop(t + 0.06);
+}
+function sched() {
+  while (nextBeat < ctx.currentTime + 0.12) {
+    const n = beatNo % S.bar;
+    click(nextBeat, n === 0 && S.bar > 1, metroBus);
+    beatTimes.push({ t: nextBeat, n });
+    nextBeat += beatSec(); beatNo++;
+  }
+  const old = ctx.currentTime - 60;
+  while (beatTimes.length && beatTimes[0].t < old) beatTimes.shift();
+}
+function startMetro() { nextBeat = ctx.currentTime + 0.2; beatNo = 0; beatTimes = []; sched(); schedTimer = setInterval(sched, 25); }
+function stopMetro() { clearInterval(schedTimer); schedTimer = null; }
+
+function renderBeats() {
+  const b = $('beats'); b.innerHTML = '';
+  for (let i = 0; i < S.bar; i++) { const d = document.createElement('i'); if (i === 0 && S.bar > 1) d.className = 'acc'; b.append(d); }
+}
+
+// ---------- start / stop ----------
+async function start() {
+  if (!window.isSecureContext || !navigator.mediaDevices) { status('The microphone needs a secure (https) page.', true); return; }
+  try {
+    status('Starting…');
+    await ensureAudio();
+    node.port.postMessage({ type: 'reset' });
+    node.port.postMessage({ type: 'mute', on: false });
+    await openMic();
+    pts = []; startMetro(); running = true;
+    $('start').classList.add('on'); $('start').querySelector('span').textContent = 'Stop';
+    $('start').querySelector('svg').innerHTML = '<path d="M2 2h10v10H2Z"/>';
+    $('hint').hidden = true;
+    status(S.speakers ? 'Listening. With speakers, keep the volume low.' : 'Listening. Sing with the metronome.');
+  } catch (e) {
+    status(e && e.name === 'NotAllowedError' ? 'The microphone was not allowed. Allow it in the browser and try again.' : 'Could not start: ' + (e.message || e), true);
+    stop();
+  }
+}
+function stop() {
+  stopMetro(); closeMic(); running = false;
+  if (node) node.port.postMessage({ type: 'reset' });
+  $('start').classList.remove('on'); $('start').querySelector('span').textContent = 'Start';
+  $('start').querySelector('svg').innerHTML = '<path d="M2 1 13 7 2 13Z"/>';
+  if (!$('status').classList.contains('err')) status('');
+}
+$('start').addEventListener('click', () => running ? stop() : start());
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target.tagName)) { e.preventDefault(); running ? stop() : start(); }
+});
+
+// ---------- clap test ----------
+let onsets = null;
+$('clap').addEventListener('click', async () => {
+  if (onsets) return;
+  if (running) stop();
+  const msg = $('clapMsg');
+  try {
+    await ensureAudio();
+    node.port.postMessage({ type: 'mute', on: true });
+    await openMic();
+  } catch (e) { msg.textContent = 'The microphone is needed for the test.'; return; }
+  onsets = [];
+  const gap = 0.6, t0 = ctx.currentTime + 0.8, clicks = [];
+  const bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(ctx.destination);
+  for (let i = 0; i < 8; i++) { clicks.push(t0 + i * gap); click(t0 + i * gap, i === 0, bus); }
+  node.port.postMessage({ type: 'onsets', on: true });
+  msg.textContent = 'Clap with each click…';
+  setTimeout(() => {
+    node.port.postMessage({ type: 'onsets', on: false });
+    const d = [];
+    for (const c of clicks.slice(2)) {
+      let best = null;
+      for (const o of onsets) { const x = o - c; if (x > -0.08 && x < 0.5 && (best === null || Math.abs(x - 0.1) < Math.abs(best - 0.1))) best = x; }
+      if (best !== null) d.push(best);
+    }
+    onsets = null; closeMic(); node.port.postMessage({ type: 'mute', on: false });
+    if (d.length < 3) { msg.textContent = 'Not enough claps were heard. Try again, a little louder.'; return; }
+    d.sort((a, b) => a - b);
+    const med = d[Math.floor(d.length / 2)];
+    S.lat = Math.max(0, Math.min(500, Math.round(med * 1000))); save(); syncUI(); sendConfig();
+    msg.textContent = `Measured ${S.lat} ms.`;
+  }, (0.8 + 8 * gap + 0.6) * 1000);
+});
+
+// ---------- messages from the audio thread ----------
+let pts = [], level = 0;
+function onMsg(e) {
+  const d = e.data;
+  if (d.type === 'p') {
+    if (running) pts.push({ t: d.t, m: d.f > 0 ? 69 + 12 * Math.log2(d.f / 440) : null });
+    level = Math.max(d.lv, level * 0.85);
+  } else if (d.type === 'on' && onsets) onsets.push(d.t);
+}
+
+// ---------- the picture ----------
+const cv = $('trace'), g2 = cv.getContext('2d');
+let center = 57, lastBeatShown = -1;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const NAMES = { 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B' };
+function draw() {
+  requestAnimationFrame(draw);
+  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
+  g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W, H);
+  const now = ctx ? ctx.currentTime : 0, span = 8, lat = (S.lat || 0) / 1000;
+  const p = preset(), offs = [0, ...p.v.map(([st, pure]) => 12 * Math.log2(st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12)))];
+  // follow the singer
+  const recent = pts.filter(q => q.m !== null && q.t > now - 6).map(q => q.m).sort((a, b) => a - b);
+  if (recent.length > 10) center += (recent[recent.length >> 1] - center) * 0.04;
+  let lo = center + Math.min(...offs) - 6, hi = center + Math.max(...offs) + 6;
+  if (hi - lo < 20) { const c = (hi + lo) / 2; lo = c - 10; hi = c + 10; }
+  const y = m => H - (m - lo) / (hi - lo) * H, x = t => W - (now - t) / span * W;
+  const fg = css('--fg'), muted = css('--muted'), line = css('--line');
+  // note lines
+  g2.font = '11px Inter, system-ui, sans-serif'; g2.textBaseline = 'middle';
+  for (let m = Math.ceil(lo); m <= Math.floor(hi); m++) {
+    const pc = ((m % 12) + 12) % 12; if (!(pc in NAMES)) continue;
+    const yy = Math.round(y(m)) + 0.5;
+    g2.strokeStyle = line; g2.globalAlpha = pc === 0 ? 1 : 0.55; g2.lineWidth = 1;
+    g2.beginPath(); g2.moveTo(26, yy); g2.lineTo(W, yy); g2.stroke();
+    g2.globalAlpha = 1; g2.fillStyle = muted;
+    g2.fillText(NAMES[pc] + (pc === 0 ? Math.floor(m / 12) - 1 : ''), 6, yy);
+  }
+  // beats
+  if (running) for (const b of beatTimes) {
+    const xx = Math.round(x(b.t + lat)) + 0.5; if (xx < 26 || xx > W) continue;
+    g2.strokeStyle = b.n === 0 ? muted : line; g2.globalAlpha = b.n === 0 ? 0.6 : 0.9; g2.lineWidth = 1;
+    g2.beginPath(); g2.moveTo(xx, 0); g2.lineTo(xx, H); g2.stroke(); g2.globalAlpha = 1;
+  }
+  // voices: the comes first, the dux on top
+  const lines = [];
+  p.v.forEach((_, i) => lines.push({ c: css(COLORS[i]), d: (i + 1) * S.entry * beatSec(), o: offs[i + 1], g: S.gains[i] }));
+  lines.push({ c: fg, d: 0, o: 0, g: 100 });
+  for (const L of lines) {
+    if (L.g <= 0) continue;
+    g2.strokeStyle = L.c; g2.lineWidth = L.d ? 2.4 : 3; g2.lineJoin = g2.lineCap = 'round';
+    g2.beginPath(); let pen = false, lt = -1;
+    for (const q of pts) {
+      const t = q.t + L.d;
+      if (t > now || x(t) < 26 || q.m === null || t - lt > 0.06) { pen = false; }
+      if (t > now || x(t) < 26 || q.m === null) { lt = t; continue; }
+      const xx = x(t), yy = y(q.m + L.o);
+      if (pen) g2.lineTo(xx, yy); else { g2.moveTo(xx, yy); pen = true; }
+      lt = t;
+    }
+    g2.stroke();
+  }
+  if (pts.length && now - pts[0].t > 45) pts = pts.filter(q => q.t > now - 45);
+  // beat dots and meter
+  if (running) {
+    let cur = -1; for (const b of beatTimes) if (b.t <= now) cur = b.n;
+    if (cur !== lastBeatShown) { [...$('beats').children].forEach((d, i) => d.classList.toggle('on', i === cur)); lastBeatShown = cur; }
+  } else if (lastBeatShown !== -1) { [...$('beats').children].forEach(d => d.classList.remove('on')); lastBeatShown = -1; }
+  $('meter').style.width = Math.min(100, Math.sqrt(level) * 140) + '%';
+  if (!running) level *= 0.9;
+}
+requestAnimationFrame(draw);
+
+// ---------- wiring the controls ----------
+const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
+on('preset', 'change', e => { S.preset = e.target.value; const p = preset(); if (p.entry) S.entry = p.entry; save(); syncUI(); sendConfig(); });
+on('entry', 'change', e => { S.entry = +e.target.value; save(); renderVoices(); sendConfig(); });
+const setBpm = v => { S.bpm = Math.max(20, Math.min(240, Math.round(v) || 60)); $('bpm').value = S.bpm; save(); renderVoices(); sendConfig(); };
+on('bpm', 'change', e => setBpm(+e.target.value));
+on('bpmDown', 'click', () => setBpm(S.bpm - 1));
+on('bpmUp', 'click', () => setBpm(S.bpm + 1));
+let taps = [];
+on('tap', 'click', () => {
+  const t = performance.now(); taps = taps.filter(x => t - x < 3000); taps.push(t);
+  if (taps.length >= 2) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(60000 / iv); }
+});
+on('bar', 'change', e => { S.bar = +e.target.value; save(); renderBeats(); });
+on('metro', 'change', e => { S.metro = e.target.checked; save(); applyVolumes(); });
+on('metroVol', 'input', e => { S.metroVol = +e.target.value; save(); applyVolumes(); });
+document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.mode; save(); syncUI(); sendConfig(); }));
+document.querySelectorAll('[data-tune]').forEach(b => b.addEventListener('click', () => { S.tune = b.dataset.tune; save(); syncUI(); sendConfig(); }));
+on('snap', 'change', e => { S.snap = e.target.checked; save(); sendConfig(); });
+on('ref', 'change', e => { S.ref = Math.max(380, Math.min(480, +e.target.value || 440)); e.target.value = S.ref; save(); sendConfig(); });
+on('hear', 'change', e => { S.hear = e.target.checked; save(); sendConfig(); });
+on('speakers', 'change', async e => { S.speakers = e.target.checked; save(); if (running) { try { await openMic(); } catch (err) {} } });
+on('vol', 'input', e => { S.vol = +e.target.value; save(); applyVolumes(); });
+const setLat = v => { S.lat = Math.max(0, Math.min(500, Math.round(v) || 0)); $('lat').value = S.lat; $('latR').value = S.lat; save(); sendConfig(); };
+on('latR', 'input', e => setLat(+e.target.value));
+on('lat', 'change', e => setLat(+e.target.value));
+
+$('yr').textContent = new Date().getFullYear();
+syncUI();
+})();
+</script>
+</body>
+</html>
