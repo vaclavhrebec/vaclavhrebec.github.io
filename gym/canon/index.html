@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Improvising canons</title>
-<meta name="description" content="Improvise a canon: sing the dux, and the comes follows you at the fifth, fourth, octave or unison, in two, three or four voices.">
+<meta name="description" content="Improvise a canon: sing the dux, and the comes follows you at the fifth, fourth, octave or unison, or in steps of the scale (seconds, thirds, sixths, sevenths), in two, three or four voices.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -93,6 +93,7 @@
   .stepper button:last-child { border-radius: 0 8px 8px 0; }
   .stepper input { border-radius: 0; border-left: 0; border-right: 0; -moz-appearance: textfield; appearance: textfield; }
   .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  #now { font-family: "EB Garamond", Georgia, serif; font-size: 1.15rem; color: var(--fg); flex-basis: 100%; margin: 0; min-height: 1.5em; }
   .note { font-size: .85rem; color: var(--muted); margin: .2rem 0 0; }
 
   .voices { list-style: none; margin: 4px 0 0; padding: 0; border-top: 1px solid var(--line); }
@@ -132,6 +133,7 @@
       <div class="beats" id="beats" aria-hidden="true"></div>
       <div class="meter" title="Microphone level" aria-hidden="true"><b id="meter"></b></div>
       <p id="status" role="status"></p>
+      <p id="now" aria-live="off"></p>
     </div>
   </section>
 
@@ -141,6 +143,12 @@
       <div class="row"><label for="preset">Type</label><select id="preset"></select></div>
       <div class="row"><label for="entry">Entry</label><select id="entry"></select></div>
       <ul class="voices" id="voices"></ul>
+      <div id="diaBox" hidden>
+        <div class="row" style="margin-top:14px"><label for="startNote">Starting note</label>
+          <select id="startNote"><option value="auto">The note I sing</option><option value="0">C</option><option value="2">D</option><option value="4">E</option><option value="5">F</option><option value="7">G</option><option value="9">A</option><option value="11">B</option></select></div>
+        <label class="check"><input type="checkbox" id="bb"> B flat instead of B natural</label>
+        <p class="note">In a canon at the second, third, sixth or seventh the comes copies your melody step by step along the white keys, so the size of its intervals changes with the note: if you sing E, a canon at the upper second begins on F (a minor second above); if you sing F, it begins on G (a major second above). The app hears your note by itself. If you tell it your starting note instead, it follows the pitch you really sing, even if you are a little flat or sharp. These canons are always played by the organ.</p>
+      </div>
     </section>
 
     <section class="card" aria-labelledby="h-tempo">
@@ -183,6 +191,7 @@
       <li>Sing the dux with the metronome. Each comes repeats what you sang, after its entry and at its interval: you hear yourself in imitation and can improvise the canon against it.</li>
       <li>In the picture, your line is dark and each comes has its own colour, so you can see the consonances and the parallels as they happen.</li>
     </ol>
+    <p><strong>In steps of the scale</strong> (seconds, thirds, sixths, sevenths): the comes copies your melody along the white keys of the piano, as in the Renaissance, so a canon at the upper second begins on F when you sing E and on G when you sing F. The line on the screen and the letters under it show where the comes stands. Choose a starting note if you want the app to follow your own pitch, even if you sing a little low or high; otherwise it listens to your first note.</p>
     <p><strong>Your voice</strong> shifts the recording of your singing to the new pitch. <strong>Organ</strong> follows the pitch you sing with a soft organ stop, which sounds cleaner in the higher voices.</p>
     <p>For three voices in the usual way, choose <em>fifth below, then fourth above</em> with an entry of one beat: the first comes enters one beat after you a fifth lower, the second two beats after you a fourth higher. For four voices, choose <em>rising fourths</em> and sing the lowest part: each comes enters one beat later and a fourth higher than the one before.</p>
   </details>
@@ -220,7 +229,7 @@ class CanonProcessor extends AudioWorkletProcessor {
     this.sq = 0; this.peak = 0;
     this.lag = Math.round((this.yW + this.tMax) * 2 / this.hop);   // window centre, in hops
     // output
-    this.voices = []; this.mode = 'voice'; this.snap = false; this.ref = 440; this.hear = 0; this.mute = false;
+    this.start = -1; this.bb = false; this.tr = null; this.voices = []; this.mode = 'voice'; this.snap = false; this.ref = 440; this.hear = 0; this.mute = false;
     this.fs = 1 - Math.exp(-1 / (0.012 * sr));
     this.atk = 1 - Math.exp(-1 / (0.012 * sr));
     this.rel = 1 - Math.exp(-1 / (0.06 * sr));
@@ -234,14 +243,15 @@ class CanonProcessor extends AudioWorkletProcessor {
       const old = this.voices, W = this.W;
       this.voices = d.voices.map((v, i) => {
         const o = old[i] || {};
-        return { delay: v.delay, ratio: v.ratio, gain: v.gain, pl: v.pl, pr: v.pr,
+        return { delay: v.delay, ratio: v.ratio, dia: v.dia, D: null, gain: v.gain, pl: v.pl, pr: v.pr,
           off: o.ratio === v.ratio && o.off !== undefined ? o.off : W / 2,
           ph: o.ph || 0, f: o.f || 0, a: o.a || 0 };
       });
-      this.mode = d.mode; this.snap = d.snap; this.ref = d.ref; this.hear = d.hear;
+      if (d.start !== this.start || d.bb !== this.bb) this.tr = null;
+      this.mode = d.mode; this.snap = d.snap; this.ref = d.ref; this.hear = d.hear; this.start = d.start; this.bb = d.bb;
     } else if (d.type === 'reset') {
       this.buf.fill(0); this.raw.fill(0); this.hf.fill(0); this.ds.fill(0);
-      for (const v of this.voices) { v.off = this.W / 2; v.a = 0; }
+      this.tr = null; for (const v of this.voices) { v.off = this.W / 2; v.a = 0; v.D = null; }
     } else if (d.type === 'mute') this.mute = d.on;
     else if (d.type === 'onsets') { this.onsets = d.on; this.lastOn = -1e12; }
   }
@@ -259,6 +269,25 @@ class CanonProcessor extends AudioWorkletProcessor {
     const g1 = Math.sin(Math.PI * o1 / W), g2 = Math.sin(Math.PI * o2 / W);
     return this.read(base - o1) * g1 * g1 + this.read(base - o2) * g2 * g2;
   }
+  // a canon in steps of the scale: the sung note is taken to the nearest white key and moved v.dia steps along the scale
+  dia(v, f) {
+    const sc = this.bb ? [0, 2, 4, 5, 7, 9, 10] : [0, 2, 4, 5, 7, 9, 11];
+    const raw = 69 + 12 * Math.log2(f / this.ref);
+    if (this.tr === null) {
+      if (this.start >= 0) {
+        const t = Math.round((raw - this.start) / 12) * 12 + this.start;
+        this.tr = t - raw;
+        this.port.postMessage({ type: 'tr', tr: this.tr });
+      } else this.tr = 0;
+    }
+    const m = raw + this.tr, mid = D => Math.floor(D / 7) * 12 + sc[((D % 7) + 7) % 7];
+    if (v.D === null || Math.abs(m - mid(v.D)) > 0.75) {
+      const oct = Math.floor(m / 12), pc = m - oct * 12; let bi = 0, bd = 1e9;
+      for (let d = 0; d < 7; d++) { const dd = Math.abs(sc[d] - pc); if (dd < bd) { bd = dd; bi = d; } }
+      v.D = Math.abs(sc[0] + 12 - pc) < bd ? (oct + 1) * 7 : oct * 7 + bi;
+    }
+    return this.ref * Math.pow(2, (mid(v.D + v.dia) - this.tr - 69) / 12);
+  }
   organ(v, now) {
     const pos = (now - v.delay) / this.hop, k = Math.floor(pos), fr = pos - k, HM = this.HM;
     let f = 0;
@@ -269,10 +298,12 @@ class CanonProcessor extends AudioWorkletProcessor {
     let target = 0;
     if (f > 0) {
       target = 1;
-      if (this.snap) f = this.ref * Math.pow(2, Math.round(12 * Math.log2(f / this.ref)) / 12);
-      const ff = f * v.ratio;
+      let ff;
+      if (v.dia) ff = this.dia(v, f);
+      else { if (this.snap) f = this.ref * Math.pow(2, Math.round(12 * Math.log2(f / this.ref)) / 12); ff = f * v.ratio; }
       if (v.a < 0.02) v.f = ff; else v.f += (ff - v.f) * this.fs;
     }
+    if (target === 0 && v.a < 0.02) v.D = null;
     v.a += (target - v.a) * (target > v.a ? this.atk : this.rel);
     if (v.a < 1e-4) return 0;
     v.ph += v.f / this.sr; if (v.ph >= 1) v.ph -= 1;
@@ -343,7 +374,7 @@ class CanonProcessor extends AudioWorkletProcessor {
         const vs = this.voices, organ = this.mode === 'organ';
         for (let j = 0; j < vs.length; j++) {
           const v = vs[j]; if (v.gain <= 0) continue;
-          const s = (organ ? this.organ(v, now) : this.shift(v, now)) * v.gain;
+          const s = (organ || v.dia ? this.organ(v, now) : this.shift(v, now)) * v.gain;
           l += s * v.pl; r += s * v.pr;
         }
         if (this.hear > 0) { l += x * this.hear; r += x * this.hear; }
@@ -373,20 +404,45 @@ const PRESETS = [
   { g: 'Three voices', id: '3a', name: 'Fifth below, then fourth above', v: [[-7, 2 / 3], [5, 4 / 3]], entry: 1 },
   { g: 'Three voices', id: '3b', name: 'Fifth below, then octave above', v: [[-7, 2 / 3], [12, 2]], entry: 1 },
   { g: 'Three voices', id: '3c', name: 'Octave below, then fifth above', v: [[-12, 1 / 2], [7, 3 / 2]], entry: 1 },
+  { g: 'In steps of the scale', id: 'd2u', name: 'Upper second', v: [[2, 1, 1]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd2d', name: 'Lower second', v: [[-2, 1, -1]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd3u', name: 'Upper third', v: [[4, 1, 2]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd3d', name: 'Lower third', v: [[-4, 1, -2]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd6u', name: 'Upper sixth', v: [[9, 1, 5]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd6d', name: 'Lower sixth', v: [[-9, 1, -5]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd7u', name: 'Upper seventh', v: [[11, 1, 6]], dia: 1 },
+  { g: 'In steps of the scale', id: 'd7d', name: 'Lower seventh', v: [[-11, 1, -6]], dia: 1 },
   { g: 'Four voices', id: '4r', name: 'Rising fourths (you sing the lowest)', v: [[5, 4 / 3], [10, 16 / 9], [15, 64 / 27]], entry: 1 },
 ];
 const IV = { 0: 'at the unison', 12: 'an octave above', '-12': 'an octave below', 7: 'a fifth above', '-7': 'a fifth below',
   5: 'a fourth above', '-5': 'a fourth below', 10: 'two fourths above (a seventh)', 15: 'three fourths above (a tenth)' };
 const ROMAN = ['I', 'II', 'III'];
+// canons in steps of the scale (third item of a comes: the number of steps; the semitones are only for the picture)
+const DIA_IV = { 1: 'a second above', '-1': 'a second below', 2: 'a third above', '-2': 'a third below', 5: 'a sixth above', '-5': 'a sixth below', 6: 'a seventh above', '-6': 'a seventh below' };
+const SCN = [0, 2, 4, 5, 7, 9, 11], SCB = [0, 2, 4, 5, 7, 9, 10];
+const scale = () => S.bb ? SCB : SCN;
+const stepMidi = (D, sc) => Math.floor(D / 7) * 12 + sc[((D % 7) + 7) % 7];
+// the white-key degree nearest to a (float) midi note
+function degreeOf(m, sc) {
+  const oct = Math.floor(m / 12), pc = m - oct * 12; let bi = 0, bd = 1e9;
+  for (let d = 0; d < 7; d++) { const dd = Math.abs(sc[d] - pc); if (dd < bd) { bd = dd; bi = d; } }
+  if (Math.abs(sc[0] + 12 - pc) < bd) return (oct + 1) * 7;
+  return oct * 7 + bi;
+}
+const NOTE_LETTER = (pc, bb) => ({ 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 10: 'B♭', 11: 'B' }[pc] || '?');
+const QUAL = { 1: { 1: 'a minor second', 2: 'a major second' }, 2: { 3: 'a minor third', 4: 'a major third' },
+  5: { 8: 'a minor sixth', 9: 'a major sixth' }, 6: { 10: 'a minor seventh', 11: 'a major seventh' } };
+const ivText = ([st, , dia]) => dia ? DIA_IV[dia] + ', in steps of the scale' : IV[st];
 const COLORS = ['--v1', '--v2', '--v3'];
 
 // ---------- settings ----------
-const DEF = { preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',
+const DEF = { start: 'auto', bb: false, preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',
   snap: false, ref: 440, hear: false, speakers: false, vol: 70, lat: null, gains: [80, 80, 80], mutes: [false, false, false] };
 let S = { ...DEF };
 try { Object.assign(S, JSON.parse(localStorage.getItem('canon-settings') || '{}')); } catch (e) {}
 const save = () => { try { localStorage.setItem('canon-settings', JSON.stringify(S)); } catch (e) {} };
 const preset = () => PRESETS.find(p => p.id === S.preset) || PRESETS[1];
+const isDia = () => !!preset().dia;
 
 // ---------- build the controls ----------
 const selP = $('preset');
@@ -405,11 +461,11 @@ function renderVoices() {
   li0.innerHTML = `<span class="sw" style="--c:var(--fg)"></span><span><span class="nm">Dux</span><span class="ds">You</span></span><span></span>`;
   ul.append(li0);
   const l0 = document.createElement('span'); l0.style.setProperty('--c', 'var(--fg)'); l0.textContent = 'Dux (you)'; lg.append(l0);
-  p.v.forEach(([st], i) => {
-    const beats = (i + 1) * S.entry;
+  p.v.forEach((vv, i) => {
+    const st = vv[0], beats = (i + 1) * S.entry;
     const li = document.createElement('li');
     li.style.setProperty('--c', `var(${COLORS[i]})`);
-    li.innerHTML = `<span class="sw"></span><span><span class="nm">Comes ${ROMAN[i]}</span><span class="ds">${beats} ${beats === 1 ? 'beat' : 'beats'} later, ${IV[st]}</span></span>
+    li.innerHTML = `<span class="sw"></span><span><span class="nm">Comes ${ROMAN[i]}</span><span class="ds">${beats} ${beats === 1 ? 'beat' : 'beats'} later, ${ivText(vv)}</span></span>
       <span><input type="range" min="0" max="100" value="${S.gains[i]}" aria-label="Volume of comes ${ROMAN[i]}"></span>`;
     li.querySelector('input').addEventListener('input', e => { S.gains[i] = +e.target.value; save(); sendConfig(); });
     ul.append(li);
@@ -425,6 +481,7 @@ function syncUI() {
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === S.mode));
   document.querySelectorAll('[data-tune]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tune === S.tune));
   $('snapRow').style.opacity = S.mode === 'organ' ? 1 : .5;
+  $('startNote').value = S.start; $('bb').checked = S.bb; $('diaBox').hidden = !isDia();
   renderVoices(); renderBeats();
 }
 
@@ -467,6 +524,7 @@ function closeMic() {
 }
 
 function beatSec() { return 60 / S.bpm; }
+const pure_dia = v => v[2] || null;
 function sendConfig() {
   if (!node) return;
   const p = preset(), sr = ctx.sampleRate;
@@ -477,9 +535,9 @@ function sendConfig() {
     const delay = Math.max(minDelay, ((i + 1) * S.entry * beatSec() - (S.lat || 0) / 1000) * sr);
     const a = (pans[i] + 1) * Math.PI / 4;
     const g = Math.pow(S.gains[i] / 100, 1.6) * 1.4;
-    return { delay, ratio, gain: g, pl: Math.cos(a) * 1.41, pr: Math.sin(a) * 1.41 };
+    return { delay, ratio, dia: pure_dia(p.v[i]), gain: g, pl: Math.cos(a) * 1.41, pr: Math.sin(a) * 1.41 };
   });
-  node.port.postMessage({ type: 'config', voices, mode: S.mode, snap: S.snap, ref: S.ref, hear: S.hear ? 0.8 : 0 });
+  node.port.postMessage({ type: 'config', voices, mode: S.mode, snap: S.snap, ref: S.ref, hear: S.hear ? 0.8 : 0, start: S.start === 'auto' ? -1 : +S.start, bb: !!S.bb });
 }
 function applyVolumes() {
   if (!master) return;
@@ -524,7 +582,7 @@ async function start() {
     node.port.postMessage({ type: 'reset' });
     node.port.postMessage({ type: 'mute', on: false });
     await openMic();
-    pts = []; startMetro(); running = true;
+    pts = []; trV = 0; $('now').textContent = ''; startMetro(); running = true;
     $('start').classList.add('on'); $('start').querySelector('span').textContent = 'Stop';
     $('start').querySelector('svg').innerHTML = '<path d="M2 2h10v10H2Z"/>';
     $('hint').hidden = true;
@@ -581,19 +639,37 @@ $('clap').addEventListener('click', async () => {
 });
 
 // ---------- messages from the audio thread ----------
-let pts = [], level = 0;
+let pts = [], level = 0, trV = 0, nowShown = 0;
+// what you sing and where the comes stands, in letters, with the size of the interval
+function showNow(f) {
+  const t = performance.now(); if (t - nowShown < 120) return; nowShown = t;
+  const sc = scale(), p = preset(), m = 69 + 12 * Math.log2(f / S.ref) + trV, D = degreeOf(m, sc), me = stepMidi(D, sc);
+  const nm = x => NOTE_LETTER(((x % 12) + 12) % 12, S.bb);
+  const parts = p.v.map((vv, i) => {
+    const k = vv[2], mc = stepMidi(D + k, sc), semis = Math.abs(mc - me), q = (QUAL[Math.abs(k) + (k < 0 ? 0 : 0)] || {})[semis];
+    return `comes ${ROMAN[i]} ${nm(mc)}${q ? ' (' + q + ')' : ''}`;
+  });
+  $('now').textContent = `You sing ${nm(me)} → ${parts.join(', ')}`;
+}
 function onMsg(e) {
   const d = e.data;
   if (d.type === 'p') {
     if (running) pts.push({ t: d.t, m: d.f > 0 ? 69 + 12 * Math.log2(d.f / 440) : null });
     level = Math.max(d.lv, level * 0.85);
-  } else if (d.type === 'on' && onsets) onsets.push(d.t);
+    if (running && d.f > 0 && isDia()) showNow(d.f);
+  } else if (d.type === 'tr') trV = d.tr;
+  else if (d.type === 'on' && onsets) onsets.push(d.t);
 }
 
 // ---------- the picture ----------
 const cv = $('trace'), g2 = cv.getContext('2d');
 let center = 57, lastBeatShown = -1;
 const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+// the pitch of a comes in steps of the scale, for the picture
+function diaPitch(m, k) {
+  const sc = scale(), D = degreeOf(m + trV, sc);
+  return stepMidi(D + k, sc) - trV;
+}
 const NAMES = { 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B' };
 function draw() {
   requestAnimationFrame(draw);
@@ -601,7 +677,7 @@ function draw() {
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W, H);
   const now = ctx ? ctx.currentTime : 0, span = 8, lat = (S.lat || 0) / 1000;
-  const p = preset(), offs = [0, ...p.v.map(([st, pure]) => 12 * Math.log2(st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12)))];
+  const p = preset(), offs = [0, ...p.v.map(([st, pure, dia]) => dia ? st : 12 * Math.log2(st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12)))];
   // follow the singer
   const recent = pts.filter(q => q.m !== null && q.t > now - 6).map(q => q.m).sort((a, b) => a - b);
   if (recent.length > 10) center += (recent[recent.length >> 1] - center) * 0.04;
@@ -627,7 +703,7 @@ function draw() {
   }
   // voices: the comes first, the dux on top
   const lines = [];
-  p.v.forEach((_, i) => lines.push({ c: css(COLORS[i]), d: (i + 1) * S.entry * beatSec(), o: offs[i + 1], g: S.gains[i] }));
+  p.v.forEach((vv, i) => lines.push({ c: css(COLORS[i]), d: (i + 1) * S.entry * beatSec(), o: offs[i + 1], g: S.gains[i], k: vv[2] || 0 }));
   lines.push({ c: fg, d: 0, o: 0, g: 100 });
   for (const L of lines) {
     if (L.g <= 0) continue;
@@ -637,7 +713,7 @@ function draw() {
       const t = q.t + L.d;
       if (t > now || x(t) < 26 || q.m === null || t - lt > 0.06) { pen = false; }
       if (t > now || x(t) < 26 || q.m === null) { lt = t; continue; }
-      const xx = x(t), yy = y(q.m + L.o);
+      const xx = x(t), yy = y(L.k ? diaPitch(q.m, L.k) : q.m + L.o);
       if (pen) g2.lineTo(xx, yy); else { g2.moveTo(xx, yy); pen = true; }
       lt = t;
     }
@@ -667,6 +743,8 @@ on('tap', 'click', () => {
   const t = performance.now(); taps = taps.filter(x => t - x < 3000); taps.push(t);
   if (taps.length >= 2) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(60000 / iv); }
 });
+on('startNote', 'change', e => { S.start = e.target.value; save(); sendConfig(); });
+on('bb', 'change', e => { S.bb = e.target.checked; save(); sendConfig(); });
 on('bar', 'change', e => { S.bar = +e.target.value; save(); renderBeats(); });
 on('metro', 'change', e => { S.metro = e.target.checked; save(); applyVolumes(); });
 on('metroVol', 'input', e => { S.metroVol = +e.target.value; save(); applyVolumes(); });
