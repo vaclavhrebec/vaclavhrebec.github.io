@@ -154,7 +154,7 @@
   <div class="controls">
     <button id="start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h3l1.6-2.3h6.8L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1Zm8 2.4a3.9 3.9 0 1 0 0 7.8 3.9 3.9 0 0 0 0-7.8Z"/></svg><span>Start the camera</span></button>
     <div class="group"><span class="lbl">Hands</span><div class="seg" role="group" aria-label="Hands"><button data-hands="1" aria-pressed="true">One</button><button data-hands="2" aria-pressed="false">Two</button></div></div>
-    <div class="group"><span class="lbl">Camera</span><div class="seg" role="group" aria-label="Camera"><button data-cam="user" aria-pressed="true">Front</button><button data-cam="environment" aria-pressed="false">Back</button></div></div>
+    <div class="group"><span class="lbl">Camera</span><div class="seg" role="group" aria-label="Camera"><button data-cam="user" aria-pressed="false">Front</button><button data-cam="environment" aria-pressed="true">Back</button></div></div>
     <div class="group"><span class="lbl">b and bb</span><div class="seg" role="group" aria-label="b and bb"><button data-b="mi" aria-pressed="true" title="b mi: B natural">♮ mi</button><button data-b="fa" aria-pressed="false" title="b fa: B flat">♭ fa</button></div></div>
     <div class="group"><span class="lbl">Octave</span><div class="seg" role="group" aria-label="Octave"><button data-oct="0" aria-pressed="true" title="Γ ut sounds as the G two octaves below middle C">As written</button><button data-oct="12" aria-pressed="false" title="Everything an octave higher">8va</button></div></div>
     <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false">Voice</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
@@ -284,9 +284,11 @@ function classify(P, wasOn){
 
 /* ---------- sound: one voice per hand, gliding from note to note while the contact holds ---------- */
 let ctx = null, master = null;
-const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'user'};
+const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment'};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
+if (!prefs.camPicked) prefs.cam = 'environment';  // the back camera, unless the person chose the front one themselves
+let mirrored = false;
 const savePrefs = () => { try { localStorage.setItem('manus:v1', JSON.stringify(prefs)); } catch (e) {} };
 function audio(){
   if (!ctx) {
@@ -456,7 +458,10 @@ async function startCam(){
     const lm = loadTracker(); lm.catch(() => {});
     stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: prefs.cam, width: {ideal: 1280}, height: {ideal: 720}}});
     video.srcObject = stream; await video.play();
-    video.classList.toggle('mirror', prefs.cam === 'user');
+    // mirror the picture only for a camera that faces the person (front camera, laptop webcam)
+    const fm = (stream.getVideoTracks()[0].getSettings() || {}).facingMode;
+    mirrored = fm ? fm === 'user' : true;
+    video.classList.toggle('mirror', mirrored);
     await lm;
     running = true; $('#hint').hidden = true; status('');
     $('#start').classList.add('on'); $('#start span').textContent = 'Stop the camera';
@@ -497,7 +502,7 @@ function loop(){
 const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 function draw(got, W, H){
   g2.clearRect(0, 0, W, H);
-  const mir = prefs.cam === 'user', X = x => mir ? W - x : x;
+  const mir = mirrored, X = x => mir ? W - x : x;
   const css = getComputedStyle(document.documentElement);
   got.forEach((P, side) => {
     if (!P) return;
@@ -568,7 +573,7 @@ function seg(attr, key, conv, after){
 }
 const silenceAll = () => { [0, 1, 2].forEach(noteOff); hands.forEach(h => { h.pos = -1; h.cand = -1; }); [0, 1].forEach(show); };
 seg('hands', 'hands', Number, () => { applyHands(); silenceAll(); });
-seg('cam', 'cam', String, async () => { if (running) { stopCam(); await startCam(); } });
+seg('cam', 'cam', String, async () => { prefs.camPicked = true; savePrefs(); if (running) { stopCam(); await startCam(); } });
 seg('b', 'bfa', v => v === 'fa', () => { silenceAll(); buildHands(); gamut(); });
 seg('oct', 'oct', Number, silenceAll);
 seg('snd', 'snd', String, silenceAll);
