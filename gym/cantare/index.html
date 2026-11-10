@@ -1047,6 +1047,23 @@ function layout(plain, wpx){
   const stv = doc.stv && items.some(it => it.xs || it.gv) ? doc.stv : null;
   L.stv = stv;
   if (stv) items.forEach(it => { it.sm = true; });
+  /* plainchant is written in ligatures: the notes of one syllable touch (a small space between two of the same pitch),
+     and a new syllable starts a new group. Only chants with a text underlay are grouped. */
+  if (ui.vw === 'chant' && !stv && doc.notes.some(n => n.l)) {
+    for (let i = 1; i < items.length; i++) {
+      const a = items[i - 1], b = items[i];
+      if (b.n.l || a.n.r || b.n.r || a.gv || b.gv) continue;
+      b.lig = {pos: a.pos};
+      a.gap = a.pos === b.pos ? 0.5 : -0.1;
+    }
+    for (let i = 0; i + 1 < items.length; i++) {
+      if (!items[i + 1].lig || items[i].lig) continue;
+      let k = i; while (k + 1 < items.length && items[k + 1].lig) k++;
+      const first = items[i], last = items[k], need = first.lw ? (first.lw - first.headW) / 2 : 0;
+      first.w = first.headW;
+      last.gap = Math.max(last.gap, need + 0.8);
+    }
+  }
   /* the singing, written out: each of its notes belongs to the note of the cantus firmus it starts under,
      and that note makes room for them */
   const tk = !plain && !stv && takeShown() && items.length ? takeLayout(items) : null;
@@ -1056,7 +1073,13 @@ function layout(plain, wpx){
   for (const it of items) {
     let row = rows[rows.length - 1];
     /* a new line when the note, or the singing written under it, would run past the end */
-    if (row.length && (cx + it.lead + it.w > L.limit || (it.tkReach && cx + it.lead + it.tkReach > L.staffR - 0.6))) { row = []; rows.push(row); cx = L.noteStart; }
+    if (row.length && (cx + it.lead + it.w > L.limit || (it.tkReach && cx + it.lead + it.tkReach > L.staffR - 0.6))) {
+      /* a ligature is never split between two lines */
+      let mv = [];
+      if (it.lig) { let g = row.length - 1; while (g > 0 && row[g].lig) g--; if (g > 0) mv = row.splice(g); }
+      row = []; rows.push(row); cx = L.noteStart;
+      for (const m of mv) { m.x0 = cx; m.hx = cx + m.lead; m.x1 = m.hx + m.w; cx = m.x1 + m.gap; row.push(m); }
+    }
     it.x0 = cx; it.hx = cx + it.lead; it.x1 = it.hx + it.w;
     cx = it.x1 + it.gap;
     row.push(it);
@@ -1069,8 +1092,10 @@ function layout(plain, wpx){
     let room = L.limit - last.x1;
     if (last.tkReach) room = Math.min(room, L.staffR - 0.6 - (last.hx + last.tkReach));
     if (room <= 0) continue;
-    const per = room / (row.length - 1);
-    row.forEach((it, k) => { const d = per * k; it.x0 += d; it.hx += d; it.x1 += d; });
+    const nb = row.filter((it, k) => k > 0 && !it.lig).length;
+    if (!nb) continue;
+    const per = room / nb; let d = 0;
+    row.forEach((it, k) => { if (k > 0 && !it.lig) d += per; it.x0 += d; it.hx += d; it.x1 += d; });
   }
   /* vertical room per line, so ledger notes and stems never collide */
   const cy = (8 - clef.pos) * 0.5;
@@ -1163,6 +1188,7 @@ function noteGlyph(d, pos, flip, x, top){
   const y = top + 4 - pos * 0.5;
   const k = ui.vw === 'chant' ? 'Bk' : ui.vw === 'black' && SOLID[d] ? d + 'k' : d;
   if (ui.vw === 'chant') flip = false;
+  if (ui.vw === 'chant') return useT(k, x, y, 1, 0.8);
   return flip ? useT(k, x, y, 1, -1) : use(k, x, y);
 }
 /* the punctus: in the space beside the note head (or the space above, when the head sits on a line) */
@@ -1212,6 +1238,10 @@ function drawItem(it, top, exp){
   } else if (n.r) {
     s += restGlyph(n.d, it.hx + it.w / 2, top);
   } else {
+    if (it.lig && ui.vw === 'chant' && it.lig.pos !== it.pos) {
+      const ya = top + 4 - Math.max(it.pos, it.lig.pos) * 0.5, yb = top + 4 - Math.min(it.pos, it.lig.pos) * 0.5;
+      s += `<rect class="bar" x="${f(it.hx)}" y="${f(ya)}" width="0.15" height="${f(yb - ya)}"/>`;
+    }
     s += ledgers(it.pos, it.hx, it.headW, top);
     if (n.a) s += n.fi ? fictaMark(n.a, it.hx, it.headW, it.pos, top) : use(ACC[n.a].g, it.hx - it.accW - 0.3, top + 4 - it.pos * 0.5);
     s += noteGlyph(n.d, it.pos, it.flip, it.hx, top);
