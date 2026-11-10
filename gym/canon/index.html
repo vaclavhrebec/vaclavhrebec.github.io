@@ -440,7 +440,11 @@ async function ensureAudio() {
     await ctx.audioWorklet.addModule(url);
     node = new AudioWorkletNode(ctx, 'canon', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
     node.port.onmessage = onMsg;
-    master = ctx.createGain(); node.connect(master).connect(ctx.destination);
+    master = ctx.createGain();
+    // a limiter, so the louder comes never distorts
+    const lim = ctx.createDynamicsCompressor();
+    lim.threshold.value = -3; lim.knee.value = 4; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.12;
+    node.connect(master).connect(lim).connect(ctx.destination);
     metroBus = ctx.createGain(); metroBus.connect(ctx.destination);
     if (S.lat == null) {   // first visit: a guess from what the browser reports
       S.lat = Math.round(((ctx.baseLatency || 0.01) + (ctx.outputLatency || 0.02)) * 1000 + 15);
@@ -479,7 +483,7 @@ function sendConfig() {
 }
 function applyVolumes() {
   if (!master) return;
-  master.gain.setTargetAtTime(Math.pow(S.vol / 100, 1.5) * 2.2, ctx.currentTime, 0.02);
+  master.gain.setTargetAtTime(Math.pow(S.vol / 100, 1.5) * 6.6, ctx.currentTime, 0.02);   // three times as loud as before
   metroBus.gain.setTargetAtTime(S.metro ? Math.pow(S.metroVol / 100, 1.5) * 0.9 : 0, ctx.currentTime, 0.02);
 }
 
