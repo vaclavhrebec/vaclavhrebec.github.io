@@ -136,6 +136,7 @@
   .event p { margin: .1rem 0 0; color: var(--muted); }
   .past .event { opacity: .7; }
   .event .reg { margin: .6rem 0 0; }
+  .event .thumbs { display: flex; gap: .6rem; flex-wrap: wrap; }
   .event .thumb { display: block; margin: .6rem 0 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
   .event .thumb img { display: block; width: 110px; height: auto; border-radius: 4px;
     box-shadow: 0 6px 16px -8px rgba(0,0,0,.45); transition: transform .2s ease; }
@@ -317,8 +318,12 @@
       </li>
 
       <li class="event" data-end="2026-08-16">
-        <div class="date"><b>16 Aug 2026</b><span>19:00</span></div>
-        <div class="what"><h4 data-i18n>Heinrich Isaac: Missa solemnis</h4><p data-i18n>with organ alternatim improvisation · Preußisch Oldendorf, Germany</p></div>
+        <div class="date"><b>16 Aug 2026</b><span>18:00</span></div>
+        <div class="what"><h4 data-i18n>Heinrich Isaac: Missa solemnis</h4><p data-i18n>with organ alternatim improvisation · Preußisch Oldendorf, Germany</p>
+          <div class="thumbs">
+            <button class="thumb" type="button" aria-label="Enlarge poster" data-i18n-aria><img src="posters/orgelsommer-2026-cover.jpg" alt="Poster: Orgelsommer 2026, Evangelischer Kirchenkreis Lübbecke, 19 July – 30 August 2026, every Sunday at 18:00" loading="lazy"></button>
+            <button class="thumb" type="button" aria-label="Enlarge programme" data-i18n-aria><img src="posters/pr-oldendorf-2026-08-16.jpg" alt="Programme: Renaissance-Ensemble KlangRäume… öffnen, Heinrich Isaac, Missa solemnis, organ: Václav Hřebec, St.-Dionysius-Kirche Preußisch Oldendorf, 16 August 2026, 18:00" loading="lazy"></button>
+          </div></div>
       </li>
 
       <li class="event" data-end="2026-06-28">
@@ -485,6 +490,7 @@ de: {
   "Pilsen Conservatory": "Konservatorium Pilsen",
   "Early music course": "Kurs für Alte Musik",
   "Enlarge poster": "Plakat vergrößern",
+  "Enlarge programme": "Programm vergrößern",
   "Meisenheim, Germany": "Meisenheim",
   "Reformed Church, Rheinfelden, Switzerland": "Reformierte Kirche, Rheinfelden",
   "Workshop: Polyphonic song improvisation": "Workshop: Mehrstimmige Liedimprovisation",
@@ -549,6 +555,7 @@ cs: {
   "Pilsen Conservatory": "Konzervatoř Plzeň",
   "Early music course": "Kurz staré hudby",
   "Enlarge poster": "Zvětšit plakát",
+  "Enlarge programme": "Zvětšit program",
   "Meisenheim, Germany": "Meisenheim, Německo",
   "Reformed Church, Rheinfelden, Switzerland": "Reformovaný kostel, Rheinfelden, Švýcarsko",
   "Workshop: Polyphonic song improvisation": "Workshop: Vícehlasá improvizace",
