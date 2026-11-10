@@ -933,6 +933,7 @@ function loadAll(){
     if (item) {
       doc = presetDoc(item);
       ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut;
+      ui.planus = !!item.s && !item.n && !item.poly; ui.fractus = !!item.fr; ui.talea = null;   /* plainchant opens in black chant notation, with the talea on offer */
       try { localStorage.setItem(STORE + ':last', item.title); } catch (e) {}
     } else if (stored && stored.doc) doc = sanitizeDoc(stored.doc) || doc;
   }
