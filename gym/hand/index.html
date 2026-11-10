@@ -168,7 +168,7 @@
 
   <div class="controls">
     <button id="start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h3l1.6-2.3h6.8L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1Zm8 2.4a3.9 3.9 0 1 0 0 7.8 3.9 3.9 0 0 0 0-7.8Z"/></svg><span>Start the camera</span></button>
-    <div class="group"><span class="lbl">Hands</span><div class="seg" role="group" aria-label="Hands"><button data-hands="1" aria-pressed="true">One</button><button data-hands="2" aria-pressed="false">Two</button></div></div>
+    <div class="group"><span class="lbl">Hand</span><div class="seg" role="group" aria-label="Which hand"><button data-hmode="L" aria-pressed="true">Left</button><button data-hmode="R" aria-pressed="false">Right</button><button data-hmode="2" aria-pressed="false">Both</button></div></div>
     <div class="group"><span class="lbl">Camera</span><div class="seg" role="group" aria-label="Camera"><button data-cam="user" aria-pressed="false">Front</button><button data-cam="environment" aria-pressed="true">Back</button></div></div>
     <div class="group"><span class="lbl">b and bb</span><div class="seg" role="group" aria-label="b and bb"><button data-b="mi" aria-pressed="true" title="b mi: B natural">♮ mi</button><button data-b="fa" aria-pressed="false" title="b fa: B flat">♭ fa</button></div></div>
     <div class="group"><span class="lbl">Octave</span><div class="seg" role="group" aria-label="Octave"><button data-oct="0" aria-pressed="true" title="Γ ut sounds as the G two octaves below middle C">As written</button><button data-oct="12" aria-pressed="false" title="Everything an octave higher">8va</button></div></div>
@@ -196,13 +196,13 @@
   <section class="how">
     <div>
       <h2>How to show a note</h2>
-      <p>Hold your left hand up with the palm towards the camera. Touch a joint of a finger with the tip of your thumb: the base of each finger, its two middle joints, its tip.</p>
+      <p>Choose <i>Left</i> or <i>Right</i> under <i>Hand</i>, and hold that hand up with the palm towards the camera. Touch a joint of a finger with the tip of your thumb: the base of each finger, its two middle joints, its tip.</p>
       <p>The three notes on the thumb itself (Γ ut, A re, B mi) you show the other way round: touch the thumb with the tip of your curled index finger.</p>
       <p>ee la sits on the back of the middle finger: curl it and touch its nail with the thumb.</p>
     </div>
     <div>
       <h2>Two hands</h2>
-      <p>Turn the phone sideways, choose <i>Two</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
+      <p>Turn the phone sideways, choose <i>Both</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
       <p>If the app mixes up two neighbouring places, press <i>Teach my hand</i> and show each position once. It then knows your hand instead of an average one, and it remembers it on this device.</p>
     </div>
     <div>
@@ -284,21 +284,38 @@ function classify(P, wasOn){
   // index tip on the thumb
   let ib = -1, id = Infinity;
   for (const i of [0, 1, 2]) { const d = dist(P[8], Q[i]); if (d < id) { id = d; ib = i; } }
-  const indexCurled = straight(P, 5) < 0.72;
+  const r5 = straight(P, 5);
+  const indexCurled = r5 < 0.6;   // curled right down onto the thumb, not just bent for a pinch
   let pos = -1;
   const thumbOn = bd < lim, indexOn = id < lim;
-  if (indexOn && thumbOn) {
-    // tip on tip: Γ when the index curls down onto the thumb, e when the thumb reaches up to the index
-    if (indexCurled && best >= 12 && best <= 14) pos = ib;
-    else if (ib === 0 && best === 12) pos = 12;
-    else pos = id < bd ? ib : best;
-  } else if (indexOn) pos = ib;
-  else if (thumbOn) pos = best;
+  // 1. A re and B mi: the index tip on the middle or the base of the thumb
+  if (indexOn && ib > 0 && id <= bd) pos = ib;
+  else {
+    // 2. the fingertips: the thumb tip meets a fingertip and is nearer to the tip than to the joint below it.
+    //    A finger bends to meet the thumb, so its tip and upper joint come close: the tip itself decides.
+    const tipLim = (wasOn ? 0.36 : 0.27) * s;
+    let tp = -1, td = Infinity;
+    // A finger clearly bent towards the thumb is being touched at its tip: the joints are shown on a straight finger.
+    const d3 = (p, q) => Math.hypot(p.x - q.x, p.y - q.y, (p.z || 0) - (q.z || 0));
+    for (const [t, j, at, m] of [[8, 7, 12, 5], [12, 11, 11, 9], [16, 15, 10, 13], [20, 19, 9, 17]]) {
+      const dt = dist(P[4], P[t]), dj = dist(P[4], P[j]);
+      // bent: curled in the picture, or pointing at the camera, so the last segment looks much shorter than the one before
+      const bent = straight(P, m) < 0.8 || dist(P[t], P[j]) < 0.55 * dist(P[j], P[j - 1]);
+      const tipSide = dt < dj || d3(P[4], P[t]) < d3(P[4], P[j]) || (bent && (dt < dj * 1.6 || dist(P[t], P[j]) < 0.06 * s));
+      if (dt < tipLim && tipSide && dt < td) { td = dt; tp = at; }
+    }
+    if (tp >= 0) pos = tp === 12 && indexCurled ? 0 : tp;   // index curled down onto the thumb tip: Γ ut, otherwise e
+    // 3. any other joint
+    else if (indexOn && thumbOn) pos = indexCurled && best >= 12 && best <= 14 ? ib : (id < bd ? ib : best);
+    else if (indexOn) pos = ib;
+    else if (thumbOn) pos = best;
+  }
   if (pos < 0) return -1;
-  // d or ee: the thumb on the nail of a curled middle finger
+  // d or ee: ee only when the middle finger is curled right in, its nail towards the camera.
+  // Bending the middle finger a little to meet the thumb is still d.
   if (pos === 11 || pos === 19) {
-    const curled = straight(P, 9) < 0.62, front = ((P[4].z || 0) - (P[12].z || 0)) / s < -0.05;
-    pos = curled && (front || pos === 19) ? 19 : 11;
+    const curled = straight(P, 9) < 0.55 && dist(P[0], P[12]) / s < 1.3;
+    pos = curled ? 19 : 11;
   }
   // a taught hand decides between the places itself
   if (templates && templates[pos] && Object.keys(templates).length >= 4) {
@@ -314,7 +331,7 @@ function classify(P, wasOn){
 
 /* ---------- sound: one voice per hand, gliding from note to note while the contact holds ---------- */
 let ctx = null, master = null;
-const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0};
+const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L'};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
 if (!prefs.camPicked) prefs.cam = 'environment';  // the back camera, unless the person chose the front one themselves
@@ -451,10 +468,11 @@ let figs = [];
 function buildHands(){
   const box = $('#hands'); box.textContent = ''; figs = [];
   const n = prefs.hands === 2 ? 2 : 1;
+  const single = n === 1 && prefs.side === 'R' ? 1 : 0;   // one hand: the left, or the right as a mirror image
   for (let s = 0; s < n; s++) {
-    const f = handSVG(s), wrap = document.createElement('div'); wrap.className = 'hand-fig';
+    const f = handSVG(n === 1 ? single : s), wrap = document.createElement('div'); wrap.className = 'hand-fig';
     wrap.appendChild(f.svg);
-    const cap = document.createElement('div'); cap.className = 'hand-cap'; cap.textContent = s ? 'Right hand (mirrored)' : 'Left hand';
+    const cap = document.createElement('div'); cap.className = 'hand-cap'; cap.textContent = (n === 1 ? single : s) ? 'Right hand (mirrored)' : 'Left hand';
     wrap.appendChild(cap); box.appendChild(wrap); figs.push(f);
   }
   if (teach.on) markTeach();
@@ -546,7 +564,7 @@ function loop(){
     if (res && res.landmarks) {
       const list = res.landmarks.map(L => L.map(p => ({x: p.x * W, y: p.y * H, z: p.z * W})));
       if (prefs.hands === 2) list.forEach(P => { const s = isLeft(P) ? 0 : 1; if (!got[s]) got[s] = P; });
-      else if (list[0]) got[0] = list[0];
+      else if (list.length) { const wantLeft = prefs.side !== 'R'; got[0] = list.find(P => isLeft(P) === wantLeft) || list[0]; }
     }
     feed(0, got[0]); feed(1, prefs.hands === 2 ? got[1] : null);
     draw(got, W, H);
@@ -560,7 +578,7 @@ function draw(got, W, H){
   const css = getComputedStyle(document.documentElement);
   got.forEach((P, side) => {
     if (!P) return;
-    const col = css.getPropertyValue(side ? '--v2' : '--v1').trim() || '#c8102e', s = scaleOf(P);
+    const col = css.getPropertyValue(side || (prefs.hands !== 2 && prefs.side === 'R') ? '--v2' : '--v1').trim() || '#c8102e', s = scaleOf(P);
     g2.lineWidth = Math.max(1.5, s * 0.02); g2.strokeStyle = 'rgba(255,255,255,.55)';
     g2.beginPath(); BONES.forEach(([a, b]) => { g2.moveTo(X(P[a].x), P[a].y); g2.lineTo(X(P[b].x), P[b].y); }); g2.stroke();
     const Q = places(P), on = hands[side].pos;
@@ -661,7 +679,17 @@ function retune(){
   if (voices[2]) { const i = tapping.find(x => x >= 0); if (i !== undefined && i >= 0) noteOn(2, midiOf(i)); }
 }
 const silenceAll = () => { [0, 1, 2].forEach(noteOff); hands.forEach(h => { h.pos = -1; h.cand = -1; }); [0, 1].forEach(show); };
-seg('hands', 'hands', Number, () => { applyHands(); silenceAll(); });
+const hmode = () => prefs.hands === 2 ? '2' : (prefs.side === 'R' ? 'R' : 'L');
+document.querySelectorAll('[data-hmode]').forEach(b => {
+  b.setAttribute('aria-pressed', String(b.dataset.hmode === hmode()));
+  b.addEventListener('click', () => {
+    const m = b.dataset.hmode;
+    if (m === '2') prefs.hands = 2; else { prefs.hands = 1; prefs.side = m; }
+    savePrefs();
+    document.querySelectorAll('[data-hmode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+    applyHands(); silenceAll();
+  });
+});
 seg('cam', 'cam', String, async () => { prefs.camPicked = true; savePrefs(); if (running) { stopCam(); await startCam(); } });
 seg('b', 'bfa', v => v === 'fa', () => { silenceAll(); buildHands(); gamut(); });
 seg('oct', 'oct', Number, retune);
@@ -687,6 +715,9 @@ $('#forget').hidden = !templates;
 function applyHands(){
   $('#app').classList.toggle('two', prefs.hands === 2);
   $('#ro1').hidden = prefs.hands !== 2;
+  const right1 = prefs.hands !== 2 && prefs.side === 'R';
+  $('#ro0 .who').textContent = right1 ? 'Right hand' : 'Left hand';
+  $('#ro0').style.setProperty('--c', right1 ? 'var(--v2)' : 'var(--v1)');
   buildHands();
 }
 function gamut(){
