@@ -1,13 +1,10 @@
-const V='cantare-v33', SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','icon-180.png'];
-self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()));});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()));});
-self.addEventListener('fetch',e=>{
-  const r=e.request; if(r.method!=='GET') return;
-  const u=new URL(r.url);
-  const font=/fonts\.(googleapis|gstatic)\.com$/.test(u.hostname);
-  if(u.origin!==location.origin && !font) return;
-  e.respondWith(caches.match(r,{ignoreSearch:true}).then(hit=>{
-    const net=fetch(r).then(res=>{ if(res&&(res.ok||res.type==='opaque')){const cp=res.clone(); caches.open(V).then(c=>c.put(r,cp));} return res; }).catch(()=>hit);
-    return hit||net;
-  }));
+// The app moved to /gym/cantare/. This worker clears the old offline copy and removes itself,
+// so devices that installed the old address are sent on to the new one.
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => {
+  e.waitUntil((async () => {
+    for (const k of await caches.keys()) if (!k.startsWith('cantare-gym')) await caches.delete(k);
+    await self.registration.unregister();
+    for (const c of await self.clients.matchAll({ type: 'window' })) c.navigate(c.url);
+  })());
 });
