@@ -94,6 +94,12 @@
   .btn:hover, .seg button:hover { color: var(--accent); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   input[type=range] { accent-color: var(--accent); width: 110px; }
+  .pitch select, .pitch input { font: 500 .92rem/1 "Inter", system-ui, sans-serif; color: var(--fg); background: var(--soft);
+    border: 0; border-radius: 10px; height: 42px; padding: 0 10px; }
+  .pitch input { width: 5.2em; text-align: center; -moz-appearance: textfield; appearance: textfield; }
+  .pitch input::-webkit-outer-spin-button, .pitch input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .pitch .unit { font-size: .92rem; color: var(--muted); }
+  .pitch .now { font-size: .85rem; color: var(--accent); min-width: 0; }
 
   .teach { margin-top: 12px; border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .teach[hidden] { display: none; }
@@ -166,6 +172,21 @@
     <div class="group"><span class="lbl">Camera</span><div class="seg" role="group" aria-label="Camera"><button data-cam="user" aria-pressed="false">Front</button><button data-cam="environment" aria-pressed="true">Back</button></div></div>
     <div class="group"><span class="lbl">b and bb</span><div class="seg" role="group" aria-label="b and bb"><button data-b="mi" aria-pressed="true" title="b mi: B natural">♮ mi</button><button data-b="fa" aria-pressed="false" title="b fa: B flat">♭ fa</button></div></div>
     <div class="group"><span class="lbl">Octave</span><div class="seg" role="group" aria-label="Octave"><button data-oct="0" aria-pressed="true" title="Γ ut sounds as the G two octaves below middle C">As written</button><button data-oct="12" aria-pressed="false" title="Everything an octave higher">8va</button></div></div>
+    <label class="group pitch" title="The pitch of a′ (a la mi re) in Hz: 440 modern, 415 a semitone lower, 466 a semitone higher">
+      <span class="lbl">a′ =</span><input type="number" id="ref" min="100" max="1000" step="any" inputmode="decimal" list="refList" aria-label="Pitch of a′ in Hz"><span class="unit">Hz</span>
+      <datalist id="refList"><option value="392"><option value="415"><option value="430"><option value="440"><option value="442"><option value="466"></datalist>
+    </label>
+    <div class="group pitch" title="Moves every note by the same interval, so the whole hand keeps its order of tones and semitones">
+      <span class="lbl">Transpose</span>
+      <div class="seg" role="group" aria-label="Direction"><button data-tdir="1" aria-pressed="true">Up</button><button data-tdir="-1" aria-pressed="false">Down</button></div>
+      <select id="tint" aria-label="Interval of transposition">
+        <option value="0">not transposed</option><option value="1">a minor second</option><option value="2">a major second</option>
+        <option value="3">a minor third</option><option value="4">a major third</option><option value="5">a perfect fourth</option>
+        <option value="6">a tritone</option><option value="7">a perfect fifth</option><option value="8">a minor sixth</option>
+        <option value="9">a major sixth</option><option value="10">a minor seventh</option><option value="11">a major seventh</option>
+        <option value="12">an octave</option>
+      </select>
+    </div>
     <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false">Voice</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
     <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
     <button class="btn" id="teachBtn" title="Show each position once, so the app learns your hand">Teach my hand</button>
@@ -293,7 +314,7 @@ function classify(P, wasOn){
 
 /* ---------- sound: one voice per hand, gliding from note to note while the contact holds ---------- */
 let ctx = null, master = null;
-const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment'};
+const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
 if (!prefs.camPicked) prefs.cam = 'environment';  // the back camera, unless the person chose the front one themselves
@@ -352,7 +373,8 @@ function makeVoice(){
   }
   return v;
 }
-const hzOf = midi => prefs.ref * Math.pow(2, (midi + prefs.oct - 69) / 12);
+const shiftOf = () => prefs.oct + prefs.tdir * prefs.tint;   // octave switch plus the transposition, in semitones
+const hzOf = midi => prefs.ref * Math.pow(2, (midi + shiftOf() - 69) / 12);
 const voices = [null, null, null];  // left hand, right hand, tapping
 function noteOn(slot, midi){
   if (prefs.snd === 'off') return;
@@ -633,11 +655,24 @@ function seg(attr, key, conv, after){
     });
   });
 }
+/* a change of pitch moves the notes that are sounding now, too */
+function retune(){
+  [0, 1].forEach(s => { const i = tapping[s] >= 0 ? tapping[s] : hands[s].pos; if (i >= 0 && voices[s]) noteOn(s, midiOf(i)); });
+  if (voices[2]) { const i = tapping.find(x => x >= 0); if (i !== undefined && i >= 0) noteOn(2, midiOf(i)); }
+}
 const silenceAll = () => { [0, 1, 2].forEach(noteOff); hands.forEach(h => { h.pos = -1; h.cand = -1; }); [0, 1].forEach(show); };
 seg('hands', 'hands', Number, () => { applyHands(); silenceAll(); });
 seg('cam', 'cam', String, async () => { prefs.camPicked = true; savePrefs(); if (running) { stopCam(); await startCam(); } });
 seg('b', 'bfa', v => v === 'fa', () => { silenceAll(); buildHands(); gamut(); });
-seg('oct', 'oct', Number, silenceAll);
+seg('oct', 'oct', Number, retune);
+seg('tdir', 'tdir', Number, retune);
+$('#tint').value = String(prefs.tint);
+$('#tint').addEventListener('change', e => { prefs.tint = Number(e.target.value); savePrefs(); retune(); });
+$('#ref').value = prefs.ref;
+$('#ref').addEventListener('change', e => {
+  const v = parseFloat(String(e.target.value).replace(',', '.'));
+  prefs.ref = v >= 100 && v <= 1000 ? Math.round(v * 100) / 100 : 440; e.target.value = prefs.ref; savePrefs(); retune();
+});
 seg('snd', 'snd', String, silenceAll);
 $('#vol').value = prefs.vol;
 $('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = volGain(); });
