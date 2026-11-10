@@ -422,6 +422,76 @@ const sylOf = i => POS[i].bfa ? (prefs.bfa ? 'fa' : 'mi') : POS[i].syl;
 /* ---------- the painted hand ---------- */
 // a left hand, palm to the viewer, in the same 21 landmarks as the camera reports
 const TPL = [[160,388],[112,352],[78,306],[55,262],[40,222],[106,214],[97,150],[92,110],[89,74],[150,204],[150,130],[150,86],[150,46],[193,211],[200,145],[205,104],[208,70],[232,232],[244,184],[251,151],[256,121]].map(([x, y]) => ({x, y}));
+/* One closed, smooth outline of a left hand (palm to the viewer) from the 21 template landmarks. */
+function handOutline(P){
+  const V = (x, y) => ({x, y});
+  const add = (p, q, k = 1) => V(p.x + q.x * k, p.y + q.y * k);
+  const sub = (p, q) => V(p.x - q.x, p.y - q.y);
+  const len = p => Math.hypot(p.x, p.y);
+  const unit = p => { const n = len(p) || 1; return V(p.x / n, p.y / n); };
+  const lerp = (p, q, t) => V(p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t);
+  const cubic = (p0, c1, c2, p1, n) => { const o = []; for (let i = 1; i <= n; i++) { const t = i / n, u = 1 - t;
+    o.push(V(u*u*u*p0.x + 3*u*u*t*c1.x + 3*u*t*t*c2.x + t*t*t*p1.x, u*u*u*p0.y + 3*u*u*t*c1.y + 3*u*t*t*c2.y + t*t*t*p1.y)); } return o; };
+  /* a finger as a gently curved axis through its joints, tapering a little to a rounded tip */
+  const finger = (a, w) => {
+    const J = [P[a], P[a + 1], P[a + 2], P[a + 3]], seg = [0];
+    for (let i = 1; i < 4; i++) seg.push(seg[i - 1] + len(sub(J[i], J[i - 1])));
+    const L = seg[3];
+    const at = s => { s = Math.max(0, Math.min(L, s)); let i = s >= seg[2] ? 2 : s >= seg[1] ? 1 : 0;
+      const t = (s - seg[i]) / (seg[i + 1] - seg[i]); return lerp(J[i], J[i + 1], t); };
+    const dir = s => unit(sub(at(s + 6), at(s - 6)));
+    const half = s => w / 2 * (1.04 - 0.16 * s / L);
+    const edge = (s, side) => { const d = dir(s), n = V(d.y * side, -d.x * side); return add(at(s), n, half(s)); }; // side 1 = left
+    const sAt = (i, t) => seg[i] + (seg[i + 1] - seg[i]) * t;
+    const up = (s0, n = 14) => { const o = []; for (let i = 0; i <= n; i++) o.push(edge(s0 + (L - s0) * i / n, 1)); return o; };
+    const down = (s1, n = 14) => { const o = []; for (let i = 0; i <= n; i++) o.push(edge(L - (L - s1) * i / n, -1)); return o; };
+    const cap = () => { const c = at(L), d = dir(L), r = half(L), o = [], a0 = Math.atan2(-d.x, d.y);
+      for (let i = 1; i < 12; i++) { const a = a0 + Math.PI * i / 12; o.push(V(c.x + Math.cos(a) * r, c.y + Math.sin(a) * r)); } return o; };
+    return {up, down, cap, sAt, edge, dir};
+  };
+  const T = finger(1, 43), I = finger(5, 33), M = finger(9, 35), R = finger(13, 32), K = finger(17, 27);
+  const pts = [];
+  const push = a => a.forEach(p => pts.push(p));
+  /* a soft web between two fingers: down one side, round the fork, up the next */
+  const fork = (from, fromDir, to, toDir, k1, k2) => cubic(from, add(from, fromDir, k1), add(to, toDir, -k2), to, 10);
+
+  // the heel of the thumb, from the wrist up to the thumb
+  const wristL = V(128, 432), thOut = T.edge(T.sAt(1, 0.15), 1);
+  push([wristL]);
+  push(cubic(wristL, V(116, 396), add(thOut, T.dir(T.sAt(1, 0.15)), -46), thOut, 18));
+  // the thumb
+  const thS1 = T.sAt(1, 0.7);
+  push(T.up(T.sAt(1, 0.15)).slice(1)); push(T.cap()); push(T.down(thS1));
+  // the deep fork between thumb and index finger
+  const iS0 = I.sAt(0, 0.1), iStart = I.edge(iS0, 1);
+  push(fork(pts[pts.length - 1], unit(sub(T.edge(thS1 - 4, -1), T.edge(thS1 + 4, -1))), iStart, I.dir(iS0), 34, 46));
+  // fingers with webs between them
+  const order = [[I, 5], [M, 9], [R, 13], [K, 17]];
+  const WEB = 0.34;
+  order.forEach(([F, a], k) => {
+    const s0 = k === 0 ? iS0 : F.sAt(0, WEB);
+    push(F.up(s0).slice(1)); push(F.cap());
+    if (k < 3) {
+      const s1 = F.sAt(0, WEB), [G] = order[k + 1], g0 = G.sAt(0, WEB);
+      push(F.down(s1));
+      const e0 = F.edge(s1, -1), e1 = G.edge(g0, 1), gap = len(sub(e1, e0));
+      push(fork(e0, F.dir(s1), e1, G.dir(g0), -(gap * 0.55 + 5), gap * 0.55 + 5));
+    } else {
+      push(F.down(F.sAt(0, 0.1)));
+    }
+  });
+  // the outer edge of the palm, down to the wrist
+  const last = pts[pts.length - 1], wristR = V(222, 432);
+  push(cubic(last, add(last, V(6, 46)), V(258, 350), wristR, 18));
+  /* smooth everything with a Catmull–Rom spline */
+  const f = p => p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+  let d = 'M' + f(pts[0]);
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    d += ' C' + f(add(p1, sub(p2, p0), 1 / 6)) + ' ' + f(add(p2, sub(p3, p1), -1 / 6)) + ' ' + f(p2);
+  }
+  return d + 'Z';
+}
 const SVGNS = 'http://www.w3.org/2000/svg';
 function handSVG(side){
   const P = TPL, Q = places(P), mir = side === 1;
@@ -431,15 +501,10 @@ function handSVG(side){
   const g = document.createElementNS(SVGNS, 'g'); if (mir) g.setAttribute('transform', 'translate(300 0) scale(-1 1)'); svg.appendChild(g);
   const path = (d, cls, extra) => { const e = document.createElementNS(SVGNS, 'path'); e.setAttribute('d', d); e.setAttribute('class', cls); if (extra) for (const k in extra) e.setAttribute(k, extra[k]); g.appendChild(e); return e; };
   const pt = p => p.x.toFixed(1) + ' ' + p.y.toFixed(1);
-  // fingers as rounded bands, drawn as outline-then-fill so the palm joins them seamlessly
-  const finger = (a, w) => 'M' + [a, a + 1, a + 2, a + 3].map(i => pt(P[i])).join(' L');
-  const fingers = [[1, 40], [5, 33], [9, 35], [13, 32], [17, 27]];
-  const palm = 'M' + [{x: 126, y: 404}, P[1], P[2], P[5], P[9], P[13], P[17], {x: 241, y: 300}, {x: 212, y: 404}].map(pt).join(' L') + 'Z';
-  const band = (w, col) => ({style: 'fill:none;stroke:' + col + ';stroke-width:' + w + 'px;stroke-linecap:round;stroke-linejoin:round'});
-  fingers.forEach(([a, w]) => path(finger(a, w), '', band(w + 4.4, 'var(--skin-ink)')));
-  path(palm, '', {style: 'fill:var(--skin);stroke:var(--skin-ink);stroke-width:4.4px;stroke-linejoin:round'});
-  fingers.forEach(([a, w]) => path(finger(a, w), '', band(w, 'var(--skin)')));
-  path(palm, '', {style: 'fill:var(--skin);stroke:none'});
+  // the whole hand as one smooth outline, fingers flowing into the palm through soft webs
+  path(handOutline(P), '', {style: 'fill:var(--skin);stroke:var(--skin-ink);stroke-width:3px;stroke-linejoin:round'});
+  // the main lines of the palm
+  for (const d of ['M102 262 C132 292 126 352 150 402', 'M106 266 C140 270 180 282 214 304', 'M246 262 C214 250 170 236 132 236']) path(d, 'crease');
   // creases across each joint
   for (const [m, p, w] of [[5, 6, 15], [9, 10, 16], [13, 14, 15], [17, 18, 12], [2, 3, 17]]) {
     for (const t of [0.3, 1]) {
