@@ -178,7 +178,7 @@ body.playing .transport{position:sticky;bottom:0;z-index:30;background:var(--gro
 #score .cbl{font:italic 1.05rem/1.2 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--leaf-ink);opacity:.62;margin:0 0 -4px 2px}
 #score .staff{stroke:var(--rule)}
 #score .staffr{fill:#B9392A;stroke:none}
-html.real .leaf{background:#E8D8B2 var(--vellum);background-size:512px 512px}
+html.real .leaf,html.real.dark .leaf,html.real.focus .leaf{background:#E9DAB6 var(--vellum);background-size:512px 512px;box-shadow:0 1px 1px rgba(0,0,0,.25),0 18px 40px -18px rgba(0,0,0,.6)}
 #grime{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;border-radius:inherit}
 #grime[hidden]{display:none}
 #score .ledger{stroke:var(--leaf-ink)}
@@ -763,16 +763,16 @@ function vnoise(seed, per){
       const b = big(u * 4, v * 4) - 0.5, m = mid(u * 16, v * 16) - 0.5, f = fine(u * 128, v * 128) - 0.5, c = cloud(u * 8, v * 8) - 0.5;
       /* veins: thin dark threads where a ridged noise is near zero */
       const r1 = Math.abs(vein(u * 5, v * 5) - 0.5), r2 = Math.abs(vein2(u * 9 + 3, v * 9) - 0.5);
-      const vn = Math.max(0, 1 - r1 / 0.01) * 0.35 + Math.max(0, 1 - r2 / 0.008) * 0.15;
-      const tone = b * 16 + m * 7 + f * 5 + Math.max(0, c) * 9;   /* the lighter clouds are where the skin is thinner */
+      const vn = 0;
+      const tone = b * 9 + Math.max(0, c) * 5 + f * 1.2;   /* only broad, soft clouds (lighter where the skin is thinner), and the finest grain */
       const i = (y * N + x) * 4;
       d[i] = 235 + tone - vn * 9; d[i + 1] = 222 + tone * 0.98 - vn * 13; d[i + 2] = 192 + tone * 1.15 - vn * 18; d[i + 3] = 255;
     }
     cx.putImageData(img, 0, 0);
     /* the hair follicles: tiny dots, often in twos and threes */
     const R = rng(27);
-    for (let k = 0; k < 900; k++) {
-      const x = R() * N, y = R() * N, n = 1 + Math.floor(R() * 3), a = 0.05 + R() * 0.1;
+    for (let k = 0; k < 260; k++) {
+      const x = R() * N, y = R() * N, n = 1 + Math.floor(R() * 3), a = 0.03 + R() * 0.05;
       for (let j = 0; j < n; j++) {
         const px = x + (R() - 0.5) * 3, py = y + (R() - 0.5) * 3, r = 0.45 + R() * 0.7;
         cx.fillStyle = `rgba(110,82,44,${a})`;
@@ -788,7 +788,7 @@ function vnoise(seed, per){
 let grimeKey = '';
 function drawGrime(force){
   const leaf = document.querySelector('.leaf'), cv = $('#grime'); if (!leaf || !cv) return;
-  if (!ui.real) { cv.hidden = true; return; }
+  if (!ui.real || !drawGrime.on) { cv.hidden = true; return; }   /* switched off: the page stays clean */
   cv.hidden = false;
   const W = leaf.clientWidth, H = leaf.clientHeight, key = Math.round(W / 24) + 'x' + Math.round(H / 24);
   if (!force && key === grimeKey) return;
