@@ -223,7 +223,7 @@ body.playing .transport{position:sticky;bottom:0;z-index:30;background:var(--gro
 .tactus{display:flex;flex-direction:column;gap:8px}
 .vignette{width:176px;height:142px;background:var(--leaf);border:1.5px solid var(--leaf-ink);outline:1px solid var(--leaf-ink);
   outline-offset:-5px;overflow:hidden;border-radius:1px}
-.handbox{position:absolute;right:0;top:4px;width:250px;height:202px;opacity:.3;pointer-events:none;z-index:0}
+.handbox{position:absolute;right:8px;top:8px;width:250px;height:202px;opacity:.55;pointer-events:none;z-index:0}
 .handbox svg{display:block;width:100%;height:100%;transform:scaleX(-1)}
 #title,#score{position:relative;z-index:1}
 .tempo-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
@@ -1507,20 +1507,39 @@ function scorePages(){
   nav.innerHTML = `<button type="button" data-d="-1" aria-label="Previous page"${ui.spPage === 0 ? ' disabled' : ''}>&#8249;</button><span>Page ${ui.spPage + 1} of ${pages.length}</span><button type="button" data-d="1" aria-label="Next page"${ui.spPage >= pages.length - 1 ? ' disabled' : ''}>&#8250;</button>`;
   return {y0: ui.spPage === 0 ? 0 : lines[cur.a].bandTop - 0.3, y1: ui.spPage === pages.length - 1 ? lay.H : lines[cur.b - 1].bandBot};
 }
-/* the tactus hand lives in the space between the first two staves of the page (between the voices of a polyphonic piece,
-   or between the first two systems of a single line), at the right, behind the notes and clear of the staff lines */
+/* the tactus hand stands in the top right corner of the page, beside the title, at a size that reads well.
+   The forearm rests in the lower part of its box (the rest is room for the lift), so the score moves down
+   just enough that the resting hand never lies on the first staff or hides behind the notes */
+let measureCtx = null;
 function placeHand(reset){
-  const hb = $('#handBox'); if (!hb) return;
-  if (reset || !lay || !lay.lines.length) { hb.style.top = hb.style.height = hb.style.width = ''; return; }
-  const svg = scoreEl.firstElementChild, leaf = hb.offsetParent; if (!svg || !leaf) return;
-  const a = lay.pages ? lay.pages[ui.spPage || 0].a : 0, ln = lay.lines[a], S = ui.size, y0 = lay.pgY0 || 0;
-  const nextTop = ln.sub && ln.sub.length ? ln.sub[0].top : (lay.lines[a + 1] ? lay.lines[a + 1].staffTop : null);
-  const hasLy = ln.lyOff !== null && ln.lyOff !== undefined;
-  const gA = ln.staffTop + (hasLy ? ln.lyOff + 1.3 : 4.8), gB = nextTop !== null ? nextTop - 0.5 : gA + 7;
-  const H = Math.max(70, Math.min(202, (gB - gA) * S)), W = 250 * H / 202;
-  const r = svg.getBoundingClientRect(), lr = leaf.getBoundingClientRect();
-  hb.style.height = H + 'px'; hb.style.width = W + 'px';
-  hb.style.top = (r.top - lr.top + ((gA + gB) / 2 - y0) * S - H / 2) + 'px';
+  const hb = $('#handBox'), pb = $('#pendBox'); if (!hb) return;
+  const leaf = hb.offsetParent;
+  const clear = () => { for (const e of [hb, pb]) if (e) e.style.top = e.style.right = e.style.height = e.style.width = ''; scoreEl.style.marginTop = ''; };
+  if (reset || !leaf || !lay || !lay.lines.length) { clear(); return; }
+  const svg = scoreEl.firstElementChild; if (!svg) { clear(); return; }
+  if (!ui.beatHand && !ui.beatPend) { scoreEl.style.marginTop = ''; return; }
+  const lr = leaf.getBoundingClientRect(), r = svg.getBoundingClientRect(), S = ui.size;
+  const a = lay.pages ? lay.pages[ui.spPage || 0].a : 0, ln = lay.lines[a];
+  const top = 8, both = ui.beatHand && ui.beatPend;
+  /* room beside the centred title */
+  const t = $('#title'), cs = getComputedStyle(t);
+  measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
+  measureCtx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
+  const tw = Math.min(lr.width, measureCtx.measureText(t.value || t.placeholder).width + 24);
+  const side = (lr.width - tw) / 2 - 14, fit = both ? (side - 4) / 2 : side;
+  let W = Math.min(fit, lr.width < 700 ? 190 : 270), y = top;
+  if (W < 150) {   /* no room beside the title (a phone): the hand goes just below the title and the page turns */
+    const nav = $('#spnav'), hd = [t, nav].filter(e => e && !e.hidden).map(e => e.getBoundingClientRect().bottom - lr.top);
+    y = Math.max(top, ...hd) + 2; W = Math.min(both ? (lr.width - 30) / 2 : 200, lr.width * 0.62);
+  }
+  const H = W * 202 / 250;
+  for (const e of [hb, pb]) if (e) { e.style.top = y + 'px'; e.style.height = H + 'px'; e.style.width = W + 'px'; e.style.right = '10px'; }
+  if (pb && both) pb.style.right = (14 + W) + 'px';
+  /* the resting forearm reaches down to about 93% of the box */
+  const margin = parseFloat(scoreEl.style.marginTop) || 0;
+  const inkTop = r.top - lr.top - margin + ((ln.bandTop ?? ln.staffTop - 4) - (lay.pgY0 || 0)) * S;
+  const need = Math.max(0, Math.round(y + H * 0.93 + 6 - inkTop));
+  scoreEl.style.marginTop = need ? need + 'px' : '';
 }
 function render(){
   lay = layout();
@@ -2795,6 +2814,7 @@ function syncBeat(){
   document.querySelectorAll('#beatList button').forEach(b => setPressed(b, on[b.dataset.beat]));
   $('#handBox').hidden = !ui.beatHand; $('#pendBox').hidden = !ui.beatPend;
   $('#pendBox').classList.toggle('both', ui.beatHand && ui.beatPend);
+  try { if (lay && !ui.cb) placeHand(); } catch (e) {}
 }
 let pendEl = null, pendAngle = 99;
 function setPend(deg){
@@ -4054,7 +4074,7 @@ function wire(){
   });
   let titleBefore = null;
   $('#title').addEventListener('focus', () => { titleBefore = snapshot(); });
-  $('#title').addEventListener('input', e => { doc.title = e.target.value; save(); });
+  $('#title').addEventListener('input', e => { doc.title = e.target.value; save(); if (!ui.cb) placeHand(); });
   $('#title').addEventListener('change', () => {
     if (titleBefore && snapshot() !== titleBefore) { pushUndo(titleBefore); syncTools(); }
     titleBefore = snapshot();
