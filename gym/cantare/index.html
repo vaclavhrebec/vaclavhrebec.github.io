@@ -225,7 +225,7 @@ body.playing .transport{position:sticky;bottom:0;z-index:30;background:var(--gro
   outline-offset:-5px;overflow:hidden;border-radius:1px}
 .handbox{position:absolute;right:8px;top:8px;width:250px;height:202px;opacity:.55;pointer-events:none;z-index:0}
 .handbox svg{display:block;width:100%;height:100%;transform:scaleX(-1)}
-#title,#score{position:relative;z-index:1}
+#title,#score,#spnav{position:relative;z-index:1}
 .tempo-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .eq{font-size:22px;color:var(--text);padding:0 2px}
 .permin{color:var(--muted);margin-right:6px}
@@ -1508,40 +1508,49 @@ function scorePages(){
   nav.innerHTML = `<button type="button" data-d="-1" aria-label="Previous page"${ui.spPage === 0 ? ' disabled' : ''}>&#8249;</button><span>Page ${ui.spPage + 1} of ${pages.length}</span><button type="button" data-d="1" aria-label="Next page"${ui.spPage >= pages.length - 1 ? ' disabled' : ''}>&#8250;</button>`;
   return {y0: ui.spPage === 0 ? 0 : lines[cur.a].bandTop - 0.3, y1: ui.spPage === pages.length - 1 ? lay.H : lines[cur.b - 1].bandBot};
 }
-/* the tactus hand stands in the top right corner of the page, beside the title, at a size that reads well.
-   The forearm rests in the lower part of its box (the rest is room for the lift), so the score moves down
-   just enough that the resting hand never lies on the first staff or hides behind the notes */
-let measureCtx = null;
+/* the tactus hand stands large in the top right corner of the page. Only the lower third of its box holds the
+   resting forearm; the rest is room for the lift, which may pass behind the title and the page turns.
+   The score moves down just enough that the resting hand never lies on the first staff or behind the notes.
+   On a phone the sleeve is cut shorter at the edge of the page, so that the hand itself can be larger. */
 function placeHand(reset){
   const hb = $('#handBox'), pb = $('#pendBox'); if (!hb) return;
-  const leaf = hb.offsetParent;
-  const clear = () => { for (const e of [hb, pb]) if (e) e.style.top = e.style.right = e.style.height = e.style.width = ''; scoreEl.style.marginTop = ''; };
+  const leaf = hb.offsetParent, hsvg = hb.querySelector('svg');
+  const clear = () => { for (const e of [hb, pb]) if (e) e.style.top = e.style.right = e.style.height = e.style.width = ''; scoreEl.style.marginTop = ''; if (hsvg) hsvg.setAttribute('viewBox', '-20 -36 236 190'); };
   if (reset || !leaf || !lay || !lay.lines.length) { clear(); return; }
   const svg = scoreEl.firstElementChild; if (!svg) { clear(); return; }
   if (!ui.beatHand && !ui.beatPend) { scoreEl.style.marginTop = ''; return; }
   const lr = leaf.getBoundingClientRect(), r = svg.getBoundingClientRect(), S = ui.size;
   const a = lay.pages ? lay.pages[ui.spPage || 0].a : 0, ln = lay.lines[a];
-  const top = 8, both = ui.beatHand && ui.beatPend;
-  /* room beside the centred title */
-  const t = $('#title'), cs = getComputedStyle(t);
-  measureCtx = measureCtx || document.createElement('canvas').getContext('2d');
-  measureCtx.font = cs.fontStyle + ' ' + cs.fontWeight + ' ' + cs.fontSize + ' ' + cs.fontFamily;
-  const tw = Math.min(lr.width, measureCtx.measureText(t.value || t.placeholder).width + 24);
-  const side = (lr.width - tw) / 2 - 14, fit = both ? (side - 4) / 2 : side;
-  let W = Math.min(fit, lr.width < 700 ? 190 : 270), y = top;
-  if (W < 150) {   /* no room beside the title (a phone): the hand goes just below the title and the page turns */
-    const nav = $('#spnav'), hd = [t, nav].filter(e => e && !e.hidden).map(e => e.getBoundingClientRect().bottom - lr.top);
-    y = Math.max(top, ...hd) + 2; W = Math.min(both ? (lr.width - 30) / 2 : 200, lr.width * 0.62);
+  const top = 8, phone = lr.width < 700, x0 = phone ? 20 : -20, units = 216 - x0;
+  const W = phone ? lr.width - 14 : Math.min(540, lr.width * 0.45), H = W * 190 / units;
+  if (hsvg) hsvg.setAttribute('viewBox', `${x0} -36 ${units} 190`);
+  Object.assign(hb.style, {top: top + 'px', right: (phone ? 4 : 10) + 'px', width: W + 'px', height: H + 'px'});
+  let low = ui.beatHand ? H : 0;
+  if (pb) {   /* the pendulum, the same height, beside the hand (or alone in the corner) */
+    const ph = ui.beatHand ? Math.min(H, (lr.width - W - 24) * 202 / 250) : (phone ? (lr.width - 14) * 202 / 250 : 436);
+    const ph2 = Math.max(90, ph);
+    Object.assign(pb.style, {top: (top + (ui.beatHand ? H - ph2 : 0)) + 'px', right: (ui.beatHand ? W + 14 : 10) + 'px', width: ph2 * 250 / 202 + 'px', height: ph2 + 'px'});
+    if (ui.beatPend) low = Math.max(low, ui.beatHand ? H : ph2);
   }
-  const H = W * 202 / 250;
-  for (const e of [hb, pb]) if (e) { e.style.top = y + 'px'; e.style.height = H + 'px'; e.style.width = W + 'px'; e.style.right = '10px'; }
-  if (pb && both) pb.style.right = (14 + W) + 'px';
-  /* the resting forearm reaches down to about 93% of the box */
+  /* the resting forearm (and the pendulum's bob) reach down to about 93% of the box */
   const margin = parseFloat(scoreEl.style.marginTop) || 0;
   const inkTop = r.top - lr.top - margin + ((ln.bandTop ?? ln.staffTop - 4) - (lay.pgY0 || 0)) * S;
-  const need = Math.max(0, Math.round(y + H * 0.93 + 6 - inkTop));
+  const need = Math.max(0, Math.round(top + low * 0.93 + 6 - inkTop));
   scoreEl.style.marginTop = need ? need + 'px' : '';
+  hb.dataset.home = top; if (pb) pb.dataset.home = parseFloat(pb.style.top);
+  handFollow();
 }
+/* while the music plays, the hand (and the pendulum) ride along at the top right of the part of the page in view,
+   so the beat is always to be seen; when the music stops they go back to their corner */
+function handFollow(){
+  const lead = $('#handBox'); if (!lead || !lead.dataset.home) return;
+  const leaf = lead.offsetParent; if (!leaf) return;
+  const lr = leaf.getBoundingClientRect(), tools = document.querySelector('.tools');
+  const tb = tools && getComputedStyle(tools).position === 'sticky' ? Math.max(0, tools.getBoundingClientRect().bottom) : 0;
+  const shift = document.body.classList.contains('playing') ? Math.max(0, Math.min(tb + 6 - lr.top, lr.height - lead.offsetHeight - 16)) : 0;
+  for (const e of [lead, $('#pendBox')]) if (e && e.dataset.home) e.style.top = (parseFloat(e.dataset.home) + shift) + 'px';
+}
+window.addEventListener('scroll', () => requestAnimationFrame(handFollow), {passive: true});
 function render(){
   lay = layout();
   const S = ui.size;
@@ -2582,7 +2591,8 @@ function followPlay(el){
   const r = el.getBoundingClientRect(), H = window.innerHeight, tools = document.querySelector('.tools'), tb = tools && getComputedStyle(tools).position === 'sticky' ? tools.getBoundingClientRect().bottom : 0;
   const top = Math.max(tb, 0) + 24, bot = H - 150;
   if (r.top >= top && r.bottom <= bot) return;
-  const want = r.top - Math.max(top, H * 0.22);
+  /* going down, move only as far as needed (and a little ahead), so the tactus hand at the top of the page stays in view as long as it can */
+  const want = r.bottom > bot ? Math.min(r.bottom - bot + H * 0.25, r.top - Math.max(top, H * 0.22)) : r.top - Math.max(top, H * 0.22);
   window.scrollBy({top: want, behavior: 'smooth'});
 }
 function stopPlayback(){
@@ -2605,7 +2615,7 @@ function replayIfPlaying(){
 }
 function togglePlay(){ audio.timeline ? stopPlayback() : startPlayback(ui.sel !== null ? ui.sel : 0); }
 function setPlayButton(on){
-  document.body.classList.toggle('playing', !!on);
+  document.body.classList.toggle('playing', !!on); handFollow();
   const fp = $('#fPlay');
   fp.setAttribute('aria-label', on ? 'Stop' : 'Play'); fp.title = on ? 'Stop' : 'Play';
   fp.innerHTML = on ? '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2h10v10H2Z"/></svg>' : '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1 13 7 2 13Z"/></svg>';
@@ -2676,6 +2686,8 @@ const PULSE = 60;   /* Gaffurius: the semibrevis lasts one pulse of someone brea
    before, so that the wrist and the fingers flow and settle instead of moving as one stick. */
 const HAND = {tgt: 0, raf: 0, last: 0, parts: null, st: null};
 const SKIN = '#F2E6C6', SHADE = '#E2D0A0', WRIST = {x: 56, y: 114};
+/* a black sleeve with a dark grey brocade (the whole hand is drawn faded, so the black reads as a deep grey) */
+const CLOTH = '#161310', CLOTH_INK = '#857A6C', CLOTH_FLOWER = '#4D453D', CLOTH_LEAF = '#3A342E';
 const HFING = [
   {mcp: [124, 118], L: [21, 14, 11], w: [6.4, 5.6, 5.0], tau: 0.085, rest: [2, 3, 2], curl: [5, 10, 8]},
   {mcp: [126, 114], L: [28, 18, 13], w: [7, 6, 5.3], tau: 0.075, rest: [1, 2, 2], curl: [5, 10, 8]},
@@ -2693,9 +2705,9 @@ function buildHand(root){
   root.innerHTML = '';
   const ink = {stroke: 'currentColor', 'stroke-linejoin': 'round', 'stroke-linecap': 'round'};
   const arm = svgEl('g', {}, root);
-  svgEl('path', {d: 'M-240 92 C-150 91 -40 94 44 97 L44 133 C-40 136 -150 137 -240 136Z', fill: SKIN, 'stroke-width': 2.2, ...ink}, arm);
+  svgEl('path', {d: 'M-240 92 C-150 91 -40 94 44 97 L44 133 C-40 136 -150 137 -240 136Z', fill: CLOTH, 'stroke-width': 2.2, ...ink}, arm);
   /* the cloth is figured: a border, and a vine with flowers and leaves, in the manner of a Renaissance brocade */
-  const deco = svgEl('g', {fill: 'none', stroke: 'currentColor', 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.62}, arm);
+  const deco = svgEl('g', {fill: 'none', stroke: CLOTH_INK, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', opacity: 0.8}, arm);
   svgEl('path', {d: 'M-240 98 C-150 97 -40 100 44 103', 'stroke-width': 1}, deco);
   svgEl('path', {d: 'M-240 101.5 C-150 100.5 -40 103.5 44 106.5', 'stroke-width': 0.5}, deco);
   svgEl('path', {d: 'M-240 130 C-150 131 -40 130 44 127', 'stroke-width': 1}, deco);
@@ -2705,15 +2717,15 @@ function buildHand(root){
     const x = -210 + 30 * m, yv = 115 + 5.5 * Math.sin(2 * Math.PI * (x + 210) / 60) + (x + 240) * 0.014;
     if (x > 30) break;
     if (m % 2 === 0) {
-      for (let k = 0; k < 5; k++) { const a = k * 2 * Math.PI / 5 - Math.PI / 2; svgEl('circle', {cx: (x + Math.cos(a) * 3.3).toFixed(1), cy: (yv + Math.sin(a) * 3.3).toFixed(1), r: 2.3, 'stroke-width': 0.9, fill: SKIN}, deco); }
-      svgEl('circle', {cx: x, cy: yv.toFixed(1), r: 1.5, fill: SHADE, 'stroke-width': 0.8}, deco);
+      for (let k = 0; k < 5; k++) { const a = k * 2 * Math.PI / 5 - Math.PI / 2; svgEl('circle', {cx: (x + Math.cos(a) * 3.3).toFixed(1), cy: (yv + Math.sin(a) * 3.3).toFixed(1), r: 2.3, 'stroke-width': 0.9, fill: CLOTH_FLOWER}, deco); }
+      svgEl('circle', {cx: x, cy: yv.toFixed(1), r: 1.5, fill: CLOTH_INK, 'stroke-width': 0.8}, deco);
     } else {
       const sg = Math.sin(2 * Math.PI * (x + 210) / 60) > 0 ? 1 : -1;
-      svgEl('path', {d: `M${x - 4} ${yv.toFixed(1)} Q${x} ${(yv + sg * 9).toFixed(1)} ${x + 4} ${yv.toFixed(1)} Q${x} ${(yv + sg * 3).toFixed(1)} ${x - 4} ${yv.toFixed(1)}Z`, 'stroke-width': 0.9, fill: SHADE}, deco);
-      svgEl('circle', {cx: x, cy: (yv - sg * 7).toFixed(1), r: 0.9, fill: 'currentColor', 'stroke-width': 0.4}, deco);
+      svgEl('path', {d: `M${x - 4} ${yv.toFixed(1)} Q${x} ${(yv + sg * 9).toFixed(1)} ${x + 4} ${yv.toFixed(1)} Q${x} ${(yv + sg * 3).toFixed(1)} ${x - 4} ${yv.toFixed(1)}Z`, 'stroke-width': 0.9, fill: CLOTH_LEAF}, deco);
+      svgEl('circle', {cx: x, cy: (yv - sg * 7).toFixed(1), r: 0.9, fill: CLOTH_INK, 'stroke-width': 0.4}, deco);
     }
   }
-  [[-22, 5], [-62, -4], [-104, 6], [-150, -3]].forEach(([x, k]) => svgEl('path', {d: `M${x} 96 C${x - 3 + k} 108 ${x - 2 - k} 121 ${x + 3} 134`, fill: 'none', 'stroke-width': 1, opacity: 0.3, ...ink}, arm));
+  [[-22, 5], [-62, -4], [-104, 6], [-150, -3]].forEach(([x, k]) => svgEl('path', {d: `M${x} 96 C${x - 3 + k} 108 ${x - 2 - k} 121 ${x + 3} 134`, fill: 'none', 'stroke-width': 1, opacity: 0.45, ...ink, stroke: CLOTH_INK}, arm));
   const palm = svgEl('g', {}, root);
   const hand = svgEl('g', {}, palm);
   svgEl('path', {d: 'M50 102 C80 97 108 97 128 100 L128 124 C108 126 80 126 50 126Z', fill: SKIN, stroke: 'none'}, hand);
