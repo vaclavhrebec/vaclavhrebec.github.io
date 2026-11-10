@@ -60,6 +60,10 @@
   footer { margin-top: 34px; color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
   footer a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .wishes { margin: 2.6rem auto 0; max-width: 760px; text-align: center; border-top: 1px solid var(--line); padding-top: 2rem; }
+  .wishes p { font-family: "EB Garamond", Georgia, serif; font-size: 1.2rem; color: var(--muted); margin: 0 0 1.1rem; }
+  .wishes .btn { font: inherit; cursor: pointer; border: 0; border-radius: 999px; padding: .6rem 1.5rem; background: var(--accent); color: #fff; }
+  .wishes .btn:hover { filter: brightness(1.1); }
 </style>
 </head>
 <body>
@@ -114,11 +118,18 @@
     </a>
   </main>
 
+  <section class="wishes">
+    <h2>Feedback &amp; wishes</h2>
+    <p>Missing a chant or hymn, found a mistake, or dreaming of a new exercise? Tell me what would help your practice.</p>
+    <button type="button" class="btn" data-feedback-open data-topic="General">Write to me</button>
+  </section>
+
   <footer>
     <span>© <span id="yr"></span> <a href="../">Václav Hřebec</a></span>
     <span>Contrapunto alla mente · Basel</span>
   </footer>
 </div>
 <script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+<script src="feedback.js" data-topic="General" defer></script>
 </body>
 </html>
