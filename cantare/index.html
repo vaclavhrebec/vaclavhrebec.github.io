@@ -615,6 +615,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
             <span class="ctl" id="linesLabel">Lines</span><div class="btns" id="linesBtns" role="group" aria-labelledby="linesLabel"><button class="tb" data-lines="5" data-keep aria-pressed="true">5</button><button class="tb" data-lines="4" data-keep aria-pressed="false">4</button></div>
             <label class="ctl" for="spacing">Horizontal spacing</label><input type="range" id="spacing" min="10" max="250" step="5">
             <label class="ctl" for="vspacing">Vertical spacing</label><input type="range" id="vspacing" min="20" max="200" step="5">
+            <span class="ctl" id="mensLabel">Mensuration</span><div class="btns" id="mensBtns" role="group" aria-labelledby="mensLabel"><button class="tb" data-mens="C" data-keep aria-pressed="false" title="Tempus imperfectum">C</button><button class="tb" data-mens="Cc" data-keep aria-pressed="false" title="Tempus imperfectum diminutum, alla breve">¢</button><button class="tb" data-mens="O" data-keep aria-pressed="false" title="Tempus perfectum">O</button><button class="tb" data-mens="Oc" data-keep aria-pressed="false" title="Tempus perfectum diminutum">⌀</button></div>
             <button class="tb" id="darkBtn" data-keep aria-pressed="false">Dark mode</button>
           </div></div>
         </div>
@@ -653,7 +654,7 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
       <tr><td><kbd>Space</kbd></td><td>Play or stop</td></tr>
       <tr><td><kbd>Ctrl/⌘</kbd> <kbd>Z</kbd></td><td>Undo; add <kbd>Shift</kbd> to redo</td></tr>
     </table>
-    <p>In tempus perfectum (click the C on the staff to turn it into O) the notes are read as the theorists teach: a brevis lasts three semibreves, a single semibreve next to a brevis makes it imperfect, and of two semibreves between breves the second is doubled. A dot after a brevis keeps it perfect; a dot between two semibreves separates the perfections; a dot after a semibreve followed by a minima adds half its value. In tempus imperfectum every dot adds half the value.</p>
+    <p>Click the sign of tempus on the staff (or use Mensuration under Appearance) to go round C, ¢ (tempus imperfectum diminutum, alla breve), O and ⌀. The stroke of ¢ and ⌀ is diminution: every note sounds twice as fast against the beat, so the tactus falls on the brevis. In tempus perfectum the notes are read as the theorists teach: a brevis lasts three semibreves, a single semibreve next to a brevis makes it imperfect, and of two semibreves between breves the second is doubled. A dot after a brevis keeps it perfect; a dot between two semibreves separates the perfections; a dot after a semibreve followed by a minima adds half its value. In tempus imperfectum every dot adds half the value.</p>
     <p>Sing turns on the microphone. The note you sing shows as a faint red dot on the staff: next to the note being played, or before the final bar when nothing plays. Hover over Sing, or tap its arrow, for its switches. Flexible pitch: on, the dot follows your exact pitch and sits a little above or below its line or space when you are sharp or flat; off, it keeps to the nearest note, like a written second voice. Headphones: turn it on when you wear them, so unisons and octaves with the organ show too. With it off, the organ is filtered out of what the microphone hears, and a note sung in unison with the organ or an octave above it does not show. Notate: while the cantus firmus plays, what you sing is written out in red on a staff of its own, above the cantus firmus or below it when you sing below. Long notes are written on the strong beats even when you come in a little early or late; quick notes can be as short as fusae. Diatonic: the notes written are only those of the scale (with B or B flat as the cantus firmus has it), so a note sung out of tune is not written as a sharp or flat. It stays until you play again or change the cantus firmus. This one is an experiment: with headphones on it gets the most right. Latency, in the same menu, is the delay between the organ and your voice reaching the microphone: left empty, it is worked out from where your notes fall; Clap test measures it (clap with each of eight clicks); or type it in milliseconds.</p>
     <p>Your work is kept in this browser automatically. Copy link gives you an address that opens this exact cantus firmus anywhere, for instance to send to a student.</p>
   </details>
@@ -784,7 +785,7 @@ let doc = defaultDoc();
 const ui = {
   sel: null, caret: 0, inDur: 'B', inRest: false, hover: null, playing: -1,
   size: window.innerWidth < 640 ? 11 : 16, spacing: 1, vspacing: 1, longaUp: false, planus: false, talea: null, cb: false, edit: false,
-  beatHand: true, beatPend: false, beatTick: false, tempus: 'C', unit: 'S', tempo: 60, ref: 440, vol: 70, reg: 'custom', bright: 50, room: 40, atk: 120, rel: 150, chiff: 7, ens: 0.3, wind: 10, scoop: 5, draw: [100, 71, 55, 48, 37, 22, 12, 8, 0, 0, 0, 0], audition: true, loop: false, metro: false, setOpen: false, micFlex: true, micPhones: false, micNotate: true, micDia: false, dark: true, micLag: 0, micCal: null
+  beatHand: true, beatPend: false, beatTick: false, tempus: 'C', cut: false, unit: 'S', tempo: 60, ref: 440, vol: 70, reg: 'custom', bright: 50, room: 40, atk: 120, rel: 150, chiff: 7, ens: 0.3, wind: 10, scoop: 5, draw: [100, 71, 55, 48, 37, 22, 12, 8, 0, 0, 0, 0], audition: true, loop: false, metro: false, setOpen: false, micFlex: true, micPhones: false, micNotate: true, micDia: false, dark: true, micLag: 0, micCal: null
 };
 let lay = null;          /* last computed layout, used for hit testing */
 let drag = null;
@@ -835,7 +836,7 @@ function sanitizeDoc(d){
 function save(){
   try {
     localStorage.setItem(STORE, JSON.stringify({doc, prefs: {
-      inDur: ui.inDur, planus: ui.planus, size: ui.size, spacing: ui.spacing, vspacing: ui.vspacing, unit: ui.unit, tempo: ui.tempo, ref: ui.ref,
+      inDur: ui.inDur, planus: ui.planus, cut: ui.cut, size: ui.size, spacing: ui.spacing, vspacing: ui.vspacing, unit: ui.unit, tempo: ui.tempo, ref: ui.ref,
       vol: ui.vol, reg: ui.reg, bright: ui.bright, room: ui.room, atk: ui.atk, rel: ui.rel, chiff: ui.chiff, ens: ui.ens, wind: ui.wind, scoop: ui.scoop, draw: ui.draw, audition: ui.audition, loop: ui.loop, micFlex: ui.micFlex, micPhones: ui.micPhones, micNotate: ui.micNotate, micDia: ui.micDia, dark: ui.dark, micLag: ui.micLag, micCal: ui.micCal, beatHand: ui.beatHand, beatPend: ui.beatPend, beatTick: ui.beatTick, tempus: ui.tempus
     }}));
   } catch (e) { /* storage unavailable: work continues, just not kept */ }
@@ -849,6 +850,7 @@ function shareURL(){
   if (doc.bflat) p.set('flat', '1');
   if (doc.lines === 4) p.set('lines', '4');
   if (ui.tempus === 'O') p.set('t', 'O');
+  if (ui.cut) p.set('cut', '1');
   p.set('notes', doc.notes.map(n => n.d + (n.p && !n.r ? 'p' : '') + '-' + (n.r ? 'r' : pitchToken(n))).join('.'));
   if (doc.title) p.set('title', doc.title);
   return location.href.split('#')[0] + '#' + p.toString();
@@ -868,7 +870,7 @@ function docFromHash(){
                 a: ({b:'b', n:'n', s:'#'})[m[5]] || '', p: m[2] === 'p'});
   }
   const d = sanitizeDoc({title: p.get('title') || '', clef, bflat: p.get('flat') === '1', lines: p.get('lines') === '4' ? 4 : 5, notes});
-  if (d) d.tempus = p.get('t') === 'O' ? 'O' : 'C';
+  if (d) { d.tempus = p.get('t') === 'O' ? 'O' : 'C'; d.cut = p.get('cut') === '1'; }
   return d;
 }
 function loadAll(){
@@ -905,14 +907,14 @@ function loadAll(){
     if (Array.isArray(p.draw) && (p.draw.length === 8 || p.draw.length === 12) && p.draw.every(v => v >= 0 && v <= 100)) ui.draw = p.draw.concat([0, 0, 0, 0]).slice(0, 12);
     ui.audition = p.audition !== false;
     ui.loop = !!p.loop;
-    ui.tempus = p.tempus === 'O' ? 'O' : 'C';
+    ui.tempus = p.tempus === 'O' ? 'O' : 'C'; ui.cut = !!p.cut;
     if (typeof p.beatHand === 'boolean') { ui.beatHand = p.beatHand; ui.beatPend = !!p.beatPend; ui.beatTick = !!p.beatTick; }
     else { const b = ['hand', 'pendulum', 'tick'].includes(p.beat) ? p.beat : (p.metro ? 'tick' : 'hand');   /* the old one-of-three choice */
       ui.beatHand = b === 'hand'; ui.beatPend = b === 'pendulum'; ui.beatTick = b === 'tick'; }
   }
   const fromLink = docFromHash();
   if (fromLink) {
-    ui.tempus = fromLink.tempus; ui.planus = false; ui.talea = null; delete fromLink.tempus;
+    ui.tempus = fromLink.tempus; ui.cut = !!fromLink.cut; ui.planus = false; ui.talea = null; delete fromLink.tempus; delete fromLink.cut;
     doc = fromLink;
     try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
   } else {
@@ -925,7 +927,7 @@ function loadAll(){
     const item = pool[Math.floor(Math.random() * pool.length)];
     if (item) {
       doc = presetDoc(item);
-      ui.tempus = item.t === 'O' ? 'O' : 'C';
+      ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut;
       try { localStorage.setItem(STORE + ':last', item.title); } catch (e) {}
     } else if (stored && stored.doc) doc = sanitizeDoc(stored.doc) || doc;
   }
@@ -936,7 +938,7 @@ function loadAll(){
 /* Undo                                                                */
 /* ------------------------------------------------------------------ */
 const undoStack = [], redoStack = [];
-const snapshot = () => JSON.stringify({title: doc.title, clef: doc.clef, bflat: doc.bflat, lines: doc.lines, notes: doc.notes, tempus: ui.tempus, cbv: doc.cbv, cbSig: doc.cbSig});
+const snapshot = () => JSON.stringify({title: doc.title, clef: doc.clef, bflat: doc.bflat, lines: doc.lines, notes: doc.notes, tempus: ui.tempus, cut: ui.cut, cbv: doc.cbv, cbSig: doc.cbSig});
 function pushUndo(before){
   undoStack.push(before);
   if (undoStack.length > 300) undoStack.shift();
@@ -954,6 +956,7 @@ function restore(json){
   const s = JSON.parse(json);
   doc.title = s.title || ''; doc.clef = s.clef; doc.bflat = s.bflat; doc.lines = s.lines === 4 ? 4 : 5; doc.notes = s.notes; doc.cbv = s.cbv; doc.cbSig = s.cbSig;
   if (s.tempus === 'O' || s.tempus === 'C') ui.tempus = s.tempus;
+  ui.cut = !!s.cut;
   ui.sel = null;
   ui.caret = Math.min(ui.caret, doc.notes.length);
   syncSettings();
@@ -1154,9 +1157,11 @@ function restGlyph(d, cx, top){
 function mensSign(cx, cy, hov){
   if (doc.lines === 4) cy += 0.5;
   const r = 1.05, a = `fill="none" stroke="currentColor" stroke-width="0.2" stroke-linecap="round"${hov ? ' class="menshov"' : ''}`;
-  if (ui.tempus === 'O') return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${r}" ${a}/>`;
+  /* the stroke of diminution: cut C (alla breve) and cut O */
+  const stroke = ui.cut ? `<path d="M${f(cx)} ${f(cy - r - 0.75)}V${f(cy + r + 0.75)}" ${a}/>` : '';
+  if (ui.tempus === 'O') return `<circle cx="${f(cx)}" cy="${f(cy)}" r="${r}" ${a}/>` + stroke;
   const x1 = cx + r * 0.643, y1 = cy - r * 0.766, y2 = cy + r * 0.766;
-  return `<path d="M${f(x1)} ${f(y1)}A${r} ${r} 0 1 0 ${f(x1)} ${f(y2)}" ${a}/>`;
+  return `<path d="M${f(x1)} ${f(y1)}A${r} ${r} 0 1 0 ${f(x1)} ${f(y2)}" ${a}/>` + stroke;
 }
 function drawItem(it, top, exp){
   const n = it.n, cls = ['it'];
@@ -1682,7 +1687,7 @@ function syncLines(){
   document.querySelectorAll('#linesBtns button').forEach(b => b.setAttribute('aria-pressed', Number(b.dataset.lines) === doc.lines ? 'true' : 'false'));
 }
 function syncSettings(){
-  $('#title').value = doc.title;
+  $('#title').value = doc.title; syncMens();
   $('#size').value = ui.size;
   $('#spacing').value = Math.round(ui.spacing * 100); $('#vspacing').value = Math.round(ui.vspacing * 100);
   syncLines();
@@ -1715,7 +1720,7 @@ function updateStatus(){
   } else if (h && h.type === 'repl') {
     msg = `Click to put a ${DUR[doc.notes[h.i].d].name.toLowerCase()} here instead of the rest. Click exactly on the rest to remove it.`;
   } else if (h && h.type === 'mens') {
-    msg = ui.tempus === 'O' ? 'Tempus perfectum: a brevis lasts three semibreves. Click for tempus imperfectum.' : 'Tempus imperfectum: a brevis lasts two semibreves. Click for tempus perfectum.';
+    msg = `${MENS_NAME[mensKey()]}. Click for ${MENS_NAME[MENS_NEXT[mensKey()]].split(':')[0].toLowerCase()}.`;
   } else if (h && h.type === 'sig') {
     msg = doc.bflat ? 'Click to remove the B flat from the signature.' : 'Click to put a B flat in the signature.';
   } else if (h && h.type === 'item') {
@@ -1860,7 +1865,7 @@ function applyTalea(k){
   if (!ui.planus) { toast('A talea can only be laid over a plainchant from the library.'); return; }
   const T = TALEAE[k]; if (!T) return;
   ui.talea = k;
-  mutate(() => { ui.tempus = 'O'; let j = 0; doc.notes.forEach(n => { if (n.r) return; const q = T[j++ % T.length]; n.d = q[0]; n.p = !!q[1]; }); });
+  mutate(() => { ui.tempus = 'O'; ui.cut = false; let j = 0; doc.notes.forEach(n => { if (n.r) return; const q = T[j++ % T.length]; n.d = q[0]; n.p = !!q[1]; }); });
   toast('Talea laid over the chant, in tempus perfectum (O).');
 }
 function scaleAll(dir){
@@ -1948,7 +1953,7 @@ function touchUp(cancelled){
   closeClefMenu(false);
   if (!ui.edit && h.type !== 'item' && h.type !== 'none') { toast('Turn on Edit to place or change notes on the staff.'); return; }
   if (h.type === 'clef') { if (!wasOpen) openClefMenu(h.li); return; }
-  if (h.type === 'mens') { setTempus(ui.tempus === 'O' ? 'C' : 'O'); return; }
+  if (h.type === 'mens') { nextMens(); return; }
   if (h.type === 'sig') { mutate(() => { doc.bflat = !doc.bflat; }); return; }
   if (h.type === 'item') { ui.hover = null; selectItem(h.i); return; }
   ui.hover = null;
@@ -1972,7 +1977,7 @@ scoreEl.addEventListener('pointerdown', e => {
   if (h.type === 'none') return;
   if (!ui.edit) { if (h.type === 'item') selectItem(h.i); else toast('Turn on Edit to place or change notes on the staff.'); return; }
   if (h.type === 'clef') { if (e.button === 0 && !wasOpen) openClefMenu(h.li); return; }
-  if (h.type === 'mens') { if (e.button === 0) setTempus(ui.tempus === 'O' ? 'C' : 'O'); return; }
+  if (h.type === 'mens') { if (e.button === 0) nextMens(); return; }
   if (h.type === 'sig') { if (e.button === 0) mutate(() => { doc.bflat = !doc.bflat; }); return; }
   if (isMouse && e.button === 2) {
     if (h.type === 'item') mutate(() => { const n = doc.notes[h.i]; n.r = true; n.a = ''; n.p = false; ui.sel = null; ui.caret = h.i + 1; ui.hover = null; });
@@ -2382,7 +2387,8 @@ function readValues(notes, tempus){
 const beatSeconds = () => 60 / ui.tempo;
 /* Tempus perfectum: the brevis (and the longer notes) count three semibreves, not two */
 const mv = k => DUR[k].m * (ui.tempus === 'O' && DUR[k].m >= 4 ? 1.5 : 1);
-const secondsPerMinim = () => beatSeconds() / mv(ui.unit);
+/* cut C and cut O (diminution): every note sounds twice as fast against the same beat, so the tactus falls on the brevis */
+const secondsPerMinim = () => beatSeconds() / mv(ui.unit) / (ui.cut ? 2 : 1);
 
 /* Plays from note `from`; beats and the hand stay aligned with the start of the piece. */
 function startPlayback(from, resumed){
@@ -2721,9 +2727,16 @@ function handStep(now){
   if (!moving) HAND.last = 0;
 }
 
-function setTempus(t){
-  ui.tempus = t; save(); render(); replayIfPlaying();
+function setTempus(t, cut){
+  ui.tempus = t; if (cut !== undefined) ui.cut = !!cut; save(); render(); replayIfPlaying(); syncMens();
 }
+/* the four signs of tempus: C, cut C (alla breve), O, cut O; clicking the sign goes round them */
+const MENS_NAME = {C: 'C, tempus imperfectum: a brevis lasts two semibreves', Cc: '¢, tempus imperfectum diminutum (alla breve): as C, but every note twice as fast, the tactus on the brevis',
+                   O: 'O, tempus perfectum: a brevis lasts three semibreves', Oc: '⌀, tempus perfectum diminutum: as O, but every note twice as fast'};
+const MENS_NEXT = {C: 'Cc', Cc: 'O', O: 'Oc', Oc: 'C'};
+const mensKey = () => ui.tempus + (ui.cut ? 'c' : '');
+function nextMens(){ const k = MENS_NEXT[mensKey()]; setTempus(k[0], k.length > 1); toast(MENS_NAME[k].split(':')[0] + '.'); }
+function syncMens(){ document.querySelectorAll('#mensBtns button').forEach(b => setPressed(b, b.dataset.mens === mensKey())); }
 function syncBeat(){
   const on = {hand: ui.beatHand, pendulum: ui.beatPend, tick: ui.beatTick};
   document.querySelectorAll('#beatList button').forEach(b => setPressed(b, on[b.dataset.beat]));
@@ -3576,7 +3589,7 @@ const LUTHERAN = [
   {title: "Gott, durch deine Güte", desc: "Michael Weisse (1531), also the tune of Gottes Sohn ist kommen. The earlier version in Die Choralmelodien zum Orgelbüchlein (Weißenfels 1714).", t: 'C', b: true, c: 'treble',
    n: '31B 31B 33B 34nB 35B 36B 35L 36B 37B 38B 35B 33B 34nB 35L 34B 32B 33B 34B 33B 32B 31L 30B 31B 32B 33B 32B. 31S 30B 29B 28L 31B 31B 33B 34nB 35B 36B 35L 31B 32B 33B 34B 33B 32B 31L',
    lyr: "Gott durch dei- ne Gü- . te wollst uns’r ar- men Leu- . te Herz Sinn und Ge- mü- . te für des Teu- fels Wü- . . . ten im Le- ben und im . Tod gnä- dig- lich be- hü- . ten"},
-  {title: "Gelobet seist du, Jesu Christ", desc: "Luther’s Christmas hymn (1524), after an early print, with its original spelling and rhythm. The print is in cut time (¢).", t: 'C', b: false,
+  {title: "Gelobet seist du, Jesu Christ", desc: "Luther’s Christmas hymn (1524), after an early print, with its original spelling and rhythm, in ¢ as printed.", t: 'C', cut: true, b: false,
    n: 'rS rM 25M 25S 25S 26S 25S 28S 29S 28B 27S 29S 30S 29S 28S 26S 25S rM 25M 28S 27S 29S 26S 25S 23S 22S rM 22M 26S 26S 26S 27S 28S 26S 25S 26S 24M 25M 26S 25L',
    lyr: "Ge- lo- bet seys- tu Jhe- su Christ das du mensch ge- bo- ren bist Von ey- ner iung- fraw das ist war des fre- wet sich der en- gel schar . Ky- ri o- leys"},
   {title: "Aus tiefer Not schrei ich zu dir", desc: "The tenor, which carries Luther’s melody, from Balthasar Resinarius’s setting (G. Rhau, Newe Deudsche Gesenge, 1544); edition of the Choral Public Domain Library. The opening rests and the repeat are not written out.", c: 'c4', t: 'C', b: false,
@@ -3803,7 +3816,7 @@ function buildLibrary(){
     if (!b) return;
     const item = libNode(b.dataset.p.split('.').map(Number)).items[Number(b.dataset.i)];
     closeLibrary(false);
-    mutate(() => { doc = presetDoc(item); ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.planus = !!item.s && !item.n && !item.poly; ui.talea = null; ui.sel = null; ui.caret = doc.notes.length; ui.hover = null; });
+    mutate(() => { doc = presetDoc(item); ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut; ui.planus = !!item.s && !item.n && !item.poly; ui.talea = null; ui.sel = null; ui.caret = doc.notes.length; ui.hover = null; });
     syncSettings();
     toast(`${item.title} loaded. Undo brings back what you had.`);
     scoreEl.focus({preventScroll: true});
@@ -3969,6 +3982,7 @@ function wire(){
     e.target.value = ui.micCal === null ? '' : Math.round(ui.micCal * 1000);
     save();
   });
+  document.querySelectorAll('#mensBtns button').forEach(b => b.addEventListener('click', () => { const k = b.dataset.mens; setTempus(k[0], k.length > 1); }));
   $('#darkBtn').addEventListener('click', () => { ui.dark = !ui.dark; applyDark(); save(); });
   wireFullscreen();
   wireTempo();
