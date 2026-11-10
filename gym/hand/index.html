@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Manus Guidonis</title>
+<meta name="description" content="Show a note on the Guidonian hand to the camera and hear it: one hand or two, thumb on the joints, index on the thumb.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* Layout: the camera and the painted hand side by side (stacked on a phone held upright); controls below. */
+  :root {
+    --bg: #faf7f2; --fg: #1c1a17; --muted: #6b655c; --line: #e4ddd1;
+    --accent: #c8102e; --card: #ffffff; --soft: #f3eee6;
+    --skin: #f1e4cc; --skin-ink: #3a2f22; --v1: #c8102e; --v2: #2f62a3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824;
+      --accent: #e5394f; --card: #1b1916; --soft: #221f1b;
+      --skin: #2a241d; --skin-ink: #d9cbb3; --v1: #ef5a6c; --v2: #6b9be0;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824;
+    --accent: #e5394f; --card: #1b1916; --soft: #221f1b;
+    --skin: #2a241d; --skin-ink: #d9cbb3; --v1: #ef5a6c; --v2: #6b9be0;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 "Inter", system-ui, sans-serif; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 0 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  header { padding: 1.4rem 0 .6rem; }
+  .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
+  .back:hover { color: var(--accent); }
+  h1 { font-family: "EB Garamond", Georgia, serif; font-weight: 600; font-size: clamp(2.2rem, 6vw, 3.2rem); line-height: 1.05; margin: .5rem 0 .2rem; text-wrap: balance; }
+  .tagline { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--muted); margin: 0; }
+  .staff { height: 25px; margin: 1rem 0 1.2rem; opacity: .5;
+    background: repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 6px); }
+
+  .stage { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .two .stage { grid-template-columns: minmax(0, 1fr); }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0; }
+  .cam { position: relative; border-radius: 8px; overflow: hidden; background: var(--soft); aspect-ratio: 4 / 3; }
+  .two .cam { aspect-ratio: 16 / 9; }
+  .cam { max-height: 74vh; }
+  .cam video, .cam canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .cam video.mirror { transform: scaleX(-1); }
+  .cam .hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 1.2rem;
+    font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); }
+  .cam .hint[hidden] { display: none; }
+  .cam .hint p { margin: 0; max-width: 34ch; }
+
+  .readouts { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .readout { flex: 1 1 160px; min-width: 0; border-radius: 10px; padding: 8px 12px; background: var(--soft); border-left: 4px solid var(--c); }
+  .readout .who { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  .readout .note { font-family: "EB Garamond", Georgia, serif; font-size: 2.1rem; line-height: 1.1; min-height: 2.3rem; color: var(--c); }
+  .readout .note small { font-style: italic; font-size: 1.15rem; color: var(--fg); margin-left: .35em; }
+  .readout .where { font-size: .85rem; color: var(--muted); min-height: 1.3em; }
+
+  .hands { display: flex; gap: 8px; justify-content: center; }
+  .hands svg { width: 100%; max-width: 360px; height: auto; display: block; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .two .hands svg { max-width: 300px; }
+  .hand-cap { text-align: center; font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .hand-fig { flex: 1 1 0; min-width: 0; }
+    .hands .crease { stroke: var(--skin-ink); stroke-width: 1.2; opacity: .35; fill: none; stroke-linecap: round; }
+  .hands .pos { cursor: pointer; }
+  .hands .pos circle { fill: var(--card); stroke: var(--skin-ink); stroke-width: 1.3; transition: fill .08s, r .08s; }
+  .hands .pos text { font: 600 12.5px "EB Garamond", Georgia, serif; fill: var(--skin-ink); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .hands .pos.back circle { stroke-dasharray: 3 2.5; }
+  .hands .pos.on circle { fill: var(--c, var(--accent)); stroke: var(--c, var(--accent)); r: 15; }
+  .hands .pos.on text { fill: #fff; }
+  .hands .pos.teach circle { stroke: var(--accent); stroke-width: 3; }
+  .hands .pos:focus-visible circle { stroke: var(--accent); stroke-width: 3; }
+  .hands .pos:focus { outline: none; }
+
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-top: 14px; }
+  #start { height: 54px; padding: 0 26px; border-radius: 27px; border: 0; background: var(--accent); color: #fff;
+    font: 500 1.05rem/1 "Inter", system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
+  #start:hover { filter: brightness(1.08); }
+  #start svg { width: 18px; height: 18px; fill: currentColor; }
+  #start.on { background: var(--fg); color: var(--bg); }
+  .group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .group > .lbl { font-size: .85rem; color: var(--muted); margin-right: 2px; }
+  .seg { display: inline-flex; background: var(--soft); border-radius: 10px; padding: 3px; }
+  .seg button, .btn { font: 500 .92rem/1 "Inter", system-ui, sans-serif; color: var(--fg); background: transparent; border: 0; border-radius: 8px; height: 36px; padding: 0 12px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,.12); color: var(--accent); }
+  .btn { background: var(--soft); }
+  .btn:hover, .seg button:hover { color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  input[type=range] { accent-color: var(--accent); width: 110px; }
+
+  .teach { margin-top: 12px; border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .teach[hidden] { display: none; }
+  .teach p { margin: 0; flex: 1 1 260px; min-width: 0; }
+  .teach b { font-family: "EB Garamond", Georgia, serif; font-size: 1.25rem; }
+  .teach .bar { height: 4px; border-radius: 2px; background: var(--soft); flex: 1 1 100%; overflow: hidden; }
+  .teach .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .1s; }
+
+  .how { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 28px; }
+  .how h2 { font-family: "EB Garamond", Georgia, serif; font-weight: 600; font-size: 1.35rem; margin: 0 0 .3rem; }
+  .how p { margin: 0 0 .5rem; color: var(--muted); max-width: 62ch; }
+  .gamut { font-family: "EB Garamond", Georgia, serif; font-size: 1.05rem; color: var(--fg); line-height: 1.7; }
+  .gamut span { white-space: nowrap; margin-right: .7em; }
+  .gamut i { color: var(--muted); }
+  .status { font-size: .88rem; color: var(--muted); min-height: 1.4em; margin-top: 8px; }
+
+  @media (max-width: 760px) {
+    .stage { grid-template-columns: minmax(0, 1fr); }
+    .readout .note { font-size: 1.8rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .hands .pos circle { transition: none; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <a class="back" href="../">← Contrapunto Gym</a>
+    <h1>Manus Guidonis</h1>
+    <p class="tagline">Show a note on your hand, and hear it.</p>
+  </header>
+  <div class="staff" aria-hidden="true"></div>
+
+  <section class="stage" aria-label="Camera and hand">
+    <div class="panel">
+      <div class="cam">
+        <video id="video" playsinline muted autoplay></video>
+        <canvas id="overlay" aria-hidden="true"></canvas>
+        <div class="hint" id="hint"><p>Press <b>Start the camera</b> and hold your hand up, palm towards the camera.<br>Or tap the notes on the painted hand.</p></div>
+      </div>
+      <div class="readouts">
+        <div class="readout" id="ro0" style="--c:var(--v1)"><div class="who">Left hand</div><div class="note">&nbsp;</div><div class="where">&nbsp;</div></div>
+        <div class="readout" id="ro1" style="--c:var(--v2)" hidden><div class="who">Right hand</div><div class="note">&nbsp;</div><div class="where">&nbsp;</div></div>
+      </div>
+      <div class="status" id="status" role="status"></div>
+    </div>
+    <div class="panel">
+      <div class="hands" id="hands"></div>
+    </div>
+  </section>
+
+  <div class="teach" id="teach" hidden>
+    <p id="teachText"></p>
+    <button class="btn" id="teachSkip">Skip this one</button>
+    <button class="btn" id="teachStop">Stop teaching</button>
+    <div class="bar"><i id="teachBar"></i></div>
+  </div>
+
+  <div class="controls">
+    <button id="start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7.5h3l1.6-2.3h6.8L17 7.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8.5a1 1 0 0 1 1-1Zm8 2.4a3.9 3.9 0 1 0 0 7.8 3.9 3.9 0 0 0 0-7.8Z"/></svg><span>Start the camera</span></button>
+    <div class="group"><span class="lbl">Hands</span><div class="seg" role="group" aria-label="Hands"><button data-hands="1" aria-pressed="true">One</button><button data-hands="2" aria-pressed="false">Two</button></div></div>
+    <div class="group"><span class="lbl">Camera</span><div class="seg" role="group" aria-label="Camera"><button data-cam="user" aria-pressed="true">Front</button><button data-cam="environment" aria-pressed="false">Back</button></div></div>
+    <div class="group"><span class="lbl">b and bb</span><div class="seg" role="group" aria-label="b and bb"><button data-b="mi" aria-pressed="true" title="b mi: B natural">♮ mi</button><button data-b="fa" aria-pressed="false" title="b fa: B flat">♭ fa</button></div></div>
+    <div class="group"><span class="lbl">Octave</span><div class="seg" role="group" aria-label="Octave"><button data-oct="0" aria-pressed="true" title="Γ ut sounds as the G two octaves below middle C">As written</button><button data-oct="12" aria-pressed="false" title="Everything an octave higher">8va</button></div></div>
+    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false">Voice</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
+    <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
+    <button class="btn" id="teachBtn" title="Show each position once, so the app learns your hand">Teach my hand</button>
+    <button class="btn" id="forget" hidden>Forget my hand</button>
+  </div>
+
+  <section class="how">
+    <div>
+      <h2>How to show a note</h2>
+      <p>Hold your left hand up with the palm towards the camera. Touch a joint of a finger with the tip of your thumb: the base of each finger, its two middle joints, its tip.</p>
+      <p>The three notes on the thumb itself (Γ ut, A re, B mi) you show the other way round: touch the thumb with the tip of your curled index finger.</p>
+      <p>ee la sits on the back of the middle finger: curl it and touch its nail with the thumb.</p>
+    </div>
+    <div>
+      <h2>Two hands</h2>
+      <p>Turn the phone sideways, choose <i>Two</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
+      <p>If the app mixes up two neighbouring places, press <i>Teach my hand</i> and show each position once. It then knows your hand instead of an average one, and it remembers it on this device.</p>
+    </div>
+    <div>
+      <h2>The gamut</h2>
+      <p class="gamut" id="gamut"></p>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+/* ------------------------------------------------------------------ */
+/* The Guidonian hand: twenty places, from Γ ut on the thumb tip       */
+/* spiralling round the hand to ee la on the back of the middle finger */
+/* ------------------------------------------------------------------ */
+// MediaPipe hand landmarks: 0 wrist; thumb 1-4; index 5-8; middle 9-12; ring 13-16; little 17-20 (base joint, two middle joints, tip).
+const POS = [
+  {k: 'Γ',  syl: 'ut',          midi: 43, where: 'tip of the thumb',              by: 'index'},
+  {k: 'A',  syl: 're',          midi: 45, where: 'middle joint of the thumb',     by: 'index'},
+  {k: 'B',  syl: 'mi',          midi: 47, where: 'base of the thumb',             by: 'index'},
+  {k: 'C',  syl: 'fa ut',       midi: 48, where: 'base of the index finger'},
+  {k: 'D',  syl: 'sol re',      midi: 50, where: 'base of the middle finger'},
+  {k: 'E',  syl: 'la mi',       midi: 52, where: 'base of the ring finger'},
+  {k: 'F',  syl: 'fa ut',       midi: 53, where: 'base of the little finger'},
+  {k: 'G',  syl: 'sol re ut',   midi: 55, where: 'little finger, lower joint'},
+  {k: 'a',  syl: 'la mi re',    midi: 57, where: 'little finger, upper joint'},
+  {k: 'b',  syl: 'fa ♮ mi',     midi: 59, where: 'tip of the little finger',      bfa: true},
+  {k: 'c',  syl: 'sol fa ut',   midi: 60, where: 'tip of the ring finger'},
+  {k: 'd',  syl: 'la sol re',   midi: 62, where: 'tip of the middle finger'},
+  {k: 'e',  syl: 'la mi',       midi: 64, where: 'tip of the index finger'},
+  {k: 'f',  syl: 'fa ut',       midi: 65, where: 'index finger, upper joint'},
+  {k: 'g',  syl: 'sol re ut',   midi: 67, where: 'index finger, lower joint'},
+  {k: 'aa', syl: 'la mi re',    midi: 69, where: 'middle finger, lower joint'},
+  {k: 'bb', syl: 'fa ♮ mi',     midi: 71, where: 'ring finger, lower joint',      bfa: true},
+  {k: 'cc', syl: 'sol fa',      midi: 72, where: 'ring finger, upper joint'},
+  {k: 'dd', syl: 'la sol',      midi: 74, where: 'middle finger, upper joint'},
+  {k: 'ee', syl: 'la',          midi: 76, where: 'back of the middle finger',     back: true},
+];
+
+const lerp = (p, q, t) => ({x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t, z: (p.z || 0) + ((q.z || 0) - (p.z || 0)) * t});
+const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
+/* Where each place lies, worked out from the 21 landmarks of the hand as it is held right now. */
+function places(P){
+  const base = (m, p) => lerp(P[m], P[p], 0.3);   // the crease where the finger leaves the palm
+  const pad  = (t, d) => lerp(P[t], P[d], 0.22);  // the pad just below the fingertip
+  const out = [];
+  out[0] = P[4]; out[1] = P[3]; out[2] = lerp(P[2], P[3], 0.25);
+  out[3] = base(5, 6); out[4] = base(9, 10); out[5] = base(13, 14); out[6] = base(17, 18);
+  out[7] = P[18]; out[8] = P[19]; out[9] = pad(20, 19);
+  out[10] = pad(16, 15); out[11] = pad(12, 11); out[12] = pad(8, 7);
+  out[13] = P[7]; out[14] = P[6]; out[15] = P[10]; out[16] = P[14]; out[17] = P[15]; out[18] = P[11];
+  out[19] = lerp(P[12], P[11], -0.35);             // just beyond the middle fingertip, on the nail
+  return out;
+}
+/* How straight a finger is: 1 when stretched out, smaller as it curls. */
+function straight(P, a){
+  const len = dist(P[a], P[a + 1]) + dist(P[a + 1], P[a + 2]) + dist(P[a + 2], P[a + 3]);
+  return len ? dist(P[a], P[a + 3]) / len : 1;
+}
+const scaleOf = P => dist(P[0], P[9]) || 1;  // wrist to the base of the middle finger
+/* Left or right, for a palm shown to the camera: the thumb side turns the other way. */
+const isLeft = P => ((P[5].x - P[0].x) * (P[17].y - P[0].y) - (P[5].y - P[0].y) * (P[17].x - P[0].x)) > 0;
+
+/* ---------- reading a place from the hand ---------- */
+const ENTER = 0.30, LEAVE = 0.42;  // contact distances, as a share of the palm length
+function features(P){
+  const s = scaleOf(P), f = [];
+  for (let i = 5; i <= 20; i++) f.push(dist(P[4], P[i]) / s);
+  for (const i of [2, 3, 4]) f.push(dist(P[8], P[i]) / s);
+  for (const a of [5, 9, 13, 17]) f.push(straight(P, a) * 1.5);
+  f.push(((P[4].z || 0) - (P[12].z || 0)) / s, ((P[8].z || 0) - (P[4].z || 0)) / s);
+  return f;
+}
+let templates = loadTemplates();  // {posIndex: [feature vectors]} taught by the player
+function classify(P, wasOn){
+  const s = scaleOf(P), Q = places(P), lim = (wasOn ? LEAVE : ENTER) * s;
+  // thumb tip on a finger
+  let best = -1, bd = Infinity;
+  for (let i = 3; i < 20; i++) { const d = dist(P[4], Q[i]); if (d < bd) { bd = d; best = i; } }
+  // index tip on the thumb
+  let ib = -1, id = Infinity;
+  for (const i of [0, 1, 2]) { const d = dist(P[8], Q[i]); if (d < id) { id = d; ib = i; } }
+  const indexCurled = straight(P, 5) < 0.72;
+  let pos = -1;
+  const thumbOn = bd < lim, indexOn = id < lim;
+  if (indexOn && thumbOn) {
+    // tip on tip: Γ when the index curls down onto the thumb, e when the thumb reaches up to the index
+    if (indexCurled && best >= 12 && best <= 14) pos = ib;
+    else if (ib === 0 && best === 12) pos = 12;
+    else pos = id < bd ? ib : best;
+  } else if (indexOn) pos = ib;
+  else if (thumbOn) pos = best;
+  if (pos < 0) return -1;
+  // d or ee: the thumb on the nail of a curled middle finger
+  if (pos === 11 || pos === 19) {
+    const curled = straight(P, 9) < 0.62, front = ((P[4].z || 0) - (P[12].z || 0)) / s < -0.05;
+    pos = curled && (front || pos === 19) ? 19 : 11;
+  }
+  // a taught hand decides between the places itself
+  if (templates && templates[pos] && Object.keys(templates).length >= 4) {
+    const f = features(P); let tb = -1, td = Infinity;
+    for (const k in templates) for (const v of templates[k]) {
+      let d = 0; for (let j = 0; j < f.length; j++) d += (f[j] - v[j]) ** 2;
+      if (d < td) { td = d; tb = Number(k); }
+    }
+    if (tb >= 0) pos = tb;
+  }
+  return pos;
+}
+
+/* ---------- sound: one voice per hand, gliding from note to note while the contact holds ---------- */
+let ctx = null, master = null;
+const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'user'};
+try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
+try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
+const savePrefs = () => { try { localStorage.setItem('manus:v1', JSON.stringify(prefs)); } catch (e) {} };
+function audio(){
+  if (!ctx) {
+    const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = prefs.vol / 100 * 0.5;
+    const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+  return ctx;
+}
+let organWave = null;
+function makeVoice(){
+  const c = audio(); if (!c) return null;
+  const out = c.createGain(); out.gain.value = 0; out.connect(master);
+  const v = {out, nodes: [], hz: 0};
+  if (prefs.snd === 'voice') {
+    const o = c.createOscillator(); o.type = 'sawtooth';
+    const vib = c.createOscillator(), vg = c.createGain(); vib.frequency.value = 5.3; vg.gain.value = 0; vib.connect(vg); vg.connect(o.frequency);
+    const f1 = c.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = 650; f1.Q.value = 5;
+    const f2 = c.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 1080; f2.Q.value = 7;
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2600;
+    const g1 = c.createGain(); g1.gain.value = 1; const g2 = c.createGain(); g2.gain.value = .55;
+    o.connect(f1); o.connect(f2); f1.connect(g1); f2.connect(g2); g1.connect(lp); g2.connect(lp); lp.connect(out);
+    o.start(); vib.start(); v.osc = o; v.vg = vg; v.nodes.push(o, vib); v.peak = 0.9;
+  } else {
+    if (!organWave) organWave = c.createPeriodicWave(new Float32Array([0, 1, .05, .32, .02, .1, .01, .03]), new Float32Array(8));
+    const o = c.createOscillator(); o.setPeriodicWave(organWave);
+    const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3200;
+    o.connect(lp); lp.connect(out); o.start(); v.osc = o; v.nodes.push(o); v.peak = 0.55;
+  }
+  return v;
+}
+const hzOf = midi => prefs.ref * Math.pow(2, (midi + prefs.oct - 69) / 12);
+const voices = [null, null, null];  // left hand, right hand, tapping
+function noteOn(slot, midi){
+  if (prefs.snd === 'off') return;
+  const c = audio(); if (!c) return;
+  let v = voices[slot];
+  const hz = hzOf(midi), t = c.currentTime;
+  if (!v || v.dying) { v = voices[slot] = makeVoice(); if (!v) return;
+    v.osc.frequency.setValueAtTime(hz, t);
+    v.out.gain.setValueAtTime(0, t); v.out.gain.linearRampToValueAtTime(v.peak, t + 0.045);
+    if (v.vg) { v.vg.gain.setValueAtTime(0, t); v.vg.gain.linearRampToValueAtTime(hz * 0.012, t + 0.45); }
+  } else {
+    v.osc.frequency.cancelScheduledValues(t); v.osc.frequency.setValueAtTime(v.osc.frequency.value, t);
+    v.osc.frequency.exponentialRampToValueAtTime(hz, t + 0.03);
+    if (v.vg) v.vg.gain.setTargetAtTime(hz * 0.012, t, 0.1);
+  }
+  v.hz = hz;
+}
+function noteOff(slot){
+  const v = voices[slot]; if (!v || !ctx) return;
+  const t = ctx.currentTime; v.dying = true; voices[slot] = null;
+  v.out.gain.cancelScheduledValues(t); v.out.gain.setValueAtTime(v.out.gain.value, t); v.out.gain.linearRampToValueAtTime(0, t + 0.12);
+  setTimeout(() => { v.nodes.forEach(n => { try { n.stop(); } catch (e) {} }); v.out.disconnect(); }, 300);
+}
+const midiOf = i => POS[i].midi - (POS[i].bfa && prefs.bfa ? 1 : 0);
+const nameOf = i => POS[i].bfa ? POS[i].k + (prefs.bfa ? '♭' : '♮') : POS[i].k;
+const sylOf = i => POS[i].bfa ? (prefs.bfa ? 'fa' : 'mi') : POS[i].syl;
+
+/* ---------- the painted hand ---------- */
+// a left hand, palm to the viewer, in the same 21 landmarks as the camera reports
+const TPL = [[160,388],[112,352],[78,306],[55,262],[40,222],[106,214],[97,150],[92,110],[89,74],[150,204],[150,130],[150,86],[150,46],[193,211],[200,145],[205,104],[208,70],[232,232],[244,184],[251,151],[256,121]].map(([x, y]) => ({x, y}));
+const SVGNS = 'http://www.w3.org/2000/svg';
+function handSVG(side){
+  const P = TPL, Q = places(P), mir = side === 1;
+  const svg = document.createElementNS(SVGNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 300 420'); svg.setAttribute('role', 'group');
+  svg.setAttribute('aria-label', (mir ? 'Right' : 'Left') + ' hand: tap a place to hear its note');
+  const g = document.createElementNS(SVGNS, 'g'); if (mir) g.setAttribute('transform', 'translate(300 0) scale(-1 1)'); svg.appendChild(g);
+  const path = (d, cls, extra) => { const e = document.createElementNS(SVGNS, 'path'); e.setAttribute('d', d); e.setAttribute('class', cls); if (extra) for (const k in extra) e.setAttribute(k, extra[k]); g.appendChild(e); return e; };
+  const pt = p => p.x.toFixed(1) + ' ' + p.y.toFixed(1);
+  // fingers as rounded bands, drawn as outline-then-fill so the palm joins them seamlessly
+  const finger = (a, w) => 'M' + [a, a + 1, a + 2, a + 3].map(i => pt(P[i])).join(' L');
+  const fingers = [[1, 40], [5, 33], [9, 35], [13, 32], [17, 27]];
+  const palm = 'M' + [{x: 126, y: 404}, P[1], P[2], P[5], P[9], P[13], P[17], {x: 241, y: 300}, {x: 212, y: 404}].map(pt).join(' L') + 'Z';
+  const band = (w, col) => ({style: 'fill:none;stroke:' + col + ';stroke-width:' + w + 'px;stroke-linecap:round;stroke-linejoin:round'});
+  fingers.forEach(([a, w]) => path(finger(a, w), '', band(w + 4.4, 'var(--skin-ink)')));
+  path(palm, '', {style: 'fill:var(--skin);stroke:var(--skin-ink);stroke-width:4.4px;stroke-linejoin:round'});
+  fingers.forEach(([a, w]) => path(finger(a, w), '', band(w, 'var(--skin)')));
+  path(palm, '', {style: 'fill:var(--skin);stroke:none'});
+  // creases across each joint
+  for (const [m, p, w] of [[5, 6, 15], [9, 10, 16], [13, 14, 15], [17, 18, 12], [2, 3, 17]]) {
+    for (const t of [0.3, 1]) {
+      const c = lerp(P[m], P[p], t), dx = P[p].x - P[m].x, dy = P[p].y - P[m].y, n = Math.hypot(dx, dy);
+      path('M' + pt({x: c.x - dy / n * w * .7, y: c.y + dx / n * w * .7}) + ' L' + pt({x: c.x + dy / n * w * .7, y: c.y - dx / n * w * .7}), 'crease');
+    }
+  }
+  const items = [];
+  Q.forEach((q, i) => {
+    const a = document.createElementNS(SVGNS, 'g');
+    a.setAttribute('class', 'pos' + (POS[i].back ? ' back' : '')); a.setAttribute('tabindex', '0'); a.setAttribute('role', 'button');
+    a.setAttribute('aria-label', nameOf(i) + ' ' + sylOf(i) + ', ' + POS[i].where);
+    a.setAttribute('transform', 'translate(' + pt(q) + ')' + (mir ? ' scale(-1 1)' : ''));
+    const c = document.createElementNS(SVGNS, 'circle'); c.setAttribute('r', '12'); a.appendChild(c);
+    const t = document.createElementNS(SVGNS, 'text'); t.textContent = POS[i].k; a.appendChild(t);
+    g.appendChild(a); items.push(a);
+    const on = e => { e.preventDefault(); tapOn(i, side); }, off = () => tapOff(side);
+    a.addEventListener('pointerdown', on); a.addEventListener('pointerup', off); a.addEventListener('pointerleave', off); a.addEventListener('pointercancel', off);
+    a.addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); tapOn(i, side); } });
+    a.addEventListener('keyup', e => { if (e.key === 'Enter' || e.key === ' ') tapOff(side); });
+  });
+  svg.style.setProperty('--c', side ? 'var(--v2)' : 'var(--v1)');
+  return {svg, items};
+}
+let figs = [];
+function buildHands(){
+  const box = $('#hands'); box.textContent = ''; figs = [];
+  const n = prefs.hands === 2 ? 2 : 1;
+  for (let s = 0; s < n; s++) {
+    const f = handSVG(s), wrap = document.createElement('div'); wrap.className = 'hand-fig';
+    wrap.appendChild(f.svg);
+    const cap = document.createElement('div'); cap.className = 'hand-cap'; cap.textContent = s ? 'Right hand (mirrored)' : 'Left hand';
+    wrap.appendChild(cap); box.appendChild(wrap); figs.push(f);
+  }
+  if (teach.on) markTeach();
+}
+const $ = s => document.querySelector(s);
+
+/* ---------- what each hand shows right now ---------- */
+const hands = [{pos: -1, cand: -1, n: 0, off: 0}, {pos: -1, cand: -1, n: 0, off: 0}];
+let tapping = [-1, -1];
+function show(side){
+  const i = tapping[side] >= 0 ? tapping[side] : hands[side].pos;
+  const ro = $('#ro' + side);
+  ro.querySelector('.note').innerHTML = i >= 0 ? nameOf(i) + '<small>' + sylOf(i) + '</small>' : '&nbsp;';
+  ro.querySelector('.where').textContent = i >= 0 ? POS[i].where : ' ';
+  figs.forEach((f, s) => f.items.forEach((el, k) => el.classList.toggle('on', s === side && k === i)));
+  // a single painted hand shows whichever hand is playing
+  if (figs.length === 1 && side === 1) figs[0].items.forEach((el, k) => el.classList.toggle('on', k === i));
+}
+function tapOn(i, side){ tapping[side] = i; noteOn(2, midiOf(i)); show(side); }
+function tapOff(side){ if (tapping[side] < 0) return; tapping[side] = -1; noteOff(2); show(side); }
+function setPos(side, pos){
+  const h = hands[side]; if (h.pos === pos) return;
+  h.pos = pos;
+  if (pos >= 0) noteOn(side, midiOf(pos)); else noteOff(side);
+  show(side);
+}
+/* a place has to hold for a few frames before it sounds, so passing over a joint does not */
+function feed(side, P){
+  const h = hands[side];
+  const pos = P ? classify(P, h.pos >= 0) : -1;
+  if (teach.on && P) teachFrame(P, pos);
+  if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
+  if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
+}
+
+/* ---------- camera and hand tracking ---------- */
+const video = $('#video'), canvas = $('#overlay'), g2 = canvas.getContext('2d');
+let landmarker = null, stream = null, running = false, lastT = -1;
+const VER = '0.10.14';
+async function loadTracker(){
+  if (landmarker) return landmarker;
+  status('Loading the hand tracker…');
+  const {FilesetResolver, HandLandmarker} = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + VER + '/vision_bundle.mjs');
+  const files = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + VER + '/wasm');
+  const opts = d => ({baseOptions: {modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: d},
+    runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5});
+  try { landmarker = await HandLandmarker.createFromOptions(files, opts('GPU')); }
+  catch (e) { landmarker = await HandLandmarker.createFromOptions(files, opts('CPU')); }
+  return landmarker;
+}
+async function startCam(){
+  try {
+    $('#start').disabled = true;
+    const lm = loadTracker(); lm.catch(() => {});
+    stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: prefs.cam, width: {ideal: 1280}, height: {ideal: 720}}});
+    video.srcObject = stream; await video.play();
+    video.classList.toggle('mirror', prefs.cam === 'user');
+    await lm;
+    running = true; $('#hint').hidden = true; status('');
+    $('#start').classList.add('on'); $('#start span').textContent = 'Stop the camera';
+    requestAnimationFrame(loop);
+  } catch (e) {
+    stopCam();
+    const msg = String(e && (e.name || e.message) || e);
+    if (/NotAllowed|Permission/i.test(msg)) status('The camera was not allowed. Allow it for this site in the browser settings and try again.');
+    else if (/NotFound|Overconstrained/i.test(msg)) status('No camera was found on this device.');
+    else status('The hand tracker could not be loaded. The first time it needs an internet connection.');
+  } finally { $('#start').disabled = false; }
+}
+function stopCam(){
+  running = false;
+  if (stream) stream.getTracks().forEach(t => t.stop()); stream = null; video.srcObject = null;
+  g2.clearRect(0, 0, canvas.width, canvas.height);
+  $('#hint').hidden = false; $('#start').classList.remove('on'); $('#start span').textContent = 'Start the camera';
+  [0, 1].forEach(s => { feed(s, null); feed(s, null); feed(s, null); });
+}
+function loop(){
+  if (!running) return;
+  if (video.readyState >= 2 && video.currentTime !== lastT) {
+    lastT = video.currentTime;
+    const W = video.videoWidth, H = video.videoHeight;
+    if (canvas.width !== W || canvas.height !== H) { canvas.width = W; canvas.height = H; }
+    let res = null; try { res = landmarker.detectForVideo(video, performance.now()); } catch (e) {}
+    const got = [null, null];
+    if (res && res.landmarks) {
+      const list = res.landmarks.map(L => L.map(p => ({x: p.x * W, y: p.y * H, z: p.z * W})));
+      if (prefs.hands === 2) list.forEach(P => { const s = isLeft(P) ? 0 : 1; if (!got[s]) got[s] = P; });
+      else if (list[0]) got[0] = list[0];
+    }
+    feed(0, got[0]); feed(1, prefs.hands === 2 ? got[1] : null);
+    draw(got, W, H);
+  }
+  requestAnimationFrame(loop);
+}
+const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+function draw(got, W, H){
+  g2.clearRect(0, 0, W, H);
+  const mir = prefs.cam === 'user', X = x => mir ? W - x : x;
+  const css = getComputedStyle(document.documentElement);
+  got.forEach((P, side) => {
+    if (!P) return;
+    const col = css.getPropertyValue(side ? '--v2' : '--v1').trim() || '#c8102e', s = scaleOf(P);
+    g2.lineWidth = Math.max(1.5, s * 0.02); g2.strokeStyle = 'rgba(255,255,255,.55)';
+    g2.beginPath(); BONES.forEach(([a, b]) => { g2.moveTo(X(P[a].x), P[a].y); g2.lineTo(X(P[b].x), P[b].y); }); g2.stroke();
+    const Q = places(P), on = hands[side].pos;
+    Q.forEach((q, i) => { g2.fillStyle = i === on ? col : 'rgba(255,255,255,.75)'; g2.beginPath(); g2.arc(X(q.x), q.y, i === on ? s * 0.09 : s * 0.025, 0, 7); g2.fill(); });
+    if (on >= 0) {
+      const q = Q[on], fs = Math.round(s * 0.2);
+      g2.font = '600 ' + fs + 'px "EB Garamond", Georgia, serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
+      g2.lineWidth = fs * 0.18; g2.strokeStyle = 'rgba(0,0,0,.55)'; g2.strokeText(nameOf(on), X(q.x), q.y - s * 0.2);
+      g2.fillStyle = '#fff'; g2.fillText(nameOf(on), X(q.x), q.y - s * 0.2);
+    }
+  });
+}
+function status(t){ $('#status').textContent = t; }
+
+/* ---------- teaching the app your hand ---------- */
+const teach = {on: false, i: 0, buf: [], data: {}};
+function loadTemplates(){ try { const t = JSON.parse(localStorage.getItem('manus:v1:hand') || 'null'); return t && typeof t === 'object' ? t : null; } catch (e) { return null; } }
+function markTeach(){ figs.forEach(f => f.items.forEach((el, k) => el.classList.toggle('teach', teach.on && k === teach.i))); }
+function teachShow(){
+  const i = teach.i, p = POS[i];
+  $('#teachText').innerHTML = (i + 1) + ' of 20 · Show <b>' + p.k + ' ' + p.syl.replace('fa ♮ mi', 'fa / mi') + '</b>: ' +
+    (p.by ? 'touch the ' + p.where + ' with your curled index finger' : 'touch the ' + p.where + ' with your thumb') + ', and hold it still.';
+  $('#teachBar').style.width = '0%'; teach.buf = []; markTeach();
+}
+function teachStart(){
+  if (!running) { status('Start the camera first, then teach the app your hand.'); return; }
+  teach.on = true; teach.i = 0; teach.data = {}; $('#teach').hidden = false; teachShow();
+}
+function teachNext(){
+  teach.i++;
+  if (teach.i >= POS.length) teachEnd(true); else teachShow();
+}
+function teachEnd(save){
+  teach.on = false; $('#teach').hidden = true; markTeach();
+  if (save && Object.keys(teach.data).length) {
+    templates = teach.data;
+    try { localStorage.setItem('manus:v1:hand', JSON.stringify(templates)); } catch (e) {}
+    status('Your hand is learned: ' + Object.keys(templates).length + ' of 20 places.');
+  }
+  $('#forget').hidden = !templates;
+}
+function teachFrame(P, pos){
+  // record once the hand is touching something and holds still
+  const s = scaleOf(P), Q = places(P);
+  const near = Math.min(...Q.slice(3).map(q => dist(P[4], q)), ...Q.slice(0, 3).map(q => dist(P[8], q))) / s;
+  if (near > 0.5) { teach.buf = []; $('#teachBar').style.width = '0%'; return; }
+  const f = features(P), last = teach.buf[teach.buf.length - 1];
+  if (last) { let d = 0; for (let j = 0; j < f.length; j++) d += (f[j] - last[j]) ** 2; if (d > 0.02) teach.buf = []; }
+  teach.buf.push(f);
+  $('#teachBar').style.width = Math.min(100, teach.buf.length / 14 * 100) + '%';
+  if (teach.buf.length >= 14) { teach.data[teach.i] = teach.buf.filter((_, k) => k % 2 === 0); noteOn(2, midiOf(teach.i)); setTimeout(() => noteOff(2), 250); teachNext(); }
+}
+
+/* ---------- controls ---------- */
+function seg(attr, key, conv, after){
+  document.querySelectorAll('[data-' + attr + ']').forEach(b => {
+    b.setAttribute('aria-pressed', String(conv(b.dataset[attr]) === prefs[key]));
+    b.addEventListener('click', () => {
+      prefs[key] = conv(b.dataset[attr]); savePrefs();
+      document.querySelectorAll('[data-' + attr + ']').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      if (after) after();
+    });
+  });
+}
+const silenceAll = () => { [0, 1, 2].forEach(noteOff); hands.forEach(h => { h.pos = -1; h.cand = -1; }); [0, 1].forEach(show); };
+seg('hands', 'hands', Number, () => { applyHands(); silenceAll(); });
+seg('cam', 'cam', String, async () => { if (running) { stopCam(); await startCam(); } });
+seg('b', 'bfa', v => v === 'fa', () => { silenceAll(); buildHands(); gamut(); });
+seg('oct', 'oct', Number, silenceAll);
+seg('snd', 'snd', String, silenceAll);
+$('#vol').value = prefs.vol;
+$('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = prefs.vol / 100 * 0.5; });
+$('#start').addEventListener('click', () => { audio(); running ? stopCam() : startCam(); });
+$('#teachBtn').addEventListener('click', teachStart);
+$('#teachSkip').addEventListener('click', teachNext);
+$('#teachStop').addEventListener('click', () => teachEnd(true));
+$('#forget').addEventListener('click', () => { templates = null; try { localStorage.removeItem('manus:v1:hand'); } catch (e) {} $('#forget').hidden = true; status('Back to the average hand.'); });
+$('#forget').hidden = !templates;
+function applyHands(){
+  $('#app').classList.toggle('two', prefs.hands === 2);
+  $('#ro1').hidden = prefs.hands !== 2;
+  buildHands();
+}
+function gamut(){
+  $('#gamut').innerHTML = POS.map((p, i) => '<span>' + p.k + ' <i>' + p.syl + '</i></span>').join(' ');
+}
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $('#start').disabled = true; status('This browser offers no camera here. You can still tap the notes on the painted hand.'); }
+applyHands(); gamut();
+window.__manus = {classify, places, POS, TPL, setPos, feed, hands};
+</script>
+</body>
+</html>
