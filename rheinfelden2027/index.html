@@ -75,11 +75,22 @@
     padding: .75rem 1.4rem; border-radius: 999px; font-weight: 500; margin-top: .6rem; }
   .btn:hover { filter: brightness(1.08); }
   .cta { text-align: center; margin: 3rem 0 0; }
+  .langs { float: right; margin: 1.4rem 0 0; display: flex; gap: .3rem; }
+  .langs button { font: inherit; font-size: .85rem; background: none; border: 1px solid var(--line);
+    color: var(--muted); border-radius: 999px; padding: .2rem .7rem; cursor: pointer; }
+  .langs button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+  [data-lang] { display: none; }
+  html[lang="en"] [data-lang="en"], html[lang="de"] [data-lang="de"] { display: block; }
   footer { margin-top: 3.5rem; color: var(--muted); font-size: .9rem; }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" data-set="en">English</button>
+    <button type="button" data-set="de">Deutsch</button>
+  </div>
+  <div data-lang="en">
   <a class="back" href="../">← Václav Hřebec</a>
 
   <h1>Renaissance Music Course in Rheinfelden</h1>
@@ -199,7 +210,145 @@
 
   <p class="cta"><a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Register for the course</a></p>
 
+  </div>
+  <div data-lang="de">
+  <a class="back" href="../">← Václav Hřebec</a>
+
+  <h1>Kurs für Renaissancemusik in Rheinfelden</h1>
+  <p class="meta">22.–28. Februar 2027 · Reformierte Kirche Rheinfelden (CH) · Leitung: Václav Hřebec</p>
+  <div class="staff" aria-hidden="true"></div>
+
+  <div class="top">
+    <div>
+      <p>Herzlich willkommen! Ich heisse Václav Hřebec und studiere an der Schola Cantorum Basiliensis in Basel. Meine Schwerpunkte sind Musiktheorie der Alten Musik, improvisierter Kontrapunkt (alias <em>cantare super librum</em>…), geschriebene Mensuralpolyphonie und Orgelimprovisation.</p>
+      <p>Ende Februar begeben wir uns auf eine einwöchige Reise durch all diese Themen, von etwa 1400 bis 1600. Die Reise findet im wunderschönen Städtchen am Rhein bei Basel statt: in Rheinfelden (CH).</p>
+      <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Zur Anmeldung</a>
+    </div>
+    <figure>
+      <a href="../posters/rheinfelden-2027-de.jpg" target="_blank" rel="noopener"><img src="../posters/rheinfelden-2027-de.jpg" alt="Plakat: Renaissancemusik-Kurs Rheinfelden, 22.–28. Februar 2027, Leitung Václav Hřebec"></a>
+    </figure>
+  </div>
+
+  <h2>Auf einen Blick</h2>
+  <dl class="facts">
+    <dt>Datum</dt><dd>Montag, 22. – Sonntag, 28. Februar 2027</dd>
+    <dt>Ort</dt><dd>Reformierte Kirche Rheinfelden (CH)</dd>
+    <dt>Inhalte</dt><dd>Improvisierte und geschriebene Polyphonie, Mensuralnotation, Solmisation, Orgel- und Instrumentalimprovisation</dd>
+    <dt>Teilnahme</dt><dd>Max. 12 aktive Teilnehmende; passive Teilnahme willkommen</dd>
+    <dt>Kursgebühr</dt><dd>270 € (voller Preis) / 180 € (Studierende)</dd>
+    <dt>Sprachen</dt><dd>Englisch, Deutsch; Französisch und Tschechisch für kurze Übersetzungen</dd>
+  </dl>
+
+  <h2>Für wen ist der Kurs?</h2>
+  <ul>
+    <li>Die Woche steht allen offen, die Renaissancemusik sicher aus moderner Notation singen können: Studierende der Alten Musik ebenso wie Laien, die in einem Chor singen.</li>
+    <li>Der ganze erste Tag erklärt die Grundbegriffe der spätmittelalterlichen Musikpraxis (Notation, Solmisation, Aufführungspraxis) für alle, die damit noch wenig vertraut sind. Ab Dienstag gehen wir dann gemeinsam etwas tiefer.</li>
+    <li>Bringen Sie gerne Renaissanceinstrumente jeder Art mit: je mehr Instrumente, desto mehr Spass!</li>
+    <li>Kurssprache ist voraussichtlich Englisch. Wenn alle Deutsch sprechen, sprechen wir einfach Deutsch. Französisch und Tschechisch gehen bei mir auch, falls jemand eine kurze Übersetzung braucht.</li>
+  </ul>
+  <p>Ganz sicher schauen wir uns die Handschrift <a href="https://www.manuscriptorium.com/hub/browser/default/gallery?url=https:%2F%2Fcollectiones.manuscriptorium.com%2Fassorted%2FAIPDIG%2FMVCHK_%2F4%2FAIPDIG-MVCHK_HR_7_II_A_7_2PGBZM4-cs%2F&amp;lang=cs" target="_blank" rel="noopener">Codex Speciálník</a> an.</p>
+
+  <h2>Wochenplan</h2>
+  <p>Hier eine Skizze des Ablaufs:</p>
+
+  <div class="day">
+    <h3>Montag, 22. Februar</h3>
+    <table class="sched">
+      <tr><td>10:00</td><td>Willkommen!</td></tr>
+      <tr><td>10:15–12:45</td><td>Starterpaket I: Tonsystem(e), Guidonische Hand, hexachordale Solmisation</td></tr>
+      <tr class="break"><td>12:45–13:45</td><td>Mittagessen</td></tr>
+      <tr class="break"><td>13:45–15:00</td><td>Siesta!</td></tr>
+      <tr><td>15:00–17:30</td><td>Starterpaket II: Notenformen und -werte, Mensurzeichen</td></tr>
+      <tr class="break"><td>17:30–19:00</td><td>Abendessen</td></tr>
+      <tr><td>ab 19:00</td><td>Freies Programm</td></tr>
+    </table>
+  </div>
+
+  <div class="day">
+    <h3>Dienstag – Samstag <span style="font-weight:400;color:var(--muted)">(Donnerstag evtl. anders)</span></h3>
+    <table class="sched">
+      <tr class="break"><td>8:30–10:00</td><td>Frühstück</td></tr>
+      <tr><td>10:00–11:00</td><td>Improvisierte Polyphonie</td></tr>
+      <tr class="break"><td>11:00–11:15</td><td>Pause</td></tr>
+      <tr><td>11:15–12:30</td><td>Geschriebene Polyphonie</td></tr>
+      <tr class="break"><td>12:45–13:45</td><td>Mittagessen</td></tr>
+      <tr class="break"><td>13:45–15:00</td><td>Siesta!</td></tr>
+      <tr><td>15:00–17:00</td><td>Instrumentale Improvisation</td></tr>
+      <tr class="break"><td>17:30–19:00</td><td>Abendessen</td></tr>
+      <tr><td>ab 19:00</td><td>Freies Programm (überraschen Sie mich mit Ihren Ideen, ich überrasche Sie mit meinen!)</td></tr>
+    </table>
+  </div>
+
+  <div class="day">
+    <h3>Sonntag, 28. Februar</h3>
+    <table class="sched">
+      <tr class="break"><td>8:00–9:00</td><td>Frühstück</td></tr>
+      <tr><td>9:00–9:30</td><td>Kurze Probe in der Kirche</td></tr>
+      <tr><td>10:00–11:00</td><td><strong>Gottesdienst mit unserer Musik</strong></td></tr>
+      <tr><td>11:00–12:00</td><td>Gespräche mit den Leuten :))</td></tr>
+      <tr class="break"><td>ab 12:00</td><td>Mittagessen und freies Programm / Abschied</td></tr>
+    </table>
+  </div>
+
+  <ul>
+    <li><strong>Ausflug am Donnerstag:</strong> Wir können einen kleinen Ausflug machen. Ein paar Ideen: die Stadt entdecken, eine kleine Wanderung zum Kloster Olsberg, Basel besichtigen und vieles mehr…</li>
+    <li>Je nach Anzahl der Organistinnen und Organisten organisiere ich Improvisationsunterricht und Übezeiten, sobald mehr Anmeldungen da sind!</li>
+  </ul>
+
+  <h2>Für Organistinnen und Organisten</h2>
+  <p>Zwei wunderbare Orgeln freuen sich darauf, Renaissancemusik zu spielen:</p>
+  <ul>
+    <li><a href="https://orgel-verzeichnis.de/rheinfelden-reformierte-kirche/" target="_blank" rel="noopener">Metzler-Orgel (1973)</a> in der Reformierten Kirche</li>
+    <li><a href="https://docs.google.com/document/d/1r-3-gpDvuIlGgWlwheoGHLBzPamEtbyZ/edit?usp=drivesdk" target="_blank" rel="noopener">Eine Kopie (1984) der Tischorgel aus Chur (CH), um 1580</a></li>
+  </ul>
+
+  <h2>Verpflegung</h2>
+  <p>Draussen wird es kalt sein, aber die Kirche ist geheizt (!) und es gibt dreimal täglich warme Mahlzeiten. Sehr liebe Menschen aus der Kirchgemeinde kochen täglich für uns; das Essen wird separat bezahlt. Das ist, glaube ich, die günstigste und bequemste Lösung für alle. Die Zutaten könnten wir sogar in Deutschland einkaufen!</p>
+  <ul>
+    <li>Wenn wir Frühstück, Mittag- und Abendessen gemeinsam einnehmen, rechne ich für die ganze Woche mit insgesamt 200–250 € / CHF.</li>
+    <li>Bitte teilen Sie mir Ihre Essensvorlieben und Unverträglichkeiten mit!</li>
+  </ul>
+
+  <h2>Orte</h2>
+  <div class="addr">
+    <div><b>Kursort: Reformierte Kirche</b>Zürcherstrasse 1<br>4310 Rheinfelden<br>Schweiz</div>
+    <div><b>Mahlzeiten: Kirchgemeindehaus</b>Roberstenstrasse 22<br>4310 Rheinfelden<br>Schweiz</div>
+  </div>
+  <div class="note">
+    <p><strong>Tipp zur Unterkunft:</strong> Suchen Sie eine Unterkunft im deutschen Rheinfelden. Dann gehen Sie einfach über die Brücke auf die Schweizer Seite und sind in 4 Minuten in der Kirche!</p>
+  </div>
+
+  <h2>Kursgebühren</h2>
+  <ul>
+    <li><strong>Aktive Teilnahme:</strong> 270 € (voller Preis) / 180 € (Studierende)</li>
+    <li><strong>Passive Teilnahme:</strong> sprechen Sie mich an! Individuelle Gebühren.</li>
+    <li>Die Zahl der aktiven Teilnehmenden ist auf <strong>12</strong> begrenzt.</li>
+  </ul>
+  <p>Falls jemand zu viele Goldbarren oder einen reichen Onkel hat, sagen Sie es mir: Dann wird es für alle günstiger, oder wir können damit das Essen bezahlen!</p>
+
+  <h2>Fragen?</h2>
+  <p>Fragen Sie mich gerne! Schreiben Sie mir eine E-Mail an <a href="mailto:vaclavhrebec2000@gmail.com">vaclavhrebec2000@gmail.com</a> oder eine Nachricht über WhatsApp, Signal, Telegram oder Threema: <a href="tel:+41772809667">+41 77 280 96 67</a>.</p>
+
+  <p class="cta"><a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Zur Kursanmeldung</a></p>
+  </div>
+
   <footer>Václav Hřebec · <a href="../">vaclavhrebec.github.io</a></footer>
 </div>
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('lang'), saved=null;
+  try{ saved=localStorage.getItem('rf27lang'); }catch(e){}
+  var lang=(q==='de'||q==='en')?q:(saved||((navigator.language||'').toLowerCase().indexOf('de')===0?'de':'en'));
+  function set(l){
+    document.documentElement.lang=l;
+    document.querySelectorAll('.langs button').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.set===l); });
+    document.title = l==='de' ? 'Kurs für Renaissancemusik Rheinfelden 2027 · Václav Hřebec' : 'Renaissance Music Course Rheinfelden 2027 · Václav Hřebec';
+  }
+  set(lang);
+  document.querySelectorAll('.langs button').forEach(function(b){
+    b.addEventListener('click', function(){ set(b.dataset.set); try{ localStorage.setItem('rf27lang', b.dataset.set); }catch(e){} });
+  });
+})();
+</script>
 </body>
 </html>
