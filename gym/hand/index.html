@@ -101,6 +101,13 @@
   .teach b { font-family: "EB Garamond", Georgia, serif; font-size: 1.25rem; }
   .teach .bar { height: 4px; border-radius: 2px; background: var(--soft); flex: 1 1 100%; overflow: hidden; }
   .teach .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .1s; }
+  .teach { padding: 14px 16px; }
+  .teach .step { display: block; font-size: .85rem; color: var(--muted); letter-spacing: .03em; margin-bottom: 2px; }
+  .teach b { font-size: 1.6rem; }
+  .teach .sub { display: block; margin-top: 6px; font-size: .95rem; color: var(--muted); min-height: 1.5em; }
+  .teach .sub.ok { color: var(--accent); font-weight: 500; }
+  .teach .bar { height: 8px; border-radius: 4px; }
+  .teach .bar i.full { background: #3f8a52; }
 
   .how { margin-top: 28px; display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px 28px; }
   .how h2 { font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: 1.35rem; margin: 0 0 .3rem; }
@@ -145,9 +152,11 @@
   </section>
 
   <div class="teach" id="teach" hidden>
-    <p id="teachText"></p>
-    <button class="btn" id="teachSkip">Skip this one</button>
-    <button class="btn" id="teachStop">Stop teaching</button>
+    <p><span id="teachText"></span><span class="sub" id="teachSub" role="status"></span></p>
+    <button class="btn" id="teachBack">Back</button>
+    <button class="btn" id="teachAgain">Again</button>
+    <button class="btn" id="teachSkip">Skip</button>
+    <button class="btn" id="teachStop">Finish</button>
     <div class="bar"><i id="teachBar"></i></div>
   </div>
 
@@ -290,15 +299,37 @@ try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}'))
 if (!prefs.camPicked) prefs.cam = 'environment';  // the back camera, unless the person chose the front one themselves
 let mirrored = false;
 const savePrefs = () => { try { localStorage.setItem('manus:v1', JSON.stringify(prefs)); } catch (e) {} };
+const volGain = () => Math.pow(prefs.vol / 100, 1.3) * 0.9;
 function audio(){
   if (!ctx) {
     const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null;
-    ctx = new AC(); master = ctx.createGain(); master.gain.value = prefs.vol / 100 * 0.5;
+    ctx = new AC(); master = ctx.createGain(); master.gain.value = volGain();
     const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
   }
-  if (ctx.state === 'suspended') ctx.resume();
+  // 'suspended', or 'interrupted' after the iPhone starts the camera: wake it up again
+  if (ctx.state !== 'running') ctx.resume().catch(() => {});
   return ctx;
 }
+/* On an iPhone, sound from the browser is silenced by the ring/silent switch unless the page plays as media.
+   A silent looping <audio> element, started by a tap, moves the page into the media category. */
+let keepAlive = null;
+function silentWav(){
+  const n = 800, b = new ArrayBuffer(44 + n), v = new DataView(b), w = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  w(0, 'RIFF'); v.setUint32(4, 36 + n, true); w(8, 'WAVEfmt '); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, 8000, true); v.setUint32(28, 8000, true); v.setUint16(32, 1, true); v.setUint16(34, 8, true); w(36, 'data'); v.setUint32(40, n, true);
+  for (let i = 0; i < n; i++) v.setUint8(44 + i, 128);
+  return URL.createObjectURL(new Blob([b], {type: 'audio/wav'}));
+}
+function unlockSound(){
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  if (!keepAlive) { keepAlive = new Audio(silentWav()); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); }
+  if (keepAlive.paused) keepAlive.play().catch(() => {});
+  const c = audio(); if (!c) return;
+  // a tiny silent sound, played inside the tap, opens the audio on every browser
+  const src = c.createBufferSource(); src.buffer = c.createBuffer(1, 1, 22050); src.connect(c.destination); src.start(0);
+}
+['pointerdown', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, unlockSound, {passive: true}));
+document.addEventListener('visibilitychange', () => { if (!document.hidden && ctx && ctx.state !== 'running') ctx.resume().catch(() => {}); });
 let organWave = null;
 function makeVoice(){
   const c = audio(); if (!c) return null;
@@ -431,8 +462,8 @@ function setPos(side, pos){
 /* a place has to hold for a few frames before it sounds, so passing over a joint does not */
 function feed(side, P){
   const h = hands[side];
+  if (teach.on) { if (P && side === 0) teachFrame(P); if (h.pos >= 0) setPos(side, -1); h.cand = -1; h.n = 0; return; }
   const pos = P ? classify(P, h.pos >= 0) : -1;
-  if (teach.on && P) teachFrame(P, pos);
   if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
   if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
 }
@@ -464,6 +495,7 @@ async function startCam(){
     video.classList.toggle('mirror', mirrored);
     await lm;
     running = true; $('#hint').hidden = true; status('');
+    audio();
     $('#start').classList.add('on'); $('#start span').textContent = 'Stop the camera';
     requestAnimationFrame(loop);
   } catch (e) {
@@ -521,43 +553,73 @@ function draw(got, W, H){
 }
 function status(t){ $('#status').textContent = t; }
 
-/* ---------- teaching the app your hand ---------- */
-const teach = {on: false, i: 0, buf: [], data: {}};
-function loadTemplates(){ try { const t = JSON.parse(localStorage.getItem('manus:v1:hand') || 'null'); return t && typeof t === 'object' ? t : null; } catch (e) { return null; } }
+/* ---------- teaching the app your hand ----------
+   One place at a time, at the player's pace: the place is named and sounded, the player shows it and holds it
+   still for a moment and a half, the app confirms it, waits, and only then asks for the next place.
+   A position that still looks like the one just learned is not taken for the next place. */
+const HOLD_MS = 1500, PAUSE_MS = 1600, STILL = 0.02, SAME = 0.03;
+const teach = {on: false, i: 0, buf: [], t0: 0, data: {}, phase: 'show', prev: null, timer: 0};
+const HAND_KEY = 'manus:v2:hand';   // v2: hands taught with the old, hurried teaching are not used any more
+function loadTemplates(){ try { const t = JSON.parse(localStorage.getItem('manus:v2:hand') || 'null'); return t && typeof t === 'object' && Object.keys(t).length ? t : null; } catch (e) { return null; } }
 function markTeach(){ figs.forEach(f => f.items.forEach((el, k) => el.classList.toggle('teach', teach.on && k === teach.i))); }
+const sqd = (a, b) => { let d = 0; for (let j = 0; j < a.length; j++) d += (a[j] - b[j]) ** 2; return d; };
+const meanOf = A => A[0].map((_, j) => A.reduce((t, v) => t + v[j], 0) / A.length);
+const sub = (t, ok) => { const e = $('#teachSub'); e.textContent = t; e.classList.toggle('ok', !!ok); };
+const bar = (x, full) => { const e = $('#teachBar'); e.style.width = Math.round(x * 100) + '%'; e.classList.toggle('full', !!full); };
+function sayNote(i, ms){ noteOn(2, midiOf(i)); setTimeout(() => noteOff(2), ms); }
 function teachShow(){
+  clearTimeout(teach.timer);
   const i = teach.i, p = POS[i];
-  $('#teachText').innerHTML = (i + 1) + ' of 20 · Show <b>' + p.k + ' ' + p.syl.replace('fa ♮ mi', 'fa / mi') + '</b>: ' +
-    (p.by ? 'touch the ' + p.where + ' with your curled index finger' : 'touch the ' + p.where + ' with your thumb') + ', and hold it still.';
-  $('#teachBar').style.width = '0%'; teach.buf = []; markTeach();
+  $('#teachText').innerHTML = '<span class="step">Place ' + (i + 1) + ' of 20</span>Show <b>' + nameOf(i) + ' ' + sylOf(i) + '</b><br>' +
+    (p.back ? 'Curl the middle finger and touch its nail with your thumb' :
+     p.by ? 'Touch the ' + p.where + ' with your curled index finger' : 'Touch the ' + p.where + ' with your thumb') + '.';
+  sub('Take your time. When you are there, hold still until the bar is full.');
+  bar(0); teach.buf = []; teach.phase = 'show'; markTeach();
+  $('#teachBack').disabled = i === 0;
+  sayNote(i, 500);
 }
 function teachStart(){
   if (!running) { status('Start the camera first, then teach the app your hand.'); return; }
-  teach.on = true; teach.i = 0; teach.data = {}; $('#teach').hidden = false; teachShow();
+  teach.on = true; teach.i = 0; teach.data = {}; teach.prev = null; $('#teach').hidden = false; status('');
+  silenceAll(); teachShow();
 }
 function teachNext(){
   teach.i++;
   if (teach.i >= POS.length) teachEnd(true); else teachShow();
 }
 function teachEnd(save){
+  clearTimeout(teach.timer);
   teach.on = false; $('#teach').hidden = true; markTeach();
   if (save && Object.keys(teach.data).length) {
-    templates = teach.data;
-    try { localStorage.setItem('manus:v1:hand', JSON.stringify(templates)); } catch (e) {}
+    templates = Object.assign({}, templates || {}, teach.data);
+    try { localStorage.setItem(HAND_KEY, JSON.stringify(templates)); } catch (e) {}
     status('Your hand is learned: ' + Object.keys(templates).length + ' of 20 places.');
   }
   $('#forget').hidden = !templates;
 }
-function teachFrame(P, pos){
-  // record once the hand is touching something and holds still
-  const s = scaleOf(P), Q = places(P);
+function teachFrame(P){
+  if (teach.phase !== 'show') return;             // confirmed: waiting before the next place
+  const now = performance.now(), s = scaleOf(P), Q = places(P);
   const near = Math.min(...Q.slice(3).map(q => dist(P[4], q)), ...Q.slice(0, 3).map(q => dist(P[8], q))) / s;
-  if (near > 0.5) { teach.buf = []; $('#teachBar').style.width = '0%'; return; }
-  const f = features(P), last = teach.buf[teach.buf.length - 1];
-  if (last) { let d = 0; for (let j = 0; j < f.length; j++) d += (f[j] - last[j]) ** 2; if (d > 0.02) teach.buf = []; }
+  if (near > 0.5) { if (teach.buf.length) sub('Take your time. When you are there, hold still until the bar is full.'); teach.buf = []; bar(0); return; }
+  const f = features(P);
+  if (teach.prev && sqd(f, teach.prev) < SAME) {
+    teach.buf = []; bar(0); sub('This still looks like ' + nameOf(teach.i - 1) + '. Move to ' + nameOf(teach.i) + '.'); return;
+  }
+  const last = teach.buf[teach.buf.length - 1];
+  if (last && sqd(f, last) > STILL) teach.buf = [];
+  if (!teach.buf.length) { teach.t0 = now; sub('Hold still…'); }
   teach.buf.push(f);
-  $('#teachBar').style.width = Math.min(100, teach.buf.length / 14 * 100) + '%';
-  if (teach.buf.length >= 14) { teach.data[teach.i] = teach.buf.filter((_, k) => k % 2 === 0); noteOn(2, midiOf(teach.i)); setTimeout(() => noteOff(2), 250); teachNext(); }
+  const x = (now - teach.t0) / HOLD_MS; bar(Math.min(1, x));
+  if (x >= 1) {
+    const i = teach.i;
+    teach.data[i] = teach.buf.filter((_, k) => k % 3 === 0);
+    teach.prev = meanOf(teach.buf);
+    teach.phase = 'done'; bar(1, true);
+    sub('✓ Got it: ' + nameOf(i) + ' ' + sylOf(i) + '. Now let go' + (i < 19 ? ' and get ready for the next place.' : '.'), true);
+    sayNote(i, 700);
+    teach.timer = setTimeout(teachNext, PAUSE_MS);
+  }
 }
 
 /* ---------- controls ---------- */
@@ -578,12 +640,14 @@ seg('b', 'bfa', v => v === 'fa', () => { silenceAll(); buildHands(); gamut(); })
 seg('oct', 'oct', Number, silenceAll);
 seg('snd', 'snd', String, silenceAll);
 $('#vol').value = prefs.vol;
-$('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = prefs.vol / 100 * 0.5; });
+$('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = volGain(); });
 $('#start').addEventListener('click', () => { audio(); running ? stopCam() : startCam(); });
 $('#teachBtn').addEventListener('click', teachStart);
-$('#teachSkip').addEventListener('click', teachNext);
+$('#teachSkip').addEventListener('click', () => { teach.prev = null; teachNext(); });
+$('#teachAgain').addEventListener('click', () => { delete teach.data[teach.i]; teach.prev = null; teachShow(); });
+$('#teachBack').addEventListener('click', () => { if (teach.i > 0) { teach.i--; delete teach.data[teach.i]; teach.prev = null; teachShow(); } });
 $('#teachStop').addEventListener('click', () => teachEnd(true));
-$('#forget').addEventListener('click', () => { templates = null; try { localStorage.removeItem('manus:v1:hand'); } catch (e) {} $('#forget').hidden = true; status('Back to the average hand.'); });
+$('#forget').addEventListener('click', () => { templates = null; try { localStorage.removeItem(HAND_KEY); localStorage.removeItem('manus:v1:hand'); } catch (e) {} $('#forget').hidden = true; status('Back to the average hand.'); });
 $('#forget').hidden = !templates;
 function applyHands(){
   $('#app').classList.toggle('two', prefs.hands === 2);
