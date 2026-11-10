@@ -921,7 +921,7 @@ const defaultDoc = () => ({
 let doc = defaultDoc();
 const ui = {
   sel: null, caret: 0, inDur: 'B', inRest: false, hover: null, playing: -1,
-  size: window.innerWidth < 640 ? 11 : 16, spacing: 1, vspacing: 1, longaUp: false, planus: false, fractus: false, taleaView: 'mensural', vw: 'white', talea: null, cb: false, edit: false,
+  size: window.innerWidth < 640 ? 11 : 16, spacing: 0.25, vspacing: 0.3, longaUp: false, planus: false, fractus: false, taleaView: 'mensural', vw: 'white', talea: null, cb: false, edit: false,
   beatHand: true, beatPend: false, beatTick: false, tempus: 'C', cut: false, unit: 'S', tempo: 60, ref: 440, vol: 70, reg: 'custom', bright: 50, room: 40, atk: 120, rel: 150, chiff: 7, ens: 0.3, wind: 10, scoop: 5, draw: [100, 71, 55, 48, 37, 22, 12, 8, 0, 0, 0, 0], audition: true, loop: false, metro: false, setOpen: false, micFlex: true, micPhones: false, micNotate: true, micDia: false, dark: true, real: true, micLag: 0, micCal: null
 };
 let lay = null;          /* last computed layout, used for hit testing */
@@ -1017,11 +1017,12 @@ function loadAll(){
     const p = stored.prefs;
     if (DUR[p.inDur]) ui.inDur = p.inDur;
     if (p.size >= 5 && p.size <= 26) ui.size = p.size;
-    if (p.spacing >= 0.1 && p.spacing <= 2.5) ui.spacing = p.spacing;
+    /* the old defaults (1) were too airy: a page left at them takes the new, tighter ones */
+    if (p.spacing >= 0.1 && p.spacing <= 2.5 && p.spacing !== 1) ui.spacing = p.spacing;
     if (typeof p.planus === 'boolean') ui.planus = p.planus;
     if (typeof p.fractus === 'boolean') ui.fractus = p.fractus;
     if (p.taleaView === 'chant' || p.taleaView === 'mensural') ui.taleaView = p.taleaView;
-    if (p.vspacing >= 0.2 && p.vspacing <= 2) ui.vspacing = p.vspacing;
+    if (p.vspacing >= 0.2 && p.vspacing <= 2 && p.vspacing !== 1) ui.vspacing = p.vspacing;
     if (DUR[p.unit]) ui.unit = p.unit;
     else if (({4:'B', 2:'S', 1:'M'})[p.unit]) ui.unit = ({4:'B', 2:'S', 1:'M'})[p.unit];
     if (p.tempo >= 10 && p.tempo <= 300) ui.tempo = p.tempo === 67 ? 60 : p.tempo;   /* 67 was the old default */
