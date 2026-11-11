@@ -57,6 +57,7 @@ h1{font-family:"IM Fell Double Pica","IM Fell English",Georgia,serif;font-weight
 .libhint{margin:6px 8px 4px;color:var(--muted);font-style:italic;font-size:14.5px}
 .catitem{display:block;width:100%;text-align:left;padding:10px 10px 8px;margin:0 0 6px;border:1px solid var(--line);background:transparent;border-radius:6px;height:auto;min-height:0;line-height:1.3}
 .catitem:hover:not(:disabled){border-color:var(--text);background:var(--ground)}
+.cfitem.busy{opacity:.55;cursor:progress}
 .catitem .cathead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .catitem .t{font-family:"IM Fell Double Pica","IM Fell English",Georgia,serif;font-size:19px;font-weight:700}
 .catitem .cnt{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:14px;white-space:nowrap}
@@ -959,13 +960,13 @@ function sanitizeDoc(d){
     clef: CLEFS[d.clef] ? (d.lines === 4 && d.clef === 'c5' ? 'c4' : d.clef) : 'c4',
     bflat: !!d.bflat,
     lines: d.lines === 4 ? 4 : 5,
-    ...(Array.isArray(d.stv) && d.stv.some(k => CLEFS[k]) ? {stv: d.stv.filter(k => CLEFS[k]).slice(0, 3)} : {}),
-    notes: d.notes.filter(n => n && DUR[n.d]).slice(0, 3000).map(n => ({
-      d: n.d, r: !!n.r, s: clampStep(Number(n.s) || 26), a: ACC[n.a] ? n.a : '', p: !!n.p, ...(n.fi && ACC[n.a] ? {fi: true} : {}),
+    ...(Array.isArray(d.stv) && d.stv.some(k => CLEFS[k]) ? {stv: d.stv.filter(k => CLEFS[k]).slice(0, 23)} : {}),
+    notes: d.notes.filter(n => n && DUR[n.d]).slice(0, 30000).map(n => ({
+      d: n.d, r: !!n.r, s: clampStep(Number(n.s) || 26), a: ACC[n.a] ? n.a : '', p: !!n.p, ...(n.fi && ACC[n.a] ? {fi: true} : {}), ...(n.k ? {k: true} : {}),
       ...(typeof n.l === 'string' && n.l ? {l: n.l.slice(0, 40), ...(n.lh ? {lh: true} : {})} : {}),
-      ...(Array.isArray(n.g) ? {g: n.g.slice(0, 4).map(g => ({s: clampStep(Number(g && g.s) || 26), a: g && ACC[g.a] ? g.a : '', ...(g && g.fi && ACC[g.a] ? {fi: true} : {}), d: g && DUR[g.d] ? g.d : 'M', p: !!(g && g.p), r: !!(g && g.r), c: !!(g && g.c), ...(g && typeof g.l === 'string' && g.l ? {l: g.l.slice(0, 40), ...(g.lh ? {lh: true} : {})} : {})}))} : {}),
+      ...(Array.isArray(n.g) ? {g: n.g.slice(0, 24).map(g => ({s: clampStep(Number(g && g.s) || 26), a: g && ACC[g.a] ? g.a : '', ...(g && g.fi && ACC[g.a] ? {fi: true} : {}), ...(g && g.k ? {k: true} : {}), d: g && DUR[g.d] ? g.d : 'M', p: !!(g && g.p), r: !!(g && g.r), c: !!(g && g.c), ...(g && typeof g.l === 'string' && g.l ? {l: g.l.slice(0, 40), ...(g.lh ? {lh: true} : {})} : {})}))} : {}),
       ...(typeof n.u === 'number' && n.u > 0 ? {u: n.u} : {}),
-      ...(Array.isArray(n.ev) ? {ev: n.ev.slice(0, 8).map(e => ({v: Number(e && e.v) > 0 ? Math.min(7, Number(e.v) | 0) : 0, s: clampStep(Number(e && e.s) || 26), a: e && ACC[e.a] ? e.a : '', u: Number(e && e.u) > 0 ? Number(e.u) : 1}))} : {}),
+      ...(Array.isArray(n.ev) ? {ev: n.ev.slice(0, 24).map(e => ({v: Number(e && e.v) > 0 ? Math.min(23, Number(e.v) | 0) : 0, s: clampStep(Number(e && e.s) || 26), a: e && ACC[e.a] ? e.a : '', u: Number(e && e.u) > 0 ? Number(e.u) : 1}))} : {}),
       ...(Array.isArray(n.x) && !n.r ? {x: n.x.slice(0, 3).map(v => ({s: clampStep(Number(v && v.s) || 26), a: v && ACC[v.a] ? v.a : ''}))} : {})
     }))
   };
@@ -1321,9 +1322,9 @@ function viewMode(){
   return ui.fractus ? 'black' : 'white';
 }
 const viewNote = n => ui.vw === 'chant' && !n.r ? {...n, d: 'B', p: false} : n;
-function noteGlyph(d, pos, flip, x, top){
+function noteGlyph(d, pos, flip, x, top, col){
   const y = top + 4 - pos * 0.5;
-  const k = ui.vw === 'chant' ? 'Bk' : ui.vw === 'black' && SOLID[d] ? d + 'k' : d;
+  const k = ui.vw === 'chant' ? 'Bk' : (ui.vw === 'black' || col) && SOLID[d] ? d + 'k' : d;
   if (ui.vw === 'chant') flip = false;
   if (ui.vw === 'chant') return useT(k, x, y, 1, 0.8);
   return flip ? useT(k, x, y, 1, -1) : use(k, x, y);
@@ -1367,7 +1368,7 @@ function drawItem(it, top, exp){
       if (g.r) { s += restGlyph(g.d, it.hx + it.headW / 2, tp); return; }
       s += ledgers(gv.pos, it.hx, it.headW, tp);
       if (g.a && ACC[g.a]) s += g.fi ? fictaMark(g.a, it.hx, it.headW, gv.pos, tp) : use(ACC[g.a].g, it.hx - gw(ACC[g.a].g) - 0.3, tp + 4 - gv.pos * 0.5);
-      s += noteGlyph(g.d, gv.pos, gv.flip, it.hx, tp);
+      s += noteGlyph(g.d, gv.pos, gv.flip, it.hx, tp, g.k);
       if (g.p) s += dotMark(it.hx + it.headW + 0.32, gv.pos, tp);
     });
   } else if (vHidS(0)) {
@@ -1381,7 +1382,7 @@ function drawItem(it, top, exp){
     }
     s += ledgers(it.pos, it.hx, it.headW, top);
     if (n.a) s += n.fi ? fictaMark(n.a, it.hx, it.headW, it.pos, top) : use(ACC[n.a].g, it.hx - it.accW - 0.3, top + 4 - it.pos * 0.5);
-    s += noteGlyph(n.d, it.pos, it.flip, it.hx, top);
+    s += noteGlyph(n.d, it.pos, it.flip, it.hx, top, n.k);
     if (n.p) s += dotMark(it.hx + it.headW + 0.32, it.pos, top);
     if (it.subs) it.subs.forEach(sb => {
       const x = it.xs && it.xs[sb.k]; if (!x || vHidS(sb.k + 1)) return;
@@ -1506,6 +1507,8 @@ let defsMarkup = '';
 /* Choir book: each voice gets its own block, Cantus and Tenor on the left page, Altus and Bassus on the right. */
 /* Voices: each one can be muted (still seen, not heard: sing it from the notation) or hidden (neither seen nor heard: improvise it) */
 const nVoices = () => doc.stv && doc.stv.length ? doc.stv.length + 1 : 1;
+/* the voices' own names when the piece brings them (Superius, Contratenor, Quinta pars …), otherwise the usual ones */
+const voiceNames = (n, cbv) => cbv && cbv.length === n && cbv.every(v => v.name) ? cbv.map(v => v.name) : VNAMES(n);
 const VNAMES = n => n === 2 ? ['Cantus', 'Tenor'] : n === 3 ? ['Cantus', 'Tenor', 'Bassus'] : n === 4 ? ['Cantus', 'Altus', 'Tenor', 'Bassus'] : Array.from({length: n}, (_, i) => 'Voice ' + (i + 1));
 const vHid = v => !!(ui.vm && ui.vm.hide[v]);
 const vHidS = v => !ui.inCB && vHid(v);
@@ -1515,7 +1518,7 @@ function syncVoices(){
   const n = nVoices(), key = n + '|' + (doc.stv || []).join(',') + '|' + doc.notes.length;
   if (!ui.vm || ui.vm.key !== key) ui.vm = {key, mute: [], hide: []};
   if (n < 2) { bar.hidden = true; bar.innerHTML = ''; bar.dataset.h = ''; return; }
-  const names = VNAMES(n);
+  const names = voiceNames(n, doc.cbv);
   bar.hidden = false;
   const html = '<span class="vt">Voices</span>' + names.map((nm, v) => {
     const m = !!ui.vm.mute[v], h = !!ui.vm.hide[v];
@@ -1550,7 +1553,7 @@ function cbMarkup(){
   const qpx = Math.max(180, scoreEl.clientWidth / cols - 16);
   const blockH = Math.max(150, (window.innerHeight * 0.8 - 70 - 28 * rowsN) / rowsN);
   const keep = {doc, sel: ui.sel, hover: ui.hover, playing: ui.playing, edit: ui.edit};
-  const names = VNAMES(keep.doc.cbv.length);
+  const names = voiceNames(keep.doc.cbv.length, keep.doc.cbv);
   const cbv = keep.doc.cbv, ncol = keep.doc.notes.length;
   let html = '';
   scoreEl.classList.toggle('cb1', narrow);
@@ -3933,13 +3936,41 @@ const LUTHERAN = [
     ]});
   LIBRARY.find(g => g.group === 'Cantus fractus').items.forEach(x => { x.fr = true; });
 })();
+/* The Josquin Research Project (josquin.stanford.edu): 1,381 pieces from about 1420 to 1540, in all their voices.
+   Too much to carry in this page, so it comes in three steps, each fetched only when it is opened and kept offline
+   by the service worker afterwards: jrp/index.json (the composers), jrp/c/<code>.json (one composer's works, with a
+   short preview of each), jrp/p/<id>.json (the whole piece). Converted from the JRP Humdrum files, CC BY-NC 4.0. */
+const JRP_BASE = 'jrp/';
+LIBRARY.push({group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and twenty more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1381,
+  pv: {title: 'Kyrie (Josquin, Missa Pange lingua)', c: 'c1', t: 'O', b: false, n: 'rB. rB. 30S 30S 31S 30B 29M 32M 33M 35S 34Sm 33Sm 34M. 35Sm 36M 37M. 36Sm 35S 34M 35M. 34Sm 33M 32M 31M 30Sm 29Sm 30S rS'}});
+const jrpCache = {};
+function jrpFetch(path){
+  if (!jrpCache[path]) jrpCache[path] = fetch(JRP_BASE + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .catch(e => { delete jrpCache[path]; throw e; });
+  return jrpCache[path];
+}
+/* open a lazy category: fill it in, then draw the library again if it is still showing that category */
+function jrpOpen(g){
+  if (g.loaded || g.loading) return;
+  g.loading = true; g.failed = false;
+  jrpFetch(g.lazy).then(data => {
+    if (g.lazy === 'index.json') g.subs = data.map(c => ({group: c.group, note: c.note, lazy: 'c/' + c.code + '.json', count: c.count, pv: c.first}));
+    else g.subs = data.subs;
+    g.loaded = true;
+  }).catch(() => { g.failed = true; }).finally(() => {
+    g.loading = false;
+    if (!$('#library').hidden && libPath.length && libNode(libPath) === g) renderLibrary();
+  });
+}
+/* how long a written value lasts, in minims: a dot adds half, black notes (coloration) last two thirds */
+const tokLen = n => DUR[n.d].m * (n.p ? 1.5 : 1) * (n.k ? 2 / 3 : 1);
 function parseTokens(str){
   const out = []; let prev = 26;
   str.trim().split(/\s+/).forEach(tok => {
-    const m = /^(r)?(\d+)?(\^)?([bn#])?(Mx|Sm|L|B|S|M|F)(\.)?$/.exec(tok);
+    const m = /^(r)?(\d+)?(\^)?([bn#])?(Mx|Sm|L|B|S|M|F)(k)?(\.)?$/.exec(tok);
     if (!m) throw new Error('bad token ' + tok);
     const s = m[2] ? Number(m[2]) : prev;
-    out.push({d: m[5], r: !!m[1], s, a: m[1] ? '' : (m[4] || ''), p: !!m[6], ...(m[3] && m[4] && !m[1] ? {fi: true} : {})});
+    out.push({d: m[5], r: !!m[1], s, a: m[1] ? '' : (m[4] || ''), p: !!m[7], ...(m[6] ? {k: true} : {}), ...(m[3] && m[4] && !m[1] ? {fi: true} : {})});
     if (!m[1]) prev = s;
   });
   return out;
@@ -3961,7 +3992,7 @@ function withExtras(item, notes){
 /* a piece in several voices, each with its own rhythm: the voices are laid on one common time line, a column for every moment
    at which any voice begins a note (or rest); each column keeps, for every voice, the value that begins there or the one held over it */
 function gridNotes(item){
-  const vs = item.poly.map(v => { let t = 0; return parseTokens(v.n).map(n => { const u = DUR[n.d].m * (n.p ? 1.5 : 1), e = {n, t0: t, u}; t += u; return e; }); });
+  const vs = item.poly.map(v => { let t = 0; return parseTokens(v.n).map(n => { const u = tokLen(n), e = {n, t0: t, u}; t += u; return e; }); });
   const ends = vs.map(v => v.length ? v[v.length - 1].t0 + v[v.length - 1].u : 0), end = Math.max(...ends);
   const times = [...new Set(vs.flatMap(v => v.map(e => e.t0)))].sort((a, b) => a - b);
   const sylAts = item.poly.map((pv, vi) => { const ly = vi === 0 ? (item.lyr || pv.lyr) : pv.lyr, m = new Map(); if (!ly) return m; const syl = ly.trim().split(/\s+/); let k = 0; vs[vi].forEach(e => { if (!e.n.r && k < syl.length) { const sy = syl[k++]; if (sy !== '.') m.set(e.t0, sy); } }); return m; });
@@ -3975,7 +4006,7 @@ function gridNotes(item){
       const e = v[ptr[vi]], held = e.t0 < T - 1e-9;
       if (!e.n.r) last[vi] = e.n.s;
       const gl = !held && vi > 0 ? sylAts[vi].get(e.t0) : null;
-      const go = {s: e.n.r ? last[vi] : e.n.s, a: e.n.a || '', ...(e.n.fi ? {fi: true} : {}), d: e.n.d, p: !!e.n.p, r: !!e.n.r, c: held}; if (gl) lyrSet(go, gl);
+      const go = {s: e.n.r ? last[vi] : e.n.s, a: e.n.a || '', ...(e.n.fi ? {fi: true} : {}), ...(e.n.k ? {k: true} : {}), d: e.n.d, p: !!e.n.p, r: !!e.n.r, c: held}; if (gl) lyrSet(go, gl);
       g.push(go);
       if (!held && !e.n.r) ev.push({v: vi, s: e.n.s, a: e.n.a || '', u: e.u});
     });
@@ -3994,9 +4025,9 @@ function itemNotes(item){
 /* the voices one by one, for the choir book: their own notes, and for each moment of the score the note that sounds there */
 function cbData(item, notes){
   if (item.poly) {
-    const vs = item.poly.map(v => { let t = 0; return parseTokens(v.n).map(n => { const e = {n, t0: t}; t += DUR[n.d].m * (n.p ? 1.5 : 1); return e; }); });
+    const vs = item.poly.map(v => { let t = 0; return parseTokens(v.n).map(n => { const e = {n, t0: t}; t += tokLen(n); return e; }); });
     const times = [...new Set(vs.flatMap(v => v.map(e => e.t0)))].sort((a, b) => a - b);
-    const out = item.poly.map((v, k) => ({clef: v.c, notes: vs[k].map(e => e.n), at: []}));
+    const out = item.poly.map((v, k) => ({clef: v.c, notes: vs[k].map(e => e.n), at: [], ...(v.nm ? {name: v.nm} : {})}));
     item.poly.forEach((v, k) => { const ly = k === 0 ? (item.lyr || v.lyr) : v.lyr; if (ly) withExtras({lyr: ly}, out[k].notes); });
     times.forEach(T => vs.forEach((v, k) => { let j = 0; while (j + 1 < v.length && v[j + 1].t0 <= T + 1e-9) j++; out[k].at.push(j); }));
     return out;
@@ -4035,7 +4066,7 @@ function previewSVG0(item){
     if (n.a && n.fi) o += fictaMark(n.a, x, 1.3, pos, top);
     else if (n.a) { const aw = gw(ACC[n.a].g); o += use(ACC[n.a].g, x, top + 4 - pos * 0.5); x += aw + 0.3; }
     o += ledgers(pos, x, 1.3, top);
-    o += noteGlyph(n.d, pos, n.d === 'L' && pos <= -3, x, top);
+    o += noteGlyph(n.d, pos, n.d === 'L' && pos <= -3, x, top, n.k);
     if (n.p) { o += dotMark(x + 1.62, pos, top); x += 0.6; }
     x += 2.2;
   });
@@ -4046,8 +4077,8 @@ function previewSVG0(item){
 }
 let libPath = [];    /* the way into the library: indices of the open category, then subcategory, and so on; [] = the list of categories */
 function libNode(path){ let list = LIBRARY, g = null; for (const i of path) { g = list[i]; list = g.subs || []; } return g; }
-function libCount(g){ return (g.items ? g.items.length : 0) + (g.subs ? g.subs.reduce((n, x) => n + libCount(x), 0) : 0); }
-function libFirst(g){ if (g.items && g.items[0]) return g.items[0]; for (const x of (g.subs || [])) { const f = libFirst(x); if (f) return f; } return null; }
+function libCount(g){ if (g.lazy && !g.loaded) return g.count || 0; return (g.items ? g.items.length : 0) + (g.subs ? g.subs.reduce((n, x) => n + libCount(x), 0) : 0); }
+function libFirst(g){ if (g.pv) return g.pv; if (g.items && g.items[0]) return g.items[0]; for (const x of (g.subs || [])) { const f = libFirst(x); if (f) return f; } return null; }
 function catButton(g, path){
   const n = libCount(g), first = libFirst(g);
   return `<button class="catitem" data-p="${path.join('.')}"><span class="cathead"><span class="t">${esc(g.group)}</span>` +
@@ -4066,7 +4097,12 @@ function renderLibrary(){
     html += `<div class="libnav"><button class="libback" type="button"><svg class="chev l" viewBox="0 0 12 12" aria-hidden="true"><path d="M7.8 2 3.6 6 7.8 10 8.9 8.9 5.9 6 8.9 3.1Z"/></svg>${esc(back)}</button></div>` +
             `<h2>${esc(g.group)}</h2><p class="gnote">${esc(g.note)}</p>`;
     const its = g.items || [], subs = g.subs || [];
-    if (!its.length && !subs.length) html += '<p class="libhint">Nothing here yet.</p>';
+    if (g.lazy && !g.loaded) {
+      if (!g.loading && !g.failed) jrpOpen(g);
+      html += g.failed ? '<p class="libhint">This part of the library could not be loaded. Check the internet connection and open it again.</p>'
+                       : '<p class="libhint">Fetching the pieces …</p>';
+      if (g.failed) g.failed = false;
+    } else if (!its.length && !subs.length) html += '<p class="libhint">Nothing here yet.</p>';
     its.forEach((it, ii) => {
       html += `<button class="cfitem" data-p="${libPath.join('.')}" data-i="${ii}"><span class="t">${esc(it.title)}</span>` +
               `<span class="d">${esc(it.desc)}</span><span class="pv">${previewSVG(it)}</span></button>`;
@@ -4091,12 +4127,24 @@ function buildLibrary(){
     const b = e.target.closest('.cfitem');
     if (!b) return;
     const item = libNode(b.dataset.p.split('.').map(Number)).items[Number(b.dataset.i)];
+    if (item.jrp) {
+      /* a piece of the Josquin Research Project: the whole score comes now */
+      if (b.dataset.busy) return;
+      b.dataset.busy = '1'; b.classList.add('busy');
+      jrpFetch('p/' + item.jrp + '.json').then(full => { closeLibrary(false); loadItem(full); })
+        .catch(() => toast('This piece could not be loaded. Check the internet connection and try again.'))
+        .finally(() => { delete b.dataset.busy; b.classList.remove('busy'); });
+      return;
+    }
     closeLibrary(false);
+    loadItem(item);
+  });
+  function loadItem(item){
     mutate(() => { doc = presetDoc(item); ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut; ui.planus = !!item.s && !item.n && !item.poly; ui.fractus = !!item.fr; ui.talea = null; ui.sel = null; ui.caret = doc.notes.length; ui.hover = null; });
     syncSettings();
     toast(`${item.title} loaded. Undo brings back what you had.`);
     scoreEl.focus({preventScroll: true});
-  });
+  }
   lib.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       e.stopPropagation();
