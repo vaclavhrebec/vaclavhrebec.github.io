@@ -1,4 +1,7 @@
-/* FEEDBACK & WISHES — one shared form for the whole Counterpoint Gym.
+/* FEEDBACK & WISHES — one shared form for the whole Counterpoint Gym (and the Ear Trainer).
+   It also adds the closing row at the bottom of every page: Feedback · Share · Support.
+   A page can choose where that row goes with an element [data-foot-slot]; otherwise it is placed
+   before the page's <footer>, or at the end of the page.
    Include on any gym page with:  <script src="…/feedback.js" data-topic="Name of this room" defer></script>
    - On a page with an element [data-feedback-slot], the button goes there.
    - Otherwise it is placed next to the "← back" link in the header.
@@ -146,4 +149,109 @@
   }
   document.querySelectorAll('[data-feedback-open]').forEach(el =>
     el.addEventListener('click', e => { e.preventDefault(); open(el.dataset.topic || pageTopic); }));
+
+  /* ---------- closing row: feedback · share · support ---------- */
+  const EAR = /\/ear\//.test(location.pathname);
+  const SITE = EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
+  const F = {
+    de: { 'Do you find {s} useful?': 'Ist {s} für Sie nützlich?',
+      'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Sagen Sie mir, was ich verbessern kann, teilen Sie es mit Freunden und Kollegen oder unterstützen Sie die Weiterentwicklung.',
+      'Feedback': 'Feedback', 'Share': 'Teilen', 'Support': 'Unterstützen', 'Share this page': 'Diese Seite teilen',
+      'Copy link': 'Link kopieren', 'Link copied.': 'Link kopiert.', 'Email': 'E-Mail', 'More…': 'Mehr …',
+      'counterpoint and improvisation exercises in the browser': 'Übungen zu Kontrapunkt und Improvisation im Browser',
+      'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'Gehörbildung im Browser: Intervalle, Intonation, Vorzeichen, Rhythmus, Akkorde und Skalen' },
+    fr: { 'Do you find {s} useful?': '{s} vous est utile ?',
+      'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Dites-moi ce qu’il faudrait améliorer, partagez-le avec vos amis et collègues, ou soutenez son développement.',
+      'Feedback': 'Remarques', 'Share': 'Partager', 'Support': 'Soutenir', 'Share this page': 'Partager cette page',
+      'Copy link': 'Copier le lien', 'Link copied.': 'Lien copié.', 'Email': 'E-mail', 'More…': 'Plus…',
+      'counterpoint and improvisation exercises in the browser': 'exercices de contrepoint et d’improvisation dans le navigateur',
+      'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'formation de l’oreille dans le navigateur : intervalles, justesse, armures, rythme, accords et gammes' },
+    cs: { 'Do you find {s} useful?': 'Je pro vás {s} užitečný?',
+      'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Napište mi, co zlepšit, sdílejte ho s přáteli a kolegy, nebo podpořte jeho další rozvoj.',
+      'Feedback': 'Připomínky', 'Share': 'Sdílet', 'Support': 'Podpořit', 'Share this page': 'Sdílet tuto stránku',
+      'Copy link': 'Kopírovat odkaz', 'Link copied.': 'Odkaz zkopírován.', 'Email': 'E-mail', 'More…': 'Další…',
+      'counterpoint and improvisation exercises in the browser': 'cvičení kontrapunktu a improvizace v prohlížeči',
+      'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'sluchová výchova v prohlížeči: intervaly, intonace, předznamenání, rytmus, akordy a stupnice' }
+  };
+  const tf = s => { const l = (document.documentElement.lang || 'en').slice(0, 2); return ((F[l] && F[l][s]) || s).replace('{s}', SITE); };
+  const ICON = {
+    pen: '<path d="M3 17.25V21h3.75L17.8 9.94l-3.75-3.75L3 17.25zm17.7-10.2a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>',
+    share: '<path d="M18 16.1c-.76 0-1.44.3-1.96.77L8.9 12.7c.05-.23.1-.46.1-.7s-.05-.47-.1-.7l7.05-4.11A2.99 2.99 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81a3 3 0 1 0 0 4.38l7.12 4.16c-.05.21-.08.43-.08.65A2.92 2.92 0 1 0 18 16.1z"/>',
+    heart: '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>'
+  };
+  const svg = n => `<svg viewBox="0 0 24 24" aria-hidden="true">${ICON[n]}</svg>`;
+  const fcss = `
+  .ft-row{margin:2.6rem auto 1.4rem;max-width:720px;padding:1.6rem 16px 0;border-top:1px solid var(--line,#e4ddd1);text-align:center;
+    font-family:"EB Garamond",Georgia,serif;color:var(--muted,var(--leaf-muted,#6b655c));clear:both}
+  .ft-row .q{font-size:1.25rem;color:var(--fg,var(--text,#1c1a17));margin:0 0 .25rem}
+  .ft-row .s{font-size:1.05rem;margin:0 0 1.1rem;line-height:1.45}
+  .ft-btns{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem}
+  .ft-btns button,.ft-btns a{display:inline-flex;align-items:center;gap:.45rem;font:500 .9rem/1.2 "Inter",system-ui,sans-serif;cursor:pointer;
+    text-decoration:none;border:1px solid var(--line,#d8d0c2);background:transparent;color:var(--fg,var(--text,#1c1a17));border-radius:999px;padding:.5rem 1.05rem}
+  .ft-btns button:hover,.ft-btns a:hover{border-color:var(--accent,#c8102e);color:var(--accent,#c8102e)}
+  .ft-btns svg{width:15px;height:15px;fill:currentColor;opacity:.85}
+  dialog.fb.sh form{gap:.7rem}
+  .sh-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem}
+  .sh-grid a,.sh-grid button{font:500 .92rem "Inter",system-ui,sans-serif;text-align:center;text-decoration:none;cursor:pointer;
+    border:1px solid var(--line,#e4ddd1);border-radius:8px;padding:.6rem .5rem;background:transparent;color:inherit}
+  .sh-grid a:hover,.sh-grid button:hover{border-color:var(--accent,#c8102e);color:var(--accent,#c8102e)}
+  .sh-link{display:flex;gap:.5rem}.sh-link input{flex:1;min-width:0}`;
+  const st2 = document.createElement('style'); st2.textContent = fcss; document.head.appendChild(st2);
+
+  const shareUrl = () => location.origin + location.pathname;
+  const shareText = () => SITE + ' – ' + tf(EAR ? 'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales' : 'counterpoint and improvisation exercises in the browser');
+  const sh = document.createElement('dialog'); sh.className = 'fb sh';
+  document.body.appendChild(sh);
+  function openShare() {
+    const u = shareUrl(), t = shareText(), eu = encodeURIComponent(u), et = encodeURIComponent(t);
+    sh.innerHTML = `<form method="dialog">
+      <button type="button" class="x" aria-label="${tr('Close')}">×</button>
+      <h2>${tf('Share this page')}</h2>
+      <p>${t}</p>
+      <div class="sh-link"><input type="text" readonly value="${u}" aria-label="URL"><button type="button" class="send" data-copy>${tf('Copy link')}</button></div>
+      <div class="sh-grid">
+        <a href="https://wa.me/?text=${et}%20${eu}" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="https://www.facebook.com/sharer/sharer.php?u=${eu}" target="_blank" rel="noopener">Facebook</a>
+        <a href="https://t.me/share/url?url=${eu}&text=${et}" target="_blank" rel="noopener">Telegram</a>
+        <a href="https://x.com/intent/tweet?url=${eu}&text=${et}" target="_blank" rel="noopener">X</a>
+        <a href="https://www.linkedin.com/sharing/share-offsite/?url=${eu}" target="_blank" rel="noopener">LinkedIn</a>
+        <a href="mailto:?subject=${encodeURIComponent(SITE)}&body=${et}%0A${eu}">${tf('Email')}</a>
+        ${navigator.share ? `<button type="button" data-native style="grid-column:1/-1">${tf('More…')}</button>` : ''}
+      </div>
+      <p class="st" role="status" aria-live="polite"></p></form>`;
+    sh.querySelector('.x').onclick = () => sh.close();
+    const inp = sh.querySelector('input'), msg = sh.querySelector('.st');
+    sh.querySelector('[data-copy]').onclick = async () => {
+      try { await navigator.clipboard.writeText(u); } catch (e) { inp.select(); try { document.execCommand('copy'); } catch (_) {} }
+      msg.textContent = tf('Link copied.'); msg.className = 'st ok';
+    };
+    const nat = sh.querySelector('[data-native]');
+    if (nat) nat.onclick = () => navigator.share({ title: SITE, text: t, url: u }).catch(() => {});
+    sh.showModal();
+  }
+  sh.addEventListener('click', e => { if (e.target === sh) sh.close(); });
+
+  function footRow() {
+    if (document.documentElement.classList.contains('embedded') || document.querySelector('.ft-row')) return;
+    const row = document.createElement('section'); row.className = 'ft-row';
+    const draw = () => {
+      row.innerHTML = `<p class="q">${tf('Do you find {s} useful?')}</p>
+        <p class="s">${tf('Tell me what to improve, share it with friends and colleagues, or support its development.')}</p>
+        <div class="ft-btns">
+          <button type="button" data-a="fb">${svg('pen')}${tf('Feedback')}</button>
+          <button type="button" data-a="sh">${svg('share')}${tf('Share')}</button>
+          <a href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener">${svg('heart')}${tf('Support')}</a>
+        </div>`;
+      row.querySelector('[data-a=fb]').onclick = () => open(pageTopic);
+      row.querySelector('[data-a=sh]').onclick = openShare;
+    };
+    draw();
+    new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    const slot = document.querySelector('[data-foot-slot]');
+    const foot = !slot && [...document.querySelectorAll('footer')].pop();
+    if (slot) slot.appendChild(row);
+    else if (foot) foot.parentNode.insertBefore(row, foot);
+    else document.body.appendChild(row);
+  }
+  footRow();
 })();
