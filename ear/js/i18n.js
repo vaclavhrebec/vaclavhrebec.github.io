@@ -2,6 +2,12 @@
    Musical names (intervals, chords, scales, clefs) are kept next to their data in the room files. */
 window.EAR_T = {
 de: {
+  'Today': 'Heute',
+  '{n} exercises': '{n} Übungen', '1 exercise': '1 Übung',
+  'Not practised yet': 'Noch nicht geübt',
+  'Days in a row': 'Tage in Folge',
+  'Suggested for today': 'Vorschlag für heute',
+  'Then sing it': 'Dann singen',
   'Tuning systems': 'Stimmungssysteme',
   'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagoreisch, mitteltönig, Werckmeister, Vallotti, Neidhardt und mehr, mit Cent-Tabellen, Stimmanleitungen und dem Euler-Gitter in 2, 3 und 4 Dimensionen.',
   '17 tunings · listen, compare, sing': '17 Stimmungen · hören, vergleichen, singen',
@@ -107,6 +113,12 @@ de: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Thaats und Ragas erklingen gleichstufig; ein Raga ist ebenso durch seine melodischen Wendungen bestimmt wie durch seine Töne.'
 },
 fr: {
+  'Today': 'Aujourd’hui',
+  '{n} exercises': '{n} exercices', '1 exercise': '1 exercice',
+  'Not practised yet': 'Pas encore d’exercice',
+  'Days in a row': 'Jours d’affilée',
+  'Suggested for today': 'Suggestion du jour',
+  'Then sing it': 'Puis chantez',
   'Tuning systems': 'Systèmes d’accord',
   'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagoricien, mésotonique, Werckmeister, Vallotti, Neidhardt et d’autres, avec tables en cents, méthodes d’accord et le réseau d’Euler en 2, 3 et 4 dimensions.',
   '17 tunings · listen, compare, sing': '17 accords · écouter, comparer, chanter',
@@ -206,6 +218,12 @@ fr: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Les thaats et les ragas sont joués en tempérament égal ; un raga se définit autant par ses tournures mélodiques que par ses notes.'
 },
 cs: {
+  'Today': 'Dnes',
+  '{n} exercises': '{n} cvičení', '1 exercise': '1 cvičení',
+  'Not practised yet': 'Zatím bez cvičení',
+  'Days in a row': 'Dní v řadě',
+  'Suggested for today': 'Návrh na dnešek',
+  'Then sing it': 'Pak to zazpívejte',
   'Tuning systems': 'Ladicí systémy',
   'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagorejské, středotónové, Werckmeister, Vallotti, Neidhardt a další, s tabulkami v centech, návody k ladění a Eulerovou mřížkou ve 2, 3 a 4 rozměrech.',
   '17 tunings · listen, compare, sing': '17 ladění · poslouchat, porovnávat, zpívat',

@@ -36,6 +36,20 @@ window.E = (function () {
   /* ---------- storage (best effort; the page works without it) ---------- */
   E.load = (k, d) => { try { const v = localStorage.getItem('ear.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
   E.save = (k, v) => { try { localStorage.setItem('ear.' + k, JSON.stringify(v)); } catch (e) {} };
+  /* practice days: every answered question marks today; the streak counts days in a row up to today (or yesterday) */
+  const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  E.practised = function () {
+    const days = E.load('days', {}), k = dayKey(new Date());
+    days[k] = (days[k] || 0) + 1;
+    const keys = Object.keys(days).sort(); while (keys.length > 400) delete days[keys.shift()];
+    E.save('days', days);
+  };
+  E.streak = function () {
+    const days = E.load('days', {}), d = new Date();
+    if (!days[dayKey(d)]) d.setDate(d.getDate() - 1);
+    let n = 0; while (days[dayKey(d)]) { n++; d.setDate(d.getDate() - 1); }
+    return {n, today: days[dayKey(new Date())] || 0};
+  };
 
   /* ---------- sound ---------- */
   const A = E.audio = { ctx: null, out: null, live: new Set() };
@@ -205,6 +219,7 @@ window.E = (function () {
       if (ok) { st.sess.ok++; all.ok++; st.sess.streak++; st.sess.best = Math.max(st.sess.best, st.sess.streak); }
       else st.sess.streak = 0;
       E.save('stats.' + spec.id, all);
+      E.practised();
       if (spec.after) spec.after(st.q, ok);
       draw();
       if (ok && pref.autoNext !== false) {
@@ -327,6 +342,21 @@ window.E = (function () {
     if (!E._scrolled) window.scrollTo(0, 0);
   };
   E.hub = function (main) {
+    /* today: the streak, and a room suggested for the day (a different one each day) */
+    const sk = E.streak(), day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), sug = E.rooms[day % E.rooms.length];
+    main.append(h('div', { class: 'today' },
+      h('div', { class: 'tcol' },
+        h('span', { class: 'tl' }, E.t('Today')),
+        h('span', { class: 'tv' }, sk.today ? (sk.today === 1 ? E.t('1 exercise') : E.t('{n} exercises', { n: sk.today })) : E.t('Not practised yet'))),
+      h('div', { class: 'tcol' },
+        h('span', { class: 'tl' }, E.t('Days in a row')),
+        h('span', { class: 'tv' }, String(sk.n))),
+      h('div', { class: 'tcol grow' },
+        h('span', { class: 'tl' }, E.t('Suggested for today')),
+        h('a', { class: 'tv', href: '#' + sug.id }, E.t(sug.title) + ' →')),
+      h('div', { class: 'tcol grow' },
+        h('span', { class: 'tl' }, E.t('Then sing it')),
+        h('a', { class: 'tv', href: '../gym/' }, 'The Ultimate Counterpoint Gym →'))));
     main.append(h('div', { class: 'rooms' }, E.rooms.map(r =>
       h('a', { class: 'card', href: '#' + r.id },
         h('div', { class: 'pic', html: r.icon ? r.icon() : '' }),
@@ -336,7 +366,7 @@ window.E = (function () {
           h('p', null, E.t(r.desc)),
           h('span', { class: 'meta' }, E.t(r.meta, r.metaVars)))))));
     /* a page of its own: the tuning systems and the Euler lattice */
-    main.firstChild.append(h('a', { class: 'card', href: 'tuning/' },
+    main.querySelector('.rooms').append(h('a', { class: 'card', href: 'tuning/' },
       h('div', { class: 'pic', html: '<svg viewBox="0 0 120 96" width="120" height="96" aria-hidden="true"><g fill="none" stroke-width="3" stroke-linecap="round">' +
         Array.from({length: 12}, (_, i) => { const a0 = -Math.PI / 2 + i * Math.PI / 6 + .12, a1 = a0 + Math.PI / 6 - .24, R = 38;
           return '<path d="M' + (60 + R * Math.cos(a0)).toFixed(1) + ' ' + (48 + R * Math.sin(a0)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (60 + R * Math.cos(a1)).toFixed(1) + ' ' + (48 + R * Math.sin(a1)).toFixed(1) + '" stroke="' + (i === 8 ? 'var(--accent)' : 'currentColor') + '" stroke-width="' + (i === 8 ? 5 : 2.5) + '"/>'; }).join('') +

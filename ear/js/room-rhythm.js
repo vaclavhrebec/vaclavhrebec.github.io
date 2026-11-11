@@ -129,6 +129,7 @@
     return out;
   }
   function play(box) {
+    if (E.practised) E.practised();   /* listening to a rhythm counts as practice for the day */
     const A = E.audio; A.stop();
     if (playing) { playing = false; updateBtns(box); clearMarks(); return; }
     playing = true; updateBtns(box);
