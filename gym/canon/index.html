@@ -118,6 +118,16 @@
   details.help summary { cursor: pointer; font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: 1.25rem; }
   .help p, .help li { color: var(--muted); }
   .help ol { padding-left: 1.2rem; }
+  .pats { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: .6rem; }
+  .pat { border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; }
+  .pat h4 { margin: 0 0 .2rem; font: 600 1.05rem/1.2 var(--serif, Georgia, serif); }
+  .pat .ds { font-size: .82rem; color: var(--muted); }
+  .pat svg { display: block; width: 100%; height: auto; margin: .3rem 0; }
+  .pat svg line { stroke: var(--muted); stroke-width: .8; }
+  .pat svg .n { fill: none; stroke: var(--fg); stroke-width: 1.5; }
+  .pat svg .n2 { fill: none; stroke: var(--v1); stroke-width: 1.5; opacity: .85; }
+  .pat svg .lg { stroke: var(--fg); stroke-width: .9; }
+  .pat .acts { display: flex; gap: 6px; flex-wrap: wrap; }
   footer { margin-top: 26px; color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
   footer a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -196,6 +206,12 @@
       <p class="note">Every device needs a little time between the sound leaving it and your voice coming back in. Raise this until the comes enters exactly with the metronome. Or press Clap test and clap along with the eight clicks: it measures the latency for you.</p>
     </section>
   </div>
+
+  <details class="help" id="patterns">
+    <summary>Patterns to practise</summary>
+    <p class="note">Short duxes that make a correct canon with the comes: only consonances against it, no parallel fifths or octaves. Every one was checked note by note. Sing a pattern, then continue it, then leave it and improvise. This is how canons were learnt in the 16th century, from tables of such formulas.</p>
+    <div id="patList" class="pats"></div>
+  </details>
 
   <details class="help">
     <summary>How it works</summary>
@@ -448,6 +464,74 @@ const QUAL = { 1: { 1: 'a minor second', 2: 'a major second' }, 2: { 3: 'a minor
   5: { 8: 'a minor sixth', 9: 'a major sixth' }, 6: { 10: 'a minor seventh', 11: 'a major seventh' } };
 const ivText = ([st, , dia]) => dia ? DIA_IV[dia] + ', in steps of the scale' : IV[st];
 const COLORS = ['--v1', '--v2', '--v3'];
+
+// ---------- patterns to practise: [canon, entry in beats, dux as diatonic steps (C4 = 28)], each checked for consonance ----------
+const PATTERNS = [["u",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["u",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["8u",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["8u",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["8d",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["8d",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["5u",1,[28,27,29,28,30,29,31,30,32,31,33,32]],["5u",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["5d",1,[32,30,31,29,30,28,29,27,28,26,27,25]],["5d",2,[32,31,33,32,34,33,35,34,36,35,37,36]],["4u",1,[32,30,31,29,30,28,29,27,28,26,27,25]],["4u",2,[32,31,33,32,34,33,35,34,36,35,37,36]],["4d",1,[28,27,29,28,30,29,31,30,32,31,33,32]],["4d",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["d2u",1,[28,27,26,27,26,25,26,25,24,25,24,23]],["d2u",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["d2d",1,[28,27,28,29,28,29,30,29,30,31,30,31]],["d2d",2,[28,27,29,28,30,29,31,30,32,31,33,32]],["d3u",1,[31,33,30,32,29,31,28,30,27,29,26,28]],["d3u",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d3d",1,[28,26,29,27,30,28,31,29,32,30,33,31]],["d3d",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d6u",1,[32,33,31,32,30,31,29,30,28,29,27,28]],["d6u",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d6d",1,[32,34,33,35,34,36,35,37,36,38,37,39]],["d6d",2,[28,27,28,29,28,29,30,29,30,31,30,31]],["d7u",1,[28,27,28,29,28,29,30,29,30,31,30,31]],["d7u",2,[28,27,29,28,30,29,31,30,32,31,33,32]],["d7d",1,[28,27,26,27,26,25,26,25,24,25,24,23]],["d7d",2,[28,26,27,25,26,24,25,23,24,22,23,21]]];
+const SCW = [0, 2, 4, 5, 7, 9, 11], LET = 'CDEFGAB';
+const stepToMidi = D => 12 + Math.floor(D / 7) * 12 + SCW[((D % 7) + 7) % 7];
+function comesMidi(pre, D) {
+  const p = PRESETS.find(x => x.id === pre), v = p.v[0];
+  return p.dia ? stepToMidi(D + v[2]) : stepToMidi(D) + v[0];
+}
+function patSVG(pre, d, dux) {
+  /* dux in dark, the comes in red, entering d beats later; a small staff in the soprano clef (c′ on the lowest line) */
+  const W = 300, H = 92, top = 26, gap = 6, x0 = 26, dx = (W - x0 - 10) / (dux.length + d);
+  const y = D => top + 4 * gap - (D - 28) * gap / 2;
+  let o = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
+  for (let i = 0; i < 5; i++) o += `<line x1="4" x2="${W - 4}" y1="${top + i * gap}" y2="${top + i * gap}"/>`;
+  /* the C clef, its centre on the lowest line */
+  const cy = top + 4 * gap;
+  o += `<g fill="var(--fg)"><rect x="7" y="${cy - 9}" width="2.6" height="18"/><rect x="11" y="${cy - 9}" width="1" height="18"/><path d="M12 ${cy} L17 ${cy - 5.5} L17 ${cy - 2} Z M12 ${cy} L17 ${cy + 5.5} L17 ${cy + 2} Z"/></g>`;
+  const p = PRESETS.find(x => x.id === pre);
+  const comesStep = D => p.dia ? D + p.v[0][2] : D + ({0: 0, 12: 7, '-12': -7, 7: 4, '-7': -4, 5: 3, '-5': -3})[p.v[0][0]];
+  const head = (cx, D, cls) => {
+    let s = '';
+    const yy = y(D);
+    for (let L = 26; L >= D; L -= 2) s += `<line class="lg" x1="${cx - 7}" x2="${cx + 7}" y1="${y(L)}" y2="${y(L)}"/>`;
+    for (let L = 38; L <= D; L += 2) s += `<line class="lg" x1="${cx - 7}" x2="${cx + 7}" y1="${y(L)}" y2="${y(L)}"/>`;
+    return s + `<ellipse class="${cls}" cx="${cx}" cy="${yy}" rx="4.6" ry="3.3" transform="rotate(-20 ${cx} ${yy})"/>`;
+  };
+  dux.forEach((D, i) => { o += head(x0 + i * dx + dx * .35, D, 'n'); });
+  dux.forEach((D, i) => {
+    const cx = x0 + (i + d) * dx + dx * .65, cs = comesStep(D), m = comesMidi(pre, D);
+    o += head(cx, cs, 'n2');
+    if (m !== stepToMidi(cs)) o += `<text x="${cx - 13}" y="${y(cs) + 4}" font-size="11" fill="var(--v1)">${m > stepToMidi(cs) ? '♯' : '♭'}</text>`;
+  });
+  /* fit the picture to the notes actually used (an octave-below comes reaches far down) */
+  const all = dux.concat(dux.map(comesStep)), yMin = Math.min(y(Math.max(...all)), top) - 10, yMax = Math.max(y(Math.min(...all)), top + 4 * gap) + 10;
+  return o.replace(`viewBox="0 0 ${W} ${H}"`, `viewBox="0 ${yMin.toFixed(1)} ${W} ${(yMax - yMin).toFixed(1)}"`) + '</svg>';
+}
+let patCtx = null;
+function hearPattern(pre, d, dux) {
+  patCtx = patCtx || new (window.AudioContext || window.webkitAudioContext)();
+  const c = patCtx; if (c.state === 'suspended') c.resume();
+  const beat = 60 / S.bpm, t0 = c.currentTime + .08, ref = S.ref || 440;
+  const f = m => ref * Math.pow(2, (m - 69) / 12);
+  const tone = (m, at, len, g0) => {
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle'; o.frequency.value = f(m);
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(g0, at + .03); g.gain.setValueAtTime(g0, at + len - .06); g.gain.linearRampToValueAtTime(0, at + len);
+    o.connect(g).connect(c.destination); o.start(at); o.stop(at + len + .02);
+  };
+  dux.forEach((D, i) => tone(stepToMidi(D), t0 + i * beat, beat * .96, .16));
+  dux.forEach((D, i) => tone(comesMidi(pre, D), t0 + (i + d) * beat, beat * .96, .12));
+}
+function renderPatterns() {
+  const box = $('patList'); if (!box) return;
+  box.innerHTML = PATTERNS.map(([pre, d, dux], k) => {
+    const p = PRESETS.find(x => x.id === pre);
+    const names = dux.map(D => LET[((D % 7) + 7) % 7]).join(' ');
+    return `<div class="pat"><h4>${p.name}</h4><div class="ds">comes ${d} ${d === 1 ? 'beat' : 'beats'} later · ${p.g.toLowerCase()}</div>${patSVG(pre, d, dux)}<div class="ds">${names}</div>
+      <div class="acts"><button class="b" type="button" data-hear="${k}">Hear it</button><button class="b" type="button" data-use="${k}">Use these settings</button></div></div>`;
+  }).join('');
+  box.querySelectorAll('[data-hear]').forEach(b => b.onclick = () => hearPattern(...PATTERNS[+b.dataset.hear]));
+  box.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
+    const [pre, d] = PATTERNS[+b.dataset.use];
+    S.preset = pre; S.entry = d; save(); syncUI();
+    if (typeof sendConfig === 'function') try { sendConfig(); } catch (e) {}
+    window.scrollTo({top: 0, behavior: 'smooth'});
+  });
+}
 
 // ---------- settings ----------
 const DEF = { start: 'auto', bb: false, preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',
@@ -775,6 +859,7 @@ on('lat', 'change', e => setLat(+e.target.value));
 
 $('yr').textContent = new Date().getFullYear();
 syncUI();
+renderPatterns();
 })();
 </script>
 <script src="../feedback.js" data-topic="Improvising canons" defer></script>
