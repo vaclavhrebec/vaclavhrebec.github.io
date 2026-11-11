@@ -215,7 +215,6 @@
     <div class="group handtools">
       <button class="btn" id="saveHand" hidden title="Save your taught hand as a file, to use it on another device">Save my hand</button>
       <button class="btn" id="loadHand" title="Load a hand saved on another device">Load a hand</button>
-      <button class="btn" id="sendHand" hidden title="Send your taught hand to Václav, anonymously: only 21 points per hand shape, no picture. It helps the app read every hand better">Send my hand to Václav</button>
       <button class="btn" id="forget" hidden>Forget my hand</button>
       <input type="file" id="handFile" accept="application/json,.json" hidden>
     </div>
@@ -226,13 +225,13 @@
       <h2>How to show a note</h2>
       <p>Choose <i>Left</i> or <i>Right</i> under <i>Hand</i>, and hold that hand up with the palm towards the camera. Touch a joint of a finger with the tip of your thumb: the base of each finger, its two middle joints, its tip.</p>
       <p>The three notes on the thumb itself (Γ ut, A re, B mi) you show the other way round: touch the thumb with the tip of your curled index finger.</p>
-      <p><b>Γ ut and e la mi</b> both bring the index tip and the thumb tip together. For Γ ut keep the thumb straight and press the index fingertip down onto the tip of the thumb. For e la mi bend the thumb and press it up into the pad of the index fingertip. For <b>C fa ut</b> keep the index finger straight and touch its base.</p>
+      <p><b>Γ ut and e la mi</b> both bring the index tip and the thumb tip together. For Γ ut keep the thumb straight and press the index fingertip down onto the tip of the thumb. For e la mi bend the thumb and press it up into the pad of the index fingertip. When the hand leaves room for doubt, the app follows the melody and takes the smaller leap: after d la sol re it hears e, after A re it hears Γ ut. For <b>C fa ut</b> keep the index finger straight and touch its base.</p>
       <p>ee la sits on the back of the middle finger: curl it and touch its nail with the thumb.</p>
     </div>
     <div>
       <h2>Two hands</h2>
       <p>Turn the phone sideways, choose <i>Both</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
-      <p>If the app mixes up two places, press <i>Teach my hand</i> and show each position once, or <i>Tricky places</i> to practise the look-alikes. When a single note is read wrongly while you play, turn on <i>Correct a note</i>, keep your hand where it is and tap the right place on the painted hand. The app then knows your hand instead of an average one and remembers it on this device. <i>Send my hand to Václav</i> shares it anonymously (only the positions of 21 points, never a picture), so the app can learn to read every hand better.</p>
+      <p>If the app mixes up two places, press <i>Teach my hand</i> and show each position once, or <i>Tricky places</i> to practise the look-alikes. When a single note is read wrongly while you play, turn on <i>Correct a note</i>, keep your hand where it is and tap the right place on the painted hand. The app then knows your hand instead of an average one and remembers it on this device.</p>
     </div>
     <div>
       <h2>The gamut</h2>
@@ -348,17 +347,29 @@ function nearest(P){
 }
 /* Γ ut or e la mi: in both the index tip meets the thumb tip.
    Γ ut: the thumb stands straight and the curled index finger presses down onto the thumb's tip.
-   e la mi: the thumb bends and presses up into the pad of the index fingertip. */
-function gammaOrE(P){
+   e la mi: the thumb bends and presses up into the pad of the index fingertip.
+   Three things decide, added up (above 0 means Γ ut):
+   1. the shape of the hand, as an average hand shows it;
+   2. the player's own taught hand, when both places were taught: which of the two it looks more like;
+   3. the melody: the note just sung. Of the two, the one nearer to it wins unless the hand clearly says otherwise,
+      so a melody moving above middle C goes up a third to e rather than down to Γ ut. */
+const CONTEXT_MS = 8000;
+function gammaOrE(P, prevMidi){
   const N = normalize(P), di = unit(N[7], N[8]);
   const down = -di.y;                         // 1 when the index tip points straight down towards the wrist
   const thumbUp = thumbStraight(N);           // 1 for a straight thumb
   const over = (N[8].y - N[4].y);             // the index tip lies above (on top of) the thumb tip
-  const score = down * 1.2 + (thumbUp - 0.85) * 4 + over * 1.5 + (straight(N, 5) < 0.6 ? 0.25 : 0);
-  return score > 1.0 ? 0 : 12;
+  let ev = down * 1.2 + (thumbUp - 0.85) * 4 + over * 1.5 + (straight(N, 5) < 0.6 ? 0.25 : 0) - 1.0;
+  if (templates && templates[0] && templates[12]) {
+    const f = featuresN(N), dmin = k => Math.min(...tFeat.filter(t => t.k === k).map(t => { let d = 0; for (let j = 0; j < f.length; j++) d += ((f[j] - t.f[j]) / tStd[j]) ** 2; return d; }));
+    const dG = dmin(0), dE = dmin(12);
+    ev = ev * 0.3 + (dE - dG) / (dE + dG || 1) * 3;
+  }
+  if (prevMidi != null) ev += (Math.abs(POS[12].midi - prevMidi) - Math.abs(POS[0].midi - prevMidi)) / 12 * 1.5;
+  return ev > 0 ? 0 : 12;
 }
 setTemplates(loadTemplates());
-function classify(P, wasOn){
+function classify(P, wasOn, side){
   const s = scaleOf(P), Q = places(P), lim = (wasOn ? LEAVE : ENTER) * s;
   // thumb tip on a finger
   let best = -1, bd = Infinity;
@@ -386,7 +397,7 @@ function classify(P, wasOn){
       const tipSide = dt < dj || d3(P[4], P[t]) < d3(P[4], P[j]) || (bent && (dt < dj * 1.6 || dist(P[t], P[j]) < 0.06 * s));
       if (dt < tipLim && tipSide && dt < td) { td = dt; tp = at; }
     }
-    if (tp >= 0) pos = tp === 12 ? gammaOrE(P) : tp;   // index tip on thumb tip: Γ ut or e, by which presses which
+    if (tp >= 0) pos = tp;   // index tip on thumb tip: Γ ut or e, by which presses which
     // the curled index finger hides the thumb tip near its own base: Γ ut, not C fa ut (C is shown with a straight index finger)
     else if (indexCurled && thumbOn && best <= 4 && dist(P[8], P[4]) < 0.35 * s) pos = 0;
     // 3. any other joint
@@ -406,6 +417,11 @@ function classify(P, wasOn){
   if (tFeat && tFeat.length) {
     const n = nearest(P);
     if (n.pos >= 0 && (templates[pos] || n.d < 1.2)) pos = n.pos;
+  }
+  // Γ ut and e la mi look alike: the hand and the melody decide together
+  if (pos === 0 || pos === 12) {
+    const h = side != null && hands[side];
+    pos = gammaOrE(P, h && h.last >= 0 && performance.now() - h.lastT < CONTEXT_MS ? POS[h.last].midi : null);
   }
   return pos;
 }
@@ -626,7 +642,7 @@ function buildHands(){
 const $ = s => document.querySelector(s);
 
 /* ---------- what each hand shows right now ---------- */
-const hands = [{pos: -1, cand: -1, n: 0, off: 0}, {pos: -1, cand: -1, n: 0, off: 0}];
+const hands = [{pos: -1, cand: -1, n: 0, off: 0, last: -1, lastT: 0}, {pos: -1, cand: -1, n: 0, off: 0, last: -1, lastT: 0}];
 let tapping = [-1, -1];
 function show(side){
   const i = tapping[side] >= 0 ? tapping[side] : hands[side].pos;
@@ -642,6 +658,7 @@ function tapOff(side){ if (tapping[side] < 0) return; tapping[side] = -1; noteOf
 function setPos(side, pos){
   const h = hands[side]; if (h.pos === pos) return;
   h.pos = pos;
+  if (pos >= 0) { h.last = pos; h.lastT = performance.now(); }   // the melody so far, for telling look-alikes apart
   if (pos >= 0) noteOn(side, midiOf(pos)); else noteOff(side);
   show(side);
 }
@@ -650,7 +667,7 @@ function feed(side, P){
   const h = hands[side];
   if (teach.on) { if (P && side === 0) teachFrame(P); if (h.pos >= 0) setPos(side, -1); h.cand = -1; h.n = 0; return; }
   if (P) lastSeen[side] = {P, t: performance.now()};
-  const pos = P ? classify(P, h.pos >= 0) : -1;
+  const pos = P ? classify(P, h.pos >= 0, side) : -1;
   if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
   if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
 }
@@ -860,8 +877,8 @@ function learnTap(i, side){
   return true;
 }
 
-/* ---------- your hand as a file, or sent to Václav ---------- */
-function handTools(){ ['#forget', '#saveHand', '#sendHand'].forEach(id => { $(id).hidden = !templates; }); }
+/* ---------- your hand as a file, to take to another device ---------- */
+function handTools(){ ['#forget', '#saveHand'].forEach(id => { $(id).hidden = !templates; }); }
 function handFile(maxPer){
   const t = {}; for (const k in templates) t[k] = templates[k].slice(-maxPer);
   return {app: 'Guidonian hand', v: 3, made: new Date().toISOString().slice(0, 10), hand: prefs.hands === 2 ? 'both' : prefs.side, places: t};
@@ -881,22 +898,6 @@ function loadHand(file){
     } catch (e) { status('This file is not a saved Guidonian hand.'); }
   };
   r.readAsText(file);
-}
-let sent = false;
-async function sendHand(){
-  if (sent) { status('Your hand has already been sent. Thank you!'); return; }
-  const btn = $('#sendHand'); btn.disabled = true; status('Sending…');
-  try {
-    const r = await fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', {
-      method: 'POST', headers: {'Content-Type': 'application/json', Accept: 'application/json'},
-      body: JSON.stringify({_subject: 'Counterpoint Gym — Guidonian hand data', _template: 'table', _captcha: 'false',
-        About: 'Guidonian hand data (anonymous: 21 points per hand shape, no picture)', Message: JSON.stringify(handFile(6)), Page: location.href})
-    });
-    const j = await r.json().catch(() => ({}));
-    if (r.ok && String(j.success) === 'true') { sent = true; status('Thank you! Your hand helps the app read every hand better.'); }
-    else status('Sorry, it could not be sent. Please try again later.');
-  } catch (e) { status('Sorry, it could not be sent. Please check your connection.'); }
-  btn.disabled = false;
 }
 
 /* ---------- controls ---------- */
@@ -956,7 +957,6 @@ $('#forget').addEventListener('click', () => { setTemplates(null); try { ['manus
 $('#saveHand').addEventListener('click', saveHand);
 $('#loadHand').addEventListener('click', () => $('#handFile').click());
 $('#handFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadHand(f); e.target.value = ''; });
-$('#sendHand').addEventListener('click', sendHand);
 handTools();
 function applyHands(){
   $('#app').classList.toggle('two', prefs.hands === 2);
