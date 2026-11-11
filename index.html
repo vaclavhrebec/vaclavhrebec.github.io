@@ -116,6 +116,18 @@
   .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 
   .links { display: flex; flex-wrap: wrap; gap: .6rem; }
+  .videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 1.4rem; }
+  .video { margin: 0; }
+  .video .yt, .video iframe { display: block; width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 10px; overflow: hidden; background: #000; }
+  .video .yt { position: relative; padding: 0; cursor: pointer; }
+  .video .yt img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+  .video .yt:hover img { transform: scale(1.03); }
+  .video .play { position: absolute; left: 50%; top: 50%; width: 64px; height: 44px; margin: -22px 0 0 -32px; border-radius: 12px; background: rgba(0,0,0,.72); transition: background .2s; }
+  .video .play::after { content: ""; position: absolute; left: 26px; top: 13px; border-style: solid; border-width: 9px 0 9px 15px; border-color: transparent transparent transparent #fff; }
+  .video .yt:hover .play, .video .yt:focus-visible .play { background: var(--accent); }
+  .video figcaption { margin-top: .5rem; font-size: .98rem; line-height: 1.35; }
+  .video figcaption a { color: var(--accent); }
+  .vlabel { display: block; font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .15rem; }
 
   footer { border-top: 1px solid var(--line); padding: 1.5rem 0 3rem; color: var(--muted);
     font-size: .9rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
@@ -424,6 +436,20 @@
       <a class="btn ghost" href="https://youtube.com/@vaclavhrebec">YouTube · @vaclavhrebec</a>
       <a class="btn ghost" href="https://instagram.com/vaclav.hrebec">Instagram · @vaclav.hrebec</a>
     </div>
+    <div class="videos">
+      <figure class="video">
+        <iframe src="https://www.youtube-nocookie.com/embed/videoseries?list=UU_zDL4QhPggHWCl59YUgzVQ&rel=0" title="Latest video on YouTube" loading="lazy"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        <figcaption><span class="vlabel" data-i18n>Latest video</span><a href="https://youtube.com/@vaclavhrebec/videos" data-i18n>All videos on YouTube</a></figcaption>
+      </figure>
+      <figure class="video">
+        <button type="button" class="yt" data-yt="4OJFD__HiYg" aria-label="Play video: Kyrie eleison">
+          <img src="https://i.ytimg.com/vi/4OJFD__HiYg/hqdefault.jpg" alt="" loading="lazy" width="480" height="360">
+          <span class="play" aria-hidden="true"></span>
+        </button>
+        <figcaption><span class="vlabel" data-i18n>Most viewed</span>Kyrie eleison, improvised three-voice polyphony with two Guidonian hands</figcaption>
+      </figure>
+    </div>
   </section>
 
   <section id="contact">
@@ -535,7 +561,7 @@ de: {
   "Photo: Valentin Richter": "Foto: Valentin Richter",
   "Photos": "Fotos",
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Musiktheorie · Improvisation · Contrapunto alla mente · Orgel · Laute",
-  "About": "Über mich", "Agenda": "Termine", "Gallery": "Galerie", "Projects": "Projekte", "Socials": "Soziale Medien",
+  "About": "Über mich", "Agenda": "Termine", "Gallery": "Galerie", "Projects": "Projekte", "Socials": "Soziale Medien", "Most viewed": "Meistgesehen", "Latest video": "Neuestes Video", "All videos on YouTube": "Alle Videos auf YouTube",
   "Upcoming": "Demnächst", "Past": "Rückblick", "New dates coming soon.": "Neue Termine folgen in Kürze.",
   "Light / dark": "Hell / dunkel",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
@@ -610,7 +636,7 @@ cs: {
   "Photo: Valentin Richter": "Foto: Valentin Richter",
   "Photos": "Fotografie",
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Hudební teorie · improvizace · contrapunto alla mente · varhany · loutna",
-  "About": "O mně", "Agenda": "Kalendář", "Gallery": "Galerie", "Projects": "Projekty", "Socials": "Sociální sítě",
+  "About": "O mně", "Agenda": "Kalendář", "Gallery": "Galerie", "Projects": "Projekty", "Socials": "Sociální sítě", "Most viewed": "Nejsledovanější", "Latest video": "Nejnovější video", "All videos on YouTube": "Všechna videa na YouTube",
   "Upcoming": "Nadcházející", "Past": "Proběhlé", "New dates coming soon.": "Nové termíny budou brzy doplněny.",
   "Light / dark": "Světlý / tmavý",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
@@ -714,6 +740,17 @@ cs: {
 })();
 </script>
 <script>
+/* VIDEOS — the player loads only after a click (fast page, no YouTube cookies before that) */
+document.querySelectorAll('.video .yt').forEach(b => b.addEventListener('click', () => {
+  const f = document.createElement('iframe');
+  const src = b.dataset.yt ? 'https://www.youtube-nocookie.com/embed/' + b.dataset.yt : 'https://www.youtube-nocookie.com/embed/videoseries?list=' + b.dataset.list;
+  f.src = src + (src.includes('?') ? '&' : '?') + 'autoplay=1&rel=0';
+  f.title = b.getAttribute('aria-label').replace(/^Play video: /, '');
+  f.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+  f.allowFullscreen = true;
+  b.replaceWith(f);
+}));
+
 /* CONTACT FORM — messages are delivered by FormSubmit (formsubmit.co) to the address below.
    The very first message triggers a one-time activation email from FormSubmit: click "Activate Form". */
 const CONTACT_TO = 'vaclavhrebec2000@gmail.com';
