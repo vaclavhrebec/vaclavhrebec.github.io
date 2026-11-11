@@ -8,7 +8,7 @@
 (function () {
   const TO = 'vaclavhrebec2000@gmail.com';
   const ENDPOINT = 'https://formsubmit.co/ajax/' + TO;
-  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'Ear training', 'Idea for a new room'];
+  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'Idea for a new room'];
   /* translations: the page's <html lang> decides (en, de, fr, cs); topics are always sent in English */
   const L = {
     de: { 'Feedback & wishes': 'Feedback & Wünsche', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Einen Fehler gefunden, fehlt ein Choral, wünschen Sie sich eine neue Übung? Schreiben Sie mir – jede Nachricht hilft dem Projekt zu wachsen.',
@@ -16,19 +16,19 @@
       'Please write a message.': 'Bitte schreiben Sie eine Nachricht.', 'Please check the email address.': 'Bitte prüfen Sie die E-Mail-Adresse.', 'Sending…': 'Wird gesendet …', 'Thank you! Your message has been sent.': 'Vielen Dank! Ihre Nachricht wurde gesendet.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte versuchen Sie es später erneut oder schreiben Sie an ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung oder schreiben Sie an ',
-      'General': 'Allgemein', 'Improvising canons': 'Kanons improvisieren', 'Guidonian hand': 'Guidonische Hand', 'Ear training': 'Gehörbildung', 'Idea for a new room': 'Idee für einen neuen Raum' },
+      'General': 'Allgemein', 'Improvising canons': 'Kanons improvisieren', 'Guidonian hand': 'Guidonische Hand', 'Idea for a new room': 'Idee für einen neuen Raum' },
     fr: { 'Feedback & wishes': 'Remarques et souhaits', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Une erreur, un chant qui manque, l’envie d’un nouvel exercice ? Écrivez-moi – chaque message aide le projet à grandir.',
       'About': 'Sujet', 'Your message': 'Votre message', 'Name (optional)': 'Nom (facultatif)', 'Email (optional, for a reply)': 'E-mail (facultatif, pour une réponse)', 'or write directly:': 'ou directement à :', 'Send': 'Envoyer', 'Close': 'Fermer',
       'Please write a message.': 'Veuillez écrire un message.', 'Please check the email address.': 'Veuillez vérifier l’adresse e-mail.', 'Sending…': 'Envoi…', 'Thank you! Your message has been sent.': 'Merci ! Votre message a bien été envoyé.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Le message n’a pas pu être envoyé. Veuillez réessayer plus tard ou écrire à ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Le message n’a pas pu être envoyé. Veuillez vérifier votre connexion ou écrire à ',
-      'General': 'Général', 'Improvising canons': 'Improviser des canons', 'Guidonian hand': 'Main guidonienne', 'Ear training': 'Formation de l’oreille', 'Idea for a new room': 'Idée pour une nouvelle salle' },
+      'General': 'Général', 'Improvising canons': 'Improviser des canons', 'Guidonian hand': 'Main guidonienne', 'Idea for a new room': 'Idée pour une nouvelle salle' },
     cs: { 'Feedback & wishes': 'Připomínky a přání', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Našli jste chybu, chybí vám chorál, přejete si nové cvičení? Napište mi – každá zpráva pomáhá projektu růst.',
       'About': 'Téma', 'Your message': 'Vaše zpráva', 'Name (optional)': 'Jméno (nepovinné)', 'Email (optional, for a reply)': 'E-mail (nepovinný, pro odpověď)', 'or write directly:': 'nebo přímo na:', 'Send': 'Odeslat', 'Close': 'Zavřít',
       'Please write a message.': 'Napište prosím zprávu.', 'Please check the email address.': 'Zkontrolujte prosím e-mailovou adresu.', 'Sending…': 'Odesílám…', 'Thank you! Your message has been sent.': 'Děkuji! Vaše zpráva byla odeslána.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Zprávu se nepodařilo odeslat. Zkuste to prosím později nebo napište na ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Zprávu se nepodařilo odeslat. Zkontrolujte prosím připojení nebo napište na ',
-      'General': 'Obecné', 'Improvising canons': 'Improvizace kánonů', 'Guidonian hand': 'Guidonská ruka', 'Ear training': 'Sluchová výchova', 'Idea for a new room': 'Nápad na novou místnost' }
+      'General': 'Obecné', 'Improvising canons': 'Improvizace kánonů', 'Guidonian hand': 'Guidonská ruka', 'Idea for a new room': 'Nápad na novou místnost' }
   };
   const tr = s => { const l = (document.documentElement.lang || 'en').slice(0, 2); return (L[l] && L[l][s]) || s; };
   const me = document.currentScript;
@@ -106,7 +106,7 @@
     if (email && !E.email.checkValidity()) { show(tr('Please check the email address.'), 'err'); E.email.focus(); return; }
     btn.disabled = true; show(tr('Sending…'));
     const body = {
-      _subject: (E.topic.value === 'Ear training' ? 'Ear Training — ' : 'Counterpoint Gym — ') + E.topic.value,
+      _subject: (E.topic.value === 'The Ultimate Ear Trainer' ? 'The Ultimate Ear Trainer — ' : 'Counterpoint Gym — ') + E.topic.value,
       _template: 'table', _captcha: 'false',
       About: E.topic.value, Message: msg,
       Name: E.name.value.trim() || '—', Email: email || '—',

@@ -313,7 +313,7 @@ window.E = (function () {
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === E.lang));
     const main = document.getElementById('main');
     main.innerHTML = '';
-    document.title = room ? E.t(room.title) + ' · ' + E.t('Ear Training') : E.t('Ear Training') + ' · Václav Hřebec';
+    document.title = room ? E.t(room.title) + ' · The Ultimate Ear Trainer' : 'The Ultimate Ear Trainer · Václav Hřebec';
     if (!room) { E.hub(main); window.scrollTo(0, 0); return; }
     const box = h('div', { class: 'roombox' });
     main.append(

@@ -2,9 +2,8 @@
    Musical names (intervals, chords, scales, clefs) are kept next to their data in the room files. */
 window.EAR_T = {
 de: {
-  'The ear training is free to use. If it helps your practice, you can support its growth with a small donation.': 'Die Gehörbildung ist kostenlos. Wenn sie Ihrem Üben hilft, können Sie ihre Weiterentwicklung mit einer kleinen Spende unterstützen.',
+  'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer ist kostenlos. Wenn er Ihrem Üben hilft, können Sie seine Weiterentwicklung mit einer kleinen Spende unterstützen.',
   'Support this project ☕': 'Dieses Projekt unterstützen ☕',
-  'Ear Training': 'Gehörbildung',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervalle, Intonation, Vorzeichen, Rhythmus, Akkorde und Skalen: tägliches Training für Musikerinnen und Musiker.',
   'The Ultimate Counterpoint Gym': 'The Ultimate Counterpoint Gym',
   'Light / dark': 'Hell / dunkel',
@@ -86,9 +85,8 @@ de: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Thaats und Ragas erklingen gleichstufig; ein Raga ist ebenso durch seine melodischen Wendungen bestimmt wie durch seine Töne.'
 },
 fr: {
-  'The ear training is free to use. If it helps your practice, you can support its growth with a small donation.': 'La formation de l’oreille est gratuite. Si elle vous aide dans votre pratique, vous pouvez soutenir son développement par un petit don.',
+  'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer est gratuit. S’il vous aide dans votre pratique, vous pouvez soutenir son développement par un petit don.',
   'Support this project ☕': 'Soutenir ce projet ☕',
-  'Ear Training': 'Formation de l’oreille',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervalles, justesse, armures, rythme, accords et gammes : l’entraînement quotidien des musiciens.',
   'The Ultimate Counterpoint Gym': 'The Ultimate Counterpoint Gym',
   'Light / dark': 'Clair / sombre',
@@ -164,9 +162,8 @@ fr: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Les thaats et les ragas sont joués en tempérament égal ; un raga se définit autant par ses tournures mélodiques que par ses notes.'
 },
 cs: {
-  'The ear training is free to use. If it helps your practice, you can support its growth with a small donation.': 'Sluchová výchova je zdarma. Pokud vám pomáhá, můžete její další rozvoj podpořit malým příspěvkem.',
+  'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer je zdarma. Pokud vám pomáhá, můžete jeho další rozvoj podpořit malým příspěvkem.',
   'Support this project ☕': 'Podpořit projekt ☕',
-  'Ear Training': 'Sluchová výchova',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervaly, intonace, předznamenání, rytmus, akordy a stupnice: každodenní trénink pro hudebníky.',
   'The Ultimate Counterpoint Gym': 'The Ultimate Counterpoint Gym',
   'Light / dark': 'Světlý / tmavý',
