@@ -66,6 +66,10 @@
   .about { margin: 2.4rem auto 0; max-width: 64ch; text-align: center; color: var(--muted); font: 1.12rem/1.5 var(--serif); }
   .about .fbtn { font: 500 .9rem var(--sans); margin-top: .9rem; cursor: pointer; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 999px; padding: .5rem 1.2rem; }
   .about .fbtn:hover { background: var(--accent); color: var(--accent-ink); }
+  .support { margin: 2rem auto 0; max-width: 64ch; text-align: center; }
+  .support p { font: 1.12rem/1.5 var(--serif); color: var(--muted); margin: 0 0 1rem; }
+  .support a { display: inline-block; font: 500 .95rem var(--sans); text-decoration: none; color: var(--accent-ink); background: var(--accent); border-radius: 999px; padding: .6rem 1.5rem; }
+  .support a:hover { filter: brightness(1.08); }
 
   /* exercise room */
   .room-head { margin: 1.2rem 0 1.1rem; }
@@ -188,9 +192,12 @@
     <p data-t="Free to use, with no account. Your settings and scores are kept in this browser only.">Free to use, with no account. Your settings and scores are kept in this browser only.</p>
     <button type="button" class="fbtn" data-feedback-open data-topic="Ear training" data-t="Feedback & wishes">Feedback &amp; wishes</button>
   </section>
+  <section class="support">
+    <p data-t="The ear training is free to use. If it helps your practice, you can support its growth with a small donation.">The ear training is free to use. If it helps your practice, you can support its growth with a small donation.</p>
+    <a href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener" data-t="Support this project ☕">Support this project ☕</a>
+  </section>
   <footer>
     <span>© 2026 Václav Hřebec</span>
-    <span><a href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener" data-t="Support this project">Support this project</a></span>
   </footer>
 </div>
 <script src="js/core.js"></script>
