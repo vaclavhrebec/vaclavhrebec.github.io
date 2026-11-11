@@ -147,3 +147,16 @@ print('composers', len(index), 'pieces', sum(c['count'] for c in index), 'MB', r
 print('fails', len(fails))
 for f in fails[:30]:
     print(' ', f)
+
+# a flat list of every piece for the library's search box: [id, title, composer]
+flat = []
+for c in index:
+    d = json.load(open(f"{OUT}/c/{c['code']}.json", encoding='utf-8'))
+    def walk(subs):
+        for g in subs:
+            for it in g.get('items', []):
+                flat.append([it['jrp'], it['title'], c['group']])
+            walk(g.get('subs', []))
+    walk(d['subs'])
+with open(f'{OUT}/search.json', 'w', encoding='utf-8') as fh:
+    json.dump(flat, fh, ensure_ascii=False, separators=(',', ':'))

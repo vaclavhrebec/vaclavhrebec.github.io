@@ -65,6 +65,10 @@ h1{font-family:"IM Fell Double Pica","IM Fell English",Georgia,serif;font-weight
 .library h2{font-family:"IM Fell Double Pica","IM Fell English",Georgia,serif;font-size:17px;font-weight:700;margin:12px 8px 2px}
 .library .gnote{margin:0 8px 6px;color:var(--muted);font-style:italic;font-size:14.5px}
 .libhint{margin:6px 8px 4px;color:var(--muted);font-style:italic;font-size:14.5px}
+.libsearch{display:block;width:calc(100% - 8px);margin:2px 4px 8px;padding:8px 14px;font:inherit;font-size:15px;border:1px solid rgba(127,127,127,.45);border-radius:999px;background:rgba(127,127,127,.12);color:inherit}
+.libsearch::placeholder{color:inherit;opacity:.55}
+.libsearch:focus{outline:2px solid var(--red);outline-offset:1px}
+.cfitem .src{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:2px}
 .catitem{display:block;width:100%;text-align:left;padding:10px 10px 8px;margin:0 0 6px;border:1px solid var(--line);background:transparent;border-radius:6px;height:auto;min-height:0;line-height:1.3}
 .catitem:hover:not(:disabled){border-color:var(--text);background:var(--ground)}
 .cfitem.busy{opacity:.55;cursor:progress}
@@ -1069,6 +1073,11 @@ function loadAll(){
     ui.tempus = fromLink.tempus; ui.cut = !!fromLink.cut; ui.planus = false; ui.fractus = false; ui.talea = null; delete fromLink.tempus; delete fromLink.cut;
     doc = fromLink;
     try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {}
+  } else if (pieceFromAddress() && !pieceFromAddress().jrp) {
+    const item = pieceFromAddress();
+    doc = presetDoc(item);
+    ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut;
+    ui.planus = !!item.s && !item.n && !item.poly; ui.fractus = !!item.fr; ui.talea = null;
   } else {
     /* every time the page opens: a melody chosen at random from the whole library (never the same one twice in a row) */
     const all = [];
@@ -4096,9 +4105,33 @@ function catButton(g, path){
          `<span class="d">${esc(g.note)}</span>` +
          (first ? `<span class="pv">${previewSVG(first)}</span><span class="first">Starts with ${esc(first.title)}</span>` : '') + `</button>`;
 }
+/* search: the built-in library and every title of the Josquin Research Project (its list is fetched on the first search) */
+let libQuery = '', jrpTitles = null;
+const fold = s => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function libSearchResults(q){
+  const words = fold(q).split(/\s+/).filter(Boolean), hit = t => words.every(w => fold(t).includes(w));
+  const out = [];
+  (function walk(list, path){ list.forEach((g, gi) => {
+    (g.items || []).forEach((it, ii) => { if (!it.jrp && hit(it.title + ' ' + g.group)) out.push({p: path.concat(gi).join('.'), i: ii, it, src: g.group}); });
+    if (g.subs && !g.lazy) walk(g.subs, path.concat(gi));
+  }); })(LIBRARY, []);
+  if (jrpTitles) jrpTitles.forEach(([id, title, comp]) => { if (hit(title + ' ' + comp)) out.push({jrp: id, it: {title}, src: 'Josquin Research Project · ' + comp}); });
+  return out;
+}
 function renderLibrary(){
   const lib = $('#library');
-  let html = '';
+  let html = `<input class="libsearch" type="search" placeholder="Search all pieces (title, composer, mass …)" aria-label="Search the library" value="${esc(libQuery)}">`;
+  if (libQuery.trim().length >= 2) {
+    if (!jrpTitles) jrpFetch('search.json').then(d => { jrpTitles = d; if (!$('#library').hidden && libQuery.trim().length >= 2) renderLibrary(); }).catch(() => {});
+    const res = libSearchResults(libQuery.trim());
+    html += res.length ? `<p class="libhint">${res.length > 200 ? 'The first 200 of ' + res.length : res.length} ${res.length === 1 ? 'piece' : 'pieces'}${jrpTitles ? '' : ' (still fetching the Josquin Research Project titles …)'}</p>`
+                       : `<p class="libhint">${jrpTitles ? 'Nothing found.' : 'Searching …'}</p>`;
+    res.slice(0, 200).forEach(r => {
+      html += r.jrp ? `<button class="cfitem" data-jrp="${esc(r.jrp)}"><span class="t">${esc(r.it.title)}</span><span class="src">${esc(r.src)}</span></button>`
+                    : `<button class="cfitem" data-p="${r.p}" data-i="${r.i}"><span class="t">${esc(r.it.title)}</span><span class="src">${esc(r.src)}</span><span class="pv">${previewSVG(r.it)}</span></button>`;
+    });
+    lib.innerHTML = html; libSearchWire(); return;
+  }
   if (!libPath.length) {
     html += '<p class="libhint">Choose a category.</p>';
     LIBRARY.forEach((g, gi) => { html += catButton(g, [gi]); });
@@ -4121,6 +4154,15 @@ function renderLibrary(){
   }
   lib.innerHTML = html;
   lib.scrollTop = 0;
+  libSearchWire();
+}
+function libSearchWire(){
+  const f = $('#library .libsearch');
+  f.addEventListener('input', () => {
+    const pos = f.selectionStart; libQuery = f.value; renderLibrary();
+    const g = $('#library .libsearch'); g.focus({preventScroll: true}); try { g.setSelectionRange(pos, pos); } catch (e) {}
+  });
+  f.addEventListener('keydown', e => { if (e.key === 'Escape' && libQuery) { e.stopPropagation(); libQuery = ''; renderLibrary(); $('#library .libsearch').focus(); } });
 }
 function libBack(){
   libPath = libPath.slice(0, -1);
@@ -4136,12 +4178,12 @@ function buildLibrary(){
     if (e.target.closest('.libback')) { libBack(); return; }
     const b = e.target.closest('.cfitem');
     if (!b) return;
-    const item = libNode(b.dataset.p.split('.').map(Number)).items[Number(b.dataset.i)];
+    const item = b.dataset.jrp ? {jrp: b.dataset.jrp} : libNode(b.dataset.p.split('.').map(Number)).items[Number(b.dataset.i)];
     if (item.jrp) {
       /* a piece of the Josquin Research Project: the whole score comes now */
       if (b.dataset.busy) return;
       b.dataset.busy = '1'; b.classList.add('busy');
-      jrpFetch('p/' + item.jrp + '.json').then(full => { closeLibrary(false); loadItem(full); })
+      jrpFetch('p/' + item.jrp + '.json').then(full => { full.jrpId = item.jrp; closeLibrary(false); loadItem(full); })
         .catch(() => toast('This piece could not be loaded. Check the internet connection and try again.'))
         .finally(() => { delete b.dataset.busy; b.classList.remove('busy'); });
       return;
@@ -4152,9 +4194,11 @@ function buildLibrary(){
   function loadItem(item){
     mutate(() => { doc = presetDoc(item); ui.tempus = item.t === 'O' ? 'O' : 'C'; ui.cut = !!item.cut; ui.planus = !!item.s && !item.n && !item.poly; ui.fractus = !!item.fr; ui.talea = null; ui.sel = null; ui.caret = doc.notes.length; ui.hover = null; });
     syncSettings();
-    toast(`${item.title} loaded. Undo brings back what you had.`);
+    pieceLink(item);
+    toast(`${item.title} loaded. Undo brings back what you had. The address now links to this piece.`);
     scoreEl.focus({preventScroll: true});
   }
+  window.cantareLoadItem = loadItem;
   lib.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       e.stopPropagation();
@@ -4167,6 +4211,24 @@ function buildLibrary(){
     const path = e.composedPath();
     if (!path.includes($('.libwrap'))) closeLibrary(false);
   });
+}
+/* every piece has an address: ?piece=<JRP number> or ?piece=<the title in plain letters> */
+const pieceSlug = t => fold(t).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function pieceLink(item){
+  try {
+    const u = new URL(location.href);
+    u.hash = ''; u.searchParams.set('piece', item.jrpId || item.jrp || pieceSlug(item.title));
+    history.replaceState(null, '', u.toString());
+  } catch (e) {}
+}
+function pieceFromAddress(){
+  let want = null;
+  try { want = new URL(location.href).searchParams.get('piece'); } catch (e) {}
+  if (!want) return null;
+  if (/^[A-Z][a-z]{2}\d{4}[a-z]?$/.test(want)) return {jrp: want};
+  let found = null;
+  (function walk(list){ list.forEach(g => { (g.items || []).forEach(it => { if (!found && pieceSlug(it.title) === want) found = it; }); if (g.subs) walk(g.subs); }); })(LIBRARY);
+  return found;
 }
 function openLibrary(){
   libPath = []; renderLibrary();
@@ -4357,6 +4419,13 @@ buildTactus();
 buildClefMenu();
 buildLibrary();
 loadAll();
+/* a link to a piece of the Josquin Research Project: fetch it once the page stands */
+(function(){
+  const w = pieceFromAddress();
+  if (!w || !w.jrp) return;
+  jrpFetch('p/' + w.jrp + '.json').then(full => { full.jrpId = w.jrp; window.cantareLoadItem(full); undoStack.length = 0; })
+    .catch(() => toast('The linked piece could not be loaded.'));
+})();
 syncSettings();
 wire();
 render();
