@@ -111,6 +111,10 @@
   .pitch .unit { font-size: .92rem; color: var(--muted); }
   .pitch .now { font-size: .85rem; color: var(--accent); min-width: 0; }
 
+  #fixBtn[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  .fixing .hands .pos circle { stroke: var(--accent); stroke-width: 1.5; }
+  .handtools { gap: 4px; flex-wrap: wrap; }
+  .teach u { text-decoration: none; font-weight: 600; }
   .teach { margin-top: 12px; border: 1px solid var(--accent); border-radius: 10px; padding: 10px 14px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
   .teach[hidden] { display: none; }
   .teach p { margin: 0; flex: 1 1 260px; min-width: 0; }
@@ -203,8 +207,18 @@
     </div>
     <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false">Voice</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
     <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
-    <button class="btn" id="teachBtn" title="Show each position once, so the app learns your hand">Teach my hand</button>
-    <button class="btn" id="forget" hidden>Forget my hand</button>
+    <div class="group handtools">
+      <button class="btn" id="teachBtn" title="Show each of the twenty places once, so the app learns your hand">Teach my hand</button>
+      <button class="btn" id="drillBtn" title="Γ ut, e la mi, C fa ut, A re and B mi look alike. Show each three times in a mixed order">Tricky places</button>
+      <button class="btn" id="fixBtn" aria-pressed="false" title="When a note is read wrongly: keep your hand where it is and tap the right place on the painted hand">Correct a note</button>
+    </div>
+    <div class="group handtools">
+      <button class="btn" id="saveHand" hidden title="Save your taught hand as a file, to use it on another device">Save my hand</button>
+      <button class="btn" id="loadHand" title="Load a hand saved on another device">Load a hand</button>
+      <button class="btn" id="sendHand" hidden title="Send your taught hand to Václav, anonymously: only 21 points per hand shape, no picture. It helps the app read every hand better">Send my hand to Václav</button>
+      <button class="btn" id="forget" hidden>Forget my hand</button>
+      <input type="file" id="handFile" accept="application/json,.json" hidden>
+    </div>
   </div>
 
   <section class="how">
@@ -212,12 +226,13 @@
       <h2>How to show a note</h2>
       <p>Choose <i>Left</i> or <i>Right</i> under <i>Hand</i>, and hold that hand up with the palm towards the camera. Touch a joint of a finger with the tip of your thumb: the base of each finger, its two middle joints, its tip.</p>
       <p>The three notes on the thumb itself (Γ ut, A re, B mi) you show the other way round: touch the thumb with the tip of your curled index finger.</p>
+      <p><b>Γ ut and e la mi</b> both bring the index tip and the thumb tip together. For Γ ut keep the thumb straight and press the index fingertip down onto the tip of the thumb. For e la mi bend the thumb and press it up into the pad of the index fingertip. For <b>C fa ut</b> keep the index finger straight and touch its base.</p>
       <p>ee la sits on the back of the middle finger: curl it and touch its nail with the thumb.</p>
     </div>
     <div>
       <h2>Two hands</h2>
       <p>Turn the phone sideways, choose <i>Both</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
-      <p>If the app mixes up two neighbouring places, press <i>Teach my hand</i> and show each position once. It then knows your hand instead of an average one, and it remembers it on this device.</p>
+      <p>If the app mixes up two places, press <i>Teach my hand</i> and show each position once, or <i>Tricky places</i> to practise the look-alikes. When a single note is read wrongly while you play, turn on <i>Correct a note</i>, keep your hand where it is and tap the right place on the painted hand. The app then knows your hand instead of an average one and remembers it on this device. <i>Send my hand to Václav</i> shares it anonymously (only the positions of 21 points, never a picture), so the app can learn to read every hand better.</p>
     </div>
     <div>
       <h2>The gamut</h2>
@@ -281,15 +296,68 @@ const isLeft = P => ((P[5].x - P[0].x) * (P[17].y - P[0].y) - (P[5].y - P[0].y) 
 
 /* ---------- reading a place from the hand ---------- */
 const ENTER = 0.30, LEAVE = 0.42;  // contact distances, as a share of the palm length
-function features(P){
-  const s = scaleOf(P), f = [];
-  for (let i = 5; i <= 20; i++) f.push(dist(P[4], P[i]) / s);
-  for (const i of [2, 3, 4]) f.push(dist(P[8], P[i]) / s);
-  for (const a of [5, 9, 13, 17]) f.push(straight(P, a) * 1.5);
-  f.push(((P[4].z || 0) - (P[12].z || 0)) / s, ((P[8].z || 0) - (P[4].z || 0)) / s);
+/* The hand in its own frame: wrist at 0, the middle finger pointing up (+y), the thumb always on the same side,
+   one palm length = 1. Tilting the phone, holding the hand nearer or farther, left or right hand: all look the same. */
+function normalize(P){
+  const s = scaleOf(P), ux = (P[9].x - P[0].x) / s, uy = (P[9].y - P[0].y) / s;
+  let vx = -uy, vy = ux;
+  if ((P[5].x - P[17].x) * vx + (P[5].y - P[17].y) * vy < 0) { vx = -vx; vy = -vy; }   // index side is +x
+  return P.map(p => {
+    const dx = p.x - P[0].x, dy = p.y - P[0].y;
+    return {x: (dx * vx + dy * vy) / s, y: (dx * ux + dy * uy) / s, z: ((p.z || 0) - (P[0].z || 0)) / s};
+  });
+}
+const unit = (p, q) => { const x = q.x - p.x, y = q.y - p.y, l = Math.hypot(x, y) || 1; return {x: x / l, y: y / l}; };
+/* How the thumb is bent at its upper joint: 1 straight, smaller as it bends. */
+const thumbStraight = N => { const a = unit(N[2], N[3]), b = unit(N[3], N[4]); return a.x * b.x + a.y * b.y; };
+function featuresN(N){
+  const f = [];
+  for (let i = 5; i <= 20; i++) f.push(dist(N[4], N[i]));               // thumb tip to every finger joint
+  for (const i of [2, 3, 4]) f.push(dist(N[8], N[i]));                  // index tip to the thumb
+  for (const i of [3, 4, 6, 7, 8]) f.push(N[i].x, N[i].y);              // where thumb and index are in the hand
+  f.push((N[4].x - N[8].x) * 2, (N[4].y - N[8].y) * 2);                 // which tip lies on which (Γ ut or e la mi)
+  const di = unit(N[7], N[8]), dt = unit(N[3], N[4]);
+  f.push(di.x, di.y, dt.x, dt.y, thumbStraight(N) * 2);                 // which way the index tip and thumb tip point
+  for (const a of [5, 9, 13, 17]) f.push(straight(N, a) * 1.5);
+  f.push(N[8].z - N[4].z, N[4].z - N[12].z);
   return f;
 }
-let templates = loadTemplates();  // {posIndex: [feature vectors]} taught by the player
+const features = P => featuresN(normalize(P));
+const pack = N => N.map(p => [+p.x.toFixed(3), +p.y.toFixed(3), +p.z.toFixed(3)]);
+const unpack = L => L.map(([x, y, z]) => ({x, y, z}));
+/* A taught hand: {place: [hand shapes, each 21 points in the hand's own frame]}. The features are worked out
+   from the points again on loading, so a later, better reader can still use every hand taught before. */
+let templates = null, tFeat = null, tStd = null;
+function setTemplates(t){
+  templates = t && Object.keys(t).length ? t : null; tFeat = null; tStd = null;
+  if (!templates) return;
+  tFeat = []; for (const k in templates) for (const L of templates[k]) tFeat.push({k: Number(k), f: featuresN(unpack(L))});
+  const n = tFeat.length, m = tFeat[0].f.length;
+  tStd = Array.from({length: m}, (_, j) => {
+    const mu = tFeat.reduce((t, s) => t + s.f[j], 0) / n;
+    return Math.max(0.03, Math.sqrt(tFeat.reduce((t, s) => t + (s.f[j] - mu) ** 2, 0) / n));
+  });
+}
+/* the nearest taught shapes vote: returns the place and how far the nearest one is */
+function nearest(P){
+  const f = features(P), D = tFeat.map(s => { let d = 0; for (let j = 0; j < f.length; j++) d += ((f[j] - s.f[j]) / tStd[j]) ** 2; return {k: s.k, d}; });
+  D.sort((a, b) => a.d - b.d);
+  const vote = {}; D.slice(0, 5).forEach(({k, d}) => { vote[k] = (vote[k] || 0) + 1 / (1 + d); });
+  let best = -1, bv = -1; for (const k in vote) if (vote[k] > bv) { bv = vote[k]; best = Number(k); }
+  return {pos: best, d: D[0].d / f.length};
+}
+/* Γ ut or e la mi: in both the index tip meets the thumb tip.
+   Γ ut: the thumb stands straight and the curled index finger presses down onto the thumb's tip.
+   e la mi: the thumb bends and presses up into the pad of the index fingertip. */
+function gammaOrE(P){
+  const N = normalize(P), di = unit(N[7], N[8]);
+  const down = -di.y;                         // 1 when the index tip points straight down towards the wrist
+  const thumbUp = thumbStraight(N);           // 1 for a straight thumb
+  const over = (N[8].y - N[4].y);             // the index tip lies above (on top of) the thumb tip
+  const score = down * 1.2 + (thumbUp - 0.85) * 4 + over * 1.5 + (straight(N, 5) < 0.6 ? 0.25 : 0);
+  return score > 1.0 ? 0 : 12;
+}
+setTemplates(loadTemplates());
 function classify(P, wasOn){
   const s = scaleOf(P), Q = places(P), lim = (wasOn ? LEAVE : ENTER) * s;
   // thumb tip on a finger
@@ -318,7 +386,9 @@ function classify(P, wasOn){
       const tipSide = dt < dj || d3(P[4], P[t]) < d3(P[4], P[j]) || (bent && (dt < dj * 1.6 || dist(P[t], P[j]) < 0.06 * s));
       if (dt < tipLim && tipSide && dt < td) { td = dt; tp = at; }
     }
-    if (tp >= 0) pos = tp === 12 && indexCurled ? 0 : tp;   // index curled down onto the thumb tip: Γ ut, otherwise e
+    if (tp >= 0) pos = tp === 12 ? gammaOrE(P) : tp;   // index tip on thumb tip: Γ ut or e, by which presses which
+    // the curled index finger hides the thumb tip near its own base: Γ ut, not C fa ut (C is shown with a straight index finger)
+    else if (indexCurled && thumbOn && best <= 4 && dist(P[8], P[4]) < 0.35 * s) pos = 0;
     // 3. any other joint
     else if (indexOn && thumbOn) pos = indexCurled && best >= 12 && best <= 14 ? ib : (id < bd ? ib : best);
     else if (indexOn) pos = ib;
@@ -331,14 +401,11 @@ function classify(P, wasOn){
     const curled = straight(P, 9) < 0.55 && dist(P[0], P[12]) / s < 1.3;
     pos = curled ? 19 : 11;
   }
-  // a taught hand decides between the places itself
-  if (templates && templates[pos] && Object.keys(templates).length >= 4) {
-    const f = features(P); let tb = -1, td = Infinity;
-    for (const k in templates) for (const v of templates[k]) {
-      let d = 0; for (let j = 0; j < f.length; j++) d += (f[j] - v[j]) ** 2;
-      if (d < td) { td = d; tb = Number(k); }
-    }
-    if (tb >= 0) pos = tb;
+  // A taught hand decides between the places itself: always when this place was taught,
+  // and for an untaught place only when the hand looks very much like a taught one.
+  if (tFeat && tFeat.length) {
+    const n = nearest(P);
+    if (n.pos >= 0 && (templates[pos] || n.d < 1.2)) pos = n.pos;
   }
   return pos;
 }
@@ -570,7 +637,7 @@ function show(side){
   // a single painted hand shows whichever hand is playing
   if (figs.length === 1 && side === 1) figs[0].items.forEach((el, k) => el.classList.toggle('on', k === i));
 }
-function tapOn(i, side){ tapping[side] = i; noteOn(2, midiOf(i)); show(side); }
+function tapOn(i, side){ if (fixing) learnTap(i, side); tapping[side] = i; noteOn(2, midiOf(i)); show(side); }
 function tapOff(side){ if (tapping[side] < 0) return; tapping[side] = -1; noteOff(2); show(side); }
 function setPos(side, pos){
   const h = hands[side]; if (h.pos === pos) return;
@@ -582,6 +649,7 @@ function setPos(side, pos){
 function feed(side, P){
   const h = hands[side];
   if (teach.on) { if (P && side === 0) teachFrame(P); if (h.pos >= 0) setPos(side, -1); h.cand = -1; h.n = 0; return; }
+  if (P) lastSeen[side] = {P, t: performance.now()};
   const pos = P ? classify(P, h.pos >= 0) : -1;
   if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
   if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
@@ -675,70 +743,160 @@ function status(t){ $('#status').textContent = t; }
 /* ---------- teaching the app your hand ----------
    One place at a time, at the player's pace: the place is named and sounded, the player shows it and holds it
    still for a moment and a half, the app confirms it, waits, and only then asks for the next place.
-   A position that still looks like the one just learned is not taken for the next place. */
-const HOLD_MS = 1500, PAUSE_MS = 1600, STILL = 0.02, SAME = 0.03;
-const teach = {on: false, i: 0, buf: [], t0: 0, data: {}, phase: 'show', prev: null, timer: 0};
-const HAND_KEY = 'manus:v2:hand';   // v2: hands taught with the old, hurried teaching are not used any more
-function loadTemplates(){ try { const t = JSON.parse(localStorage.getItem('manus:v2:hand') || 'null'); return t && typeof t === 'object' && Object.keys(t).length ? t : null; } catch (e) { return null; } }
+   A position that still looks like the one just learned is not taken for the next place.
+   "Teach my hand" goes once through all twenty places; "Tricky places" drills the ones that look alike
+   (Γ ut, e la mi, C fa ut, A re, B mi) several times in a mixed order. */
+const HOLD_MS = 1500, PAUSE_MS = 1600, STILL = 0.02, SAME = 0.03, PER_PLACE = 40;
+const teach = {on: false, seq: [], k: 0, i: 0, buf: [], t0: 0, data: {}, phase: 'show', prev: null, timer: 0, drill: false};
+const HAND_KEY = 'manus:v3:hand';   // v3: the hand is kept as points, not as a fixed list of features
+function loadTemplates(){ try { const t = JSON.parse(localStorage.getItem('manus:v3:hand') || 'null'); return t && typeof t === 'object' && Object.keys(t).length ? t : null; } catch (e) { return null; } }
+function saveTemplates(){ try { templates ? localStorage.setItem(HAND_KEY, JSON.stringify(templates)) : localStorage.removeItem(HAND_KEY); } catch (e) {} handTools(); }
+function addShapes(i, list){
+  const t = Object.assign({}, templates || {});
+  t[i] = (t[i] || []).concat(list).slice(-PER_PLACE);
+  setTemplates(t);
+}
 function markTeach(){ figs.forEach(f => f.items.forEach((el, k) => el.classList.toggle('teach', teach.on && k === teach.i))); }
 const sqd = (a, b) => { let d = 0; for (let j = 0; j < a.length; j++) d += (a[j] - b[j]) ** 2; return d; };
 const meanOf = A => A[0].map((_, j) => A.reduce((t, v) => t + v[j], 0) / A.length);
 const sub = (t, ok) => { const e = $('#teachSub'); e.textContent = t; e.classList.toggle('ok', !!ok); };
 const bar = (x, full) => { const e = $('#teachBar'); e.style.width = Math.round(x * 100) + '%'; e.classList.toggle('full', !!full); };
 function sayNote(i, ms){ noteOn(2, midiOf(i)); setTimeout(() => noteOff(2), ms); }
+/* how to show each place; the look-alikes are spelt out */
+function howTo(i){
+  const p = POS[i];
+  if (i === 0) return 'Keep the thumb <u>straight and upright</u>. Curl the index finger and press its fingertip <u>down onto the very tip of the thumb</u>: the thumb tip is the place shown.';
+  if (i === 12) return '<u>Bend the thumb</u> and press its tip <u>up into the pad of the index fingertip</u>: the index fingertip is the place shown.';
+  if (i === 3) return 'Keep the index finger <u>straight</u> and touch the crease at its base with the tip of your thumb.';
+  if (p.back) return 'Curl the middle finger and touch its nail with your thumb.';
+  if (p.by) return 'Touch the ' + p.where + ' with the tip of your curled index finger.';
+  return 'Touch the ' + p.where + ' with your thumb.';
+}
 function teachShow(){
   clearTimeout(teach.timer);
-  const i = teach.i, p = POS[i];
-  $('#teachText').innerHTML = '<span class="step">Place ' + (i + 1) + ' of 20</span>Show <b>' + nameOf(i) + ' ' + sylOf(i) + '</b><br>' +
-    (p.back ? 'Curl the middle finger and touch its nail with your thumb' :
-     p.by ? 'Touch the ' + p.where + ' with your curled index finger' : 'Touch the ' + p.where + ' with your thumb') + '.';
+  const i = teach.i = teach.seq[teach.k];
+  $('#teachText').innerHTML = '<span class="step">' + (teach.drill ? 'Tricky places · ' : '') + 'Step ' + (teach.k + 1) + ' of ' + teach.seq.length + '</span>Show <b>' + nameOf(i) + ' ' + sylOf(i) + '</b><br>' + howTo(i);
   sub('Take your time. When you are there, hold still until the bar is full.');
   bar(0); teach.buf = []; teach.phase = 'show'; markTeach();
-  $('#teachBack').disabled = i === 0;
+  $('#teachBack').disabled = teach.k === 0;
   sayNote(i, 500);
 }
-function teachStart(){
+const shuffled = A => { const a = A.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function teachStart(drill){
   if (!running) { status('Start the camera first, then teach the app your hand.'); return; }
-  teach.on = true; teach.i = 0; teach.data = {}; teach.prev = null; $('#teach').hidden = false; status('');
+  correcting(false);
+  teach.drill = drill;
+  if (drill) {   // three mixed rounds of the look-alikes, never the same place twice in a row
+    const seq = [];
+    for (let r = 0; r < 3; r++) { let round; do round = shuffled([0, 12, 3, 1, 2]); while (seq.length && round[0] === seq[seq.length - 1]); seq.push(...round); }
+    teach.seq = seq;
+  } else teach.seq = POS.map((_, i) => i);
+  teach.k = 0; teach.data = {}; teach.steps = []; teach.prev = null; $('#teach').hidden = false; status('');
   silenceAll(); teachShow();
 }
 function teachNext(){
-  teach.i++;
-  if (teach.i >= POS.length) teachEnd(true); else teachShow();
+  teach.k++;
+  if (teach.k >= teach.seq.length) teachEnd(true); else teachShow();
 }
 function teachEnd(save){
   clearTimeout(teach.timer);
   teach.on = false; $('#teach').hidden = true; markTeach();
   if (save && Object.keys(teach.data).length) {
-    templates = Object.assign({}, templates || {}, teach.data);
-    try { localStorage.setItem(HAND_KEY, JSON.stringify(templates)); } catch (e) {}
+    // a full teaching replaces what was taught for those places before; the drill adds to it
+    if (!teach.drill && templates) { const t = Object.assign({}, templates); for (const i in teach.data) delete t[i]; setTemplates(t); }
+    for (const i in teach.data) addShapes(Number(i), teach.data[i]);
+    saveTemplates();
     status('Your hand is learned: ' + Object.keys(templates).length + ' of 20 places.');
   }
-  $('#forget').hidden = !templates;
 }
 function teachFrame(P){
   if (teach.phase !== 'show') return;             // confirmed: waiting before the next place
   const now = performance.now(), s = scaleOf(P), Q = places(P);
   const near = Math.min(...Q.slice(3).map(q => dist(P[4], q)), ...Q.slice(0, 3).map(q => dist(P[8], q))) / s;
   if (near > 0.5) { if (teach.buf.length) sub('Take your time. When you are there, hold still until the bar is full.'); teach.buf = []; bar(0); return; }
-  const f = features(P);
+  const N = normalize(P), f = featuresN(N);
   if (teach.prev && sqd(f, teach.prev) < SAME) {
-    teach.buf = []; bar(0); sub('This still looks like ' + nameOf(teach.i - 1) + '. Move to ' + nameOf(teach.i) + '.'); return;
+    teach.buf = []; bar(0); sub('This still looks like the place before. Move to ' + nameOf(teach.i) + '.'); return;
   }
   const last = teach.buf[teach.buf.length - 1];
-  if (last && sqd(f, last) > STILL) teach.buf = [];
+  if (last && sqd(f, last.f) > STILL) teach.buf = [];
   if (!teach.buf.length) { teach.t0 = now; sub('Hold still…'); }
-  teach.buf.push(f);
+  teach.buf.push({f, L: pack(N)});
   const x = (now - teach.t0) / HOLD_MS; bar(Math.min(1, x));
   if (x >= 1) {
-    const i = teach.i;
-    teach.data[i] = teach.buf.filter((_, k) => k % 3 === 0);
-    teach.prev = meanOf(teach.buf);
+    const i = teach.i, got = teach.buf.filter((_, k) => k % 4 === 0).map(b => b.L);
+    teach.data[i] = (teach.data[i] || []).concat(got);
+    teach.steps[teach.k] = {i, n: got.length};
+    teach.prev = meanOf(teach.buf.map(b => b.f));
     teach.phase = 'done'; bar(1, true);
-    sub('✓ Got it: ' + nameOf(i) + ' ' + sylOf(i) + '. Now let go' + (i < 19 ? ' and get ready for the next place.' : '.'), true);
+    sub('✓ Got it: ' + nameOf(i) + ' ' + sylOf(i) + '. Now let go' + (teach.k < teach.seq.length - 1 ? ' and get ready for the next one.' : '.'), true);
     sayNote(i, 700);
     teach.timer = setTimeout(teachNext, PAUSE_MS);
   }
+}
+/* undo what one step added */
+function dropStep(k){
+  const st = teach.steps[k]; if (!st) return;
+  const a = teach.data[st.i]; if (a) { a.splice(a.length - st.n, st.n); if (!a.length) delete teach.data[st.i]; }
+  teach.steps[k] = null;
+}
+
+/* ---------- correcting a note while playing ----------
+   With "Correct a note" on, hold your hand where it is and tap the right place on the painted hand:
+   the app keeps that hand shape as an example of the place you tapped. */
+let fixing = false;
+const lastSeen = [null, null];   // the last hand shape each hand showed, and when
+function correcting(on){
+  fixing = on; $('#fixBtn').setAttribute('aria-pressed', String(on));
+  $('#app').classList.toggle('fixing', on);
+  status(on ? 'Show the place on your hand and keep it there. Then tap the place you mean on the painted hand.' : '');
+}
+function learnTap(i, side){
+  const seen = lastSeen[side] || lastSeen[0];
+  if (!seen || performance.now() - seen.t > 700) { status('No hand in the camera just now. Keep your hand where it is and tap again.'); return false; }
+  const P = seen.P, before = classify(P, false);
+  addShapes(i, [pack(normalize(P))]); saveTemplates();
+  status('✓ Learned: this is ' + nameOf(i) + ' ' + sylOf(i) + (before >= 0 && before !== i ? ' (it was read as ' + nameOf(before) + ').' : '.') + ' Tap again to add more, or turn “Correct a note” off.');
+  return true;
+}
+
+/* ---------- your hand as a file, or sent to Václav ---------- */
+function handTools(){ ['#forget', '#saveHand', '#sendHand'].forEach(id => { $(id).hidden = !templates; }); }
+function handFile(maxPer){
+  const t = {}; for (const k in templates) t[k] = templates[k].slice(-maxPer);
+  return {app: 'Guidonian hand', v: 3, made: new Date().toISOString().slice(0, 10), hand: prefs.hands === 2 ? 'both' : prefs.side, places: t};
+}
+function saveHand(){
+  const blob = new Blob([JSON.stringify(handFile(PER_PLACE))], {type: 'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'my-guidonian-hand.json';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function loadHand(file){
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const j = JSON.parse(r.result); if (!j || j.v !== 3 || !j.places) throw 0;
+      for (const k in j.places) if (POS[k] && Array.isArray(j.places[k])) addShapes(Number(k), j.places[k].filter(L => Array.isArray(L) && L.length === 21));
+      saveTemplates(); status('Hand loaded: ' + Object.keys(templates).length + ' of 20 places.');
+    } catch (e) { status('This file is not a saved Guidonian hand.'); }
+  };
+  r.readAsText(file);
+}
+let sent = false;
+async function sendHand(){
+  if (sent) { status('Your hand has already been sent. Thank you!'); return; }
+  const btn = $('#sendHand'); btn.disabled = true; status('Sending…');
+  try {
+    const r = await fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', {
+      method: 'POST', headers: {'Content-Type': 'application/json', Accept: 'application/json'},
+      body: JSON.stringify({_subject: 'Counterpoint Gym — Guidonian hand data', _template: 'table', _captcha: 'false',
+        About: 'Guidonian hand data (anonymous: 21 points per hand shape, no picture)', Message: JSON.stringify(handFile(6)), Page: location.href})
+    });
+    const j = await r.json().catch(() => ({}));
+    if (r.ok && String(j.success) === 'true') { sent = true; status('Thank you! Your hand helps the app read every hand better.'); }
+    else status('Sorry, it could not be sent. Please try again later.');
+  } catch (e) { status('Sorry, it could not be sent. Please check your connection.'); }
+  btn.disabled = false;
 }
 
 /* ---------- controls ---------- */
@@ -784,13 +942,22 @@ seg('snd', 'snd', String, silenceAll);
 $('#vol').value = prefs.vol;
 $('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = volGain(); });
 $('#start').addEventListener('click', () => { audio(); running ? stopCam() : startCam(); });
-$('#teachBtn').addEventListener('click', teachStart);
+$('#teachBtn').addEventListener('click', () => teachStart(false));
+$('#drillBtn').addEventListener('click', () => teachStart(true));
 $('#teachSkip').addEventListener('click', () => { teach.prev = null; teachNext(); });
-$('#teachAgain').addEventListener('click', () => { delete teach.data[teach.i]; teach.prev = null; teachShow(); });
-$('#teachBack').addEventListener('click', () => { if (teach.i > 0) { teach.i--; delete teach.data[teach.i]; teach.prev = null; teachShow(); } });
+$('#teachAgain').addEventListener('click', () => { dropStep(teach.k); teach.prev = null; teachShow(); });
+$('#teachBack').addEventListener('click', () => { if (teach.k > 0) { teach.k--; dropStep(teach.k); teach.prev = null; teachShow(); } });
 $('#teachStop').addEventListener('click', () => teachEnd(true));
-$('#forget').addEventListener('click', () => { templates = null; try { localStorage.removeItem(HAND_KEY); localStorage.removeItem('manus:v1:hand'); } catch (e) {} $('#forget').hidden = true; status('Back to the average hand.'); });
-$('#forget').hidden = !templates;
+$('#fixBtn').addEventListener('click', () => {
+  if (!fixing && !running) { status('Start the camera first.'); return; }
+  correcting(!fixing);
+});
+$('#forget').addEventListener('click', () => { setTemplates(null); try { ['manus:v3:hand', 'manus:v2:hand', 'manus:v1:hand'].forEach(k => localStorage.removeItem(k)); } catch (e) {} handTools(); status('Back to the average hand.'); });
+$('#saveHand').addEventListener('click', saveHand);
+$('#loadHand').addEventListener('click', () => $('#handFile').click());
+$('#handFile').addEventListener('change', e => { const f = e.target.files[0]; if (f) loadHand(f); e.target.value = ''; });
+$('#sendHand').addEventListener('click', sendHand);
+handTools();
 function applyHands(){
   $('#app').classList.toggle('two', prefs.hands === 2);
   $('#ro1').hidden = prefs.hands !== 2;
@@ -804,7 +971,7 @@ function gamut(){
 }
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $('#start').disabled = true; status('This browser offers no camera here. You can still tap the notes on the painted hand.'); }
 applyHands(); gamut();
-window.__manus = {classify, places, POS, TPL, setPos, feed, hands};
+window.__manus = {classify, places, POS, TPL, setPos, feed, hands, normalize, gammaOrE, features, setTemplates};
 </script>
 <script src="../feedback.js" data-topic="Guidonian hand" defer></script>
 </body>
