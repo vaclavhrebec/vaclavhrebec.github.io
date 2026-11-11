@@ -335,6 +335,17 @@ window.E = (function () {
           h('h2', null, E.t(r.title)),
           h('p', null, E.t(r.desc)),
           h('span', { class: 'meta' }, E.t(r.meta, r.metaVars)))))));
+    /* a page of its own: the tuning systems and the Euler lattice */
+    main.firstChild.append(h('a', { class: 'card', href: 'tuning/' },
+      h('div', { class: 'pic', html: '<svg viewBox="0 0 120 96" width="120" height="96" aria-hidden="true"><g fill="none" stroke-width="3" stroke-linecap="round">' +
+        Array.from({length: 12}, (_, i) => { const a0 = -Math.PI / 2 + i * Math.PI / 6 + .12, a1 = a0 + Math.PI / 6 - .24, R = 38;
+          return '<path d="M' + (60 + R * Math.cos(a0)).toFixed(1) + ' ' + (48 + R * Math.sin(a0)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (60 + R * Math.cos(a1)).toFixed(1) + ' ' + (48 + R * Math.sin(a1)).toFixed(1) + '" stroke="' + (i === 8 ? 'var(--accent)' : 'currentColor') + '" stroke-width="' + (i === 8 ? 5 : 2.5) + '"/>'; }).join('') +
+        '</g></svg>' }),
+      h('div', { class: 'body' },
+        h('span', { class: 'num' }, 'VII'),
+        h('h2', null, E.t('Tuning systems')),
+        h('p', null, E.t('Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.')),
+        h('span', { class: 'meta' }, E.t('17 tunings · listen, compare, sing')))));
   };
   document.addEventListener('keydown', e => {
     const q = document.querySelector('.quiz');

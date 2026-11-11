@@ -2,6 +2,9 @@
    Musical names (intervals, chords, scales, clefs) are kept next to their data in the room files. */
 window.EAR_T = {
 de: {
+  'Tuning systems': 'Stimmungssysteme',
+  'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagoreisch, mitteltönig, Werckmeister, Vallotti, Neidhardt und mehr, mit Cent-Tabellen, Stimmanleitungen und dem Euler-Gitter in 2, 3 und 4 Dimensionen.',
+  '17 tunings · listen, compare, sing': '17 Stimmungen · hören, vergleichen, singen',
   'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer ist kostenlos. Wenn er Ihrem Üben hilft, können Sie seine Weiterentwicklung mit einer kleinen Spende unterstützen.',
   'Support this project ☕': 'Dieses Projekt unterstützen ☕',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervalle, Intonation, Vorzeichen, Rhythmus, Akkorde und Skalen: tägliches Training für Musikerinnen und Musiker.',
@@ -104,6 +107,9 @@ de: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Thaats und Ragas erklingen gleichstufig; ein Raga ist ebenso durch seine melodischen Wendungen bestimmt wie durch seine Töne.'
 },
 fr: {
+  'Tuning systems': 'Systèmes d’accord',
+  'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagoricien, mésotonique, Werckmeister, Vallotti, Neidhardt et d’autres, avec tables en cents, méthodes d’accord et le réseau d’Euler en 2, 3 et 4 dimensions.',
+  '17 tunings · listen, compare, sing': '17 accords · écouter, comparer, chanter',
   'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer est gratuit. S’il vous aide dans votre pratique, vous pouvez soutenir son développement par un petit don.',
   'Support this project ☕': 'Soutenir ce projet ☕',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervalles, justesse, armures, rythme, accords et gammes : l’entraînement quotidien des musiciens.',
@@ -200,6 +206,9 @@ fr: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Les thaats et les ragas sont joués en tempérament égal ; un raga se définit autant par ses tournures mélodiques que par ses notes.'
 },
 cs: {
+  'Tuning systems': 'Ladicí systémy',
+  'Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.': 'Pythagorejské, středotónové, Werckmeister, Vallotti, Neidhardt a další, s tabulkami v centech, návody k ladění a Eulerovou mřížkou ve 2, 3 a 4 rozměrech.',
+  '17 tunings · listen, compare, sing': '17 ladění · poslouchat, porovnávat, zpívat',
   'The Ultimate Ear Trainer is free to use. If it helps your practice, you can support its growth with a small donation.': 'The Ultimate Ear Trainer je zdarma. Pokud vám pomáhá, můžete jeho další rozvoj podpořit malým příspěvkem.',
   'Support this project ☕': 'Podpořit projekt ☕',
   'Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.': 'Intervaly, intonace, předznamenání, rytmus, akordy a stupnice: každodenní trénink pro hudebníky.',

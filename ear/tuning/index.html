@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tuning systems · The Ultimate Ear Trainer</title>
+<meta name="description" content="Historical tuning systems to hear, compare and sing with: Pythagorean, just intonation, meantone (¼, ⅓, ²⁄₇, ⅕, ⅙ comma), Werckmeister, Kirnberger, Vallotti, Young, Neidhardt, Kellner, Lehman and equal temperament, with cents tables, beat rates and tuning instructions.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Václav Hřebec">
+<meta property="og:url" content="https://vaclavhrebec.github.io/ear/tuning/">
+<meta property="og:title" content="Tuning systems">
+<meta property="og:description" content="Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more: how they work, how to tune them, and how they sound. Part of The Ultimate Ear Trainer.">
+<meta property="og:image" content="https://vaclavhrebec.github.io/og/tuning.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tuning systems">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #faf7f2; --fg: #1c1a17; --muted: #6b655c; --line: #e4ddd1; --line-strong: #b9b0a2; --soft: #f1ece3;
+    --accent: #c8102e; --blue: #24479a; --card: #ffffff; --heat: 200, 16, 46;
+    --serif: "EB Garamond", Georgia, "Times New Roman", serif; --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824; --line-strong: #5a534b; --soft: #201d19;
+    --accent: #e5394f; --blue: #7d9be0; --card: #1b1916; --heat: 229, 57, 79; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824; --line-strong: #5a534b; --soft: #201d19;
+    --accent: #e5394f; --blue: #7d9be0; --card: #1b1916; --heat: 229, 57, 79; color-scheme: dark }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--sans); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px 64px; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; padding-top: 1rem; }
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 12px; font: italic 1.02rem/1.3 var(--serif); color: var(--muted); }
+  .sitenav a { color: inherit; text-decoration: none; }
+  .sitenav a:hover { color: var(--fg); }
+  .tools { display: flex; gap: .5rem; align-items: center; }
+  .lang { display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--card); }
+  .lang button { font: 500 .76rem/1 var(--sans); letter-spacing: .05em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: .42rem .62rem; cursor: pointer; }
+  .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  #theme { font: inherit; font-size: .8rem; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: .35rem .7rem; cursor: pointer; }
+  header.site { padding: 1.6rem 0 .2rem; }
+  header.site h1 { font: 600 clamp(2.4rem, 7vw, 3.8rem)/1 var(--serif); margin: 0 0 .5rem; letter-spacing: -.01em; }
+  header.site p { font: italic 1.3rem/1.4 var(--serif); color: var(--muted); margin: 0; max-width: 62ch; }
+  .staff { height: 33px; margin: 1.3rem 0 1.6rem; opacity: .5; background: repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 8px); }
+  h2 { font: 600 2rem/1.15 var(--serif); margin: 2.6rem 0 .8rem; }
+  h3 { font: 600 1.3rem/1.2 var(--serif); margin: 1.4rem 0 .4rem; }
+  h3.sub { margin-top: 2rem; }
+  .intro p { max-width: 70ch; }
+  .note { font-size: .86rem; color: var(--muted); margin: .4rem 0; max-width: 75ch; }
+
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  #controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  #controls .fld:first-child, #controls .fld:nth-child(2) { grid-column: span 2; }
+  @media (max-width: 520px) { #controls .fld:first-child, #controls .fld:nth-child(2) { grid-column: 1 / -1; } }
+  .fld { display: flex; flex-direction: column; gap: 4px; font-size: .82rem; color: var(--muted); }
+  .fld select { font: 500 .95rem var(--sans); padding: .5rem .5rem; border-radius: 8px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .fld input[type=range] { accent-color: var(--accent); margin-top: .7rem; }
+  #plays { margin-top: 16px; display: flex; flex-direction: column; gap: 10px; }
+  .pg { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pg[hidden] { display: none; }
+  .pl { width: 5.6rem; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  @media (max-width: 520px) { .pl { width: 100%; } }
+  .abn { font-size: .86rem; color: var(--muted); }
+  .btn { font: 500 .92rem var(--sans); border-radius: 8px; padding: .55rem .95rem; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn.ghost { color: var(--muted); }
+  .chk { display: inline-flex; gap: .4rem; align-items: center; font-size: .9rem; margin: 0 .4rem; }
+  .chk input { accent-color: var(--accent); }
+  .now { margin: 2px 0 0; font: italic 1.05rem var(--serif); color: var(--muted); }
+
+  #visual { display: grid; grid-template-columns: minmax(0, 320px) minmax(0, 1fr); gap: 24px; align-items: center; margin-top: 18px; }
+  @media (max-width: 720px) { #visual { grid-template-columns: 1fr; } }
+  .circ { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
+  .circ .cn circle { fill: var(--bg); stroke: var(--fg); stroke-width: 1.2; }
+  .circ .cn text { font: 15px var(--serif); fill: var(--fg); }
+  .circ .dv { font: 600 10px var(--sans); fill: var(--muted); }
+  .circ .mid { font: 600 15px var(--serif); fill: var(--fg); }
+  .circ .mid2 { font: 12px var(--sans); fill: var(--accent); }
+  .circ .mid2 .wd { fill: var(--blue); }
+  .kb { position: relative; height: 170px; display: flex; user-select: none; touch-action: manipulation; }
+  .k { cursor: pointer; border: 1px solid var(--line-strong); font: inherit; padding: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+  .k.w { flex: 1; background: #fffdf9; color: #1c1a17; border-radius: 0 0 8px 8px; padding-bottom: 8px; }
+  .k.w + .k.w { border-left: 0; }
+  .k.b { position: absolute; top: 0; width: 7%; height: 58%; background: #1c1a17; color: #f3ede3; border-radius: 0 0 6px 6px; padding-bottom: 6px; z-index: 2; border-color: #1c1a17; }
+  .k span { font: 15px var(--serif); }
+  .k small { font: 500 .7rem var(--sans); color: #6b655c; font-variant-numeric: tabular-nums; }
+  .k.on.w, .k:active.w { background: #f6d9dd; }
+  .k.on.b, .k:active.b { background: var(--accent); }
+
+  .det { max-width: 74ch; }
+  .det .who { font: italic 1.08rem var(--serif); color: var(--muted); margin: 0 0 .4rem; }
+  .det ol { padding-left: 1.3rem; }
+  .det li { margin: .3rem 0; }
+  .tbls { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 18px 28px; }
+  .tb { min-width: 0; overflow-x: auto; }
+  .tb h3 { margin-top: .4rem; }
+  table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: .88rem; }
+  th, td { padding: .28rem .45rem; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+  thead th { font: 500 .7rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  tbody th { text-align: left; font: 500 .95rem var(--serif); }
+  tr.z td { color: var(--muted); }
+  tr.wolf td, tr.wolf th { color: var(--accent); }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 10px; background: var(--card); }
+  table.cmp th:first-child { position: sticky; left: 0; background: var(--card); z-index: 1; text-align: left; }
+  table.cmp td { min-width: 3.1rem; }
+  table.cmp td.lo { background: rgba(36, 71, 154, calc(var(--v) * .28)); }
+  table.cmp td.hi { background: rgba(var(--heat), calc(var(--v) * .28)); }
+  table.heat td { background: rgba(var(--heat), calc(var(--h) * .75)); }
+  table.heat td.pure { box-shadow: inset 0 0 0 2px var(--ok, #2f7d4a); }
+  table.heat td.wolf { background: rgba(var(--heat), .95); color: #fff; }
+  table.cmp tr.cur th, table.cmp tr.cur td { font-weight: 600; }
+  .pick { font: 500 .92rem var(--serif); background: none; border: 0; color: var(--fg); cursor: pointer; padding: 0; text-align: left; }
+  .pick:hover { color: var(--accent); }
+  table.cm td:nth-child(2), table.cm td:nth-child(3) { white-space: nowrap; }
+  table.cm td:last-child { white-space: normal; text-align: left; color: var(--muted); }
+  .mar { background: var(--card); border: 1px solid var(--line); border-left: 3px solid var(--accent); border-radius: 10px; padding: 1rem 1.3rem; }
+  .mar p { max-width: 72ch; }
+  .mar .acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: .6rem; }
+  .latwrap { margin: 8px 0 0; }
+  .lat { width: 100%; height: auto; display: block; touch-action: pan-y; }
+  .grab { cursor: grab; }
+  .lat .tri { cursor: pointer; transition: fill .2s; }
+  .lat .tri.maj { fill: rgba(200, 16, 46, .07); }
+  .lat .tri.min { fill: rgba(36, 71, 154, .06); }
+  .lat .tri:hover, .lat .tri.lit { fill: rgba(200, 16, 46, .22); }
+  .lat .tri.min:hover, .lat .tri.min.lit { fill: rgba(36, 71, 154, .22); }
+  .lat line { stroke-width: 1.6; }
+  .lat .e5 { stroke: var(--fg); opacity: .55; }
+  .lat .e3 { stroke: var(--accent); opacity: .6; }
+  .lat .em { stroke: var(--blue); opacity: .35; stroke-dasharray: 3 4; }
+  .lat .e7 { stroke: #2f7d4a; opacity: .7; }
+  .lat .e11 { stroke: #b07a12; opacity: .55; stroke-dasharray: 5 4; }
+  .lat .trail { fill: none; stroke: var(--accent); stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
+  .lat .nd { cursor: pointer; }
+  .lat .nd circle { fill: var(--card); stroke: var(--fg); stroke-width: 1.3; }
+  .lat .nd.z7 circle { stroke: #2f7d4a; }
+  .lat .nd.z11 circle { stroke: #b07a12; }
+  .lat .nd.one circle { stroke: var(--accent); stroke-width: 2.6; }
+  .lat .nd:hover circle, .lat .nd:focus circle { fill: var(--soft); stroke: var(--accent); }
+  .lat .nd:focus { outline: none; }
+  .lat .nn { font: 600 15px var(--serif); fill: var(--fg); text-anchor: middle; pointer-events: none; }
+  .lat .nm { font: 600 9.5px var(--sans); fill: var(--accent); text-anchor: middle; pointer-events: none; }
+  .lat .axes text { font: 12px var(--sans); fill: var(--muted); }
+  .lat .km { fill: var(--blue); }
+  .lat .k5 { fill: var(--fg); } .lat .k3 { fill: var(--accent); } .lat .k7 { fill: #2f7d4a; } .lat .k11 { fill: #b07a12; }
+  .lat .hint { font-style: italic; }
+  .lat .lay { font: italic 14px var(--serif); fill: var(--muted); text-anchor: middle; }
+  .walk { min-height: 1.5em; font-size: .92rem; margin: .4rem 0 .8rem; }
+  .walk .nm2 { color: var(--accent); font-size: .8rem; font-weight: 600; }
+  .lh { margin-top: .2rem; }
+  .dimsw { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; margin-bottom: .4rem; }
+  .dimsw button { font: 500 .85rem var(--sans); background: none; border: 0; border-radius: 999px; padding: .4rem .9rem; cursor: pointer; color: var(--muted); }
+  .dimsw button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  #txt3 p, #txt4 p { max-width: 74ch; }
+  .ex { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; margin-top: 18px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { color: #fff; filter: brightness(1.08); }
+  .fld.inl { flex-direction: row; }
+  .ansgrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0 6px; }
+  .ansgrid .ans { text-align: left; }
+  .ans.right { background: #e3f1e7; border-color: #2f7d4a; color: #1c1a17; }
+  .ans.wrong { background: #fbe4e6; border-color: var(--accent); color: #1c1a17; }
+  .qfb { min-height: 1.4em; font-size: .92rem; padding: .5rem .7rem; border-radius: 8px; background: var(--soft); }
+  .qfb:empty { background: none; }
+  .qfb.ok b { color: #2f7d4a; } .qfb.bad b { color: var(--accent); }
+  .qfb .sc { float: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .rq { font: italic 1.1rem var(--serif); margin: .6rem 0 0; min-height: 1.4em; }
+  footer { margin-top: 3rem; color: var(--muted); font-size: .88rem; border-top: 1px solid var(--line); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <nav class="sitenav"><a href="../../">← Václav Hřebec</a><span>·</span><a href="../" data-t="All exercises">All exercises</a></nav>
+    <div class="tools">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="de" lang="de">DE</button><button type="button" data-lang="fr" lang="fr">FR</button><button type="button" data-lang="cs" lang="cs">CZ</button>
+      </div>
+      <button id="theme" type="button" data-t="Light / dark">Light / dark</button>
+    </div>
+  </div>
+  <header class="site">
+    <h1 data-t="Tuning systems">Tuning systems</h1>
+    <p>How the twelve notes of the octave were tuned from the Middle Ages to today. Listen to scales and chords in each system, compare them, sing against them, and learn to tune them yourself.</p>
+  </header>
+  <div class="staff" aria-hidden="true"></div>
+
+  <section class="intro">
+    <p>Pure fifths (3:2) and pure major thirds (5:4) cannot live together on a keyboard. Twelve pure fifths overshoot seven octaves by the <em>Pythagorean comma</em>; four pure fifths overshoot a pure major third (plus two octaves) by the <em>syntonic comma</em>. Every tuning system on this page is a decision about where to put these small leftovers – into one unusable “wolf” fifth, evenly into all fifths, or unevenly, so that some keys are sweeter than others.</p>
+    <div id="commas"></div>
+    <p class="note" data-t="The explanations are in English for now.">The explanations are in English for now.</p>
+  </section>
+
+  <section id="player">
+    <h2 id="title2"></h2>
+    <div class="panel">
+      <div id="controls"></div>
+      <div id="plays"></div>
+      <div id="visual"></div>
+    </div>
+    <div id="detail"></div>
+    <div id="tables"></div>
+  </section>
+
+  <section>
+    <h2 data-t="All temperaments compared">All temperaments compared</h2>
+    <p class="note" data-t="Deviation of each note from equal temperament, in cents (A = 0).">Deviation of each note from equal temperament, in cents (A = 0).</p>
+    <div id="compare"></div>
+  </section>
+
+  <section id="euler">
+    <h2>The Euler lattice (Tonnetz)</h2>
+    <div class="intro">
+      <p>In his <em>Tentamen novae theoriae musicae</em> (1739) Leonhard Euler drew the notes of pure intonation as a network: one direction multiplies by 3 (pure fifths), the other by 5 (pure major thirds). In the 19th century Arthur von Oettingen and Hugo Riemann turned it into the <em>Tonnetz</em>, and today neo-Riemannian theory uses it to describe how chords move: flipping a triangle over one of its edges keeps two notes and moves the third by a step.</p>
+      <p>Drawn with triangles, every upward triangle is a pure major triad and every downward triangle a pure minor triad. The position of a note matters: the E reached by a third from C (5:4) is a syntonic comma lower than the E reached by four fifths (81:64). The small marks show this: <b>−S</b> means a syntonic comma lower than the Pythagorean note of the same name.</p>
+    </div>
+    <div class="panel">
+      <h3 class="lh">Two dimensions: fifths and thirds</h3>
+      <p class="note">Tap a note to hear it; tap a triangle to hear its chord. Your path is drawn, so you can see where you drift.</p>
+      <div id="lat2d" class="latwrap"></div>
+      <p id="walk" class="walk" aria-live="polite"></p>
+      <div class="pg"><button type="button" class="btn" data-demo="pump">The comma pump: C – Am – Dm – G – C</button><button type="button" class="btn ghost" id="clearWalk">Clear the path</button></div>
+    </div>
+
+    <div class="panel" style="margin-top:18px">
+      <div class="dimsw" role="group" aria-label="Dimensions"><button type="button" data-dims="3" aria-pressed="true">3D: + 7</button><button type="button" data-dims="4" aria-pressed="false">4D: + 11</button></div>
+      <div id="txt3">
+        <h3 class="lh">Three dimensions: the harmonic seventh</h3>
+        <p>Euler himself suggested in 1764 that the dominant seventh chord owes its sound to the seventh harmonic. Add 7:4 as a third axis and the plane becomes a space; in the 20th century Harry Partch, Ben Johnston and James Tenney explored it. The harmonic seventh (968.8 c) is 31 c lower than the equal-tempered minor seventh; together with the major triad it makes the chord 4:5:6:7, which barbershop quartets tune by ear. The mark <b>−Z</b> stands for the septimal comma 64:63 (27.3 c).</p>
+      </div>
+      <div id="txt4" hidden>
+        <h3 class="lh">Four dimensions: the eleventh harmonic</h3>
+        <p>A fourth axis cannot be built in our space, but it can be imagined – the way a cube is drawn as two squares joined at the corners. Here the whole 3D lattice is shown three times, each copy one step of 11:8 away. The interval 11:8 (551.3 c) lies almost exactly between the fourth and the tritone; Partch built his 43-note scale on this 11-limit space. <b>+U</b> stands for the undecimal comma 33:32 (53.3 c). Every further prime – 13, 17, 19 … – adds another dimension: the harmonic series as a space of ever more directions, which Tenney called harmonic space.</p>
+      </div>
+      <div id="lat3d" class="latwrap grab"></div>
+      <p id="walk3" class="walk" aria-live="polite"></p>
+      <div class="pg"><span class="pl">7</span>
+        <button type="button" class="btn" data-demo="sev">4:5:6:7 harmonic seventh chord</button>
+        <button type="button" class="btn" data-demo="sevET">the same in equal temperament</button>
+        <button type="button" class="btn" data-demo="sevs">four minor sevenths: 16:9, 9:5, 1000 c, 7:4</button>
+        <button type="button" class="btn" data-demo="sub">7:6 subminor triad</button></div>
+      <div class="pg"><span class="pl">11</span>
+        <button type="button" class="btn" data-demo="eleven">4:3, 11:8, the tritone 600 c, 45:32</button>
+        <button type="button" class="btn" data-demo="otonal">4:5:6:7:9:11 (harmonic series)</button></div>
+    </div>
+
+    <div class="ex">
+      <div class="panel">
+        <h3 class="lh">Exercise: which way through the lattice?</h3>
+        <p class="note">Two notes in pure intonation, one after the other and then together. Which step in the lattice was it?</p>
+        <div class="pg"><button type="button" class="btn primary" id="qstart">New example</button><button type="button" class="btn" id="qagain">Hear again</button>
+          <label class="fld inl"><select id="qlvl"><option value="2">2D: fifths and thirds</option><option value="3">3D: with the harmonic seventh</option></select></label></div>
+        <div id="qans" class="ansgrid"></div>
+        <p id="qfb" class="qfb" aria-live="polite"></p>
+      </div>
+      <div class="panel">
+        <h3 class="lh">Exercise: pure or tempered?</h3>
+        <p class="note">The same interval twice: once pure, once equal-tempered.</p>
+        <div class="pg"><button type="button" class="btn primary" id="rstart">New example</button><button type="button" class="btn" id="ragain">Hear again</button></div>
+        <p id="rq" class="rq"></p>
+        <div id="rans" class="ansgrid two"><button type="button" class="btn ans" data-k="A">The first was pure</button><button type="button" class="btn ans" data-k="B">The second was pure</button></div>
+        <p id="rfb" class="qfb" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-t="Marchetto of Padua: the whole tone in five parts">Marchetto of Padua: the whole tone in five parts</h2>
+    <div class="mar">
+      <p>Long before temperaments, Marchetto of Padua described an extraordinary way of placing the sharps. In his <em>Lucidarium in arte musicae planae</em> (1317–18) and <em>Pomerium in arte musicae mensuratae</em> (1318–19) he divides the whole tone into five parts, which he calls <em>dieses</em>. A semitone can be <em>enharmonic</em> (two dieses), <em>diatonic</em> (three) or <em>chromatic</em> (four).</p>
+      <p>When a voice is raised to lead into a perfect consonance – the sixth widening to the octave (A–F♯ → G–G) or the third widening to the fifth (A–C♯ → G–D) – Marchetto takes the large chromatic semitone. The sharp then stands only one diesis (about a fifth of a tone, roughly 40–50 cents) below the note it resolves to. The imperfect consonance becomes very wide and very tense, and its resolution all the more satisfying: the opposite of meantone, where sharps are low.</p>
+      <p>How literally Marchetto meant his numbers is debated. John Rahn (<a href="https://mtosmt.org/issues/mto.98.4.6/mto.98.4.6.rahn.html" target="_blank" rel="noopener">Music Theory Online, 1998</a>) shows how they can be realised on the monochord and finds that listeners easily hear the difference. Here the diesis is taken as exactly one fifth of a Pythagorean whole tone (40.8 c). Listen to the two cadences with the sharp placed in three ways:</p>
+      <div class="acts">
+        <button type="button" class="btn" data-mar="march">Marchetto (⁴⁄₅ tone, 163 c)</button>
+        <button type="button" class="btn" data-mar="pyth">Pythagorean (apotome, 114 c)</button>
+        <button type="button" class="btn" data-mar="mean">¼-comma meantone (76 c)</button>
+      </div>
+      <p class="note">Each button plays A–F♯ → G–g (sixth to octave), then A–C♯ → G–d (third to fifth). The numbers give the distance of the sharp above its natural.</p>
+    </div>
+  </section>
+
+  <footer>© 2026 Václav Hřebec · <a href="../">The Ultimate Ear Trainer</a></footer>
+</div>
+<script src="tuning.js"></script>
+<script src="lattice.js"></script>
+<script src="../../gym/feedback.js" data-topic="Tuning systems" defer></script>
+</body>
+</html>
