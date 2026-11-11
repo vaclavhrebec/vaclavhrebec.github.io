@@ -171,6 +171,17 @@
   .exinfo .q { font-family: var(--serif); font-size: 1.25em; line-height: 0; }
   .exinfo { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .86rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+  .modetabs { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--card); margin: 0 0 14px; }
+  .modetabs button { font: 500 .92rem var(--sans); border: 0; background: none; color: var(--fg); border-radius: 999px; padding: .45rem 1.1rem; cursor: pointer; }
+  .modetabs button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+  .recbar { height: 4px; border-radius: 2px; background: var(--soft); overflow: hidden; }
+  .recbar .recfill { display: block; height: 100%; width: 0; background: var(--accent); transition: width .25s linear; }
+  .credit { font-size: .86rem; color: var(--muted); } .credit b, .credit i { color: var(--fg); }
+  ol.credits { padding-left: 1.4rem; margin: .4rem 0 0; display: grid; gap: .35rem; }
+  .review .revrow { border-top: 1px solid var(--line); padding: .7rem 0; display: grid; gap: .4rem; }
+  .review .revrow.edited { background: var(--ok-soft); } .review .revrow.off { opacity: .5; }
+  .review .revctl { display: flex; flex-wrap: wrap; gap: .4rem .9rem; align-items: center; font-size: .85rem; }
+  .review input[type=text], .review select { font: inherit; padding: .2rem .35rem; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--fg); }
   footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .6rem; }
   footer a { color: inherit; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -213,6 +224,8 @@
 <script src="js/room-rhythm.js"></script>
 <script src="js/room-chords.js"></script>
 <script src="js/room-scales.js"></script>
+<script src="js/recordings.js"></script>
+<script src="js/room-scalerec.js"></script>
 <script>
   (function () {
     const root = document.documentElement;

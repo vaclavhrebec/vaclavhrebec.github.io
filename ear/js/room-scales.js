@@ -95,6 +95,7 @@
     return { id: a[0], g: a[1], steps, cents, name: { en: a[3], de: a[4], fr: a[5], cs: a[6] } };
   });
   const BY = Object.fromEntries(S.map(s => [s.id, s]));
+  E.scaleData = { S, GROUPS, BY };
   const key = s => s.cents.join(',');
   const cfg = Object.assign({ on: ['major', 'natmin', 'harmin', 'melmin'], dir: 'up', tempo: 150 }, E.load('cfg.scales', {}));
   const save = () => E.save('cfg.scales', cfg);
@@ -155,6 +156,15 @@
     meta: '{n} scales · quarter tones', metaVars: { n: S.length },
     lede: 'A scale is played from a random tonic. Choose its name. Scales that contain exactly the same notes (for example Aeolian and natural minor) count as the same answer.',
     icon: () => E.notation.notesSVG('treble', [28, 29, 30, 31, 32, 33].map(d => ({ dia: d })), { SP: 8, gap: 2.2, minW: 150 }),
-    mount(box) { box.classList.add('quiz'); E.quiz(spec, box); }
+    mount(box) {
+      // two modes: synthesised scales, or a moment from a real recording
+      const mode = E.load('scales.mode', 'synth');
+      const tabs = h('div', { class: 'modetabs', role: 'group' },
+        [['synth', 'Played scales'], ['rec', 'In real music']].map(([id, l]) => h('button', { type: 'button', 'aria-pressed': String(mode === id),
+          onclick: () => { if (mode !== id) { E.save('scales.mode', id); E.render(); } } }, T(l))));
+      const inner = h('div', { class: 'quiz' });
+      box.append(tabs, inner);
+      if (mode === 'rec' && E.recQuiz) E.recQuiz(inner); else E.quiz(spec, inner);
+    }
   });
 })();
