@@ -1,0 +1,23 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Vaclav Hrebec//Rheinfelden 2027//EN
+CALSCALE:GREGORIAN
+BEGIN:VEVENT
+UID:rheinfelden-2027-course@vaclavhrebec.github.io
+DTSTAMP:20261111T120000Z
+DTSTART;VALUE=DATE:20270222
+DTEND;VALUE=DATE:20270301
+SUMMARY:Renaissance Music Course Rheinfelden
+LOCATION:Reformierte Kirche\, Zürcherstrasse 1\, 4310 Rheinfelden\, Switzerland
+DESCRIPTION:Led by Václav Hřebec. Registration until 25 January 2027. https://vaclavhrebec.github.io/rheinfelden2027/
+URL:https://vaclavhrebec.github.io/rheinfelden2027/
+END:VEVENT
+BEGIN:VEVENT
+UID:rheinfelden-2027-deadline@vaclavhrebec.github.io
+DTSTAMP:20261111T120000Z
+DTSTART;VALUE=DATE:20270125
+DTEND;VALUE=DATE:20270126
+SUMMARY:Registration deadline: Renaissance Music Course Rheinfelden
+URL:https://vaclavhrebec.github.io/rheinfelden2027/
+END:VEVENT
+END:VCALENDAR

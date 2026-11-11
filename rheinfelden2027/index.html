@@ -89,6 +89,18 @@
   [data-lang] { display: none; }
   html[lang="en"] [data-lang="en"], html[lang="de"] [data-lang="de"] { display: block; }
   footer { margin-top: 3.5rem; color: var(--muted); font-size: .9rem; }
+  .dl-note { font-size: .95rem; color: var(--muted); margin: .8rem 0 0; }
+  .dl-note a { color: var(--accent); }
+  .map { height: 420px; margin: 1.2rem 0 .5rem; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--card); z-index: 0; }
+  @media (max-width: 600px) { .map { height: 340px; } }
+  .maplegend { font-size: .9rem; color: var(--muted); margin: 0; }
+  .maplegend .k { display: inline-block; width: 10px; height: 10px; transform: rotate(45deg); margin: 0 .45rem 0 .2rem; vertical-align: 1px; }
+  .maplegend .k.main { background: #c8102e; }
+  .maplegend .k.near { background: #fff; border: 2px solid #c8102e; margin-left: 1rem; }
+  .pin { width: 16px; height: 16px; transform: rotate(45deg); background: #c8102e; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+  .pin.near { background: #fff; border-color: #c8102e; }
+  .leaflet-popup-content { font: 14px/1.4 "Inter", system-ui, sans-serif; margin: 10px 14px; }
+  .leaflet-popup-content b { font-family: "EB Garamond", Georgia, serif; font-size: 1.05rem; }
 </style>
 </head>
 <body>
@@ -109,6 +121,7 @@
       <p>Hello and welcome! My name is Václav Hřebec and I am currently studying at the Schola Cantorum Basiliensis in Basel, Switzerland, specialising in early music theory, improvised counterpoint (a.k.a. <em>cantare super librum</em>…), written mensural polyphony and organ improvisation.</p>
       <p>At the end of February we are embarking on a one-week journey through all these musical topics, spanning roughly the years 1400 to 1600. The journey takes place in Rheinfelden (CH), a wonderful small town on the Rhine near Basel.</p>
       <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Register here</a>
+      <p class="dl-note">Registration closes on <strong>25 January 2027</strong>. <a href="course.ics" download="rheinfelden-2027.ics">Add the week to your calendar</a></p>
     </div>
     <figure>
       <a href="../posters/rheinfelden-2027.jpg" target="_blank" rel="noopener"><img src="../posters/w/rheinfelden-2027-1240.webp" width="1542" height="2048" loading="lazy" decoding="async" alt="Poster: Renaissance Music Course Rheinfelden, 22–28 February 2027, led by Václav Hřebec"></a>
@@ -118,6 +131,7 @@
   <h2>At a glance</h2>
   <dl class="facts">
     <dt>Dates</dt><dd>Monday 22 – Sunday 28 February 2027</dd>
+    <dt>Registration</dt><dd><strong>until 25 January 2027</strong></dd>
     <dt>Venue</dt><dd>Reformed Church, Rheinfelden (CH)</dd>
     <dt>Topics</dt><dd>Improvised and written polyphony, mensural notation, solmisation, organ and instrumental improvisation</dd>
     <dt>Participants</dt><dd>Max. 12 active participants; passive participants welcome</dd>
@@ -200,6 +214,8 @@
     <div><b>Main venue: Reformed Church</b>Zürcherstrasse 1<br>4310 Rheinfelden<br>Switzerland</div>
     <div><b>Meals: parish centre (Gemeindehaus)</b>Roberstenstrasse 22<br>4310 Rheinfelden<br>Switzerland</div>
   </div>
+  <div class="map" data-l="en" role="region" aria-label="Map of the course places"></div>
+  <p class="maplegend"><span class="k main"></span>Course places <span class="k near"></span>Nearby: the church of the former Olsberg Abbey, and the Reformed Church in Magden</p>
   <div class="note">
     <p><strong>Accommodation tip:</strong> search for your accommodation in the German part of Rheinfelden. Then you just cross the bridge to the Swiss side and in 4 minutes you are in the church!</p>
   </div>
@@ -230,6 +246,7 @@
       <p>Herzlich willkommen! Ich heisse Václav Hřebec und studiere an der Schola Cantorum Basiliensis in Basel. Meine Schwerpunkte sind Musiktheorie der Alten Musik, improvisierter Kontrapunkt (alias <em>cantare super librum</em>…), geschriebene Mensuralpolyphonie und Orgelimprovisation.</p>
       <p>Ende Februar begeben wir uns auf eine einwöchige Reise durch all diese Themen, von etwa 1400 bis 1600. Die Reise findet im wunderschönen Städtchen am Rhein bei Basel statt: in Rheinfelden (CH).</p>
       <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc0PN2_sja8GPjpYB-IIhBCXxZOLfxxrePJbw9KIFANDMGQ1Q/viewform?usp=send_form" target="_blank" rel="noopener">Zur Anmeldung</a>
+      <p class="dl-note">Anmeldeschluss: <strong>25. Januar 2027</strong>. <a href="course.ics" download="rheinfelden-2027.ics">Die Kurswoche in den Kalender eintragen</a></p>
     </div>
     <figure>
       <a href="../posters/rheinfelden-2027-de.jpg" target="_blank" rel="noopener"><img src="../posters/w/rheinfelden-2027-de-1240.webp" width="1542" height="2048" loading="lazy" decoding="async" alt="Plakat: Renaissancemusik-Kurs Rheinfelden, 22.–28. Februar 2027, Leitung Václav Hřebec"></a>
@@ -239,6 +256,7 @@
   <h2>Auf einen Blick</h2>
   <dl class="facts">
     <dt>Datum</dt><dd>Montag, 22. – Sonntag, 28. Februar 2027</dd>
+    <dt>Anmeldung</dt><dd><strong>bis 25. Januar 2027</strong></dd>
     <dt>Ort</dt><dd>Reformierte Kirche Rheinfelden (CH)</dd>
     <dt>Inhalte</dt><dd>Improvisierte und geschriebene Polyphonie, Mensuralnotation, Solmisation, Orgel- und Instrumentalimprovisation</dd>
     <dt>Teilnahme</dt><dd>Max. 12 aktive Teilnehmende; passive Teilnahme willkommen</dd>
@@ -321,6 +339,8 @@
     <div><b>Kursort: Reformierte Kirche</b>Zürcherstrasse 1<br>4310 Rheinfelden<br>Schweiz</div>
     <div><b>Mahlzeiten: Kirchgemeindehaus</b>Roberstenstrasse 22<br>4310 Rheinfelden<br>Schweiz</div>
   </div>
+  <div class="map" data-l="de" role="region" aria-label="Karte der Kursorte"></div>
+  <p class="maplegend"><span class="k main"></span>Kursorte <span class="k near"></span>In der Nähe: die Kirche des ehemaligen Klosters Olsberg und die Reformierte Kirche Magden</p>
   <div class="note">
     <p><strong>Tipp zur Unterkunft:</strong> Suchen Sie eine Unterkunft im deutschen Rheinfelden. Dann gehen Sie einfach über die Brücke auf die Schweizer Seite und sind in 4 Minuten in der Kirche!</p>
   </div>
@@ -355,6 +375,38 @@
   document.querySelectorAll('.langs button').forEach(function(b){
     b.addEventListener('click', function(){ set(b.dataset.set); try{ localStorage.setItem('rf27lang', b.dataset.set); }catch(e){} });
   });
+})();
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="" defer></script>
+<script>
+/* the course places on an OpenStreetMap map; drawn when the map scrolls into view (and again after a language switch) */
+(function () {
+  const P = [
+    {ll: [47.55323, 7.79588], main: true, en: ['Reformed Church', 'Main venue · Zürcherstrasse 1, 4310 Rheinfelden'], de: ['Reformierte Kirche', 'Kursort · Zürcherstrasse 1, 4310 Rheinfelden']},
+    {ll: [47.55670, 7.79957], main: true, en: ['Reformed parish centre', 'Meals · Roberstenstrasse 22, 4310 Rheinfelden'], de: ['Reformiertes Kirchgemeindehaus', 'Mahlzeiten · Roberstenstrasse 22, 4310 Rheinfelden']},
+    {ll: [47.52405, 7.77419], en: ['Olsberg Abbey church', 'Church of the former Cistercian convent, Olsberg'], de: ['Klosterkirche Olsberg', 'Kirche des ehemaligen Zisterzienserinnenklosters, Olsberg']},
+    {ll: [47.52897, 7.81348], en: ['Reformed Church Magden', 'Juchstrasse 27, 4312 Magden'], de: ['Reformierte Kirche Magden', 'Juchstrasse 27, 4312 Magden']}
+  ];
+  const maps = new Map();
+  function draw(el) {
+    if (!window.L || el.offsetParent === null) return;
+    if (maps.has(el)) { maps.get(el).invalidateSize(); return; }
+    const l = el.dataset.l, m = L.map(el, {scrollWheelZoom: false});
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(m);
+    const pts = P.map(p => {
+      const mk = L.marker(p.ll, {icon: L.divIcon({className: '', html: '<div class="pin' + (p.main ? '' : ' near') + '"></div>', iconSize: [16, 16], iconAnchor: [8, 8]}), title: p[l][0]}).addTo(m);
+      mk.bindPopup('<b>' + p[l][0] + '</b><br>' + p[l][1] + '<br><a href="https://www.openstreetmap.org/?mlat=' + p.ll[0] + '&mlon=' + p.ll[1] + '#map=17/' + p.ll[0] + '/' + p.ll[1] + '" target="_blank" rel="noopener">' + (l === 'de' ? 'Grössere Karte' : 'Larger map') + '</a>');
+      return p.ll;
+    });
+    m.fitBounds(pts, {padding: [36, 36]});
+    maps.set(el, m);
+  }
+  const els = document.querySelectorAll('.map');
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) draw(e.target); }), {rootMargin: '300px'});
+  addEventListener('load', () => els.forEach(el => io.observe(el)));
+  document.querySelectorAll('.langs button').forEach(b => b.addEventListener('click', () => setTimeout(() => els.forEach(draw), 50)));
 })();
 </script>
 </body>
