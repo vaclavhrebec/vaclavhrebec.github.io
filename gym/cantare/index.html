@@ -593,6 +593,8 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
         <button class="tb" id="micDia" data-keep aria-pressed="false" title="What you sing is written with the notes of the scale only (B or B flat as the cantus firmus has it), never a chromatic note">Diatonic</button>
         <button class="tb" id="micNotate" data-keep aria-pressed="true" title="While the cantus firmus plays, what you sing is written out in red on a staff of its own, down to fusae">Notate</button>
         <button class="tb" id="micPhones" data-keep aria-pressed="false" title="On: no filtering, so unisons and octaves with the organ show too. Off: the organ is filtered out of what the microphone hears, for singing along through speakers">Headphones</button>
+        <button class="tb" id="micRec" data-keep aria-pressed="false" title="On: every time the music plays while the microphone is on, your voice is recorded with it">Record me</button>
+        <button class="tb" id="micBack" data-keep disabled title="Play your last recording together with the music, from where you started">Listen back</button>
       </div>
         <div class="latrow" title="The time from the organ sounding to your voice reaching the microphone, so what you sing is written in the right place. Empty: worked out by itself">
           <label for="micLat">Latency</label><input type="number" id="micLat" min="0" max="600" step="1" inputmode="numeric" placeholder="auto"><span>ms</span>
@@ -2650,6 +2652,7 @@ function startPlayback(from, resumed){
   for (let i = 0; i < from; i++) offset += U(i) * spm;
   const t0 = ctx.currentTime + 0.12;
   const origin = t0 - offset;                 /* where the piece "began" */
+  recAtStart(ctx, t0, from);
   let t = t0;
   const tl = [], jobs = [];
   for (let i = from; i < doc.notes.length; i++) {
@@ -2754,6 +2757,7 @@ function followPlay(el){
   window.scrollBy({top: want, behavior: 'smooth'});
 }
 function stopPlayback(){
+  recStop();
   if (!audio.timeline) return;
   cancelAnimationFrame(audio.raf); clearInterval(audio.feedTimer);
   const now = audio.ctx.currentTime;
@@ -3279,6 +3283,44 @@ function takeStart(fromU){
 }
 /* seconds from the organ starting a note (on the audio clock) to that moment reaching the analyser in the singer's
    voice: the way out to the speakers, the way back in through the microphone, and half the analysis window */
+/* ---------- recording yourself with the music ----------
+   With "Record me" on and the microphone open, each playback records the voice (MediaRecorder on the raw microphone).
+   "Listen back" plays the music again from the same note and the recording with it, moved back by the latency,
+   so that what was sung against a note sounds against that note. */
+const rec = {on: false, mr: null, chunks: [], buf: null, from: 0, t0: 0, startCtx: 0, src: null, listening: false};
+function recAtStart(ctx, t0, from){
+  if (rec.listening) {
+    rec.listening = false;
+    if (!rec.buf) return;
+    const lag = takeLag(ctx) - 1024 / ctx.sampleRate + (ui.micCal !== null ? 0 : ui.micLag);
+    const s = t0 - rec.t0 + rec.startCtx + lag, now = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = rec.buf;
+    const g = ctx.createGain(); g.gain.value = 1.4; src.connect(g); g.connect(ctx.destination);
+    if (s >= now) src.start(s); else if (now - s < rec.buf.duration) src.start(now, now - s);
+    rec.src = src;
+    return;
+  }
+  if (!rec.on || !mic.on || !mic.stream || !window.MediaRecorder) return;
+  try {
+    rec.chunks = [];
+    rec.mr = new MediaRecorder(mic.stream);
+    rec.mr.ondataavailable = e => { if (e.data && e.data.size) rec.chunks.push(e.data); };
+    rec.mr.onstop = () => {
+      const blob = new Blob(rec.chunks, {type: rec.mr ? rec.mr.mimeType : 'audio/webm'});
+      rec.mr = null;
+      blob.arrayBuffer().then(b => audio.ctx.decodeAudioData(b)).then(buf => {
+        rec.buf = buf; $('#micBack').disabled = false;
+        toast('Recorded. Press Listen back to hear yourself with the music.');
+      }).catch(() => toast('The recording could not be read in this browser.'));
+    };
+    rec.mr.start();
+    rec.startCtx = ctx.currentTime; rec.t0 = t0; rec.from = from;
+  } catch (e) { rec.mr = null; }
+}
+function recStop(){
+  if (rec.src) { try { rec.src.stop(); } catch (e) {} rec.src = null; }
+  if (rec.mr && rec.mr.state === 'recording') { try { rec.mr.stop(); } catch (e) {} }
+}
 function takeLag(ctx){
   /* measured with the clap test, or typed in: that, from the organ's click to the sound reaching the analyser */
   if (ui.micCal !== null) return ui.micCal + 1024 / ctx.sampleRate;
@@ -4370,6 +4412,12 @@ function wire(){
   $('#mic').addEventListener('click', e => { mic.on ? micStop() : micStart(); e.currentTarget.blur(); });
   $('#micFlex').addEventListener('click', () => { ui.micFlex = !ui.micFlex; setPressed($('#micFlex'), ui.micFlex); mic.snap = null; mic.pend = null; save(); });
   $('#micPhones').addEventListener('click', () => { ui.micPhones = !ui.micPhones; setPressed($('#micPhones'), ui.micPhones); save(); });
+  $('#micRec').addEventListener('click', () => {
+    rec.on = !rec.on; setPressed($('#micRec'), rec.on);
+    if (rec.on) { if (!window.MediaRecorder) { rec.on = false; setPressed($('#micRec'), false); toast('This browser cannot record.'); return; }
+      if (!mic.on) micStart(); toast('Recording is on: press play and sing. Each playback is recorded.'); }
+  });
+  $('#micBack').addEventListener('click', () => { if (!rec.buf) return; rec.listening = true; startPlayback(rec.from); });
   $('#micNotate').addEventListener('click', () => { ui.micNotate = !ui.micNotate; setPressed($('#micNotate'), ui.micNotate); if (!ui.micNotate) takeClear(); save(); render(); });
   $('#micClap').addEventListener('click', clapTest);
   $('#micDia').addEventListener('click', () => { ui.micDia = !ui.micDia; setPressed($('#micDia'), ui.micDia); save(); if (take.frames.length) { take.sig = ''; takeQuantize(true); } });
