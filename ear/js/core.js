@@ -265,7 +265,7 @@ window.E = (function () {
       set.append(h('summary', null, T('Settings')));
       const sb = h('div', { class: 'setbody' });
       spec.settings(sb, () => { st.q = null; st.done = false; draw(); });
-      if (spec.play) sb.append(E.timbreField());
+      if (spec.play && !spec.ownTimbre) sb.append(E.timbreField());
       sb.append(E.checkField(T('Go on to the next question automatically after a correct answer'), pref.autoNext !== false, v => { pref.autoNext = v; E.saveSettings(); }));
       set.append(sb);
 

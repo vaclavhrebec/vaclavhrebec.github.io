@@ -3,7 +3,9 @@
 (function () {
   const h = E.h, T = E.t;
   const LEVELS = [10, 8, 6, 5, 4, 3, 2, 1, .5];
-  const cfg = Object.assign({ level: 0, auto: true, dir: false, dur: .7, fixed: false }, E.load('cfg.cents', {}));
+  const cfg = Object.assign({ level: 0, auto: true, dir: false, dur: 1, fixed: false, tim: 'organ' }, E.load('cfg.cents', {}));
+  // a steady tone: a decaying piano tone makes differences of a few cents very hard to hear
+  if (!cfg.timV2) { cfg.tim = 'organ'; cfg.dur = Math.max(cfg.dur, 1); cfg.timV2 = 1; }
   const save = () => E.save('cfg.cents', cfg);
   let run = 0, miss = 0;
   const fmtC = c => (c < 1 ? '½' : String(c)) + ' ' + T(c === 1 ? 'cent' : 'cents');
@@ -12,8 +14,18 @@
     const A = E.audio; A.stop();
     const t = A.now(), d = cfg.dur, gap = .28;
     q.f.forEach((fr, i) => {
-      A.tone(fr, t + i * (d + gap), d);
+      A.tone(fr, t + i * (d + gap), d, { timbre: cfg.tim });
       A.later(() => light(i), (t - A.get().currentTime + i * (d + gap)) * 1000);
+    });
+    A.later(() => light(-1), (t - A.get().currentTime + 4 * (d + gap)) * 1000);
+  }
+  /* after the answer: the normal and the odd tone, twice, one after the other */
+  function compare(q) {
+    const A = E.audio; A.stop();
+    const t = A.now(), d = cfg.dur, gap = .28, other = q.f[(q.odd + 1) % 4];
+    [other, q.f[q.odd], other, q.f[q.odd]].forEach((fr, i) => {
+      A.tone(fr, t + i * (d + gap), d, { timbre: cfg.tim });
+      A.later(() => light(i % 2 ? q.odd : -1), (t - A.get().currentTime + i * (d + gap)) * 1000);
     });
     A.later(() => light(-1), (t - A.get().currentTime + 4 * (d + gap)) * 1000);
   }
@@ -22,7 +34,7 @@
   }
 
   const spec = {
-    id: 'cents', cols: 4, autoDelay: 1500,
+    id: 'cents', cols: 4, autoDelay: 1500, ownTimbre: true,
     options: () => cfg.dir
       ? [0, 1, 2, 3].flatMap(i => [{ id: i + 'u', label: (i + 1) + ' ↑', sub: T('higher') }, { id: i + 'd', label: (i + 1) + ' ↓', sub: T('lower') }])
         .sort((a, b) => (a.id[1] === 'u' ? 0 : 1) - (b.id[1] === 'u' ? 0 : 1) || a.id[0] - b.id[0])
@@ -42,7 +54,7 @@
       if (ok) { run++; miss = 0; if (run >= 5 && cfg.level < LEVELS.length - 1) { cfg.level++; run = 0; save(); spec._lvlMsg = 'up'; } }
       else { miss++; run = 0; if (miss >= 2 && cfg.level > 0) { cfg.level--; miss = 0; save(); spec._lvlMsg = 'down'; } }
     },
-    stage(q, el) {
+    stage(q, el, st) {
       const lv = h('div', { class: 'levelbar' },
         LEVELS.map((c, i) => h('button', {
           type: 'button', class: 'lv' + (i === cfg.level ? ' on' : '') + (i < cfg.level ? ' past' : ''),
@@ -53,14 +65,16 @@
       el.append(
         h('div', { class: 'lvhead' }, h('span', null, T('Level'), ' ', h('b', null, cfg.level + 1), ' · ', fmtC(LEVELS[cfg.level])), msg),
         lv,
-        h('div', { class: 'lamps' }, [0, 1, 2, 3].map(i => h('div', { class: 'lamp' }, h('span', null, i + 1)))));
+        h('div', { class: 'lamps' }, [0, 1, 2, 3].map(i => h('div', { class: 'lamp' }, h('span', null, i + 1)))),
+        q && st && st.done ? h('div', { class: 'cmp' }, h('button', { type: 'button', class: 'mini', onclick: () => compare(q) }, '▶ ' + T('Compare: a normal tone and the odd one, twice'))) : null);
     },
     settings(el, rerun) {
       el.append(
         E.checkField(T('Automatic levels: five correct in a row moves up, two mistakes in a row move down'), cfg.auto, v => { cfg.auto = v; save(); }),
         E.checkField(T('Also say whether the tone is higher or lower'), cfg.dir, v => { cfg.dir = v; save(); rerun(); }),
         E.checkField(T('Always start from A = 440 Hz (otherwise a random pitch each time)'), cfg.fixed, v => { cfg.fixed = v; save(); }),
-        E.rangeField(T('Tone length'), cfg.dur, .3, 1.5, .1, v => v.toFixed(1) + ' s', v => { cfg.dur = v; save(); }));
+        E.selectField(T('Sound'), cfg.tim, [{ v: 'organ', l: T('Organ (principal)') }, { v: 'reed', l: T('Reed') }, { v: 'sine', l: T('Sine tone') }, { v: 'piano', l: T('Piano-like') }], v => { cfg.tim = v; save(); }),
+        E.rangeField(T('Tone length'), cfg.dur, .3, 2, .1, v => v.toFixed(1) + ' s', v => { cfg.dur = v; save(); }));
     }
   };
 
