@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ear Training · Václav Hřebec</title>
+<meta name="description" content="Ear training in the browser: intervals, intonation in cents, key signatures, rhythm, chords and scales including Arabic maqamat. English, Deutsch, Français, Čeština.">
+<meta property="og:title" content="Ear Training · Gehörbildung">
+<meta property="og:description" content="Intervals, intonation, key signatures, rhythm, chords and scales. By Václav Hřebec.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Layout: one centred column; overview = grid of six exercise cards; each exercise = panel (stage + actions + feedback), answer grid, statistics, settings */
+  :root {
+    --bg: #faf7f2; --fg: #1c1a17; --muted: #6b655c; --line: #e4ddd1; --soft: #f1ece3;
+    --accent: #c8102e; --accent-ink: #fff; --card: #ffffff; --ok: #2f7d4a; --ok-soft: #e3f1e7; --bad-soft: #fbe4e6;
+    --serif: "EB Garamond", Georgia, "Times New Roman", serif; --sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824; --soft: #201d19;
+    --accent: #e5394f; --accent-ink: #fff; --card: #1b1916; --ok: #6cc28a; --ok-soft: #1d3325; --bad-soft: #3a1c20; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #141210; --fg: #ece6dc; --muted: #9c948a; --line: #2c2824; --soft: #201d19;
+    --accent: #e5394f; --accent-ink: #fff; --card: #1b1916; --ok: #6cc28a; --ok-soft: #1d3325; --bad-soft: #3a1c20; color-scheme: dark }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 var(--sans); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 max(16px, env(safe-area-inset-right)) 56px max(16px, env(safe-area-inset-left)); }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .6rem 1rem; padding-top: 1rem; }
+  .sitenav { display: flex; flex-wrap: wrap; gap: 4px 12px; font: italic 1.02rem/1.3 var(--serif); color: var(--muted); }
+  .sitenav a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
+  .sitenav a:hover { color: var(--fg); border-bottom-color: currentColor; }
+  .tools { display: flex; gap: .5rem; align-items: center; }
+  .lang { display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--card); }
+  .lang button { font: 500 .76rem/1 var(--sans); letter-spacing: .05em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: .42rem .62rem; cursor: pointer; }
+  .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+  #theme { font: inherit; font-size: .8rem; background: none; border: 1px solid var(--line); color: var(--muted); border-radius: 999px; padding: .35rem .7rem; cursor: pointer; }
+
+  header.site { padding: 1.6rem 0 .2rem; }
+  header.site h1 { font: 600 clamp(2.4rem, 7vw, 3.8rem)/1 var(--serif); margin: 0 0 .4rem; letter-spacing: -.01em; text-wrap: balance; }
+  header.site p { font: italic 1.3rem/1.35 var(--serif); color: var(--muted); margin: 0; max-width: 60ch; }
+  body.in-room header.site h1 { font-size: 1.6rem; margin: 0; }
+  body.in-room header.site p, body.in-room .staff { display: none; }
+  body.in-room header.site { padding: .9rem 0 0; }
+  .staff { height: 33px; margin: 1.3rem 0 1.8rem; opacity: .5; background: repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 8px); }
+
+  /* overview */
+  .rooms { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+  @media (max-width: 900px) { .rooms { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .rooms { grid-template-columns: 1fr; } }
+  .card { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+    color: inherit; text-decoration: none; transition: border-color .2s, transform .2s, box-shadow .2s; }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 16px 32px -20px rgba(0,0,0,.4); }
+  .card .pic { height: 118px; display: grid; place-items: center; background: var(--soft); border-bottom: 1px solid var(--line); padding: 10px 16px; }
+  .card .pic svg { max-height: 96px; max-width: 100%; width: auto; height: auto; }
+  .card .body { padding: 14px 18px 18px; display: flex; flex-direction: column; flex: 1; }
+  .num { font: italic 1rem var(--serif); color: var(--accent); }
+  .card h2 { font: 600 1.55rem/1.15 var(--serif); margin: .05rem 0 .4rem; }
+  .card p { margin: 0 0 .9rem; color: var(--muted); font-size: .95rem; flex: 1; }
+  .meta { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-top: 1px solid var(--line); padding-top: .6rem; }
+  .about { margin: 2.4rem auto 0; max-width: 64ch; text-align: center; color: var(--muted); font: 1.12rem/1.5 var(--serif); }
+  .about .fbtn { font: 500 .9rem var(--sans); margin-top: .9rem; cursor: pointer; border: 1px solid var(--accent); color: var(--accent); background: none; border-radius: 999px; padding: .5rem 1.2rem; }
+  .about .fbtn:hover { background: var(--accent); color: var(--accent-ink); }
+
+  /* exercise room */
+  .room-head { margin: 1.2rem 0 1.1rem; }
+  .room-head .back { color: var(--muted); text-decoration: none; font-size: .95rem; }
+  .room-head .back:hover { color: var(--accent); }
+  .room-head h1 { font: 600 clamp(2rem, 5.5vw, 2.9rem)/1.05 var(--serif); margin: .1rem 0 .4rem; }
+  .room-head .lede { margin: 0; color: var(--muted); max-width: 70ch; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+  .acts { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn { font: 500 .95rem var(--sans); border-radius: 8px; padding: .62rem 1.1rem; border: 1px solid var(--line); background: var(--card); color: var(--fg); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--fg); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); min-width: 9.5rem; }
+  .btn.primary:hover { filter: brightness(1.08); border-color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .keys-hint { font-size: .78rem; color: var(--muted); margin-left: auto; }
+  @media (max-width: 600px) { .keys-hint { display: none; } }
+  .feedback { min-height: 1.6em; font-size: 1rem; padding: .6rem .8rem; border-radius: 8px; background: var(--soft); }
+  .feedback.ok { background: var(--ok-soft); } .feedback.ok b:first-child { color: var(--ok); }
+  .feedback.bad { background: var(--bad-soft); } .feedback.bad b:first-child { color: var(--accent); }
+  .feedback .cmp { display: inline-flex; gap: 6px; margin-left: .4rem; flex-wrap: wrap; }
+  .feedback .steps { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .muted { color: var(--muted); }
+  .mini { font: 500 .8rem var(--sans); border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 999px; padding: .25rem .7rem; cursor: pointer; margin: 0 .2rem; }
+  .mini:hover { border-color: var(--accent); color: var(--accent); }
+
+  .answers { display: grid; grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+  @media (max-width: 760px) { .answers { grid-template-columns: repeat(min(var(--cols, 4), 3), minmax(0, 1fr)); } }
+  @media (max-width: 480px) { .answers { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .ghead { grid-column: 1 / -1; font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: .5rem 0 -.1rem; }
+  .ans { font: 500 .93rem/1.25 var(--sans); text-align: left; padding: .7rem .8rem; border-radius: 8px; border: 1px solid var(--line);
+    background: var(--card); color: var(--fg); cursor: pointer; min-height: 3rem; display: flex; flex-direction: column; justify-content: center; gap: 2px; overflow-wrap: anywhere; }
+  .ans small { font-weight: 400; font-size: .76rem; color: var(--muted); }
+  .ans:hover:not(:disabled) { border-color: var(--accent); }
+  .ans:disabled { cursor: default; color: var(--muted); }
+  .ans.is-right { background: var(--ok-soft); border-color: var(--ok); color: var(--fg); }
+  .ans.is-wrong { background: var(--bad-soft); border-color: var(--accent); color: var(--fg); }
+
+  .stats { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; align-items: baseline; font-size: .88rem; padding: .2rem .2rem 0; font-variant-numeric: tabular-nums; }
+  .linkish { font: inherit; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; }
+  .settings { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .settings summary { cursor: pointer; font: 600 1.15rem var(--serif); padding: .3rem 0; }
+  .setbody { display: flex; flex-direction: column; gap: 12px; padding: .6rem 0 0; }
+  .sethead { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: .4rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; font-size: .86rem; border: 1px solid var(--line); border-radius: 999px; padding: .32rem .75rem; cursor: pointer; user-select: none; background: var(--card); }
+  .chip input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .chip.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .chip:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .chk { display: flex; gap: .55rem; align-items: flex-start; font-size: .93rem; }
+  .chk input { margin-top: .25rem; accent-color: var(--accent); }
+  .fld { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; max-width: 420px; }
+  .fld select { font: inherit; padding: .45rem .5rem; border-radius: 6px; border: 1px solid var(--line); background: var(--card); color: var(--fg); }
+  .fld input[type=range] { accent-color: var(--accent); width: 100%; }
+  .fld output { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .presets { display: flex; flex-wrap: wrap; gap: 4px; }
+  .note { margin: 0; font-size: .84rem; color: var(--muted); max-width: 75ch; }
+
+  /* stages */
+  .stage:empty { display: none; }
+  .score { display: block; fill: var(--fg); stroke: var(--fg); }
+  .score path, .score ellipse, .score rect, .score circle, .score text { stroke: none; }
+  .score .stl, .score line { stroke: var(--fg); }
+  .score .hole { fill: var(--card); }
+  .score .acc { fill: var(--accent); }
+  .score .tbr { stroke: var(--fg); fill: none; }
+  .score text { font-family: var(--serif); font-weight: 600; }
+  .score .tn { font-style: italic; font-weight: 600; }
+  .card .score .hole { fill: var(--soft); }
+  .keystage { display: flex; justify-content: center; }
+  .keystage svg { width: min(100%, 320px); height: auto; }
+  .cap { text-align: center; color: var(--muted); font-size: .9rem; margin-top: -.3rem; }
+
+  .lvhead { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: baseline; font-size: .95rem; }
+  .lvmsg { color: var(--accent); font-size: .88rem; }
+  .levelbar { display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 4px; }
+  .levelbar.wide { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+  .lv { font: inherit; border: 1px solid var(--line); background: var(--card); color: var(--fg); border-radius: 6px; padding: .35rem 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .lv b { font-size: .95rem; } .lv small { font-size: .68rem; color: var(--muted); }
+  .lv.past { background: var(--soft); }
+  .lv.on { background: var(--fg); color: var(--bg); border-color: var(--fg); } .lv.on small { color: inherit; opacity: .8; }
+  .lamps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+  .lamp { height: 64px; border-radius: 10px; border: 1px solid var(--line); background: var(--soft); display: grid; place-items: center; font: 600 1.6rem var(--serif); color: var(--muted); transition: background .08s, color .08s; }
+  .lamp.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+
+  .rhythmroom .sheet { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 14px; margin-top: 14px; overflow-x: auto; }
+  .rhythmroom .sheet svg { display: block; max-width: none; }
+  .rhythmroom .sheet .veil { display: none; }
+  .rhythmroom .sheet.hidden svg { filter: blur(9px); opacity: .25; }
+  .rhythmroom .sheet.hidden .veil { display: grid; position: absolute; inset: 0; place-items: center; padding: 1rem; text-align: center; color: var(--muted); font: italic 1.2rem var(--serif); }
+  .rhythm .nh.on { fill: var(--accent); }
+  .exinfo .q { font-family: var(--serif); font-size: 1.25em; line-height: 0; }
+  .exinfo { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .86rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .6rem; }
+  footer a { color: inherit; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <nav class="sitenav" aria-label="Václav Hřebec">
+      <a href="../">&#8592; Václav Hřebec</a><span aria-hidden="true">·</span>
+      <a href="../gym/" data-t="The Ultimate Counterpoint Gym">The Ultimate Counterpoint Gym</a>
+    </nav>
+    <div class="tools">
+      <div class="lang" role="group" aria-label="Language">
+        <button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="de" lang="de">DE</button><button type="button" data-lang="fr" lang="fr">FR</button><button type="button" data-lang="cs" lang="cs">CZ</button>
+      </div>
+      <button id="theme" type="button" data-t="Light / dark">Light / dark</button>
+    </div>
+  </div>
+  <header class="site">
+    <h1><a href="#" style="color:inherit;text-decoration:none" data-t="Ear Training">Ear Training</a></h1>
+    <p data-t="Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.">Intervals, intonation, key signatures, rhythm, chords and scales: daily practice for musicians.</p>
+  </header>
+  <div class="staff" aria-hidden="true"></div>
+  <main id="main"></main>
+  <section class="about" id="about">
+    <p data-t="Free to use, with no account. Your settings and scores are kept in this browser only.">Free to use, with no account. Your settings and scores are kept in this browser only.</p>
+    <button type="button" class="fbtn" data-feedback-open data-topic="Ear training" data-t="Feedback & wishes">Feedback &amp; wishes</button>
+  </section>
+  <footer>
+    <span>© 2026 Václav Hřebec</span>
+    <span><a href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener" data-t="Support this project">Support this project</a></span>
+  </footer>
+</div>
+<script src="js/core.js"></script>
+<script src="js/glyphs.js"></script>
+<script src="js/notation.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/room-intervals.js"></script>
+<script src="js/room-cents.js"></script>
+<script src="js/room-keys.js"></script>
+<script src="js/room-rhythm.js"></script>
+<script src="js/room-chords.js"></script>
+<script src="js/room-scales.js"></script>
+<script>
+  (function () {
+    const root = document.documentElement;
+    try { const t = localStorage.getItem('theme'); if (t) root.dataset.theme = t; } catch (e) {}
+    document.getElementById('theme').addEventListener('click', () => {
+      const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+      root.dataset.theme = dark ? 'light' : 'dark';
+      try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
+    });
+    document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => E.setLang(b.dataset.lang)));
+    document.documentElement.lang = E.lang;
+    E.render();
+  })();
+</script>
+<script src="../gym/feedback.js" data-topic="Ear training" defer></script>
+</body>
+</html>
