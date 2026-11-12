@@ -16,6 +16,32 @@ const VOWELS = {
 };
 export const vowelOf = t => { const m = /[aeiouyáéíóúæœ]/i.exec((t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')); const c = m ? m[0].toLowerCase() : 'a'; return c === 'y' ? 'i' : c === 'æ' ? 'e' : c === 'œ' ? 'e' : c; };
 
+/* Voice bank: vowels sung by Chimera's physical vocal-tract model (MIT, Jameson Hodge), rendered offline, one file per body and vowel. */
+const BANK = { map: null, buf: {}, pending: {} };
+export function prepare(base = 'audio/voice/') {
+  ensure();
+  const get = async (k, f, b) => { if (BANK.buf[k] || BANK.pending[k]) return; BANK.pending[k] = 1;
+    try { BANK.buf[k] = await ctx.decodeAudioData(await (await fetch(base + f)).arrayBuffer()); } catch (e) { /* the formant voice stands in */ } };
+  return (async () => {
+    if (!BANK.map) { try { BANK.map = await (await fetch(base + 'map.json')).json(); } catch (e) { return; } }
+    await Promise.all(['male', 'female'].flatMap(b => 'aeiou'.split('').map(v => get(b + v, `${b}_${v}.mp3`))));
+  })();
+}
+function bankNote(midi, f0, vowel, at, env, sources) {
+  const m = BANK.map; if (!m) return false;
+  const body = midi < 57 ? 'male' : 'female', buf = BANK.buf[body + vowel]; if (!buf) return false;
+  const ps = m[body]; let k = 0; ps.forEach((p, i) => { if (Math.abs(p - midi) < Math.abs(ps[k] - midi)) k = i; });
+  const fp = 440 * Math.pow(2, (ps[k] - 69) / 12), slot = k * m.slot;
+  const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = f0 / fp;
+  const n = Math.max(1, Math.round((m.loop[1] - m.loop[0]) * fp));
+  src.loop = true; src.loopStart = slot + m.loop[0]; src.loopEnd = slot + m.loop[0] + n / fp;
+  const v = ctx.createOscillator(); v.frequency.value = 5.2;
+  const vg = ctx.createGain(); vg.gain.setValueAtTime(0, at); vg.gain.linearRampToValueAtTime(14, at + .5);
+  v.connect(vg); vg.connect(src.detune); sources.push(v);
+  src.connect(env); src.start(at, slot + m.lead - .03); sources.push(src);
+  return true;
+}
+
 let ctx = null, master = null, dry = null, wet = null;
 
 export function ensure() {
@@ -61,7 +87,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   env.gain.linearRampToValueAtTime(0, end + rel * .5);
   const stop = end + rel;
   const sources = [];
-  const sink = out(env, level);
+  const sink = out(env, timbre === 'voice' ? level * 2.6 : level);
 
   const noise = (dur, hp, q, g0) => {
     const nb = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate), d = nb.getChannelData(0);
@@ -107,8 +133,10 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.max(1600, f0 * 8);
     o.connect(lp); lp.connect(env); sources.push(o); vibrato(o, 4.2, .0015, .5);
     noise(.06, Math.min(f0 * 5, 5000), .8, .05);
+  } else if (bankNote(midi, f0, vowel, at, env, sources)) {
+    /* sung by Chimera */
   } else {
-    /* Voice: a glottal buzz shaped by the formants of the syllable's vowel, with a gentle vibrato. */
+    /* Voice (until the bank has loaded): a glottal buzz shaped by the formants of the syllable's vowel, with a gentle vibrato. */
     const o = ctx.createOscillator(); o.setPeriodicWave(wave(Array.from({ length: 30 }, (_, i) => 1 / (i + 1))));
     o.frequency.value = f0; vibrato(o, 5.3, .005, .2);
     const f = VOWELS[vowel] || VOWELS.a, tone = f0 > 330 ? 1.3 : 1;
@@ -118,7 +146,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     });
     sources.push(o);
   }
-  sources.forEach(s => { s.start(at); s.stop(stop + .05); });
+  sources.forEach(s => { if (!s.buffer) s.start(at); s.stop(stop + .05); });
   return sink;
 }
 
