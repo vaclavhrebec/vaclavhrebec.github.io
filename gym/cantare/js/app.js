@@ -1,0 +1,531 @@
+import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, midiOf, slug, stepName, VALUE_NAME } from './music.js';
+import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont } from './engrave.js';
+import * as snd from './audio.js';
+
+const $ = s => document.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v); }
+  kids.flat().forEach(c => e.append(c.nodeType ? c : document.createTextNode(c)));
+  return e;
+};
+
+/* ------------------------------------------------------------------ state */
+const STORE = 'cantare-next:v1';
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript' };
+try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
+setFont(prefs.font);
+const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
+
+const S = {
+  library: [], flat: [],
+  base: null,            /* the piece as read from the library */
+  piece: null,           /* the piece as shown: talea, tempus applied */
+  shift: 0,              /* transposition in diatonic steps */
+  clefs: [],             /* clef overrides per voice */
+  lines: 0,              /* 0 = automatic */
+  tempus: null,          /* null = as written */
+  talea: -1, taleaLook: 'chant',
+  voice: [],             /* per voice: on | mute | hide */
+  leaf: 0, leaves: [],
+  playing: false, startAt: 0, sel: null, index: [], systems: null, edit: false,
+};
+
+/* talea patterns, in breves; a three is a perfect longa, six a perfect maxima */
+const TALEAE = [
+  ['Longa, brevis', [2, 1]], ['Brevis, longa', [1, 2]],
+  ['Three breves, perfect longa', [1, 1, 1, 3]], ['Three breves, longa, brevis, perfect longa', [1, 1, 1, 2, 1, 3]],
+  ['Three longas, perfect maxima', [2, 2, 2, 6]], ['Perfect longa, longa, brevis', [3, 2, 1]],
+];
+
+const T = { hidden: 'improvise this voice' };
+
+/* ------------------------------------------------------------------ utilities */
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2600); }
+
+function applyTheme() {
+  document.documentElement.dataset.theme = prefs.theme;
+  document.querySelector('meta[name=theme-color]').content = prefs.theme === 'dark' ? '#0f1218' : '#f1eadb';
+}
+
+/* ------------------------------------------------------------------ library */
+async function loadLibrary() {
+  const [lib, tags] = await Promise.all([fetch('data/library.json').then(r => r.json()), fetch('data/taglines.json').then(r => r.json())]);
+  S.library = lib;
+  (function walk(list, trail) { list.forEach(g => { const t = [...trail, g.group]; (g.items || []).forEach(it => S.flat.push({ item: it, trail: t })); if (g.subs) walk(g.subs, t); }); })(lib, []);
+  $('#tagline').textContent = tags[Math.floor(Math.random() * tags.length)];
+}
+
+const countIn = g => (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
+
+function renderTree(filter = '') {
+  const q = filter.trim().toLowerCase();
+  const tree = $('#tree');
+  tree.textContent = '';
+  const make = (g, trail, open) => {
+    const items = (g.items || []).filter(it => !q || (it.title + ' ' + (it.desc || '')).toLowerCase().includes(q));
+    const subs = (g.subs || []).map(s => make(s, [...trail, g.group], open)).filter(Boolean);
+    if (!items.length && !subs.length && !g.lazy) return null;
+    if (g.lazy && q) return null;
+    const d = el('details', { class: trail.length ? 'sub' : '' }, el('summary', {}, g.group, el('small', {}, String(countIn(g) || g.count || ''))));
+    if (open || q) d.open = true;
+    if (g.note && !q) d.append(el('p', { class: 'gnote' }, g.note));
+    items.forEach(it => d.append(el('button', { class: 'item', 'data-id': it.id, 'aria-current': S.base && S.base.id === it.id ? 'true' : 'false', onclick: () => { openItem(it, [...trail, g.group]); if (innerWidth < 1100) closeDrawer('library'); } },
+      el('b', {}, it.title))));
+    subs.forEach(s => d.append(s));
+    if (g.lazy) d.append(el('p', { class: 'more' }, 'The Josquin Research Project collection (' + g.count + ' pieces) comes with the next version.'));
+    return d;
+  };
+  S.library.forEach((g, i) => { const d = make(g, [], i === 0); if (d) tree.append(d); });
+  if (!tree.children.length) tree.append(el('p', { class: 'more' }, 'Nothing found.'));
+}
+
+/* ------------------------------------------------------------------ opening a piece */
+function openItem(item, trail, opts = {}) {
+  stopPlayback();
+  S.base = pieceFrom(item, trail.length ? trail : S.flat.find(f => f.item === item)?.trail || []);
+  S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
+  S.voice = S.base.voices.map(() => 'on');
+  rebuildPiece();
+  render(true);
+  hist.undo = []; hist.redo = [];
+  buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips();
+  document.querySelectorAll('.tree .item').forEach(b => b.setAttribute('aria-current', String(+b.dataset.id === item.id)));
+  try { history.replaceState(null, '', '#' + slug(item.title)); } catch (e) { /* ignore */ }
+  $('#stage').scrollTop = 0;
+  if (opts.toast) toast(opts.toast);
+}
+
+/* the shown piece derives from the base piece plus the Studio's choices */
+function rebuildPiece() {
+  const b = S.base;
+  const p = { ...b, voices: b.voices.map(v => ({ ...v, notes: v.notes.map(n => ({ ...n })) })) };
+  if (S.tempus) p.tempus = S.tempus;
+  if (S.talea >= 0 && b.kind === 'chant') {
+    const pat = TALEAE[S.talea][1], v = p.voices[0];
+    v.notes.forEach((n, i) => {
+      const br = pat[i % pat.length];
+      const [val, dot] = br === 1 ? ['B', false] : br === 2 ? ['L', false] : br === 3 ? ['L', true] : br === 6 ? ['Mx', true] : ['B', false];
+      n.v = val; n.dot = dot;
+    });
+    p.talea = true;
+    if (S.taleaLook === 'mensural') { p.kind = 'mensural'; p.lines = 5; }
+  }
+  /* durations: in the talea every value is read in tempus imperfectum */
+  p.voices.forEach(v => { stamp(v.notes, p.talea ? 'C' : p.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  p.end = Math.max(...p.voices.map(v => v.end));
+  if (S.lines) p.lines = S.lines;
+  else if (S.talea >= 0 && S.taleaLook === 'mensural') p.lines = 5;
+  S.piece = p;
+}
+
+/* ------------------------------------------------------------------ drawing the page */
+const paper = $('#paper');
+const spaceW = () => Math.max(20, (paper.clientWidth || $('#stage').clientWidth - 40) - 40) / prefs.zoom;
+
+function render(resetLeaf) {
+  const p = S.piece;
+  $('#trail').textContent = (p.trail || []).join('  ›  ');
+  $('#title').textContent = p.title;
+  $('#note').textContent = p.note + (p.talea ? ' Talea: ' + TALEAE[S.talea][0] + '.' : '');
+  const useBook = prefs.view === 'book' && p.voices.length > 1;
+  $('#pager').hidden = !useBook;
+  paper.className = useBook ? 'book' : 'paper';
+  paper.textContent = '';
+  S.index = [];
+  const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T };
+  if (useBook) renderBook(p, opts, resetLeaf);
+  else renderScore(p, opts);
+  collectNotes();
+  markSel();
+}
+
+function renderScore(p, opts) {
+  const w = spaceW();
+  const systems = engraveSystems(p, p.voices.map((_, i) => i), w, opts);
+  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, prefs.zoom)))));
+  S.systems = systems;
+}
+
+function renderBook(p, opts, resetLeaf) {
+  const paneCss = (paper.clientWidth || $('#stage').clientWidth) / 2 - 36;
+  const availH = Math.max(300, $('#stage').clientHeight - 130);
+  /* first pass at the chosen size to learn how tall a line is, then shrink so that two lines per pane fit one screen */
+  let scale = prefs.zoom;
+  const probe = p.voices.map((_, i) => engraveSystems(p, [i], Math.max(18, paneCss / scale), { ...opts, names: false }));
+  const maxH = Math.max(...probe.map(s => Math.max(...s.map(x => x.h))));
+  scale = Math.max(8, Math.min(scale, (availH / 2 - 34) / (2 * maxH + 1.2)));
+  S.bookScale = scale;
+  const paneW = Math.max(18, paneCss / scale);
+  const per = p.voices.map((_, i) => engraveSystems(p, [i], paneW, { ...opts, names: false }));
+  const sysH = Math.max(...per.map(s => Math.max(...s.map(x => x.h)))) * scale + 14;
+  const rows = Math.max(2, Math.floor((availH / 2 - 30) / sysH));
+  /* leaves: every voice shows at most `rows` lines; the boundaries fall on starts of lines of any voice */
+  const cuts = [...new Set(per.flatMap(s => s.map(x => x.t0)))].sort((a, b) => a - b);
+  const leaves = [];
+  let a = 0;
+  while (a < cuts.length) {
+    let b = a + 1;
+    const fits = e => per.every(s => s.filter(x => x.t0 >= cuts[a] - 1e-6 && x.t0 < (e < cuts.length ? cuts[e] : Infinity) - 1e-6).length <= rows);
+    while (b < cuts.length && fits(b + 1)) b++;
+    leaves.push({ t0: cuts[a], t1: b < cuts.length ? cuts[b] : Infinity });
+    a = b;
+  }
+  S.leaves = leaves;
+  if (resetLeaf) S.leaf = 0;
+  S.leaf = Math.min(S.leaf, leaves.length - 1);
+  const L = leaves[S.leaf];
+  $('#leafNo').textContent = `Leaf ${S.leaf + 1} of ${leaves.length}`;
+  const order = p.voices.length === 3 ? [0, 1, 2, -1] : [0, 1, 2, 3];
+  order.forEach(vi => {
+    const pane = el('div', { class: 'pane' });
+    if (vi >= 0 && vi < p.voices.length) {
+      const v = p.voices[vi];
+      if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
+      per[vi].filter(x => x.t0 >= L.t0 - 1e-6 && x.t0 < L.t1 - 1e-6).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
+    }
+    paper.append(pane);
+  });
+}
+
+const parse = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
+
+function collectNotes() {
+  S.index = [...paper.querySelectorAll('.note')].map(e => ({ e, t: +e.dataset.t, end: +e.dataset.t + +e.dataset.len, on: false }));
+}
+
+/* ------------------------------------------------------------------ studio */
+function chipRow(label, buttons) { return el('div', { class: 'row' }, label ? el('label', {}, label) : '', buttons); }
+const chip = (text, pressed, fn, extra = {}) => el('button', { class: 'chip', 'aria-pressed': String(!!pressed), onclick: fn, ...extra }, text);
+
+function buildTransform() {
+  const b = S.base, c = $('#transformPop');
+  c.textContent = '';
+  const card = (title, ...kids) => { const d = el('section', { class: 'card' }, el('h3', {}, title), ...kids); c.append(d); return d; };
+  const redo = () => { rebuildPiece(); render(); buildTransform(); buildVoiceChips(); };
+
+  /* clefs */
+  const multi = b.voices.length > 1;
+  const clefCard = card('Clef and staff');
+  b.voices.forEach((v, i) => {
+    const cur = S.clefs[i] || v.clef;
+    clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || 'Voice ' + (i + 1)) : 'Clef'),
+      el('select', { 'aria-label': 'Clef', onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_ORDER.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
+  });
+  clefCard.append(chipRow('Lines', [[0, 'Auto'], [4, '4'], [5, '5']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
+  clefCard.append(el('p', { class: 'hint' }, 'Plainchant stands on four lines, everything mensural on five; Auto follows that rule.'));
+
+  /* pitch */
+  const range = (() => { const st = b.voices[0].notes.filter(n => !n.rest).map(n => n.step + S.shift); return st.length ? stepName(Math.min(...st)) + '–' + stepName(Math.max(...st)) : ''; })();
+  card('Pitch',
+    el('div', { class: 'row' }, el('label', {}, 'Step'), chip('−', false, () => { S.shift -= 1; redo(); }), chip('+', false, () => { S.shift += 1; redo(); }),
+      el('label', {}, 'Octave'), chip('−', false, () => { S.shift -= 7; redo(); }), chip('+', false, () => { S.shift += 7; redo(); }), chip('Reset', false, () => { S.shift = 0; redo(); })),
+    el('p', { class: 'hint' }, `Melody now spans ${range}. Steps move every voice along the white keys, so the mode stays as it is.`));
+
+  /* mensuration */
+  const t = S.tempus || b.tempus;
+  if (b.kind !== 'chant') {
+    card('Mensuration',
+      chipRow('Tempus', [['C', 'Imperfectum'], ['O', 'Perfectum']].map(([k, n]) => chip(n, t === k, () => { S.tempus = k; redo(); }))),
+      el('p', { class: 'hint' }, 'In tempus perfectum a brevis holds three semibreves.'));
+  } else {
+    const looks = [['chant', 'Chant notation'], ['mensural', 'Mensural notation']];
+    card('Talea',
+      el('div', { class: 'row' }, chip('None', S.talea < 0, () => { S.talea = -1; redo(); })),
+      ...TALEAE.map(([name], i) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }))),
+      S.talea >= 0 ? chipRow('Shown as', looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
+      el('p', { class: 'hint' }, 'A talea lays a repeating rhythmic pattern over the chant. Dotted values are perfect.'));
+  }
+
+}
+
+function buildStudio() {
+  const b = S.base, c = $('#cards');
+  c.textContent = '';
+  const multi = b.voices.length > 1;
+  const card = (title, ...kids) => { const d = el('section', { class: 'card' }, el('h3', {}, title), ...kids); c.append(d); return d; };
+
+  /* sound */
+  card('Sound',
+    chipRow('Timbre', Object.entries(snd.TIMBRES).map(([k, v]) => chip(v.label, prefs.timbre === k, () => { prefs.timbre = k; savePrefs(); buildStudio(); }))),
+    el('div', { class: 'row' }, el('label', {}, 'Volume'), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
+    chipRow('Pitch', [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); buildStudio(); }))),
+    chipRow('Tactus', [chip('Click', prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip('Hand', prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); applyHand(); buildStudio(); })]));
+
+  /* view */
+  card('View',
+    chipRow('Notation', [['manuscript', 'Manuscript'], ['bravura', 'Engraved']].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
+    chipRow('Layout', [['score', 'Score'], ['book', 'Choir book']].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
+    el('div', { class: 'row' }, el('label', {}, 'Size'), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
+    chipRow('Theme', [chip('Dark', prefs.theme === 'dark', () => { prefs.theme = 'dark'; savePrefs(); applyTheme(); buildStudio(); }), chip('Light', prefs.theme === 'light', () => { prefs.theme = 'light'; savePrefs(); applyTheme(); buildStudio(); })]));
+
+  card('Share', el('div', { class: 'row' }, chip('Copy link', false, async () => {
+    const url = location.origin + location.pathname + '#' + slug(b.title);
+    try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch (e) { toast(url); }
+  }), chip('Print', false, () => window.print())));
+}
+
+function buildVoiceChips() {
+  const box = $('#voiceChips');
+  box.textContent = '';
+  if (S.base.voices.length < 2) return;
+  S.base.voices.forEach((v, i) => {
+    const set = st => () => { S.voice[i] = S.voice[i] === st ? 'on' : st; render(); buildVoiceChips(); if (S.playing) { /* sound follows at once */ } };
+    box.append(el('div', { class: 'vc' }, el('span', {}, v.name || 'Voice ' + (i + 1)),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: 'Seen, not heard: sing it from the notation', onclick: set('mute') }, 'Mute'),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: 'Neither seen nor heard: improvise it', onclick: set('hide') }, 'Hide')));
+  });
+}
+
+
+/* ------------------------------------------------------------------ editing (only after the pencil is tapped) */
+const hist = { undo: [], redo: [] };
+const snap = () => JSON.stringify(S.base.voices.map(v => v.notes));
+function afterEdit() {
+  S.base.voices.forEach(v => { stamp(v.notes, S.base.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  S.base.end = Math.max(...S.base.voices.map(v => v.end));
+  stopPlayback();
+  rebuildPiece(); render(); buildEditTools(); buildTransform();
+}
+function commit(change) {
+  hist.undo.push(snap()); if (hist.undo.length > 200) hist.undo.shift();
+  hist.redo = [];
+  change(); afterEdit();
+}
+function restoreSnap(js) { JSON.parse(js).forEach((ns, i) => { S.base.voices[i].notes = ns; }); if (S.sel && !S.base.voices[S.sel.vi].notes[S.sel.i]) S.sel = null; afterEdit(); }
+const undo = () => { if (hist.undo.length) { hist.redo.push(snap()); restoreSnap(hist.undo.pop()); } };
+const redoEdit = () => { if (hist.redo.length) { hist.undo.push(snap()); restoreSnap(hist.redo.pop()); } };
+const selNote = () => (S.sel ? S.base.voices[S.sel.vi]?.notes[S.sel.i] : null);
+function markSel() {
+  paper.querySelectorAll('.note.sel').forEach(x => x.classList.remove('sel'));
+  if (S.sel && S.edit) paper.querySelector(`.note[data-v="${S.sel.vi}"][data-i="${S.sel.i}"]`)?.classList.add('sel');
+}
+function select(vi, i) { S.sel = { vi, i }; markSel(); buildEditTools(); }
+function hear(n) { if (!n || n.rest) return; const ctx = snd.ensure(); snd.note({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, at: ctx.currentTime + .02, dur: .6 }); }
+
+const EDIT = {
+  pitch(d) { const n = selNote(); if (!n || n.rest) return; commit(() => { n.step = Math.max(7, Math.min(55, n.step + d)); }); hear(selNote()); },
+  value(v) { const n = selNote(); if (n) commit(() => { n.v = v; }); },
+  rest() { const n = selNote(); if (n) commit(() => { n.rest = !n.rest; if (n.rest) n.acc = ''; }); },
+  dot() { const n = selNote(); if (n) commit(() => { n.dot = !n.dot; }); },
+  acc(a) { const n = selNote(); if (n && !n.rest) commit(() => { n.acc = n.acc === a ? '' : a; n.ficta = false; }); },
+  del() {
+    if (!S.sel) return;
+    const { vi, i } = S.sel, ns = S.base.voices[vi].notes;
+    if (ns.length < 2) return;
+    commit(() => { ns.splice(i, 1); S.sel = { vi, i: Math.min(i, ns.length - 1) }; });
+  },
+  add() {
+    const vi = S.sel ? S.sel.vi : 0, ns = S.base.voices[vi].notes, at = S.sel ? S.sel.i : ns.length - 1;
+    const src = ns[at] || { step: 28 };
+    commit(() => { ns.splice(at + 1, 0, { v: src.v || 'B', rest: false, step: src.step, acc: '', dot: false, col: false, ficta: false }); S.sel = { vi, i: at + 1 }; });
+  },
+  move(d) { if (!S.sel) return; const ns = S.base.voices[S.sel.vi].notes, i = Math.max(0, Math.min(ns.length - 1, S.sel.i + d)); select(S.sel.vi, i); hear(ns[i]); },
+};
+
+const ICON = {
+  undo: '<svg class="ico" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0 -5)"/></svg>',
+  redo: '<svg class="ico" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/><path d="M20 12H10a6 6 0 0 0 0 12" transform="translate(0 -5)"/></svg>',
+  left: '<svg class="ico" viewBox="0 0 24 24"><path d="M14.500 5l-7 7 7 7"/></svg>',
+  right: '<svg class="ico" viewBox="0 0 24 24"><path d="M9.500 5l7 7-7 7"/></svg>',
+  up: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 14.500l7-7 7 7"/></svg>',
+  down: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 9.500l7 7 7-7"/></svg>',
+  dot: '<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.600" fill="currentColor"/></svg>',
+  plus: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+  trash: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.500h4V7M7 7l1 13h8l1-13"/></svg>',
+};
+
+function buildEditTools() {
+  const box = $('#editTools');
+  box.hidden = !S.edit;
+  $('#editBtn').setAttribute('aria-pressed', String(S.edit));
+  box.textContent = '';
+  if (!S.edit) return;
+  const n = selNote(), has = !!n;
+  const btn = (html, title, fn, o = {}) => { const b = el('button', { class: 'tbtn' + (o.on ? ' on' : ''), title, 'aria-label': title, disabled: !!o.dis, onclick: fn }); b.innerHTML = html; return b; };
+  const grp = (...k) => el('div', { class: 'tb-group' }, ...k.flat());
+  box.append(
+    grp(btn(ICON.undo, 'Undo', undo, { dis: !hist.undo.length }), btn(ICON.redo, 'Redo', redoEdit, { dis: !hist.redo.length })),
+    grp(btn(ICON.left, 'Previous note', () => EDIT.move(-1), { dis: !has }), btn(ICON.right, 'Next note', () => EDIT.move(1), { dis: !has }),
+      btn(ICON.up, 'Higher', () => EDIT.pitch(1), { dis: !has || n.rest }), btn(ICON.down, 'Lower', () => EDIT.pitch(-1), { dis: !has || n.rest })),
+    grp(['Mx', 'L', 'B', 'S', 'M', 'Sm', 'F'].map(v => btn(glyphIcon('note', v), VALUE_NAME[v], () => EDIT.value(v), { on: has && n.v === v, dis: !has }))),
+    grp(btn(glyphIcon('rest'), 'Rest', () => EDIT.rest(), { on: has && n.rest, dis: !has }), btn(ICON.dot, 'Dot', () => EDIT.dot(), { on: has && n.dot, dis: !has })),
+    grp([['b', 'Flat'], ['n', 'Natural'], ['#', 'Sharp']].map(([k, t]) => btn(glyphIcon('acc', k), t, () => EDIT.acc(k), { on: has && n.acc === k, dis: !has || n.rest }))),
+    grp(btn(ICON.plus, 'Add a note after this one', () => EDIT.add()), btn(ICON.trash, 'Delete', () => EDIT.del(), { dis: !has })),
+  );
+  if (!has) box.append(el('span', { class: 'edit-hint' }, 'Tap a note to select it.'));
+}
+
+$('#editBtn').addEventListener('click', () => {
+  S.edit = !S.edit;
+  if (!S.edit) S.sel = null;
+  buildEditTools(); markSel();
+});
+$('#transformBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const pop = $('#transformPop'); pop.hidden = !pop.hidden;
+  if (!pop.hidden) { const r = $('#toolbar').getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; }
+  $('#transformBtn').setAttribute('aria-expanded', String(!pop.hidden));
+});
+document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
+
+/* ------------------------------------------------------------------ the tactus hand */
+const HAND = `<g id="handArm"><rect x="26" y="46" width="12" height="30" rx="5" fill="currentColor" opacity=".45"/>
+<g id="baton"><path d="M31 36L52 2" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" fill="none"/><path d="M31 36L35 29" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/></g>
+<rect x="21" y="32" width="22" height="19" rx="7.500" fill="currentColor"/><path d="M27.500 37v8M32 37v8M36.500 37v8" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/>
+<path d="M40 39c4.500 0 5.500 5 2 7.500" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/></g>`;
+function applyHand() { $('#tactusBox').classList.toggle('off', !prefs.hand); }
+function swing(phase) {
+  const c = Math.cos(phase * Math.PI * 2);
+  const arm = $('#handArm'), bat = $('#baton');
+  if (arm) arm.setAttribute('transform', `rotate(${(8 * c).toFixed(1)} 32 70)`);
+  if (bat) bat.setAttribute('transform', `rotate(${(28 * c).toFixed(1)} 31 36)`);
+}
+
+/* ------------------------------------------------------------------ playback */
+const spm = () => (60 / prefs.tempo) / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4); /* seconds per minim */
+
+let timer = 0, raf = 0, clock = null;
+
+function sounding() {
+  const out = [];
+  S.piece.voices.forEach((v, vi) => {
+    if (S.voice[vi] !== 'on') return;
+    v.notes.forEach(n => { if (!n.rest) out.push({ vi, n }); });
+  });
+  return out.sort((a, b) => a.n.t - b.n.t);
+}
+
+function startPlayback() {
+  const ctx = snd.ensure();
+  snd.setVolume(prefs.volume);
+  const p = S.piece, from = S.startAt || 0, k = spm();
+  const events = sounding().filter(e => e.n.t + e.n.len > from + 1e-6);
+  let ei = 0, bi = Math.ceil(from / (S.piece.tempus === 'O' ? 6 : 4));
+  const t0 = ctx.currentTime + .15;
+  clock = { t0, from, k, end: p.end, ended: false };
+  const beat = S.piece.tempus === 'O' && !p.talea ? 6 : 4;
+  const pump = () => {
+    const horizon = ctx.currentTime + 1.2;
+    while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
+      const { vi, n } = events[ei++];
+      const at = t0 + Math.max(0, n.t - from) * k;
+      const cut = Math.max(0, from - n.t);
+      snd.note({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, dur: Math.max(.08, (n.len - cut) * k - .03), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+    }
+    while (prefs.click && bi * beat < p.end && t0 + (bi * beat - from) * k < horizon) { snd.click(t0 + (bi * beat - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
+  };
+  pump();
+  timer = setInterval(pump, 150);
+  setPlaying(true);
+  frame();
+}
+
+function stopPlayback(keep) {
+  clearInterval(timer); cancelAnimationFrame(raf);
+  clock = null;
+  if (S.playing) setPlaying(false);
+  S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
+  if (!keep) swing(0);
+}
+
+function setPlaying(on) {
+  S.playing = on;
+  $('#playIcon').innerHTML = on ? '<path d="M6 5h4.5v14H6zM13.500 5H18v14h-4.500z"/>' : '<path d="M7 4.500v15l12-7.500z"/>';
+  $('#play').setAttribute('aria-label', on ? 'Stop' : 'Play');
+}
+
+let lastSys = -1, lastLeaf = -1;
+function frame() {
+  if (!clock) return;
+  const pos = clock.from + (snd.now() - clock.t0) / clock.k;
+  if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; return; }
+  swing(pos > 0 ? ((pos / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4)) % 1) : 0);
+  for (const x of S.index) {
+    const on = x.t <= pos && pos < x.end;
+    if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
+  }
+  /* follow the music */
+  if (paper.classList.contains('book')) {
+    const li = S.leaves.findIndex(l => pos >= l.t0 - 1e-6 && pos < l.t1);
+    if (li >= 0 && li !== S.leaf) { S.leaf = li; render(); if (S.playing) { /* keep the highlight on */ } }
+  } else if (S.systems) {
+    const si = S.systems.findIndex(s => pos >= s.t0 && pos < s.t1);
+    if (si >= 0 && si !== lastSys) {
+      lastSys = si;
+      const node = paper.children[si], st = $('#stage');
+      const r = node.getBoundingClientRect(), sr = st.getBoundingClientRect();
+      if (r.top < sr.top + 40 || r.bottom > sr.bottom - 40) st.scrollTo({ top: st.scrollTop + r.top - sr.top - 90, behavior: 'smooth' });
+    }
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+/* tapping a note plays it and sets where playback begins */
+paper.addEventListener('click', e => {
+  const g = e.target.closest('.note');
+  if (!g) return;
+  const t = +g.dataset.t, vi = +g.dataset.v, i = +g.dataset.i;
+  if (S.edit) { select(vi, i); hear(S.base.voices[vi].notes[i]); return; }
+  const n = S.piece.voices[vi].notes[i];
+  S.startAt = t;
+  paper.querySelectorAll('.note.sel').forEach(x => x.classList.remove('sel'));
+  g.classList.add('sel');
+  if (!n.rest && !S.playing) { const ctx = snd.ensure(); snd.note({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, at: ctx.currentTime + .02, dur: .7 }); }
+  if (S.playing) { stopPlayback(true); startPlayback(); }
+});
+
+$('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
+$('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; $('#bpm').textContent = prefs.tempo; savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
+$('#prevLeaf').addEventListener('click', () => { S.leaf = Math.max(0, S.leaf - 1); render(); });
+$('#nextLeaf').addEventListener('click', () => { S.leaf = Math.min(S.leaves.length - 1, S.leaf + 1); render(); });
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.code === 'Space') { e.preventDefault(); $('#play').click(); }
+  if (S.edit && S.sel) {
+    if (e.key === 'ArrowUp') { e.preventDefault(); EDIT.pitch(1); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); EDIT.pitch(-1); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); EDIT.move(1); return; }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); EDIT.move(-1); return; }
+    if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); EDIT.del(); return; }
+  }
+  if (e.key === 'ArrowRight' && !$('#pager').hidden) $('#nextLeaf').click();
+  if (e.key === 'ArrowLeft' && !$('#pager').hidden) $('#prevLeaf').click();
+});
+
+/* ------------------------------------------------------------------ drawers, theme, search */
+const relayout = () => {};
+function openDrawer(id) { $('#' + id).dataset.open = 'true'; if (innerWidth >= 1100) relayout(); }
+function closeDrawer(id) { $('#' + id).dataset.open = 'false'; if (innerWidth >= 1100) relayout(); }
+const toggleDrawer = id => ($('#' + id).dataset.open === 'true' ? closeDrawer : openDrawer)(id);
+$('#openLib').addEventListener('click', () => toggleDrawer('library'));
+$('#openStudio').addEventListener('click', () => toggleDrawer('studio'));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeDrawer(b.dataset.close)));
+$('#toggleTheme').addEventListener('click', () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; savePrefs(); applyTheme(); if (S.base) buildStudio(); });
+$('#search').addEventListener('input', e => renderTree(e.target.value));
+
+let rt = 0, lastW = 0;
+new ResizeObserver(() => {
+  const w = paper.clientWidth + $('#stage').clientHeight * 1000;
+  if (w === lastW) return;
+  lastW = w; clearTimeout(rt); rt = setTimeout(() => S.piece && !S.playing && render(), 90);
+}).observe($('#stage'));
+
+/* ------------------------------------------------------------------ start */
+(async function start() {
+  applyTheme();
+  $('#hand').innerHTML = HAND;
+  applyHand();
+  $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
+  const wide = innerWidth >= 1100;
+  $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
+  await loadLibrary();
+  renderTree();
+  const want = decodeURIComponent(location.hash.slice(1));
+  const hit = want && S.flat.find(f => slug(f.item.title) === want);
+  const pick = hit || S.flat[Math.floor(Math.random() * S.flat.length)];
+  openItem(pick.item, pick.trail);
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+
+window.cantare = { S, prefs };
