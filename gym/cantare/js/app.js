@@ -1,7 +1,8 @@
-import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, midiOf, slug, stepName, VALUE_NAME } from './music.js';
+import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont } from './engrave.js';
 import * as snd from './audio.js';
-import { createMic, describe } from './mic.js';
+import { createMic, describe, spellMidi, median } from './mic.js';
+import { createTake } from './take.js';
 import { tr, setLang, getLang, guessLang, LANGS, translatePage } from './i18n.js';
 
 const $ = s => document.querySelector(s);
@@ -14,7 +15,9 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '' };
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '',
+  /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
+  micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0 };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 setFont(prefs.font);
 setLang(prefs.lang || guessLang());
@@ -144,6 +147,7 @@ function openItem(item, trail, opts = {}) {
 
 /* the shown piece derives from the base piece plus the Studio's choices */
 function rebuildPiece() {
+  take.clear();
   const b = S.base;
   const p = { ...b, voices: b.voices.map(v => ({ ...v, notes: v.notes.map(n => ({ ...n })) })) };
   if (S.tempus) p.tempus = S.tempus;
@@ -186,10 +190,13 @@ function render(resetLeaf) {
   markSel();
 }
 
-function renderScore(p, opts) {
+function renderScore(p0, opts) {
   const w = spaceW();
-  const systems = engraveSystems(p, p.voices.map((_, i) => i), w, opts);
+  const { p, order } = withTake(p0);
+  const systems = engraveSystems(p, order, w, opts);
   systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, prefs.zoom)))));
+  paper.classList.toggle('singing', p !== p0);
+  if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
   S.systems = systems;
 }
 
@@ -295,8 +302,8 @@ function buildStudio() {
   card(tr('Sound'),
     chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
-    chipRow(tr('Pitch'), [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); buildStudio(); }))),
-    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); applyHand(); buildStudio(); })]));
+    chipRow(tr('Pitch'), [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); buildStudio(); }))),
+    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); })]));
 
   /* view */
   card(tr('View'),
@@ -347,7 +354,14 @@ function markSel() {
   if (S.sel && S.edit) paper.querySelector(`.note[data-v="${S.sel.vi}"][data-i="${S.sel.i}"]`)?.classList.add('sel');
 }
 function select(vi, i) { S.sel = { vi, i }; markSel(); buildEditTools(); }
-function hear(n) { if (!n || n.rest) return; const ctx = snd.ensure(); snd.note({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .6 }); }
+/* the notes the organ has sounded lately, so the microphone can tell the organ from the singer */
+const SOUNDED = [];
+function playNote(o) {
+  snd.note(o);
+  SOUNDED.push({ t0: o.at, t1: o.at + o.dur, f: hz(o.midi, o.a4) });
+  if (SOUNDED.length > 400) SOUNDED.splice(0, SOUNDED.length - 400);
+}
+function hear(n) { if (!n || n.rest) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .6 }); }
 
 const EDIT = {
   pitch(d) { const n = selNote(); if (!n || n.rest) return; commit(() => { n.step = Math.max(7, Math.min(55, n.step + d)); }); hear(selNote()); },
@@ -415,19 +429,6 @@ $('#transformBtn').addEventListener('click', e => {
 });
 document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
 
-/* ------------------------------------------------------------------ the tactus hand */
-const HAND = `<g id="handArm"><rect x="26" y="46" width="12" height="30" rx="5" fill="currentColor" opacity=".45"/>
-<g id="baton"><path d="M31 36L52 2" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" fill="none"/><path d="M31 36L35 29" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/></g>
-<rect x="21" y="32" width="22" height="19" rx="7.500" fill="currentColor"/><path d="M27.500 37v8M32 37v8M36.500 37v8" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/>
-<path d="M40 39c4.500 0 5.500 5 2 7.500" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/></g>`;
-function applyHand() { $('#tactusBox').classList.toggle('off', !prefs.hand); }
-function swing(phase) {
-  const c = Math.cos(phase * Math.PI * 2);
-  const arm = $('#handArm'), bat = $('#baton');
-  if (arm) arm.setAttribute('transform', `rotate(${(8 * c).toFixed(1)} 32 70)`);
-  if (bat) bat.setAttribute('transform', `rotate(${(28 * c).toFixed(1)} 31 36)`);
-}
-
 /* ------------------------------------------------------------------ playback */
 const spm = () => (60 / prefs.tempo) / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4); /* seconds per minim */
 
@@ -451,6 +452,7 @@ function startPlayback() {
   const t0 = ctx.currentTime + .15;
   clock = { t0, from, k, end: p.end, ended: false };
   recHook(ctx, t0, from);
+  singStart(from);
   const beat = S.piece.tempus === 'O' && !p.talea ? 6 : 4;
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
@@ -458,7 +460,7 @@ function startPlayback() {
       const { vi, n } = events[ei++];
       const at = t0 + Math.max(0, n.t - from) * k;
       const cut = Math.max(0, from - n.t);
-      snd.note({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: n.text, dur: Math.max(.08, (n.len - cut) * k - .03), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+      playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: n.text, dur: Math.max(.08, (n.len - cut) * k - .03), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
     }
     while (prefs.click && bi * beat < p.end && t0 + (bi * beat - from) * k < horizon) { snd.click(t0 + (bi * beat - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };
@@ -471,10 +473,10 @@ function startPlayback() {
 function stopPlayback(keep) {
   clearInterval(timer); cancelAnimationFrame(raf);
   recStop();
+  singStop();
   clock = null;
   if (S.playing) setPlaying(false);
   S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
-  if (!keep) swing(0);
 }
 
 function setPlaying(on) {
@@ -488,7 +490,6 @@ function frame() {
   if (!clock) return;
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
   if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; return; }
-  swing(pos > 0 ? ((pos / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4)) % 1) : 0);
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
     if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
@@ -514,12 +515,13 @@ paper.addEventListener('click', e => {
   const g = e.target.closest('.note');
   if (!g) return;
   const t = +g.dataset.t, vi = +g.dataset.v, i = +g.dataset.i;
+  if (vi >= S.piece.voices.length) return; /* the written-out singing */
   if (S.edit) { select(vi, i); hear(S.base.voices[vi].notes[i]); return; }
   const n = S.piece.voices[vi].notes[i];
   S.startAt = t;
   paper.querySelectorAll('.note.sel').forEach(x => x.classList.remove('sel'));
   g.classList.add('sel');
-  if (!n.rest && !S.playing) { const ctx = snd.ensure(); snd.note({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .7 }); }
+  if (!n.rest && !S.playing) { const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .7 }); }
   if (S.playing) { stopPlayback(true); startPlayback(); }
 });
 
@@ -552,11 +554,133 @@ document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click
 $('#toggleTheme').addEventListener('click', () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; savePrefs(); applyTheme(); if (S.base) buildStudio(); });
 $('#search').addEventListener('input', e => renderTree(e.target.value));
 
-/* ------------------------------------------------------------------ microphone and recording */
+/* ------------------------------------------------------------------ microphone, singing and recording */
 const mic = createMic(() => snd.ensure());
+const take = createTake();
 const rec = { me: false, listen: null, src: null };
-function micTone(midi) { const d = describe(midi, prefs.a4); return d; }
+const syncMicOpt = () => { mic.opt.flex = prefs.micFlex; mic.opt.phones = prefs.micPhones; mic.opt.a4 = prefs.a4; };
+syncMicOpt();
+/* which organ notes the microphone may be hearing right now: those sounding, and those that ended under 0.6 s ago */
+mic.organ = now => {
+  const cur = [], prev = []; let prevAge = 1;
+  for (let i = SOUNDED.length - 1; i >= 0; i--) {
+    const x = SOUNDED[i];
+    if (now >= x.t0 - .02 && now < x.t1 + .05) { if (!cur.includes(x.f)) cur.push(x.f); }
+    else if (x.t1 <= now && now - x.t1 < .6) { if (!prev.includes(x.f)) prev.push(x.f); prevAge = Math.min(prevAge, now - x.t1); }
+  }
+  return { cur, prev, prevAge };
+};
+
+/* writing out the singing: only while the music plays with the microphone open and Notate on */
+const takeShown = () => mic.on && prefs.micNotate && take.parts.length > 0;
+const semi = () => spm() / 2; /* seconds per semiminima */
+const takeCtx = () => ({
+  c: semi(), shown: mic.shown, peak: mic.peak, O: S.piece.tempus === 'O' && !S.piece.talea, dia: prefs.micDia, bflat: S.piece.bflat,
+  cal: prefs.micCal, lagGuess: prefs.micLag,
+  learn: d => { prefs.micLag = Math.round((prefs.micLag * .4 + d * .6) * 1000) / 1000; savePrefs(); },
+});
+let takeRender = 0;
+const takeChanged = () => { if (!takeRender) takeRender = requestAnimationFrame(() => { takeRender = 0; render(); }); };
+function singStart(from) {
+  const had = take.parts.length;
+  take.clear();
+  if (mic.on && prefs.micNotate && !rec.listen) take.start(from * 2);
+  if (had) takeChanged();
+}
+function singStop() {
+  if (!clock || !take.on) return;
+  const pos = clock.from + (snd.now() - clock.t0) / clock.k;
+  const changed = take.finish(Math.min(pos, clock.end) * 2, takeCtx());
+  take.on = false;
+  if (changed || take.parts.length) takeChanged();
+}
+mic.onRaw = (now, mm, q, rms, onset) => {
+  if (!take.on || !clock) return;
+  const u = 2 * (clock.from + (now - mic.lag(prefs.micCal) - (prefs.micCal != null ? 0 : prefs.micLag) - clock.t0) / clock.k);
+  if (take.record(u, mm, q, rms, onset, takeCtx())) takeChanged();
+};
+
+/* the take as a voice of its own, in red, above the music or below it when it was sung below */
+function withTake(p) {
+  const order = p.voices.map((_, i) => i);
+  if (!takeShown()) return { p, order };
+  const notes = take.notes(p.bflat);
+  const steps = notes.filter(n => !n.rest).map(n => n.step);
+  const first = p.voices.findIndex((_, i) => S.voice[i] !== 'hide');
+  const ref = p.voices[first < 0 ? 0 : first];
+  const refClef = clefFor(S.clefs[first] || ref.clef);
+  let clef = refClef.id;
+  if (steps.length) {
+    const mid = refClef.bottom + p.lines - 1;
+    if (Math.abs(median(steps) - mid) > 4.5) clef = fitClef(steps, p.lines, refClef.id, p.kind === 'chant' ? undefined : CLEF_ORDER).id;
+  }
+  /* above, unless nearly all of it was sung below the note of the music at that moment */
+  let below = 0, n = 0;
+  notes.forEach(q => {
+    if (q.rest) return;
+    const cf = ref.notes.find(x => x.t <= q.t + 1e-6 && q.t < x.t + x.len - 1e-6);
+    if (!cf || cf.rest) return;
+    n++; if (q.midi < midiOf(cf, p.bflat, S.shift)) below++;
+  });
+  const above = !(n && below >= .8 * n);
+  const tk = { clef, name: tr('You'), notes, lyrics: '', sung: true, end: notes.length ? notes.at(-1).t + notes.at(-1).len : 0 };
+  const voices = [...p.voices, tk];
+  const vi = voices.length - 1;
+  S.clefs[vi] = undefined;
+  const at = above ? order.indexOf(first < 0 ? 0 : first) : order.length;
+  order.splice(at, 0, vi);
+  return { p: { ...p, voices, end: Math.max(p.end, tk.end) }, order };
+}
+
+/* the sung pitch as a faint red dot on the staff: next to the note being played, or at the end when nothing plays.
+   While the singing is written out, the dot is the pen, on the red staff, where the music has got to. */
+let dotWhere = null;
+function dotTarget() {
+  if (!S.piece || paper.classList.contains('book')) return null;
+  const takeVi = takeShown() ? S.piece.voices.length : -1;
+  const audible = S.piece.voices.findIndex((_, i) => S.voice[i] !== 'hide');
+  if (clock) {
+    const on = S.index.find(x => x.on && +x.e.dataset.v === (audible < 0 ? 0 : audible)) || S.index.find(x => x.on && +x.e.dataset.v < S.piece.voices.length);
+    if (on) {
+      const svg = on.e.closest('svg.system'), bb = on.e.getBBox();
+      const gv = takeVi >= 0 && svg.querySelector(`g[data-voice="${takeVi}"]`) ? takeVi : +on.e.dataset.v;
+      return { svg, vi: gv, x: bb.x + bb.width + .45 };
+    }
+  }
+  const sys = [...paper.querySelectorAll('svg.system')].pop();
+  if (!sys) return null;
+  const vb = sys.viewBox.baseVal;
+  const vi = audible < 0 ? 0 : audible;
+  return sys.querySelector(`g[data-voice="${vi}"]`) ? { svg: sys, vi, x: vb.width - 1.6, end: true } : null;
+}
+function drawDot(hit) {
+  const old = paper.querySelector('.micdot');
+  if (!hit || hit.snap == null || !S.piece) { if (old) old.remove(); return; }
+  const tg = dotTarget();
+  if (!tg) { if (old) old.remove(); return; }
+  const g = tg.svg.querySelector(`g[data-voice="${tg.vi}"]`);
+  const sung = tg.vi >= S.piece.voices.length;
+  const clefId = sung ? withTake(S.piece).p.voices[tg.vi]?.clef : (S.clefs[tg.vi] || S.piece.voices[tg.vi].clef);
+  const clef = clefFor(clefId), lines = S.piece.lines;
+  const sp = spellMidi(hit.snap), sig = S.piece.bflat && sp.L === 6 ? -1 : 0;
+  const acc = sp.alt === sig ? '' : sp.alt < 0 ? '♭' : sp.alt > 0 ? '♯' : '♮';
+  const y0 = (lines - 1) - (sp.s - clef.bottom) / 2;
+  const cents = prefs.micFlex ? Math.max(-50, Math.min(50, (hit.midi - hit.snap) * 100)) : 0;
+  const y = y0 - cents / 100 * .5, r = .5;
+  const vb = tg.svg.viewBox.baseVal;
+  const x = Math.min(tg.x + (acc ? .9 : 0), vb.width - r - .2);
+  let ledg = '';
+  for (let k = -1; k >= Math.floor(y0); k--) ledg += `<path d="M${(x - .9).toFixed(2)} ${k}h1.8" class="staffline"/>`;
+  for (let k = lines; k <= Math.ceil(y0); k++) ledg += `<path d="M${(x - .9).toFixed(2)} ${k}h1.8" class="staffline"/>`;
+  const html = `${ledg}${acc ? `<text x="${(x - 1.1).toFixed(2)}" y="${(y0 + .45).toFixed(2)}" class="micacc">${acc}</text>` : ''}<ellipse cx="${x.toFixed(2)}" cy="${y.toFixed(2)}" rx="${r + .04}" ry="${(r * .86).toFixed(2)}" class="micball"/>`;
+  let d = old;
+  if (!d || d.parentNode !== g) { if (old) old.remove(); d = document.createElementNS('http://www.w3.org/2000/svg', 'g'); d.setAttribute('class', 'micdot'); g.append(d); }
+  if (d.dataset.h !== html) { d.innerHTML = html; d.dataset.h = html; }
+}
+
+function micTone(midi) { return describe(midi); }
 mic.onFrame = (hit) => {
+  drawDot(hit);
   const nameEl = $('#micNote'), needle = $('#micNeedle'), cents = $('#micCents');
   if (!nameEl) return;
   if (!hit) { nameEl.textContent = '–'; cents.textContent = ''; needle.style.opacity = '.2'; needle.style.left = '50%'; return; }
@@ -564,33 +688,59 @@ mic.onFrame = (hit) => {
   nameEl.textContent = d.name; cents.textContent = (d.cents > 0 ? '+' : '') + d.cents + ' ¢';
   needle.style.opacity = '1'; needle.style.left = (50 + Math.max(-50, Math.min(50, d.cents))) + '%';
 };
-mic.onTake = () => { buildMic(); toast(tr('Recording saved')); };
+mic.onTake = () => { buildMic(); toast(tr('Recorded. Press Play back to hear yourself with the music.')); };
 mic.onRecState = () => buildMic();
 async function micToggle() {
-  if (mic.on) { mic.stop(); rec.me = false; buildMic(); $('#micBtn').classList.remove('on'); return; }
+  if (mic.on) { mic.stop(); rec.me = false; take.clear(); render(); buildMic(); $('#micBtn').classList.remove('on'); return; }
+  syncMicOpt();
   const r = await mic.start();
   if (r === 'blocked') toast(tr('The microphone is blocked: allow it in the browser settings.'));
   else if (r !== 'ok') toast(tr('This browser cannot use the microphone here.'));
+  else toast(tr('Sing: your pitch shows as a red dot on the staff.'));
   $('#micBtn').classList.toggle('on', mic.on);
+  buildMic();
+}
+async function clapTest() {
+  if (!mic.on) await micToggle();
+  if (!mic.on || mic.clapping) return;
+  stopPlayback();
+  toast(tr('Clap with each click.'));
+  buildMic();
+  const v = await mic.clapTest(t => snd.click(t, true));
+  if (v == null) toast(tr('No claps were heard. Try again, a little louder.'));
+  else { prefs.micCal = v; savePrefs(); toast(tr('Latency') + ': ' + Math.round(v * 1000) + ' ms'); }
   buildMic();
 }
 function buildMic() {
   const pop = $('#micPop'); if (!pop) return;
   pop.textContent = '';
   const card = el('div', { class: 'card' });
+  const sw = (key, label, title, after) => chip(tr(label), prefs[key], () => { prefs[key] = !prefs[key]; savePrefs(); syncMicOpt(); if (after) after(); buildMic(); }, { title: tr(title) });
   card.append(el('div', { class: 'row' }, chip(tr(mic.on ? 'Close the microphone' : 'Open the microphone'), mic.on, micToggle)));
+  if (mic.on) card.append(el('div', { class: 'tuner' }, el('b', { id: 'micNote' }, '–'), el('span', { id: 'micCents' }), el('div', { class: 'meter' }, el('i', { class: 'mid' }), el('i', { id: 'micNeedle' }))));
+  card.append(el('p', { class: 'hint' }, tr('The note you sing shows as a faint red dot on the staff: next to the note being played, or at the end when nothing plays.')));
+  card.append(el('div', { class: 'row wrap' },
+    sw('micFlex', 'Flexible pitch', 'On: the dot follows your exact pitch, a little above or below its note when you are sharp or flat. Off: it sits on the nearest note, like a written second voice'),
+    sw('micNotate', 'Notate', 'While the music plays, what you sing is written out in red on a staff of its own, down to fusae', () => { if (!prefs.micNotate) { take.clear(); render(); } }),
+    sw('micDia', 'Diatonic', 'What you sing is written with the notes of the scale only (B or B flat as the music has it), never a chromatic note', () => { if (take.frames.length && take.quantize(true, takeCtx())) takeChanged(); }),
+    sw('micPhones', 'Headphones', 'On: no filtering, so unisons and octaves with the organ show too. Off: the organ is filtered out of what the microphone hears, for singing along through speakers')));
+  const lat = el('input', { type: 'number', min: 0, max: 600, step: 1, inputmode: 'numeric', placeholder: tr('auto'), value: prefs.micCal == null ? '' : Math.round(prefs.micCal * 1000), 'aria-label': tr('Latency'),
+    onchange: e => { const v = e.target.value.trim(); prefs.micCal = v === '' ? null : Math.max(0, Math.min(600, +v)) / 1000; savePrefs(); } });
+  card.append(el('div', { class: 'row latrow', title: tr('The time from the organ sounding to your voice reaching the microphone, so what you sing is written in the right place. Empty: worked out by itself') },
+    el('label', {}, tr('Latency')), lat, el('span', {}, 'ms'), chip(tr(mic.clapping ? 'Listening…' : 'Clap test'), false, clapTest, { disabled: mic.clapping, title: tr('Eight clicks: clap with each one, and the latency is measured') })));
   if (mic.on) {
-    card.append(el('div', { class: 'tuner' }, el('b', { id: 'micNote' }, '–'), el('span', { id: 'micCents' }), el('div', { class: 'meter' }, el('i', { class: 'mid' }), el('i', { id: 'micNeedle' }))));
-    card.append(el('div', { class: 'row' }, chip(tr('Record me') + (mic.recording ? ' · ' + tr('Recording…') : ''), rec.me, () => { rec.me = !rec.me; buildMic(); })));
+    card.append(el('div', { class: 'row' }, chip(tr('Record me') + (mic.recording ? ' · ' + tr('Recording…') : ''), rec.me, () => { rec.me = !rec.me; buildMic(); },
+      { title: tr('On: every time the music plays while the microphone is on, your voice is recorded with it') })));
     card.append(el('p', { class: 'hint' }, tr('Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.')));
   }
+  if (take.parts.length) card.append(el('div', { class: 'row' }, chip(tr('Clear the written singing'), false, () => { take.clear(); render(); buildMic(); })));
   if (mic.take && mic.take.url) {
     const t = mic.take;
     const au = el('audio', { controls: true, src: t.url, style: 'width:100%' });
     const ext = /mp4|aac/.test(t.mime) ? 'm4a' : /ogg/.test(t.mime) ? 'ogg' : 'webm';
     card.append(el('div', { class: 'take' }, el('label', {}, tr('Your recording')), au,
       el('div', { class: 'row' },
-        chip(tr('Play back'), false, () => listenBack(), { disabled: !t.buffer }),
+        chip(tr('Play back'), false, () => listenBack(), { disabled: !t.buffer, title: tr('Play your last recording together with the music, from where you started') }),
         el('a', { class: 'chip', href: t.url, download: 'cantare-' + slug(S.base?.title || 'recording').slice(0, 40) + '.' + ext }, tr('Download')),
         chip(tr('Delete'), false, () => { URL.revokeObjectURL(t.url); mic.take = null; buildMic(); }))));
   }
@@ -604,7 +754,7 @@ function listenBack() {
 function recHook(ctx, t0, from) {
   if (rec.listen) {
     const t = rec.listen; rec.listen = null;
-    const s = t0 - (t.t0 - t.startCtx) - mic.latency(), now = ctx.currentTime;
+    const s = t0 - (t.t0 - t.startCtx) - mic.latency(prefs.micCal) - (prefs.micCal != null ? 0 : prefs.micLag), now = ctx.currentTime;
     const src = ctx.createBufferSource(); src.buffer = t.buffer;
     const g = ctx.createGain(); g.gain.value = 1.4; src.connect(g); g.connect(ctx.destination);
     if (s >= now) src.start(s); else if (now - s < t.buffer.duration) src.start(now, now - s);
@@ -663,8 +813,6 @@ new ResizeObserver(() => {
 (async function start() {
   applyTheme();
   translatePage();
-  $('#hand').innerHTML = HAND;
-  applyHand();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
   const wide = innerWidth >= 1100;
   $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
