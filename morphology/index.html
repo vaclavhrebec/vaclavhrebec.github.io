@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Morphology of Music</title>
+<meta name="description" content="A vault of musical elements and the styles they combine into: when the Picardy third, imitation, the basso continuo or isorhythm appear, and how their combinations make a style. By Václav Hřebec.">
+<meta property="og:title" content="The Morphology of Music">
+<meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to Bach.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e1e1e'/%3E%3Cg stroke='%23a88bfa' stroke-width='1.6'%3E%3Cpath d='M9 10 22 8M9 10l7 13M22 8l-6 15M22 8l3 12'/%3E%3C/g%3E%3Cg fill='%23a88bfa'%3E%3Ccircle cx='9' cy='10' r='3'/%3E%3Ccircle cx='22' cy='8' r='2.4'/%3E%3Ccircle cx='16' cy='23' r='3.4'/%3E%3Ccircle cx='25' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #1e1e1e; --bg2: #262626; --bg3: #2f2f2f; --line: #363636; --fg: #dcddde; --muted: #999; --faint: #6b6b6b;
+  --accent: #a88bfa; --accent2: #8a5cf5; --sel: rgba(138,92,245,.18); --hover: rgba(255,255,255,.06);
+  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a;
+  --c-style: #a88bfa;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
+  --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
+  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510;
+  --c-style: #7b55e6; color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
+    --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
+    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510;
+    --c-style: #7b55e6; color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--sans); overflow: hidden; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.app { display: grid; grid-template-columns: 44px 268px 1fr 280px; grid-template-rows: 38px 1fr; height: 100vh; height: 100dvh; }
+.app.noright { grid-template-columns: 44px 268px 1fr 0; }
+.app.noleft { grid-template-columns: 44px 0 1fr 280px; }
+.app.noleft.noright { grid-template-columns: 44px 0 1fr 0; }
+.app.viewonly { grid-template-columns: 44px 268px 1fr 0; } .app.viewonly.noleft { grid-template-columns: 44px 0 1fr 0; }
+.app.viewonly .right { display: none; }
+
+.ribbon { grid-column: 1; grid-row: 2; } .side { grid-column: 2; grid-row: 2; } .main { grid-column: 3; grid-row: 2; } .right { grid-column: 4; grid-row: 2; }
+/* title bar */
+.titlebar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 0 10px; background: var(--bg2); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); min-width: 0; }
+.titlebar .vault { color: var(--fg); font-weight: 600; white-space: nowrap; }
+.titlebar nav { display: flex; gap: 12px; margin-left: auto; white-space: nowrap; overflow: hidden; }
+.titlebar nav a { color: var(--muted); text-decoration: none; }
+.titlebar nav a:hover { color: var(--fg); }
+.iconbtn { width: 30px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: var(--muted); flex: none; }
+.iconbtn:hover { background: var(--hover); color: var(--fg); }
+.iconbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn[aria-pressed="true"] { color: var(--accent); background: var(--sel); }
+
+/* ribbon */
+.ribbon { background: var(--bg2); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+.ribbon .iconbtn { width: 34px; height: 34px; }
+.ribbon .grow { flex: 1; }
+
+/* left sidebar */
+.side { background: var(--bg2); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.side .head { padding: 10px 10px 6px; }
+.search { width: 100%; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); padding: 0 9px; font: 13px var(--sans); }
+.tree { overflow: auto; padding: 4px 6px 20px; font-size: 13.5px; flex: 1; }
+.folder > button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border: 0; background: transparent; border-radius: 5px; cursor: pointer; text-align: left; color: var(--fg); font-weight: 500; }
+.folder > button:hover { background: var(--hover); }
+.folder > button .chev { width: 10px; height: 10px; transition: transform .12s; color: var(--muted); flex: none; }
+.folder.closed > button .chev { transform: rotate(-90deg); }
+.folder.closed > .kids { display: none; }
+.kids { margin-left: 11px; padding-left: 7px; border-left: 1px solid var(--line); }
+.file { display: flex; align-items: center; gap: 7px; padding: 2px 6px; border-radius: 5px; color: var(--muted); text-decoration: none; cursor: pointer; line-height: 1.5; }
+.file:hover { background: var(--hover); color: var(--fg); }
+.file.on { background: var(--sel); color: var(--fg); }
+.file .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.file .yr { margin-left: auto; font: 11px var(--mono); color: var(--faint); }
+.file.hidden { display: none; }
+
+/* main */
+.main { min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); }
+.tabbar { display: flex; align-items: center; height: 36px; border-bottom: 1px solid var(--line); background: var(--bg2); padding: 0 6px; gap: 2px; flex: none; }
+.tab { height: 28px; padding: 0 12px; border: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; white-space: nowrap; }
+.tab[aria-selected="true"] { background: var(--bg); color: var(--fg); }
+.view { flex: 1; overflow: auto; position: relative; }
+.view[hidden] { display: none; }
+
+/* note */
+.note { max-width: 760px; margin: 0 auto; padding: 28px 34px 80px; }
+.crumb { font-size: 12.5px; color: var(--faint); margin-bottom: 6px; }
+.note h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 14px; font-weight: 700; letter-spacing: -.01em; }
+.props { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 22px; font-size: 13.5px; }
+.props summary { padding: 6px 12px; cursor: pointer; color: var(--muted); font-weight: 500; }
+.props dl { display: grid; grid-template-columns: 120px 1fr; margin: 0; padding: 2px 12px 10px; gap: 5px 12px; }
+.props dt { color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.props dt svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.props dd { margin: 0; }
+.tag { display: inline-block; padding: 0 8px; border-radius: 10px; background: var(--sel); color: var(--accent); font-size: 12.5px; margin: 0 4px 3px 0; text-decoration: none; }
+.note p { margin: 0 0 1em; }
+.il { color: var(--accent); text-decoration: none; cursor: pointer; }
+.il:hover { text-decoration: underline; }
+.il.style { font-weight: 600; }
+.ext { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; text-decoration: none; color: var(--fg); font-size: 14px; }
+.ext:hover { border-color: var(--accent); color: var(--accent); }
+.note h2 { font-size: 1.15rem; margin: 28px 0 10px; }
+.chk { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 24px; }
+.chk li { break-inside: avoid; margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
+.chk li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--accent); border-radius: 3px; background: var(--accent); flex: none; transform: translateY(2px);
+  -webkit-mask: none; }
+.chk li span.d { color: var(--faint); font: 11.5px var(--mono); margin-left: auto; white-space: nowrap; }
+.minitl { margin: 6px 0 0; }
+.minitl svg { display: block; width: 100%; height: auto; }
+.callout { border-left: 3px solid var(--accent); background: var(--sel); border-radius: 0 7px 7px 0; padding: 10px 14px; margin: 18px 0; font-size: 14px; }
+.callout b { color: var(--accent); }
+
+/* right pane */
+.right { background: var(--bg2); border-left: 1px solid var(--line); overflow: auto; min-width: 0; font-size: 13px; }
+.right h3 { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 16px 14px 6px; font-weight: 600; }
+.right .lk { display: block; padding: 4px 14px; color: var(--fg); text-decoration: none; cursor: pointer; }
+.right .lk:hover { background: var(--hover); }
+.right .lk small { display: block; color: var(--faint); }
+.right .none { padding: 2px 14px; color: var(--faint); }
+#local { display: block; width: 100%; height: 230px; border-bottom: 1px solid var(--line); }
+
+/* graph */
+#graph { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#graph.drag { cursor: grabbing; }
+.panel { position: absolute; top: 10px; right: 10px; width: 250px; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
+.panel h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.panel label { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
+.panel .row { display: flex; align-items: center; gap: 8px; }
+.panel input[type=range] { flex: 1; accent-color: var(--accent2); }
+.yr-big { font: 600 20px var(--mono); color: var(--fg); }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.zoom { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 4px; }
+.zoom button { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--bg2); border-radius: 7px; cursor: pointer; font-size: 17px; }
+.yearnow { position: absolute; left: 14px; top: 10px; font: 600 40px/1 var(--mono); color: var(--fg); opacity: .14; pointer-events: none; }
+.panel .playyr { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; height: 26px; padding: 0 9px; cursor: pointer; font-size: 12.5px; }
+.panel .mini { color: var(--faint); font-size: 11.5px; margin-top: 6px; line-height: 1.4; }
+
+/* timeline */
+.tl { padding: 16px 18px 50px; min-width: 860px; }
+.tl .ctl { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.tl .ctl input[type=range] { width: 260px; accent-color: var(--accent2); }
+#tlsvg { display: block; width: 100%; }
+#tlsvg text { font-family: var(--sans); }
+#tlsvg .rowlab { fill: var(--fg); font-size: 12.5px; cursor: pointer; }
+#tlsvg .rowlab:hover { fill: var(--accent); }
+#tlsvg .grp { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+#tlsvg .tick { fill: var(--faint); font-size: 11px; font-family: var(--mono); }
+#tlsvg .gl { stroke: var(--line); }
+#tlsvg .bar { cursor: pointer; }
+#tlsvg .dim { opacity: .18; }
+#tlsvg .cur { stroke: var(--accent); stroke-width: 1.5; }
+
+/* combine */
+.cmb { max-width: 1040px; margin: 0 auto; padding: 24px 28px 60px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; }
+.cmb h1 { grid-column: 1 / -1; font-size: 1.6rem; margin: 0; }
+.cmb .lead { grid-column: 1 / -1; color: var(--muted); margin: -16px 0 0; max-width: 70ch; }
+.cmb fieldset { border: 0; padding: 0; margin: 0 0 14px; }
+.cmb legend { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.cmb .opts { display: flex; flex-wrap: wrap; gap: 5px; }
+.pill { border: 1px solid var(--line); background: transparent; border-radius: 14px; padding: 2px 11px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.pill:hover { color: var(--fg); border-color: var(--faint); }
+.pill[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); color: var(--fg); }
+.res { position: sticky; top: 0; align-self: start; }
+.res .box { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--bg2); margin-bottom: 12px; }
+.res .box h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.era { font: 600 22px var(--mono); }
+.match { display: grid; grid-template-columns: 1fr 44px; gap: 2px 8px; align-items: center; margin: 6px 0; font-size: 14px; }
+.match .barw { grid-column: 1 / -1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.match .barw i { display: block; height: 100%; background: var(--accent2); }
+.match .pc { text-align: right; font: 12px var(--mono); color: var(--muted); }
+.cmb .small { font-size: 12.5px; color: var(--faint); }
+.linkbtn { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; }
+
+.scrim { display: none; }
+@media (max-width: 1100px) { .app, .app.noleft, .app.viewonly, .app.noright { grid-template-columns: 44px 240px 1fr 0; } .app.noleft, .app.viewonly.noleft, .app.noleft.noright { grid-template-columns: 44px 0 1fr 0; } .right { display: none; } #rightBtn { display: none; } }
+@media (max-width: 760px) {
+  .app, .app.noleft, .app.viewonly, .app.viewonly.noleft, .app.noright, .app.noleft.noright { grid-template-columns: 0 0 1fr 0; grid-template-rows: 44px 1fr; }
+  .ribbon { display: none; }
+  .side { position: fixed; z-index: 20; top: 44px; bottom: 0; left: 0; width: min(300px, 86vw); transform: translateX(-102%); transition: transform .18s; }
+  .app.drawer .side { transform: none; }
+  .app.drawer .scrim { display: block; position: fixed; inset: 44px 0 0 0; background: rgba(0,0,0,.45); z-index: 15; }
+  .titlebar nav { display: none; }
+  .note { padding: 20px 16px 70px; }
+  .note h1 { font-size: 1.55rem; }
+  .props dl { grid-template-columns: 96px 1fr; }
+  .chk { columns: 1; }
+  .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 52px; padding: 8px 10px; }
+  .panel .legend, .panel .mini { display: none; }
+  .yearnow { font-size: 30px; }
+  .cmb { grid-template-columns: 1fr; padding: 18px 16px 60px; }
+  .res { position: static; }
+  .tl { padding: 12px 10px 40px; }
+}
+@media (min-width: 761px) { #menuBtn { display: none; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="titlebar">
+    <button class="iconbtn" id="menuBtn" aria-label="Files" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <span class="vault">The Morphology of Music</span>
+    <nav aria-label="Václav Hřebec's website"><a href="../">← Václav Hřebec</a><a href="../#agenda">Agenda</a><a href="../#projects">Projects</a><a href="../gym/">Counterpoint Gym</a><a href="../ear/">Ear Trainer</a><a href="../rheinfelden2027/">Course Rheinfelden 2027</a></nav>
+    <button class="iconbtn" id="themeBtn" aria-label="Light or dark" title="Light or dark"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></button>
+    <button class="iconbtn" id="rightBtn" aria-label="Links pane" aria-pressed="true" title="Show or hide the links pane"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+  </header>
+  <aside class="ribbon" aria-label="Views">
+    <button class="iconbtn" data-go="note" title="Notes" aria-label="Notes"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></button>
+    <button class="iconbtn" data-go="graph" title="Graph view" aria-label="Graph view"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="17" cy="5" r="2"/><circle cx="12" cy="17" r="2.6"/><circle cx="19" cy="15" r="1.7"/><path d="m8 8 3 7M15.4 6.2l-2.6 8.6M8.2 6.6 15 5.3M17.7 6.8l1 6.5"/></svg></button>
+    <button class="iconbtn" data-go="timeline" title="Timeline" aria-label="Timeline"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 6h7M8 10h9M4 14h6M11 16h8"/></svg></button>
+    <button class="iconbtn" data-go="combine" title="Style finder: combine elements" aria-label="Style finder"><svg viewBox="0 0 24 24"><circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/></svg></button>
+    <span class="grow"></span>
+    <button class="iconbtn" id="leftBtn" title="Show or hide the file explorer" aria-label="File explorer" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+  </aside>
+  <aside class="side" id="side" aria-label="File explorer">
+    <div class="head"><input class="search" id="search" type="search" placeholder="Search notes…" aria-label="Search notes"></div>
+    <div class="tree" id="tree"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="main">
+    <div class="tabbar" role="tablist">
+      <button class="tab" role="tab" data-go="note" id="tabNote">Note</button>
+      <button class="tab" role="tab" data-go="graph">Graph view</button>
+      <button class="tab" role="tab" data-go="timeline">Timeline</button>
+      <button class="tab" role="tab" data-go="combine">Style finder</button>
+    </div>
+    <section class="view" id="v-note" role="tabpanel"><article class="note" id="note"></article></section>
+    <section class="view" id="v-graph" role="tabpanel" hidden>
+      <canvas id="graph" aria-label="Graph of musical elements and styles. Use the file explorer or the timeline for a text version."></canvas>
+      <div class="yearnow" id="yearNow"></div>
+      <div class="panel">
+        <h4>Filters</h4>
+        <div class="row"><span class="yr-big" id="yrLab">all years</span><button class="playyr" id="yrPlay" title="Let the centuries pass">▶ Play</button></div>
+        <div class="row"><input type="range" id="yr" min="740" max="1760" step="5" value="1760" aria-label="Year"></div>
+        <label><input type="checkbox" id="showStyles" checked> Styles</label>
+        <label><input type="checkbox" id="showLabels" checked> Labels</label>
+        <div class="legend" id="legend"></div>
+        <p class="mini">Bright: established at that year. Faint: just emerging. Hidden: not yet there or gone. Drag nodes, scroll to zoom, click to open.</p>
+      </div>
+      <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Fit" title="Fit">⤢</button></div>
+    </section>
+    <section class="view" id="v-timeline" role="tabpanel" hidden>
+      <div class="tl">
+        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="740" max="1760" step="5" value="1450" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b><span>· thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements</span></div>
+        <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
+      </div>
+    </section>
+    <section class="view" id="v-combine" role="tabpanel" hidden><div class="cmb" id="cmb"></div></section>
+  </main>
+  <aside class="right" id="right" aria-label="Links">
+    <canvas id="local" aria-hidden="true"></canvas>
+    <div id="links"></div>
+  </aside>
+</div>
+<script src="vault.js"></script>
+<script>
+(function () {
+  'use strict';
+  const V = window.VAULT;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  const MIN = 740, MAX = 1760, NOW = 1750;
+
+  /* ---------- the vault as nodes and links ---------- */
+  const nodes = [], byId = {};
+  V.elements.forEach(e => { const n = Object.assign({kind: 'el'}, e); nodes.push(n); byId[n.id] = n; });
+  V.styles.forEach(s => { const n = Object.assign({kind: 'style', folder: 'style'}, s); nodes.push(n); byId[n.id] = n; });
+  const linkRe = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+  const edges = [], seen = new Set();
+  const addEdge = (a, b, type) => { const k = a < b ? a + '|' + b : b + '|' + a; if (a === b || seen.has(k)) return; seen.add(k); edges.push({a, b, type}); };
+  nodes.forEach(n => {
+    n.out = new Set(); n.back = new Set();
+    for (const m of ((n.text || '') + ' ' + (n.scope || '')).matchAll(linkRe)) n.out.add(m[1]);
+    (n.elements || []).forEach(e => n.out.add(e));
+  });
+  nodes.forEach(n => n.out.forEach(t => { if (byId[t]) { byId[t].back.add(n.id); addEdge(n.id, t, n.kind === 'style' ? 'style' : 'note'); } }));
+  nodes.forEach(n => { n.deg = n.out.size + n.back.size; });
+  const stylesOf = id => V.styles.filter(s => s.elements.includes(id));
+  const colorVar = f => f === 'style' ? '--c-style' : '--c-' + f;
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  /* presence of an element in a year: 0 none, 0.5 emerging, 1 established, 0.25 after fading */
+  function presence(n, y) {
+    if (n.kind === 'style') return y >= n.from && y <= n.to ? 1 : 0;
+    if (y < n.first) return 0;
+    if (n.fade && y > n.fade) return 0;
+    return y < n.common ? 0.5 : 1;
+  }
+  const yrs = n => n.kind === 'style' ? `${n.from}–${n.to === NOW ? '' : n.to}` : `${n.first}`;
+
+  /* ---------- markup ---------- */
+  function md(s) {
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, id, lab) => {
+        const n = byId[id]; if (!n) return esc(lab || id);
+        return `<a class="il${n.kind === 'style' ? ' style' : ''}" href="#note/${id}" data-id="${id}">${lab || n.title}</a>`;
+      });
+  }
+
+  /* ---------- file explorer ---------- */
+  const ICON = {cal: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+    list: '<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+    tag: '<svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8Z"/><circle cx="7.5" cy="8" r="1.3"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11Z"/><circle cx="12" cy="10" r="2"/></svg>'};
+  const chev = '<svg class="chev" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  function tree() {
+    const file = n => `<a class="file" href="#note/${n.id}" data-id="${n.id}"><span class="dot" style="background:var(${colorVar(n.folder)})"></span><span>${esc(n.title)}</span><span class="yr">${n.kind === 'style' ? n.from : n.first}</span></a>`;
+    let h = `<div class="folder"><button type="button">${chev}Styles</button><div class="kids">${V.styles.slice().sort((a, b) => a.from - b.from).map(s => file(byId[s.id])).join('')}</div></div>`;
+    h += `<div class="folder"><button type="button">${chev}Elements</button><div class="kids">`;
+    for (const f in V.folders) {
+      const list = V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first);
+      h += `<div class="folder"><button type="button">${chev}${esc(V.folders[f])}</button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
+    }
+    h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this vault works</span></a></div></div>`;
+    $('#tree').innerHTML = h;
+    $('#tree').querySelectorAll('.folder > button').forEach(b => b.onclick = () => b.parentElement.classList.toggle('closed'));
+  }
+  $('#search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#tree .file').forEach(f => {
+      const n = byId[f.dataset.id];
+      const hay = n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
+      f.classList.toggle('hidden', !!q && !hay.includes(q));
+    });
+    if (q) document.querySelectorAll('#tree .folder').forEach(f => f.classList.remove('closed'));
+  });
+
+  /* ---------- notes ---------- */
+  function miniTimeline(ids, from, to) {
+    const W = 680, rowH = 17, top = 18, lab = 190, x = y => lab + (y - MIN) / (MAX - MIN) * (W - lab - 6);
+    let h = `<svg viewBox="0 0 ${W} ${top + ids.length * rowH + 4}" role="img" aria-label="When these elements are present">`;
+    for (let c = 800; c <= 1700; c += 100) h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c}</text>`;
+    if (from != null) h += `<rect x="${x(from)}" y="12" width="${x(to) - x(from)}" height="${ids.length * rowH + 6}" fill="var(--sel)"/>`;
+    ids.forEach((id, i) => {
+      const n = byId[id], y = top + i * rowH, c = `var(${colorVar(n.folder)})`, end = n.fade || NOW;
+      h += `<text x="${lab - 8}" y="${y + 10}" font-size="11" fill="var(--fg)" text-anchor="end">${esc(n.title.length > 30 ? n.title.slice(0, 29) + '…' : n.title)}</text>`;
+      h += `<rect x="${x(n.first)}" y="${y + 5}" width="${Math.max(1, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".55"/>`;
+      h += `<rect x="${x(n.common)}" y="${y + 2}" width="${Math.max(2, x(end) - x(n.common))}" height="9" rx="3" fill="${c}"/>`;
+    });
+    return h + '</svg>';
+  }
+  function about() {
+    return `<div class="crumb">About</div><h1>How this vault works</h1>
+      <p>A style is not a thing but a <b>combination</b>. This vault breaks music from plainchant to Bach into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
+      <p>Take the <a class="il" href="#note/picardy-third" data-id="picardy-third">major third in the final chord</a>: it needs a texture of four or more voices and a tuning in which the third is sweet. So it cannot belong to the <a class="il style" href="#note/notre-dame" data-id="notre-dame">Notre Dame school</a>, it appears rarely in the <a class="il style" href="#note/ockeghem" data-id="ockeghem">Ockeghem generation</a> and becomes the rule with <a class="il style" href="#note/palestrina" data-id="palestrina">Palestrina</a>.</p>
+      <p>Open the <b>graph view</b> and move the year slider to watch elements appear and the styles form around them; the <b>timeline</b> shows every element as a bar; the <b>style finder</b> works backwards – pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
+      <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the contact form on the homepage.</div>
+      <p class="small" style="color:var(--faint)">${V.elements.length} elements · ${V.styles.length} styles · ${edges.length} links · © 2026 Václav Hřebec</p>`;
+  }
+  function renderNote(id) {
+    const el = $('#note');
+    document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
+    if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'The Morphology of Music'; renderLinks(null); return; }
+    const n = byId[id];
+    document.title = n.title + ' · The Morphology of Music';
+    let h;
+    if (n.kind === 'el') {
+      const st = stylesOf(id);
+      h = `<div class="crumb">Elements / ${esc(V.folders[n.folder])}</div><h1>${esc(n.title)}</h1>
+        <details class="props" open><summary>Properties</summary><dl>
+        <dt>${ICON.cal}first</dt><dd>c. ${n.first}</dd>
+        <dt>${ICON.cal}common</dt><dd>c. ${n.common}</dd>
+        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + n.fade : '— still current in 1750'}</dd>
+        <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
+        <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
+        <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
+        </dl></details>
+        ${n.text.split(/\n\n/).map(p => `<p>${md(p)}</p>`).join('')}
+        ${n.link ? `<p><a class="ext" href="${esc(n.link.href)}">↗ ${esc(n.link.label)}</a></p>` : ''}
+        <h2>On the timeline</h2><div class="minitl">${miniTimeline([id].concat([...n.out].filter(x => byId[x] && byId[x].kind === 'el')))}</div>`;
+    } else {
+      const els = n.elements.slice().sort((a, b) => byId[a].first - byId[b].first);
+      h = `<div class="crumb">Styles</div><h1>${esc(n.title)}</h1>
+        <details class="props" open><summary>Properties</summary><dl>
+        <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.to === NOW ? '1750 and beyond' : n.to}</dd>
+        <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
+        <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
+        </dl></details>
+        <p>${md(n.text)}</p>
+        <h2>Made of</h2><ul class="chk">${els.map(e => `<li><a class="il" href="#note/${e}" data-id="${e}">${esc(byId[e].title)}</a><span class="d">${byId[e].first}${byId[e].fade ? '–' + byId[e].fade : '–'}</span></li>`).join('')}</ul>
+        <h2>Elements over time</h2><div class="minitl">${miniTimeline(els, n.from, n.to)}</div>
+        <p class="small" style="color:var(--faint);font-size:13px">The shaded band is the period of the style. Find similar combinations in the <a class="il" href="#combine" data-go="combine">style finder</a>.</p>`;
+    }
+    el.innerHTML = h;
+    el.querySelectorAll('.tag[data-folder]').forEach(t => t.onclick = e => { e.preventDefault(); $('#search').value = ''; filterFolder(t.dataset.folder); });
+    renderLinks(n);
+    $('#v-note').scrollTop = 0;
+  }
+  function filterFolder(f) {
+    document.querySelectorAll('#tree .file').forEach(x => { const n = byId[x.dataset.id]; x.classList.toggle('hidden', !n || n.folder !== f); });
+    document.querySelectorAll('#tree .folder').forEach(x => x.classList.remove('closed'));
+    $('#app').classList.add('drawer'); $('#app').classList.remove('noleft');
+  }
+  function renderLinks(n) {
+    const item = id => { const m = byId[id]; return `<a class="lk" href="#note/${id}" data-id="${id}">${esc(m.title)}<small>${m.kind === 'style' ? 'style · ' + yrs(m) : esc(V.folders[m.folder]) + ' · ' + m.first}</small></a>`; };
+    if (!n) { $('#links').innerHTML = '<h3>Linked mentions</h3><p class="none">Open a note to see its links.</p>'; drawLocal(null); return; }
+    const back = [...n.back], out = [...n.out].filter(x => byId[x]);
+    $('#links').innerHTML = `<h3>Linked mentions (${back.length})</h3>${back.map(item).join('') || '<p class="none">None</p>'}<h3>Outgoing links (${out.length})</h3>${out.map(item).join('') || '<p class="none">None</p>'}`;
+    drawLocal(n);
+  }
+
+  /* ---------- force-directed graph ---------- */
+  const G = {scale: 1, ox: 0, oy: 0, year: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true};
+  nodes.forEach((n, i) => { const a = i * 2.399, r = 30 + 9 * Math.sqrt(i); n.x = Math.cos(a) * r; n.y = Math.sin(a) * r; n.vx = 0; n.vy = 0; n.r = n.kind === 'style' ? 6 + n.elements.length * 0.3 : 3 + Math.sqrt(n.deg) * 0.9; });
+  const nb = {}; nodes.forEach(n => nb[n.id] = new Set()); edges.forEach(e => { nb[e.a].add(e.b); nb[e.b].add(e.a); });
+  function tick(list, E, a) {
+    for (let i = 0; i < list.length; i++) { const p = list[i];
+      for (let j = i + 1; j < list.length; j++) { const q = list[j]; let dx = q.x - p.x, dy = q.y - p.y, d2 = dx * dx + dy * dy || .01;
+        if (d2 > 160000) continue; const f = 2600 * a / d2, d = Math.sqrt(d2); dx /= d; dy /= d; p.vx -= dx * f; p.vy -= dy * f; q.vx += dx * f; q.vy += dy * f; } }
+    E.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return; let dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const L = e.type === 'style' ? 120 : 80, f = (d - L) * 0.022 * a; dx /= d; dy /= d; p.vx += dx * f; p.vy += dy * f; q.vx -= dx * f; q.vy -= dy * f; });
+    list.forEach(n => { n.vx -= n.x * 0.004 * a; n.vy -= n.y * 0.004 * a; if (n === G.drag) { n.vx = n.vy = 0; return; } n.x += n.vx; n.y += n.vy; n.vx *= .55; n.vy *= .55; });
+  }
+  const cv = $('#graph'), cx = cv.getContext('2d');
+  function sizeCanvas(c) { const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(1, r.width * d); c.height = Math.max(1, r.height * d); return {w: r.width, h: r.height, d}; }
+  let dims = {w: 1, h: 1, d: 1};
+  function visible(n) { if (n.kind === 'style' && !G.styles) return false; return G.year >= MAX || presence(n, G.year) > 0; }
+  function draw() {
+    const {w, h, d} = dims; cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h);
+    cx.save(); cx.translate(w / 2 + G.ox, h / 2 + G.oy); cx.scale(G.scale, G.scale);
+    const hov = G.hover, hl = hov ? nb[hov.id] : null, line = css('--line'), fg = css('--fg'), muted = css('--muted'), acc = css('--accent');
+    cx.lineWidth = 1 / G.scale;
+    edges.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return;
+      const on = hov && (e.a === hov.id || e.b === hov.id);
+      cx.strokeStyle = on ? acc : line; cx.globalAlpha = hov && !on ? .25 : (e.type === 'style' ? .55 : .9); cx.lineWidth = (on ? 1.6 : 1) / G.scale;
+      cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(q.x, q.y); cx.stroke(); });
+    nodes.forEach(n => { if (!n.vis) return; const pr = G.year >= MAX ? 1 : presence(n, G.year);
+      const dim = hov && hov !== n && !hl.has(n.id);
+      cx.globalAlpha = dim ? .18 : (pr === 0.5 ? .45 : 1);
+      cx.fillStyle = css(colorVar(n.folder)); cx.beginPath(); cx.arc(n.x, n.y, n.r, 0, 7); cx.fill();
+      if (n.kind === 'style') { cx.strokeStyle = css('--bg'); cx.lineWidth = 2 / G.scale; cx.beginPath(); cx.arc(n.x, n.y, n.r * .55, 0, 7); cx.stroke(); }
+      if (n === hov) { cx.strokeStyle = fg; cx.lineWidth = 2 / G.scale; cx.beginPath(); cx.arc(n.x, n.y, n.r + 3 / G.scale, 0, 7); cx.stroke(); }
+    });
+    if (G.labels || hov) {
+      cx.textAlign = 'center'; cx.textBaseline = 'top';
+      nodes.forEach(n => { if (!n.vis) return; const show = (G.labels && (G.scale > 1.15 || n.kind === 'style' || (G.scale > .8 && n.deg > 10))) || n === hov || (hl && hl.has(n.id));
+        if (!show) return; const dim = hov && hov !== n && !hl.has(n.id); if (dim) return;
+        const fs = (n.kind === 'style' ? 12 : 10.5) / Math.max(G.scale, .7);
+        cx.font = `${n.kind === 'style' ? 600 : 400} ${fs}px ${css('--sans')}`; cx.fillStyle = n.kind === 'style' ? fg : muted;
+        cx.globalAlpha = (G.year >= MAX ? 1 : presence(n, G.year)) === 0.5 ? .55 : 1;
+        cx.fillText(n.title.length > 34 ? n.title.slice(0, 33) + '…' : n.title, n.x, n.y + n.r + 3 / G.scale); });
+    }
+    cx.restore(); cx.globalAlpha = 1;
+  }
+  let raf = 0;
+  function loop() { raf = 0; const list = nodes.filter(n => n.vis); if (G.alpha > .02) { tick(list, edges, G.alpha); G.alpha *= .985; } draw(); if (G.alpha > .02 || G.drag) raf = requestAnimationFrame(loop); }
+  const kick = (a = .5) => { G.alpha = Math.max(G.alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
+  function setYear(y) {
+    G.year = y; const all = y >= MAX;
+    $('#yrLab').textContent = all ? 'all years' : 'c. ' + y; $('#yearNow').textContent = all ? '' : y;
+    nodes.forEach(n => { const was = n.vis; n.vis = visible(n); if (n.vis && !was) { const nbv = [...nb[n.id]].map(i => byId[i]).find(m => m.vis); if (nbv) { n.x = nbv.x + (Math.random() - .5) * 30; n.y = nbv.y + (Math.random() - .5) * 30; } } });
+    kick(.35);
+  }
+  function toWorld(px, py) { return {x: (px - dims.w / 2 - G.ox) / G.scale, y: (py - dims.h / 2 - G.oy) / G.scale}; }
+  function hit(px, py) { const p = toWorld(px, py); let best = null, bd = 1e9; nodes.forEach(n => { if (!n.vis) return; const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < n.r + 6 / G.scale && d < bd) { bd = d; best = n; } }); return best; }
+  let ptr = null, moved = false;
+  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), n = hit(e.clientX - r.left, e.clientY - r.top); ptr = {x: e.clientX, y: e.clientY, ox: G.ox, oy: G.oy, n}; moved = false; cv.setPointerCapture(e.pointerId); if (n) { G.drag = n; kick(.3); } cv.classList.add('drag'); });
+  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+    if (ptr) { if (Math.hypot(e.clientX - ptr.x, e.clientY - ptr.y) > 4) moved = true;
+      if (G.drag) { const p = toWorld(px, py); G.drag.x = p.x; G.drag.y = p.y; kick(.25); } else { G.ox = ptr.ox + e.clientX - ptr.x; G.oy = ptr.oy + e.clientY - ptr.y; draw(); } return; }
+    const n = hit(px, py); if (n !== G.hover) { G.hover = n; cv.style.cursor = n ? 'pointer' : 'grab'; cv.title = n ? n.title + ' · ' + (n.kind === 'style' ? yrs(n) : 'from c. ' + n.first) : ''; draw(); } });
+  cv.addEventListener('pointerup', () => { const n = ptr && ptr.n; if (n && !moved) location.hash = 'note/' + n.id; G.drag = null; ptr = null; cv.classList.remove('drag'); });
+  cv.addEventListener('pointerleave', () => { if (!ptr && G.hover) { G.hover = null; draw(); } });
+  function zoomAt(f, px = dims.w / 2, py = dims.h / 2) { const p = toWorld(px, py); G.scale = Math.min(4, Math.max(.25, G.scale * f)); G.ox = px - dims.w / 2 - p.x * G.scale; G.oy = py - dims.h / 2 - p.y * G.scale; draw(); }
+  cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * .0015), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+  $('#zin').onclick = () => zoomAt(1.25); $('#zout').onclick = () => zoomAt(.8);
+  function fit() { const v = nodes.filter(n => n.vis); if (!v.length) return; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; v.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); });
+    G.scale = Math.min(2, Math.max(.3, Math.min((dims.w - 60) / (x1 - x0 + 120), (dims.h - 60) / (y1 - y0 + 80)))); G.ox = -(x0 + x1) / 2 * G.scale; G.oy = -(y0 + y1) / 2 * G.scale; draw(); }
+  $('#zfit').onclick = fit;
+  $('#yr').addEventListener('input', e => setYear(+e.target.value));
+  $('#showStyles').onchange = e => { G.styles = e.target.checked; setYear(G.year); };
+  $('#showLabels').onchange = e => { G.labels = e.target.checked; draw(); };
+  let playT = 0;
+  $('#yrPlay').onclick = () => { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; return; }
+    let y = G.year >= MAX - 10 ? 760 : G.year; $('#yrPlay').textContent = '❚❚ Pause';
+    playT = setInterval(() => { y += 10; if (y > NOW) { y = MAX; clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; } $('#yr').value = y; setYear(y); }, 120); };
+  $('#legend').innerHTML = Object.keys(V.folders).map(f => `<span><i style="background:var(--c-${f})"></i>${esc(V.folders[f].split(' &')[0].split(',')[0])}</span>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
+  /* settle the layout once before showing it */
+  nodes.forEach(n => n.vis = true); for (let i = 0; i < 600; i++) tick(nodes, edges, Math.max(.05, 1 - i / 600)); G.alpha = 0;
+
+  /* local graph in the right pane */
+  const lc = $('#local'), lx = lc.getContext('2d');
+  function drawLocal(n) {
+    const {w, h, d} = sizeCanvas(lc); lx.setTransform(d, 0, 0, d, 0, 0); lx.clearRect(0, 0, w, h); if (!n) return;
+    const ids = [n.id, ...nb[n.id]]; const pts = ids.map(id => byId[id]);
+    const ang = i => i * 2 * Math.PI / (pts.length - 1) - Math.PI / 2, R = Math.min(w, h) / 2 - 34;
+    const pos = {}; pos[n.id] = {x: w / 2, y: h / 2}; pts.slice(1).forEach((p, i) => pos[p.id] = {x: w / 2 + Math.cos(ang(i)) * R, y: h / 2 + Math.sin(ang(i)) * R * .8});
+    lx.strokeStyle = css('--line'); lx.lineWidth = 1;
+    edges.forEach(e => { if (pos[e.a] && pos[e.b]) { lx.beginPath(); lx.moveTo(pos[e.a].x, pos[e.a].y); lx.lineTo(pos[e.b].x, pos[e.b].y); lx.stroke(); } });
+    lx.textAlign = 'center'; lx.textBaseline = 'top';
+    pts.forEach(p => { const q = pos[p.id], r = p === n ? 7 : 4.5; lx.fillStyle = css(colorVar(p.folder)); lx.beginPath(); lx.arc(q.x, q.y, r, 0, 7); lx.fill();
+      lx.font = `${p === n ? 600 : 400} 10.5px ${css('--sans')}`; lx.fillStyle = p === n ? css('--fg') : css('--muted');
+      const t = p.title.length > 22 ? p.title.slice(0, 21) + '…' : p.title; if (p === n || pts.length < 9) lx.fillText(t, q.x, q.y + r + 2); });
+    lc.onmousemove = e => { const r = lc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let t = ''; for (const id in pos) if (Math.hypot(pos[id].x - x, pos[id].y - y) < 9) t = byId[id].title; lc.title = t; lc.style.cursor = t ? 'pointer' : 'default'; };
+    lc.onclick = e => { const r = lc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; for (const id in pos) if (Math.hypot(pos[id].x - x, pos[id].y - y) < 9) { location.hash = 'note/' + id; return; } };
+  }
+
+  /* ---------- timeline ---------- */
+  let tlFocus = null;
+  function timeline() {
+    const year = +$('#tlyr').value, W = Math.max(860, $('#v-timeline').clientWidth - 36), lab = 250, rowH = 19, x = y => lab + (y - MIN) / (MAX - MIN) * (W - lab - 10);
+    const rows = []; rows.push({grp: 'Styles'}); V.styles.slice().sort((a, b) => a.from - b.from).forEach(s => rows.push({n: byId[s.id]}));
+    for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    const H = 26 + rows.length * rowH + 10; let h = '';
+    for (let c = 800; c <= 1700; c += 50) h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/>` + (c % 100 ? '' : `<text class="tick" x="${x(c)}" y="13" text-anchor="middle">${c}</text>`);
+    const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
+    rows.forEach((r, i) => { const y = 26 + i * rowH;
+      if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
+      const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
+      h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > 38 ? n.title.slice(0, 37) + '…' : n.title)}</text>`;
+      if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${n.from}–${n.to}</title></rect>`;
+      else { const end = n.fade || NOW;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${n.first}</title></rect>`;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${n.common}${n.fade ? '–' + n.fade : ''}</title></rect>`; }
+      h += '</g>'; });
+    h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
+    const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.height = H + 'px'; svg.innerHTML = h;
+    svg.querySelectorAll('[data-id]').forEach(t => t.onclick = () => location.hash = 'note/' + t.dataset.id);
+    svg.querySelectorAll('[data-style]').forEach(t => t.onclick = () => { tlFocus = tlFocus === t.dataset.style ? null : t.dataset.style; timeline(); });
+    $('#tlyrLab').textContent = year;
+  }
+  $('#tlyr').addEventListener('input', timeline);
+
+  /* ---------- style finder ---------- */
+  const pick = new Set();
+  function combine() {
+    let h = `<h1>Style finder</h1><p class="lead">Choose the elements you hear in a piece. The finder shows when all of them could have coexisted and which styles share the combination – a style is a set of elements present at the same time.</p><div>`;
+    for (const f in V.folders) h += `<fieldset><legend>${esc(V.folders[f])}</legend><div class="opts">${V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).map(e => `<button class="pill" type="button" data-p="${e.id}" aria-pressed="${pick.has(e.id)}">${esc(e.title)}</button>`).join('')}</div></fieldset>`;
+    h += `</div><div class="res" id="res"></div>`;
+    $('#cmb').innerHTML = h;
+    $('#cmb').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pick.has(b.dataset.p) ? pick.delete(b.dataset.p) : pick.add(b.dataset.p); b.setAttribute('aria-pressed', pick.has(b.dataset.p)); results(); });
+    results();
+  }
+  function results() {
+    const sel = [...pick].map(id => byId[id]);
+    let h = '';
+    if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>.</p></div>`;
+    else {
+      const lo = Math.max(...sel.map(n => n.first)), hi = Math.min(...sel.map(n => n.fade || NOW));
+      const loC = Math.max(...sel.map(n => n.common));
+      h += `<div class="box"><h3>Possible period</h3>` + (lo <= hi
+        ? `<div class="era">c. ${lo}–${hi === NOW ? '1750' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
+        : `<div class="era">—</div><p class="small">These elements never coexisted in the sources: one had faded before another appeared.</p>`) + `</div>`;
+      const ranked = V.styles.map(s => { const inter = sel.filter(n => s.elements.includes(n.id)).length; const union = new Set(s.elements.concat([...pick])).size; return {s, inter, score: inter / union, cover: inter / sel.length}; })
+        .filter(r => r.inter).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
+      h += `<div class="box"><h3>Styles with this combination</h3>${ranked.length ? ranked.map(r => `<div class="match"><a class="il style" href="#note/${r.s.id}" data-id="${r.s.id}">${esc(r.s.title)}</a><span class="pc">${r.inter}/${sel.length}</span><span class="barw"><i style="width:${Math.round(r.cover * 100)}%"></i></span></div>`).join('') : '<p class="small">No style in the vault uses these elements.</p>'}</div>`;
+      h += `<p><button class="linkbtn" id="clr">Clear the selection</button></p>`;
+    }
+    $('#res').innerHTML = h;
+    $('#res').querySelectorAll('[data-ex]').forEach(b => b.onclick = () => { b.dataset.ex.split(',').forEach(i => pick.add(i)); combine(); });
+    const c = $('#clr'); if (c) c.onclick = () => { pick.clear(); combine(); };
+  }
+
+  /* ---------- views and routing ---------- */
+  let view = 'note', builtTL = false, builtC = false;
+  function show(v) {
+    view = v;
+    ['note', 'graph', 'timeline', 'combine'].forEach(k => { $('#v-' + k).hidden = k !== v; });
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.go === v));
+    document.querySelectorAll('.ribbon [data-go]').forEach(t => t.setAttribute('aria-pressed', t.dataset.go === v));
+    if (v === 'graph') { dims = sizeCanvas(cv); if (!G.fitted) { setYear(G.year); fit(); G.fitted = true; } kick(.1); }
+    if (v === 'timeline') timeline();
+    if (v === 'combine' && !builtC) { combine(); builtC = true; }
+    $('#app').classList.remove('drawer');
+    $('#app').classList.toggle('viewonly', v !== 'note');
+    if (v === 'graph') { dims = sizeCanvas(cv); draw(); }
+  }
+  let lastNote = 'about';
+  function route() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (h.startsWith('note/')) { lastNote = h.slice(5); renderNote(lastNote); show('note'); }
+    else if (['graph', 'timeline', 'combine'].includes(h)) show(h);
+    else { renderNote('about'); show('note'); }
+  }
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.go; location.hash = g === 'note' ? 'note/' + lastNote : g; }));
+  document.addEventListener('click', e => { const a = e.target.closest('a.il, a.file, a.lk'); if (a && a.dataset.id && window.innerWidth <= 760) $('#app').classList.remove('drawer'); });
+  window.addEventListener('hashchange', route);
+  window.addEventListener('resize', () => { if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); if (view === 'note' && byId[lastNote]) drawLocal(byId[lastNote]); });
+  $('#menuBtn').onclick = () => { const o = $('#app').classList.toggle('drawer'); $('#menuBtn').setAttribute('aria-expanded', o); };
+  $('#scrim').onclick = () => $('#app').classList.remove('drawer');
+  $('#leftBtn').onclick = () => { const off = $('#app').classList.toggle('noleft'); $('#leftBtn').setAttribute('aria-pressed', !off); if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); };
+  $('#rightBtn').onclick = () => { const off = $('#app').classList.toggle('noright'); $('#rightBtn').setAttribute('aria-pressed', !off); if (view === 'graph') { setTimeout(() => { dims = sizeCanvas(cv); draw(); }, 0); } if (view === 'timeline') timeline(); };
+  try { const t = localStorage.getItem('morph-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  $('#themeBtn').onclick = () => {
+    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches;
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('morph-theme', document.documentElement.dataset.theme); } catch (e) {}
+    draw(); if (byId[lastNote]) drawLocal(byId[lastNote]); };
+  tree(); route();
+})();
+</script>
+</body>
+</html>
