@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas of Musical Style</title>
+<meta name="description" content="Nearly 200 musical elements and 55 styles from plainchant to hip hop: when the Picardy third, imitation, sonata form, the leitmotif or minimalist repetition appear, how their combinations make a style, and how many real voices each period uses. By Václav Hřebec.">
+<meta property="og:title" content="Atlas of Musical Style">
+<meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to the present.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e1e1e'/%3E%3Cg stroke='%23a88bfa' stroke-width='1.6'%3E%3Cpath d='M9 10 22 8M9 10l7 13M22 8l-6 15M22 8l3 12'/%3E%3C/g%3E%3Cg fill='%23a88bfa'%3E%3Ccircle cx='9' cy='10' r='3'/%3E%3Ccircle cx='22' cy='8' r='2.4'/%3E%3Ccircle cx='16' cy='23' r='3.4'/%3E%3Ccircle cx='25' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #1e1e1e; --bg2: #262626; --bg3: #2f2f2f; --line: #363636; --fg: #dcddde; --muted: #999; --faint: #6b6b6b;
+  --accent: #a88bfa; --accent2: #8a5cf5; --sel: rgba(138,92,245,.18); --hover: rgba(255,255,255,.06);
+  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a; --c-harmony: #f08a6c; --c-timbre: #a6d96a; --c-popular: #f2a4d8;
+  --c-style: #a88bfa;
+  --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
+  --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
+  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
+  --c-style: #7b55e6; color-scheme: light;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
+    --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
+    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
+    --c-style: #7b55e6; color-scheme: light;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--fg); font: 15px/1.6 var(--sans); overflow: hidden; }
+a { color: var(--accent); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+.app { display: grid; grid-template-columns: 44px 268px 1fr 280px; grid-template-rows: 38px 1fr; height: 100vh; height: 100dvh; }
+.app.noright { grid-template-columns: 44px 268px 1fr 0; }
+.app.noleft { grid-template-columns: 44px 0 1fr 280px; }
+.app.noleft.noright { grid-template-columns: 44px 0 1fr 0; }
+.app.viewonly { grid-template-columns: 44px 268px 1fr 0; } .app.viewonly.noleft { grid-template-columns: 44px 0 1fr 0; }
+.app.viewonly .right { display: none; }
+
+.ribbon { grid-column: 1; grid-row: 2; } .side { grid-column: 2; grid-row: 2; } .main { grid-column: 3; grid-row: 2; } .right { grid-column: 4; grid-row: 2; }
+/* title bar */
+.titlebar { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 0 10px; background: var(--bg2); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--muted); min-width: 0; }
+.titlebar .vault { color: var(--fg); font-weight: 600; white-space: nowrap; }
+.titlebar nav { display: flex; gap: 12px; margin-left: auto; white-space: nowrap; overflow: hidden; }
+.titlebar nav a { color: var(--muted); text-decoration: none; }
+.titlebar nav a:hover { color: var(--fg); }
+.iconbtn { width: 30px; height: 30px; display: grid; place-items: center; border: 0; background: transparent; border-radius: 6px; cursor: pointer; color: var(--muted); flex: none; }
+.iconbtn:hover { background: var(--hover); color: var(--fg); }
+.iconbtn svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.iconbtn[aria-pressed="true"] { color: var(--accent); background: var(--sel); }
+
+/* ribbon */
+.ribbon { background: var(--bg2); border-right: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+.ribbon .iconbtn { width: 34px; height: 34px; }
+.ribbon .grow { flex: 1; }
+
+/* left sidebar */
+.side { background: var(--bg2); border-right: 1px solid var(--line); display: flex; flex-direction: column; min-width: 0; overflow: hidden; }
+.side .head { padding: 10px 10px 6px; }
+.search { width: 100%; height: 30px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--fg); padding: 0 9px; font: 13px var(--sans); }
+.tree { overflow: auto; padding: 4px 6px 20px; font-size: 13.5px; flex: 1; }
+.folder > button { display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border: 0; background: transparent; border-radius: 5px; cursor: pointer; text-align: left; color: var(--fg); font-weight: 500; }
+.folder > button:hover { background: var(--hover); }
+.folder > button .chev { width: 10px; height: 10px; transition: transform .12s; color: var(--muted); flex: none; }
+.folder.closed > button .chev { transform: rotate(-90deg); }
+.folder.closed > .kids { display: none; }
+.kids { margin-left: 11px; padding-left: 7px; border-left: 1px solid var(--line); }
+.file { display: flex; align-items: center; gap: 7px; padding: 2px 6px; border-radius: 5px; color: var(--muted); text-decoration: none; cursor: pointer; line-height: 1.5; }
+.file:hover { background: var(--hover); color: var(--fg); }
+.file.on { background: var(--sel); color: var(--fg); }
+.file .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+.file .yr { margin-left: auto; font: 11px var(--mono); color: var(--faint); }
+.folder .cnt { margin-left: auto; font: 11px var(--mono); color: var(--faint); font-weight: 400; }
+.file.hidden { display: none; }
+
+/* main */
+.main { min-width: 0; overflow: hidden; display: flex; flex-direction: column; background: var(--bg); }
+.tabbar { display: flex; align-items: center; height: 36px; border-bottom: 1px solid var(--line); background: var(--bg2); padding: 0 6px; gap: 2px; flex: none; }
+.tab { height: 28px; padding: 0 12px; border: 0; border-radius: 6px 6px 0 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; white-space: nowrap; }
+.tab[aria-selected="true"] { background: var(--bg); color: var(--fg); }
+.view { flex: 1; overflow: auto; position: relative; }
+.view[hidden] { display: none; }
+
+/* note */
+.note { max-width: 760px; margin: 0 auto; padding: 28px 34px 80px; }
+.crumb { font-size: 12.5px; color: var(--faint); margin-bottom: 6px; }
+.note h1 { font-size: 1.9rem; line-height: 1.2; margin: 0 0 14px; font-weight: 700; letter-spacing: -.01em; }
+.props { border: 1px solid var(--line); border-radius: 8px; margin: 0 0 22px; font-size: 13.5px; }
+.props summary { padding: 6px 12px; cursor: pointer; color: var(--muted); font-weight: 500; }
+.props dl { display: grid; grid-template-columns: 120px 1fr; margin: 0; padding: 2px 12px 10px; gap: 5px 12px; }
+.props dt { color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.props dt svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.props dd { margin: 0; }
+.tag { display: inline-block; padding: 0 8px; border-radius: 10px; background: var(--sel); color: var(--accent); font-size: 12.5px; margin: 0 4px 3px 0; text-decoration: none; }
+.note p { margin: 0 0 1em; }
+.il { color: var(--accent); text-decoration: none; cursor: pointer; }
+.il:hover { text-decoration: underline; }
+.il.style { font-weight: 600; }
+.ext { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; text-decoration: none; color: var(--fg); font-size: 14px; }
+.ext:hover { border-color: var(--accent); color: var(--accent); }
+.note h2 { font-size: 1.15rem; margin: 28px 0 10px; }
+.chk { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 24px; }
+.chk li { break-inside: avoid; margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
+.chk li::before { content: ""; width: 12px; height: 12px; border: 1.5px solid var(--accent); border-radius: 3px; background: var(--accent); flex: none; transform: translateY(2px);
+  -webkit-mask: none; }
+.chk li span.d { color: var(--faint); font: 11.5px var(--mono); margin-left: auto; white-space: nowrap; }
+.minitl { margin: 6px 0 0; }
+.minitl svg { display: block; width: 100%; height: auto; }
+.callout { border-left: 3px solid var(--accent); background: var(--sel); border-radius: 0 7px 7px 0; padding: 10px 14px; margin: 18px 0; font-size: 14px; }
+.callout b { color: var(--accent); }
+
+/* footer: feedback · share · support, and the copyright line */
+.pagefoot { max-width: 760px; margin: 0 auto; padding: 0 34px 40px; }
+.pagefoot footer { text-align: center; color: var(--faint); font-size: 12.5px; margin-top: 18px; }
+.pagefoot footer a { color: inherit; }
+.ft-row { font-family: var(--sans) !important; margin-top: 0 !important; }
+.ft-row .q { font-size: 1.05rem !important; font-weight: 600; }
+.ft-row .s { font-size: .92rem !important; }
+.fbslot .fb-open { font: 12.5px var(--sans); color: var(--muted); border-color: var(--line); padding: 3px 10px; }
+.fbslot .fb-open:hover { color: #fff; background: var(--accent2); border-color: var(--accent2); }
+dialog.fb { background: var(--bg2) !important; color: var(--fg) !important; font-family: var(--sans) !important; font-size: 15px !important; }
+dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important; font-size: 1.4rem !important; }
+:root { --accent-ink: #fff; }
+@media (max-width: 760px) { .pagefoot { padding: 0 16px 40px; } .fbslot { display: none; } }
+
+/* right pane */
+.right { background: var(--bg2); border-left: 1px solid var(--line); overflow: auto; min-width: 0; font-size: 13px; }
+.right h3 { font-size: 11.5px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); margin: 16px 14px 6px; font-weight: 600; }
+.right .lk { display: block; padding: 4px 14px; color: var(--fg); text-decoration: none; cursor: pointer; }
+.right .lk:hover { background: var(--hover); }
+.right .lk small { display: block; color: var(--faint); }
+.right .none { padding: 2px 14px; color: var(--faint); }
+#local { display: block; width: 100%; height: 230px; border-bottom: 1px solid var(--line); }
+
+/* graph */
+#graph { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+#graph.drag { cursor: grabbing; }
+.panel { position: absolute; top: 10px; right: 10px; width: 250px; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
+.panel h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.panel h4 button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.panel.min > :not(h4):not(.row) { display: none; }
+.panel.min { width: 230px; }
+.panel label { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
+.panel .row { display: flex; align-items: center; gap: 8px; }
+.panel input[type=range] { flex: 1; accent-color: var(--accent2); }
+.yr-big { font: 600 20px var(--mono); color: var(--fg); }
+.legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
+.legend span, .legend button { display: flex; align-items: center; gap: 5px; border: 0; background: none; padding: 1px 3px; margin: 0 -3px; border-radius: 4px; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.legend button:hover { color: var(--fg); }
+.legend button[aria-pressed="true"] { background: var(--sel); color: var(--fg); }
+.legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.zoom { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 4px; }
+.zoom button { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--bg2); border-radius: 7px; cursor: pointer; font-size: 17px; }
+.yearnow { position: absolute; left: 14px; top: 10px; font: 600 40px/1 var(--mono); color: var(--fg); opacity: .14; pointer-events: none; }
+.panel .playyr { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; height: 26px; padding: 0 9px; cursor: pointer; font-size: 12.5px; }
+.panel .mini { color: var(--faint); font-size: 11.5px; margin-top: 6px; line-height: 1.4; }
+
+/* timeline */
+.tl { padding: 16px 18px 50px; min-width: 860px; }
+.tl .ctl { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.tl .ctl input[type=range] { width: 260px; accent-color: var(--accent2); }
+#tlsvg { display: block; width: 100%; }
+#tlsvg text { font-family: var(--sans); }
+#tlsvg .rowlab { fill: var(--fg); font-size: 12.5px; cursor: pointer; }
+#tlsvg .rowlab:hover { fill: var(--accent); }
+#tlsvg .grp { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+#tlsvg .tick { fill: var(--faint); font-size: 11px; font-family: var(--mono); }
+#tlsvg .era { fill: var(--muted); font-size: 11.5px; font-style: italic; }
+.tl select { height: 28px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg2); color: var(--fg); font: 13px var(--sans); }
+#tlsvg .gl { stroke: var(--line); }
+#tlsvg .bar { cursor: pointer; }
+#tlsvg .dim { opacity: .18; }
+#tlsvg .cur { stroke: var(--accent); stroke-width: 1.5; }
+
+/* combine */
+.cmb { max-width: 1040px; margin: 0 auto; padding: 24px 28px 60px; display: grid; grid-template-columns: 1fr 360px; gap: 28px; }
+.cmb h1 { grid-column: 1 / -1; font-size: 1.6rem; margin: 0; }
+.cmb .lead { grid-column: 1 / -1; color: var(--muted); margin: -16px 0 0; max-width: 70ch; }
+.cmb fieldset { border: 0; padding: 0; margin: 0 0 14px; }
+.cmb legend { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+.cmb .opts { display: flex; flex-wrap: wrap; gap: 5px; }
+.pill { border: 1px solid var(--line); background: transparent; border-radius: 14px; padding: 2px 11px; cursor: pointer; font-size: 13px; color: var(--muted); }
+.pill:hover { color: var(--fg); border-color: var(--faint); }
+.pill[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); color: var(--fg); }
+.res { position: sticky; top: 0; align-self: start; }
+.vvw { max-width: 1120px; margin: 0 auto; padding: 24px 28px 60px; }
+.vvw h1 { font-size: 1.6rem; margin: 0 0 6px; }
+.vvw .lead { color: var(--muted); margin: 0 0 14px; max-width: 74ch; }
+.vvw svg { width: 100%; height: auto; display: block; overflow: visible; }
+.vvw .band { fill: var(--accent); fill-opacity: .2; stroke: var(--accent); stroke-opacity: .55; cursor: pointer; }
+.vvw .band:hover { fill-opacity: .42; }
+.vvw .peak { stroke: var(--accent); stroke-opacity: .6; stroke-dasharray: 2 3; }
+.vvw .pk { fill: var(--bg); stroke: var(--accent); }
+.vvw .gl { stroke: var(--line); }
+.vvw .ax { fill: var(--muted); font-size: 11px; }
+.vvw .mk { fill: var(--fg); cursor: pointer; }
+.vvw .mk.att { fill: var(--bg); stroke: var(--fg); stroke-dasharray: 2 2; }
+.vvw .ml { fill: var(--fg); font-size: 11.5px; pointer-events: none; }
+.vvw .key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); margin: 6px 0 12px; }
+.vtab { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.vtab th, .vtab td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.vtab th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.vtab td:nth-child(1) { white-space: nowrap; } .vtab td:nth-child(2), .vtab td:nth-child(3) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vvw .detail { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--bg2); margin-top: 14px; min-height: 3.2em; }
+.vvw .detail b { color: var(--fg); }
+.res .box { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--bg2); margin-bottom: 12px; }
+.res .box h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+.era { font: 600 22px var(--mono); }
+.match { display: grid; grid-template-columns: 1fr 44px; gap: 2px 8px; align-items: center; margin: 6px 0; font-size: 14px; }
+.match .barw { grid-column: 1 / -1; height: 4px; background: var(--bg3); border-radius: 2px; overflow: hidden; }
+.match .barw i { display: block; height: 100%; background: var(--accent2); }
+.match .pc { text-align: right; font: 12px var(--mono); color: var(--muted); }
+.cmb .small { font-size: 12.5px; color: var(--faint); }
+.linkbtn { border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-size: 13px; }
+
+.scrim { display: none; }
+@media (max-width: 1100px) { .app, .app.noleft, .app.viewonly, .app.noright { grid-template-columns: 44px 240px 1fr 0; } .app.noleft, .app.viewonly.noleft, .app.noleft.noright { grid-template-columns: 44px 0 1fr 0; } .right { display: none; } #rightBtn { display: none; } }
+@media (max-width: 760px) {
+  .app, .app.noleft, .app.viewonly, .app.viewonly.noleft, .app.noright, .app.noleft.noright { grid-template-columns: 0 0 1fr 0; grid-template-rows: 44px 1fr; }
+  .ribbon { display: none; }
+  .side { position: fixed; z-index: 20; top: 44px; bottom: 0; left: 0; width: min(300px, 86vw); transform: translateX(-102%); transition: transform .18s; }
+  .app.drawer .side { transform: none; }
+  .app.drawer .scrim { display: block; position: fixed; inset: 44px 0 0 0; background: rgba(0,0,0,.45); z-index: 15; }
+  .titlebar nav { display: none; }
+  .note { padding: 20px 16px 70px; }
+  .note h1 { font-size: 1.55rem; }
+  .props dl { grid-template-columns: 96px 1fr; }
+  .chk { columns: 1; }
+  .panel { left: 10px; right: 10px; width: auto; top: auto; bottom: 52px; padding: 8px 10px; }
+  .panel .legend, .panel .mini { display: none; }
+  .yearnow { font-size: 30px; }
+  .cmb { grid-template-columns: 1fr; padding: 18px 16px 60px; }
+  .res { position: static; }
+  .tl { padding: 12px 10px 40px; }
+}
+@media (min-width: 761px) { #menuBtn { display: none; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="titlebar">
+    <button class="iconbtn" id="menuBtn" aria-label="Files" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+    <span class="vault">Atlas of Musical Style</span>
+    <nav aria-label="Václav Hřebec's website"><a href="../">← Václav Hřebec</a><a href="../#agenda">Agenda</a><a href="../#projects">Projects</a><a href="../gym/">Counterpoint Gym</a><a href="../ear/">Ear Trainer</a><a href="../rheinfelden2027/">Course Rheinfelden 2027</a></nav>
+    <span class="fbslot" data-feedback-slot></span>
+    <button class="iconbtn" id="themeBtn" aria-label="Light or dark" title="Light or dark"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></button>
+    <button class="iconbtn" id="rightBtn" aria-label="Links pane" aria-pressed="true" title="Show or hide the links pane"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></button>
+  </header>
+  <aside class="ribbon" aria-label="Views">
+    <button class="iconbtn" data-go="note" title="Notes" aria-label="Notes"><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></button>
+    <button class="iconbtn" data-go="graph" title="Graph view" aria-label="Graph view"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="17" cy="5" r="2"/><circle cx="12" cy="17" r="2.6"/><circle cx="19" cy="15" r="1.7"/><path d="m8 8 3 7M15.4 6.2l-2.6 8.6M8.2 6.6 15 5.3M17.7 6.8l1 6.5"/></svg></button>
+    <button class="iconbtn" data-go="timeline" title="Timeline" aria-label="Timeline"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 6h7M8 10h9M4 14h6M11 16h8"/></svg></button>
+    <button class="iconbtn" data-go="combine" title="Style finder: combine elements" aria-label="Style finder"><svg viewBox="0 0 24 24"><circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/></svg></button>
+    <button class="iconbtn" data-go="voices" title="Number of voices through history" aria-label="Voices"><svg viewBox="0 0 24 24"><path d="M3 20h18M4 17V13M8 17V9M12 17V6M16 17V10M20 17V4"/></svg></button>
+    <span class="grow"></span>
+    <button class="iconbtn" id="leftBtn" title="Show or hide the file explorer" aria-label="File explorer" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+  </aside>
+  <aside class="side" id="side" aria-label="File explorer">
+    <div class="head"><input class="search" id="search" type="search" placeholder="Search notes…" aria-label="Search notes"></div>
+    <div class="tree" id="tree"></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+  <main class="main">
+    <div class="tabbar" role="tablist">
+      <button class="tab" role="tab" data-go="note" id="tabNote">Note</button>
+      <button class="tab" role="tab" data-go="graph">Graph view</button>
+      <button class="tab" role="tab" data-go="timeline">Timeline</button>
+      <button class="tab" role="tab" data-go="combine">Style finder</button>
+      <button class="tab" role="tab" data-go="voices">Voices</button>
+    </div>
+    <section class="view" id="v-note" role="tabpanel"><article class="note" id="note"></article>
+      <div class="pagefoot"><div data-foot-slot></div><footer>© 2026 Václav Hřebec · <a href="../">vaclavhrebec.github.io</a> · <a href="../gym/">Counterpoint Gym</a> · <a href="../ear/">Ear Trainer</a></footer></div></section>
+    <section class="view" id="v-graph" role="tabpanel" hidden>
+      <canvas id="graph" aria-label="Graph of musical elements and styles. Use the file explorer or the timeline for a text version."></canvas>
+      <div class="yearnow" id="yearNow"></div>
+      <div class="panel">
+        <h4><button type="button" id="panelBtn" aria-expanded="true">Filters <span aria-hidden="true">▾</span></button></h4>
+        <div class="row"><span class="yr-big" id="yrLab">all years</span><button class="playyr" id="yrPlay" title="Let the centuries pass">▶ Play</button></div>
+        <div class="row"><input type="range" id="yr" min="0" max="1000" step="1" value="1000" aria-label="Year"></div>
+        <label><input type="checkbox" id="showStyles" checked> Styles</label>
+        <label><input type="checkbox" id="showLabels" checked> Labels</label>
+        <label title="Line the nodes up from left (early) to right (today)"><input type="checkbox" id="timeAxis"> Time axis</label>
+        <div class="legend" id="legend"></div>
+        <p class="mini">Bright: established in that year. Faint: just emerging. Hidden: not yet there, or gone. Drag nodes, scroll to zoom, click to open. Click a colour to show only that folder.</p>
+      </div>
+      <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Fit" title="Fit">⤢</button></div>
+    </section>
+    <section class="view" id="v-timeline" role="tabpanel" hidden>
+      <div class="tl">
+        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="310" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
+          <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option></select>
+          <span>thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
+        <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
+      </div>
+    </section>
+    <section class="view" id="v-combine" role="tabpanel" hidden><div class="cmb" id="cmb"></div></section>
+    <section class="view" id="v-voices" role="tabpanel" hidden><div class="vvw" id="vv"></div></section>
+  </main>
+  <aside class="right" id="right" aria-label="Links">
+    <canvas id="local" aria-hidden="true"></canvas>
+    <div id="links"></div>
+  </aside>
+</div>
+<script src="vault.js"></script>
+<script src="vault-renaissance.js"></script>
+<script src="vault-baroque.js"></script>
+<script src="vault-classical-romantic.js"></script>
+<script src="vault-modern.js"></script>
+<script src="vault-popular.js"></script>
+<script src="vault-crosslinks.js"></script>
+<script src="vault-voices.js"></script>
+<script>
+(function () {
+  'use strict';
+  const V = window.VAULT;
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+  const MIN = 700, NOW = Math.max(2026, new Date().getFullYear()), MAX = NOW + 14;
+  V.styles.forEach(st => { if (st.to == null) { st.to = NOW; st.alive = true; } });
+  /* the historical scale: early centuries compressed, every era gets room */
+  const KNOTS = [[MIN, 0], [1200, .15], [1450, .31], [1600, .43], [1750, .56], [1850, .68], [1900, .75], [1950, .84], [2000, .94], [MAX, 1]];
+  function tOf(y) { for (let i = 1; i < KNOTS.length; i++) if (y <= KNOTS[i][0]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return t0 + (y - y0) / (y1 - y0) * (t1 - t0); } return 1; }
+  function yOf(t) { for (let i = 1; i < KNOTS.length; i++) if (t <= KNOTS[i][1]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return Math.round(y0 + (t - t0) / (t1 - t0) * (y1 - y0)); } return MAX; }
+  const TICKS = [800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
+  const ERAS = [['Middle Ages', MIN, 1430], ['Renaissance', 1430, 1600], ['Baroque', 1600, 1750], ['Classical', 1750, 1820], ['Romantic', 1820, 1910], ['Modernism', 1910, 1975], ['Contemporary', 1975, NOW]];
+  const sliderYear = el => yOf(+el.value / 1000);
+
+  /* ---------- the vault as nodes and links ---------- */
+  const nodes = [], byId = {};
+  V.elements.forEach(e => { const n = Object.assign({kind: 'el'}, e); nodes.push(n); byId[n.id] = n; });
+  V.styles.forEach(s => { const n = Object.assign({kind: 'style', folder: 'style'}, s); nodes.push(n); byId[n.id] = n; });
+  const linkRe = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+  const edges = [], seen = new Set();
+  const addEdge = (a, b, type) => { const k = a < b ? a + '|' + b : b + '|' + a; if (a === b || seen.has(k)) return; seen.add(k); edges.push({a, b, type}); };
+  nodes.forEach(n => {
+    n.out = new Set(); n.back = new Set();
+    for (const m of ((n.text || '') + ' ' + (n.scope || '')).matchAll(linkRe)) n.out.add(m[1]);
+    (n.elements || []).forEach(e => n.out.add(e));
+  });
+  nodes.forEach(n => n.out.forEach(t => { if (byId[t]) { byId[t].back.add(n.id); addEdge(n.id, t, n.kind === 'style' ? 'style' : 'note'); } }));
+  nodes.forEach(n => { n.deg = n.out.size + n.back.size; });
+  const stylesOf = id => V.styles.filter(s => s.elements.includes(id));
+  const colorVar = f => f === 'style' ? '--c-style' : '--c-' + f;
+  const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+  /* presence of an element in a year: 0 none, 0.5 emerging, 1 established, 0.25 after fading */
+  function presence(n, y) {
+    if (n.kind === 'style') return y >= n.from && y <= n.to ? 1 : 0;
+    if (y < n.first) return 0;
+    if (n.fade && y > n.fade) return 0;
+    return y < n.common ? 0.5 : 1;
+  }
+  const yrs = n => n.kind === 'style' ? `${n.from}–${n.alive ? 'today' : n.to}` : `${n.first}`;
+
+  /* ---------- markup ---------- */
+  function md(s) {
+    return esc(s)
+      .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, id, lab) => {
+        const n = byId[id]; if (!n) return esc(lab || id);
+        return `<a class="il${n.kind === 'style' ? ' style' : ''}" href="#note/${id}" data-id="${id}">${lab || n.title}</a>`;
+      });
+  }
+
+  /* ---------- file explorer ---------- */
+  const ICON = {cal: '<svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
+    list: '<svg viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+    tag: '<svg viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-8 8Z"/><circle cx="7.5" cy="8" r="1.3"/></svg>',
+    pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11Z"/><circle cx="12" cy="10" r="2"/></svg>'};
+  const chev = '<svg class="chev" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+  function tree() {
+    const file = n => `<a class="file" href="#note/${n.id}" data-id="${n.id}"><span class="dot" style="background:var(${colorVar(n.folder)})"></span><span>${esc(n.title)}</span><span class="yr">${n.kind === 'style' ? n.from : n.first}</span></a>`;
+    const POP = new Set(['ragtime', 'early-jazz', 'swing-era', 'bebop', 'modal-jazz-style', 'free-jazz', 'rock', 'hip-hop', 'electronic-dance']);
+    const eraOf = st => POP.has(st.id) ? 'Jazz & popular' : st.from < 1430 ? 'Middle Ages' : st.from < 1600 ? 'Renaissance' : st.from < 1720 ? 'Baroque' : st.from < 1810 ? 'Galant & Classical' : st.from < 1900 ? 'Romantic' : '20th & 21st centuries';
+    const groups = ['Middle Ages', 'Renaissance', 'Baroque', 'Galant & Classical', 'Romantic', '20th & 21st centuries', 'Jazz & popular'];
+    let h = `<div class="folder"><button type="button">${chev}Styles <span class="cnt">${V.styles.length}</span></button><div class="kids">` + groups.map(g => {
+      const list = V.styles.filter(st => eraOf(st) === g).sort((a, b) => a.from - b.from);
+      return `<div class="folder closed"><button type="button">${chev}${g} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(st => file(byId[st.id])).join('')}</div></div>`; }).join('') + `</div></div>`;
+    h += `<div class="folder"><button type="button">${chev}Elements</button><div class="kids">`;
+    for (const f in V.folders) {
+      const list = V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first);
+      h += `<div class="folder closed"><button type="button">${chev}${esc(V.folders[f])} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
+    }
+    h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this works</span></a></div></div>`;
+    $('#tree').innerHTML = h;
+    $('#tree').querySelectorAll('.folder > button').forEach(b => b.onclick = () => b.parentElement.classList.toggle('closed'));
+  }
+  $('#search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('#tree .file').forEach(f => {
+      const n = byId[f.dataset.id];
+      const hay = n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
+      f.classList.toggle('hidden', !!q && !hay.includes(q));
+    });
+    document.querySelectorAll('#tree .folder').forEach(f => { if (q) f.classList.toggle('closed', !f.querySelector('.file:not(.hidden)')); });
+  });
+
+  /* ---------- notes ---------- */
+  function miniTimeline(ids, from, to) {
+    const W = 680, rowH = 17, top = 18, lab = 190, x = y => lab + tOf(y) * (W - lab - 6);
+    let h = `<svg viewBox="0 0 ${W} ${top + ids.length * rowH + 4}" role="img" aria-label="When these elements are present">`;
+    [800, 1200, 1450, 1600, 1750, 1850, 1900, 1950, 2000].forEach(c => { h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c}</text>`; });
+    if (from != null) h += `<rect x="${x(from)}" y="12" width="${x(to) - x(from)}" height="${ids.length * rowH + 6}" fill="var(--sel)"/>`;
+    ids.forEach((id, i) => {
+      const n = byId[id], y = top + i * rowH, c = `var(${colorVar(n.folder)})`, end = n.fade || NOW;
+      h += `<text x="${lab - 8}" y="${y + 10}" font-size="11" fill="var(--fg)" text-anchor="end">${esc(n.title.length > 30 ? n.title.slice(0, 29) + '…' : n.title)}</text>`;
+      h += `<rect x="${x(n.first)}" y="${y + 5}" width="${Math.max(1, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".55"/>`;
+      h += `<rect x="${x(n.common)}" y="${y + 2}" width="${Math.max(2, x(end) - x(n.common))}" height="9" rx="3" fill="${c}"/>`;
+    });
+    return h + '</svg>';
+  }
+  function about() {
+    return `<div class="crumb">About</div><h1>How this works</h1>
+      <p>A style is not a thing but a <b>combination</b>. This vault breaks the history of composed music – from plainchant to spectralism, from the troubadours to hip hop – into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
+      <p>Take the <a class="il" href="#note/picardy-third" data-id="picardy-third">major third in the final chord</a>: it needs a texture of four or more voices and a tuning in which the third is sweet. So it cannot belong to the <a class="il style" href="#note/notre-dame" data-id="notre-dame">Notre Dame school</a>, it appears rarely in the <a class="il style" href="#note/ockeghem" data-id="ockeghem">Ockeghem generation</a> and becomes the rule with <a class="il style" href="#note/palestrina" data-id="palestrina">Palestrina</a>.</p>
+      <p>Every style also has a number of <b>real voices</b> – independent contrapuntal lines, not performers – so that a piece in four voices stays a four-voice piece however many instruments play it. The <b>voices view</b> follows the number from the single line of plainchant, through the two voices that carry most of the Magnus liber organi, to the 40-part works of the 16th century; the <a class="il" href="#combine" data-go="combine">style finder</a> can filter by it.</p>
+      <p>Open the <b>graph view</b> and move the year slider – or press Play – to watch elements appear and the styles form around them; switch on <b>Time axis</b> to line everything up chronologically, and click a colour in the legend to follow one family of elements (harmony, rhythm, timbre…) through the centuries. The <b>timeline</b> shows every element as a bar, era by era. The <b>style finder</b> works backwards: pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
+      <p>Some elements return after centuries in a new guise – <a class="il" href="#note/parallel-chords" data-id="parallel-chords">Debussy’s parallel chords</a> after <a class="il" href="#note/parallel-organum" data-id="parallel-organum">parallel organum</a>, <a class="il" href="#note/swing" data-id="swing">swing</a> after <a class="il" href="#note/notes-inegales" data-id="notes-inegales">notes inégales</a>, <a class="il" href="#note/total-serialism" data-id="total-serialism">total serialism</a> after <a class="il" href="#note/isorhythm" data-id="isorhythm">isorhythm</a>. The links between such notes are the morphology: forms that grow, die back and sprout again.</p>
+      <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the <b>Feedback</b> button below.</div>
+      <p class="small" style="color:var(--faint)">${V.elements.length} elements · ${V.styles.length} styles · ${edges.length} links · last updated November 2026 · © 2026 Václav Hřebec</p>`;
+  }
+  function renderNote(id) {
+    const el = $('#note');
+    document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
+    if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'Atlas of Musical Style'; renderLinks(null); return; }
+    const n = byId[id];
+    document.title = n.title + ' · Atlas of Musical Style';
+    let h;
+    if (n.kind === 'el') {
+      const st = stylesOf(id);
+      h = `<div class="crumb">Elements / ${esc(V.folders[n.folder])}</div><h1>${esc(n.title)}</h1>
+        <details class="props" open><summary>Properties</summary><dl>
+        <dt>${ICON.cal}first</dt><dd>c. ${n.first}</dd>
+        <dt>${ICON.cal}common</dt><dd>c. ${n.common}</dd>
+        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + n.fade : '— still in use today'}</dd>
+        <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
+        <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
+        <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
+        </dl></details>
+        ${n.text.split(/\n\n/).map(p => `<p>${md(p)}</p>`).join('')}
+        ${n.link ? `<p><a class="ext" href="${esc(n.link.href)}">↗ ${esc(n.link.label)}</a></p>` : ''}
+        <h2>On the timeline</h2><div class="minitl">${miniTimeline([id].concat([...n.out].filter(x => byId[x] && byId[x].kind === 'el')))}</div>`;
+    } else {
+      const els = n.elements.slice().sort((a, b) => byId[a].first - byId[b].first);
+      h = `<div class="crumb">Styles</div><h1>${esc(n.title)}</h1>
+        <details class="props" open><summary>Properties</summary><dl>
+        <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.alive ? 'today' : n.to}</dd>
+        <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
+        ${voiceRow(n.id)}
+        <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
+        </dl></details>
+        <p>${md(n.text)}</p>
+        <h2>Made of</h2><ul class="chk">${els.map(e => `<li><a class="il" href="#note/${e}" data-id="${e}">${esc(byId[e].title)}</a><span class="d">${byId[e].first}${byId[e].fade ? '–' + byId[e].fade : '–'}</span></li>`).join('')}</ul>
+        <h2>Elements over time</h2><div class="minitl">${miniTimeline(els, n.from, n.to)}</div>
+        <p class="small" style="color:var(--faint);font-size:13px">The shaded band is the period of the style. Find similar combinations in the <a class="il" href="#combine" data-go="combine">style finder</a>.</p>`;
+    }
+    el.innerHTML = h;
+    el.querySelectorAll('.tag[data-folder]').forEach(t => t.onclick = e => { e.preventDefault(); $('#search').value = ''; filterFolder(t.dataset.folder); });
+    renderLinks(n);
+    $('#v-note').scrollTop = 0;
+  }
+  function filterFolder(f) {
+    document.querySelectorAll('#tree .file').forEach(x => { const n = byId[x.dataset.id]; x.classList.toggle('hidden', !n || n.folder !== f); });
+    document.querySelectorAll('#tree .folder').forEach(x => x.classList.remove('closed'));
+    $('#app').classList.add('drawer'); $('#app').classList.remove('noleft');
+  }
+  function renderLinks(n) {
+    const item = id => { const m = byId[id]; return `<a class="lk" href="#note/${id}" data-id="${id}">${esc(m.title)}<small>${m.kind === 'style' ? 'style · ' + yrs(m) : esc(V.folders[m.folder]) + ' · ' + m.first}</small></a>`; };
+    if (!n) { $('#links').innerHTML = '<h3>Linked mentions</h3><p class="none">Open a note to see its links.</p>'; drawLocal(null); return; }
+    const back = [...n.back], out = [...n.out].filter(x => byId[x]);
+    $('#links').innerHTML = `<h3>Linked mentions (${back.length})</h3>${back.map(item).join('') || '<p class="none">None</p>'}<h3>Outgoing links (${out.length})</h3>${out.map(item).join('') || '<p class="none">None</p>'}`;
+    drawLocal(n);
+  }
+
+  /* ---------- force-directed graph ---------- */
+  const G = {scale: 1, ox: 0, oy: 0, year: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true, axis: false, only: null};
+  const AXW = 2400;
+  const timeOf = n => n.kind === 'style' ? (n.from + Math.min(n.to, n.from + 80)) / 2 : n.first;
+  nodes.forEach(n => n.tx = (tOf(timeOf(n)) - .5) * AXW);
+  nodes.forEach((n, i) => { const a = i * 2.399, r = 30 + 9 * Math.sqrt(i); n.x = Math.cos(a) * r; n.y = Math.sin(a) * r; n.vx = 0; n.vy = 0; n.r = n.kind === 'style' ? 6 + n.elements.length * 0.3 : 3 + Math.sqrt(n.deg) * 0.9; });
+  const nb = {}; nodes.forEach(n => nb[n.id] = new Set()); edges.forEach(e => { nb[e.a].add(e.b); nb[e.b].add(e.a); });
+  function tick(list, E, a) {
+    for (let i = 0; i < list.length; i++) { const p = list[i];
+      for (let j = i + 1; j < list.length; j++) { const q = list[j]; let dx = q.x - p.x, dy = q.y - p.y, d2 = dx * dx + dy * dy || .01;
+        if (d2 > 160000) continue; const f = 2600 * a / d2, d = Math.sqrt(d2); dx /= d; dy /= d; p.vx -= dx * f; p.vy -= dy * f; q.vx += dx * f; q.vy += dy * f; } }
+    E.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return; let dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
+      const L = e.type === 'style' ? 120 : 80, f = (d - L) * 0.022 * a; dx /= d; dy /= d; p.vx += dx * f; p.vy += dy * f; q.vx -= dx * f; q.vy -= dy * f; });
+    list.forEach(n => { if (G.axis) { n.vx += (n.tx - n.x) * 0.08 * a; n.vy -= n.y * 0.004 * a; } else { n.vx -= n.x * 0.004 * a; n.vy -= n.y * 0.004 * a; } if (n === G.drag) { n.vx = n.vy = 0; return; } n.x += n.vx; n.y += n.vy; n.vx *= .55; n.vy *= .55; });
+  }
+  const cv = $('#graph'), cx = cv.getContext('2d');
+  function sizeCanvas(c) { const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(1, r.width * d); c.height = Math.max(1, r.height * d); return {w: r.width, h: r.height, d}; }
+  let dims = {w: 1, h: 1, d: 1};
+  function visible(n) { if (n.kind === 'style' && !G.styles) return false; if (G.only && n.kind !== 'style' && n.folder !== G.only) return false; if (G.only && n.kind === 'style' && ![...nb[n.id]].some(i => byId[i].folder === G.only)) return false; return G.year >= MAX || presence(n, G.year) > 0; }
+  function draw() {
+    const {w, h, d} = dims; cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h);
+    cx.save(); cx.translate(w / 2 + G.ox, h / 2 + G.oy); cx.scale(G.scale, G.scale);
+    const hov = G.hover, hl = hov ? nb[hov.id] : null, line = css('--line'), fg = css('--fg'), muted = css('--muted'), acc = css('--accent');
+    if (G.axis) { cx.save(); cx.font = `${11 / G.scale}px ${css('--sans')}`; cx.textAlign = 'center';
+      const top = (-h / 2 - G.oy) / G.scale, bot = (h / 2 - G.oy) / G.scale;
+      ERAS.forEach(([name, a, b], i) => { const x0 = (tOf(a) - .5) * AXW, x1 = (tOf(b) - .5) * AXW; cx.globalAlpha = i % 2 ? .07 : .02; cx.fillStyle = muted; cx.fillRect(x0, top, x1 - x0, bot - top); cx.globalAlpha = .9; cx.font = `italic ${12 / G.scale}px ${css('--sans')}`; cx.fillText(name, (x0 + x1) / 2, top + 22 / G.scale); });
+      cx.font = `${10.5 / G.scale}px ${css('--mono')}`; cx.fillStyle = muted;
+      TICKS.forEach(c => { const xx = (tOf(c) - .5) * AXW; cx.globalAlpha = .75; cx.fillText(c, xx, bot - 12 / G.scale); });
+      cx.restore(); }
+    cx.lineWidth = 1 / G.scale;
+    edges.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return;
+      const on = hov && (e.a === hov.id || e.b === hov.id);
+      cx.strokeStyle = on ? acc : line; cx.globalAlpha = hov && !on ? .25 : (e.type === 'style' ? .55 : .9); cx.lineWidth = (on ? 1.6 : 1) / G.scale;
+      cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(q.x, q.y); cx.stroke(); });
+    nodes.forEach(n => { if (!n.vis) return; const pr = G.year >= MAX ? 1 : presence(n, G.year);
+      const dim = hov && hov !== n && !hl.has(n.id);
+      cx.globalAlpha = dim ? .18 : (pr === 0.5 ? .45 : 1);
+      cx.fillStyle = css(colorVar(n.folder)); cx.beginPath(); cx.arc(n.x, n.y, n.r, 0, 7); cx.fill();
+      if (n.kind === 'style') { cx.strokeStyle = css('--bg'); cx.lineWidth = 2 / G.scale; cx.beginPath(); cx.arc(n.x, n.y, n.r * .55, 0, 7); cx.stroke(); }
+      if (n === hov) { cx.strokeStyle = fg; cx.lineWidth = 2 / G.scale; cx.beginPath(); cx.arc(n.x, n.y, n.r + 3 / G.scale, 0, 7); cx.stroke(); }
+    });
+    if (G.labels || hov) {
+      cx.textAlign = 'center'; cx.textBaseline = 'top';
+      nodes.forEach(n => { if (!n.vis) return; const show = (G.labels && (G.scale > 1.15 || n.kind === 'style' || (G.scale > .8 && n.deg > 10))) || n === hov || (hl && hl.has(n.id));
+        if (!show) return; const dim = hov && hov !== n && !hl.has(n.id); if (dim) return;
+        const fs = (n.kind === 'style' ? 12 : 10.5) / Math.max(G.scale, .7);
+        cx.font = `${n.kind === 'style' ? 600 : 400} ${fs}px ${css('--sans')}`; cx.fillStyle = n.kind === 'style' ? fg : muted;
+        cx.globalAlpha = (G.year >= MAX ? 1 : presence(n, G.year)) === 0.5 ? .55 : 1;
+        const tt = n.title.length > 34 ? n.title.slice(0, 33) + '…' : n.title; cx.lineJoin = 'round'; cx.strokeStyle = css('--bg'); cx.lineWidth = 3.5 / G.scale; cx.strokeText(tt, n.x, n.y + n.r + 3 / G.scale); cx.fillText(tt, n.x, n.y + n.r + 3 / G.scale); });
+    }
+    cx.restore(); cx.globalAlpha = 1;
+  }
+  let raf = 0;
+  function loop() { raf = 0; const list = nodes.filter(n => n.vis); if (G.alpha > .02) { tick(list, edges, G.alpha); G.alpha *= .985; } draw(); if (G.alpha > .02 || G.drag) raf = requestAnimationFrame(loop); }
+  const kick = (a = .5) => { G.alpha = Math.max(G.alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
+  function setYear(y) {
+    G.year = y; const all = y >= MAX - 2;
+    $('#yrLab').textContent = all ? 'all years' : 'c. ' + y; $('#yearNow').textContent = all ? '' : y;
+    nodes.forEach(n => { const was = n.vis; n.vis = visible(n); if (n.vis && !was) { const nbv = [...nb[n.id]].map(i => byId[i]).find(m => m.vis); if (nbv) { n.x = nbv.x + (Math.random() - .5) * 30; n.y = nbv.y + (Math.random() - .5) * 30; } } });
+    kick(.35);
+  }
+  function toWorld(px, py) { return {x: (px - dims.w / 2 - G.ox) / G.scale, y: (py - dims.h / 2 - G.oy) / G.scale}; }
+  function hit(px, py) { const p = toWorld(px, py); let best = null, bd = 1e9; nodes.forEach(n => { if (!n.vis) return; const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < n.r + 6 / G.scale && d < bd) { bd = d; best = n; } }); return best; }
+  let ptr = null, moved = false;
+  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), n = hit(e.clientX - r.left, e.clientY - r.top); ptr = {x: e.clientX, y: e.clientY, ox: G.ox, oy: G.oy, n}; moved = false; cv.setPointerCapture(e.pointerId); if (n) { G.drag = n; kick(.3); } cv.classList.add('drag'); });
+  cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+    if (ptr) { if (Math.hypot(e.clientX - ptr.x, e.clientY - ptr.y) > 4) moved = true;
+      if (G.drag) { const p = toWorld(px, py); G.drag.x = p.x; G.drag.y = p.y; kick(.25); } else { G.ox = ptr.ox + e.clientX - ptr.x; G.oy = ptr.oy + e.clientY - ptr.y; draw(); } return; }
+    const n = hit(px, py); if (n !== G.hover) { G.hover = n; cv.style.cursor = n ? 'pointer' : 'grab'; cv.title = n ? n.title + ' · ' + (n.kind === 'style' ? yrs(n) : 'from c. ' + n.first) : ''; draw(); } });
+  cv.addEventListener('pointerup', () => { const n = ptr && ptr.n; if (n && !moved) location.hash = 'note/' + n.id; G.drag = null; ptr = null; cv.classList.remove('drag'); });
+  cv.addEventListener('pointerleave', () => { if (!ptr && G.hover) { G.hover = null; draw(); } });
+  function zoomAt(f, px = dims.w / 2, py = dims.h / 2) { const p = toWorld(px, py); G.scale = Math.min(4, Math.max(.25, G.scale * f)); G.ox = px - dims.w / 2 - p.x * G.scale; G.oy = py - dims.h / 2 - p.y * G.scale; draw(); }
+  cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * .0015), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+  $('#zin').onclick = () => zoomAt(1.25); $('#zout').onclick = () => zoomAt(.8);
+  function fit() { const v = nodes.filter(n => n.vis); if (!v.length) return; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; v.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); });
+    G.scale = Math.min(2, Math.max(.3, Math.min((dims.w - 60) / (x1 - x0 + 120), (dims.h - 60) / (y1 - y0 + 80)))); G.ox = -(x0 + x1) / 2 * G.scale; G.oy = -(y0 + y1) / 2 * G.scale; draw(); }
+  $('#zfit').onclick = fit;
+  $('#panelBtn').onclick = () => { const m = document.querySelector('.panel').classList.toggle('min'); $('#panelBtn').setAttribute('aria-expanded', !m); $('#panelBtn span').textContent = m ? '▸' : '▾'; };
+  if (window.innerWidth <= 760) { document.querySelector('.panel').classList.add('min'); $('#panelBtn').setAttribute('aria-expanded', 'false'); $('#panelBtn span').textContent = '▸'; }
+  $('#yr').addEventListener('input', e => setYear(+e.target.value >= 1000 ? MAX : sliderYear(e.target)));
+  $('#timeAxis').onchange = e => { G.axis = e.target.checked; G.alpha = 1; kick(1); setTimeout(fit, 1200); };
+  $('#showStyles').onchange = e => { G.styles = e.target.checked; setYear(G.year); };
+  $('#showLabels').onchange = e => { G.labels = e.target.checked; draw(); };
+  let playT = 0;
+  $('#yrPlay').onclick = () => { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; return; }
+    let t = G.year >= MAX - 2 ? 0.04 : tOf(G.year); $('#yrPlay').textContent = '❚❚ Pause';
+    playT = setInterval(() => { t += 0.004; if (t >= .995) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; $('#yr').value = 1000; setYear(MAX); return; } $('#yr').value = Math.round(t * 1000); setYear(yOf(t)); }, 110); };
+  const short = f => ({texture: 'Texture', harmony: 'Harmony', cadence: 'Cadence', counterpoint: 'Counterpoint', rhythm: 'Rhythm', form: 'Form', pitch: 'Pitch & tuning', timbre: 'Timbre & tech', practice: 'Practice', popular: 'Jazz & popular'})[f] || f;
+  $('#legend').innerHTML = Object.keys(V.folders).map(f => `<button type="button" data-only="${f}"><i style="background:var(--c-${f})"></i>${esc(short(f))}</button>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
+  $('#legend').querySelectorAll('[data-only]').forEach(b => b.onclick = () => { G.only = G.only === b.dataset.only ? null : b.dataset.only; $('#legend').querySelectorAll('[data-only]').forEach(x => x.setAttribute('aria-pressed', x.dataset.only === G.only)); setYear(G.year); setTimeout(fit, 700); });
+  /* settle the layout once before showing it */
+  nodes.forEach(n => n.vis = true); for (let i = 0; i < 600; i++) tick(nodes, edges, Math.max(.05, 1 - i / 600)); G.alpha = 0;
+
+  /* local graph in the right pane */
+  const lc = $('#local'), lx = lc.getContext('2d');
+  function drawLocal(n) {
+    const {w, h, d} = sizeCanvas(lc); lx.setTransform(d, 0, 0, d, 0, 0); lx.clearRect(0, 0, w, h); if (!n) return;
+    const ids = [n.id, ...nb[n.id]]; const pts = ids.map(id => byId[id]);
+    const ang = i => i * 2 * Math.PI / (pts.length - 1) - Math.PI / 2, R = Math.min(w, h) / 2 - 34;
+    const pos = {}; pos[n.id] = {x: w / 2, y: h / 2}; pts.slice(1).forEach((p, i) => pos[p.id] = {x: w / 2 + Math.cos(ang(i)) * R, y: h / 2 + Math.sin(ang(i)) * R * .8});
+    lx.strokeStyle = css('--line'); lx.lineWidth = 1;
+    edges.forEach(e => { if (pos[e.a] && pos[e.b]) { lx.beginPath(); lx.moveTo(pos[e.a].x, pos[e.a].y); lx.lineTo(pos[e.b].x, pos[e.b].y); lx.stroke(); } });
+    lx.textAlign = 'center'; lx.textBaseline = 'top';
+    pts.forEach(p => { const q = pos[p.id], r = p === n ? 7 : 4.5; lx.fillStyle = css(colorVar(p.folder)); lx.beginPath(); lx.arc(q.x, q.y, r, 0, 7); lx.fill();
+      lx.font = `${p === n ? 600 : 400} 10.5px ${css('--sans')}`; lx.fillStyle = p === n ? css('--fg') : css('--muted');
+      const t = p.title.length > 22 ? p.title.slice(0, 21) + '…' : p.title; if (p === n || pts.length < 9) lx.fillText(t, q.x, q.y + r + 2); });
+    lc.onmousemove = e => { const r = lc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let t = ''; for (const id in pos) if (Math.hypot(pos[id].x - x, pos[id].y - y) < 9) t = byId[id].title; lc.title = t; lc.style.cursor = t ? 'pointer' : 'default'; };
+    lc.onclick = e => { const r = lc.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; for (const id in pos) if (Math.hypot(pos[id].x - x, pos[id].y - y) < 9) { location.hash = 'note/' + id; return; } };
+  }
+
+  /* ---------- timeline ---------- */
+  let tlFocus = null;
+  function timeline() {
+    const year = sliderYear($('#tlyr')), only = $('#tlShow').value, narrow = window.innerWidth <= 760, W = Math.max(narrow ? 1100 : 860, $('#v-timeline').clientWidth - 36), lab = narrow ? 168 : 250, rowH = 19, x = y => lab + tOf(y) * (W - lab - 10);
+    const rows = []; rows.push({grp: 'Styles'}); V.styles.slice().sort((a, b) => a.from - b.from).forEach(s => rows.push({n: byId[s.id]}));
+    if (only === 'all') for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    else if (only !== 'styles') { rows.length = 0; rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    const H = 26 + rows.length * rowH + 10; let h = '';
+    ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${name}</text>`; });
+    TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${c}</text>`; });
+    const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
+    rows.forEach((r, i) => { const y = 26 + i * rowH;
+      if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
+      const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
+      const cut = narrow ? 25 : 38; h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > cut ? n.title.slice(0, cut - 1) + '…' : n.title)}<title>${esc(n.title)}</title></text>`;
+      if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${n.from}–${n.to}</title></rect>`;
+      else { const end = n.fade || NOW;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${n.first}</title></rect>`;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${n.common}${n.fade ? '–' + n.fade : ''}</title></rect>`; }
+      h += '</g>'; });
+    h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
+    const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H + 22}`); svg.style.height = (H + 22) + 'px'; svg.innerHTML = h;
+    svg.querySelectorAll('[data-id]').forEach(t => t.onclick = () => location.hash = 'note/' + t.dataset.id);
+    svg.querySelectorAll('[data-style]').forEach(t => t.onclick = () => { tlFocus = tlFocus === t.dataset.style ? null : t.dataset.style; timeline(); });
+    $('#tlyrLab').textContent = year;
+  }
+  $('#tlyr').addEventListener('input', timeline);
+  $('#tlShow').innerHTML += Object.keys(V.folders).map(f => `<option value="${f}">${esc(V.folders[f])}</option>`).join('');
+  $('#tlShow').addEventListener('change', timeline);
+
+  /* ---------- style finder ---------- */
+  const pick = new Set(); let vpick = null;
+  function combine() {
+    let h = `<h1>Style finder</h1><p class="lead">Choose the elements you hear in a piece. The finder shows when all of them could have coexisted and which styles share the combination – a style is a set of elements present at the same time.</p><div>`;
+    h += `<fieldset><legend>Number of real voices</legend><div class="opts">${[1, 2, 3, 4, 5, 6, 8, 12, 16, 24, 40].map(n => `<button class="pill" type="button" data-v="${n}" aria-pressed="${vpick === n}">${n}</button>`).join('')}</div></fieldset>`;
+    for (const f in V.folders) h += `<fieldset><legend>${esc(V.folders[f])}</legend><div class="opts">${V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).map(e => `<button class="pill" type="button" data-p="${e.id}" aria-pressed="${pick.has(e.id)}">${esc(e.title)}</button>`).join('')}</div></fieldset>`;
+    h += `</div><div class="res" id="res"></div>`;
+    $('#cmb').innerHTML = h;
+    $('#cmb').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pick.has(b.dataset.p) ? pick.delete(b.dataset.p) : pick.add(b.dataset.p); b.setAttribute('aria-pressed', pick.has(b.dataset.p)); results(); });
+    $('#cmb').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { vpick = vpick === +b.dataset.v ? null : +b.dataset.v; $('#cmb').querySelectorAll('[data-v]').forEach(x => x.setAttribute('aria-pressed', vpick === +x.dataset.v)); results(); });
+    results();
+  }
+  function results() {
+    const sel = [...pick].map(id => byId[id]);
+    let h = '';
+    const usual = s => VV[s.id] && vpick >= VV[s.id][0] && vpick <= VV[s.id][1], rare = s => VV[s.id] && !usual(s) && vpick >= VV[s.id][0] && vpick <= VV[s.id][2];
+    if (!sel.length && vpick) h = '';
+    else if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>, <button class="linkbtn" data-ex="sonata-form,alberti-bass,classical-orchestra">sonata form + Alberti bass + Classical orchestra</button> or <button class="linkbtn" data-ex="extended-tertian,parallel-chords,whole-tone">extended chords + parallel chords + whole-tone scale</button>.</p></div>`;
+    else {
+      const lo = Math.max(...sel.map(n => n.first)), hi = Math.min(...sel.map(n => n.fade || NOW));
+      const loC = Math.max(...sel.map(n => n.common));
+      h += `<div class="box"><h3>Possible period</h3>` + (lo <= hi
+        ? `<div class="era">c. ${lo}–${hi === NOW ? 'today' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
+        : `<div class="era">—</div><p class="small">These elements never coexisted in the sources: one had faded before another appeared.</p>`) + `</div>`;
+      const ranked = V.styles.map(s => { const inter = sel.filter(n => s.elements.includes(n.id)).length; const union = new Set(s.elements.concat([...pick])).size; return {s, inter, score: inter / union, cover: inter / sel.length}; })
+        .filter(r => r.inter && (!vpick || usual(r.s) || rare(r.s))).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
+      h += `<div class="box"><h3>Styles with this combination</h3>${ranked.length ? ranked.map(r => `<div class="match"><a class="il style" href="#note/${r.s.id}" data-id="${r.s.id}">${esc(r.s.title)}</a><span class="pc">${r.inter}/${sel.length}</span><span class="barw"><i style="width:${Math.round(r.cover * 100)}%"></i></span></div>`).join('') : '<p class="small">No style in the vault uses these elements.</p>'}</div>`;
+      h += `<p><button class="linkbtn" id="clr">Clear the selection</button></p>`;
+    }
+    if (vpick) {
+      const f = V.styles.filter(usual).sort((a, b) => a.from - b.from), g = V.styles.filter(rare).sort((a, b) => a.from - b.from), li = s => `<div class="match"><a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a><span class="pc">${s.from}–${s.alive ? 'today' : s.to}</span></div>`;
+      h += `<div class="box"><h3>${vpick} real voice${vpick > 1 ? 's' : ''}: usual in</h3>${f.length ? f.map(li).join('') : '<p class="small">No style in the collection uses this many voices as a rule.</p>'}</div>` + (g.length ? `<div class="box"><h3>Possible but exceptional in</h3>${g.map(li).join('')}</div>` : '');
+    }
+    $('#res').innerHTML = h;
+    $('#res').querySelectorAll('[data-ex]').forEach(b => b.onclick = () => { b.dataset.ex.split(',').forEach(i => pick.add(i)); combine(); });
+    const c = $('#clr'); if (c) c.onclick = () => { pick.clear(); combine(); };
+  }
+
+  /* ---------- the number of voices ---------- */
+  const VV = V.voices || {};
+  const vrange = r => r[0] === r[1] ? String(r[0]) : r[0] + '–' + r[1];
+  function voiceRow(id) {
+    const r = VV[id]; if (!r) return '';
+    return `<dt>${ICON.list}real voices</dt><dd>usually ${vrange(r)}${r[2] > r[1] ? ' · up to ' + r[2] : ''}${r[3] ? '<br><span class="small" style="color:var(--muted);font-size:12.5px">' + esc(r[3]) + '</span>' : ''}</dd>`;
+  }
+  const VTABLE = [
+    ['c. 800–1100', '1–2', '2', 'Plainchant, then parallel and free organum. Doubling at the octave adds sounding lines but no voice.'],
+    ['1100–1200', '2', '3', 'Two voices; three in a few pieces such as Congaudeant catholici.'],
+    ['1200–1250', '2–3', '4', 'The Magnus liber organi: mostly two voices, a small part in three, and Perotin’s Viderunt and Sederunt (1198, 1199) in four.'],
+    ['1250–1320', '3', '4', 'The motet: triplum, motetus and tenor. Four voices are exceptional.'],
+    ['1320–1400', '2–3', '4', 'Two in the Italian madrigal, three in the French song and motet, four in Machaut’s Mass. Five voices are a rarity.'],
+    ['1400–1450', '3', '4', 'Cantus, tenor and contratenor, the sweet sonority of the English style.'],
+    ['1450–1500', '3–4', '6', 'The contratenor splits into altus and bassus: four voices become the norm, from c. 1460.'],
+    ['1500–1600', '4–6', '40', 'Five and six in the motet and madrigal, eight in double choirs; masses and motets in 12 to 40 parts as exceptions (Striggio c. 1565, Tallis before 1572).'],
+    ['1600–1750', '2–5', '8', 'Fewer real parts, with the continuo as harmony: trio sonata, fugue in 3–5, double choirs. Lully’s 24 violins play in five parts.'],
+    ['1750–1900', '3–6', '16', 'The orchestra grows to a hundred players, but the number of real lines stays at about four to six.'],
+    ['since 1900', '3–8', '52', 'Micropolyphony and sound masses give every player a line (Ligeti, Penderecki); minimalism and tintinnabuli go back to two or three.']
+  ];
+  function voicesView() {
+    const host = $('#vv'), W = Math.max(680, host.clientWidth - 56 || 900), Hh = 440, L = 46, R = 16, T = 18, B = 40, ymax = 60;
+    const x = y => L + tOf(Math.min(y, NOW)) * (W - L - R), yv = n => T + (1 - Math.log(n) / Math.log(ymax)) * (Hh - T - B);
+    const active = y => V.styles.filter(s => VV[s.id] && VV[s.id][1] > 1 && s.from <= y && (s.alive || y <= s.to));
+    const med = a => { a = a.slice().sort((p, q) => p - q); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+    const pts = []; for (let y = 840; y <= NOW; y += 5) { const A = active(y); if (A.length) pts.push({y, lo: med(A.map(s => VV[s.id][0])), hi: med(A.map(s => VV[s.id][1])), pk: Math.max(...A.map(s => VV[s.id][2]))}); }
+    for (const k of ['lo', 'hi']) { const src = pts.map(q => q[k]); pts.forEach((q, i) => { let a = 0, c = 0; for (let j = Math.max(0, i - 7); j <= Math.min(pts.length - 1, i + 7); j++) { a += src[j]; c++; } q[k] = a / c; }); }
+    let h = '';
+    ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="${T}" width="${x(b) - x(a)}" height="${Hh - T - B}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="ax" x="${(x(a) + x(b)) / 2}" y="${Hh - B + 30}" text-anchor="middle" font-style="italic">${name}</text>`; });
+    [1, 2, 3, 4, 6, 8, 12, 16, 24, 40].forEach(n => { h += `<line class="gl" x1="${L}" x2="${W - R}" y1="${yv(n)}" y2="${yv(n)}" stroke-dasharray="${n === 1 ? '0' : '2 4'}"/><text class="ax" x="${L - 8}" y="${yv(n) + 4}" text-anchor="end">${n}</text>`; });
+    TICKS.forEach(c => { h += `<text class="ax" x="${x(c)}" y="${Hh - B + 14}" text-anchor="middle">${c}</text>`; });
+    const step = (key, up) => pts.map((q, i) => `${i ? 'L' : 'M'}${x(q.y).toFixed(1)} ${yv(q[key] * (up || 1)).toFixed(1)}`).join('');
+    h += `<path d="${step('hi', 1.12)} ${pts.slice().reverse().map(q => `L${x(q.y).toFixed(1)} ${yv(q.lo / 1.12).toFixed(1)}`).join('')}Z" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-opacity=".6"><title>The usual number of voices (the median of the styles of the time)</title></path>`;
+    h += `<path d="${step('pk')}" fill="none" stroke="var(--accent)" stroke-opacity=".75" stroke-dasharray="3 4"><title>The most voices known in any style of the time</title></path>`;
+    const marks = V.voiceMarks || [], short = {850: 'Musica enchiriadis', 1150: 'Congaudeant', 1198: 'Viderunt omnes', 1365: 'Machaut’s Mass', 1490: 'Deo gratias', 1565: 'Striggio', 1570: 'Tallis', 1615: 'Gabrieli', 1670: 'Lully’s violins', 1682: 'Salisburgensis', 1788: 'Jupiter finale', 1913: 'Strauss', 1966: 'Ligeti'};
+    const placed = [], free = (bx) => !placed.some(q => bx.x0 < q.x1 && bx.x1 > q.x0 && bx.y0 < q.y1 && bx.y1 > q.y0);
+    marks.forEach(m => placed.push({x0: x(m.y) - 7, x1: x(m.y) + 7, y0: yv(m.n) - 7, y1: yv(m.n) + 7}));
+    marks.forEach((m, i) => {
+      const cx = x(m.y), cy = yv(m.n), txt = (short[m.y] || m.t) + ' ' + m.n, w = txt.length * 6.1;
+      h += (m.parts ? `<rect class="mk" data-m="${i}" x="${cx - 5}" y="${cy - 5}" width="10" height="10"><title>${esc(m.t)}</title></rect>` : `<circle class="mk${m.attributed ? ' att' : ''}" data-m="${i}" cx="${cx}" cy="${cy}" r="5.5"><title>${esc(m.t)}</title></circle>`);
+      for (const [dx, dy, an] of [[9, -8, 'start'], [9, 15, 'start'], [-9, -8, 'end'], [-9, 15, 'end'], [9, -24, 'start'], [9, 31, 'start'], [-9, -24, 'end'], [-9, 31, 'end'], [14, -40, 'start'], [-14, -40, 'end']]) {
+        const tx = cx + dx, ty = cy + dy, bx = {x0: an === 'start' ? tx : tx - w, x1: an === 'start' ? tx + w : tx, y0: ty - 11, y1: ty + 3};
+        if (bx.x0 < L - 30 || bx.x1 > W - 4 || !free(bx)) continue;
+        placed.push(bx); h += `<text class="ml" x="${tx}" y="${ty}" text-anchor="${an}">${esc(txt)}</text>`; break;
+      }
+    });
+    host.innerHTML = `<h1>The number of voices</h1><p class="lead">A voice is a real part, an independent contrapuntal line, not a performer: four voices played by twenty instruments are still four voices. The chart shows how many voices the styles of each time normally use (the shaded band), the most that occur in any of them (the dotted line) and single pieces with a documented number of parts (the dots). Open a style to see its own range.</p>
+      <svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Number of real voices from plainchant to today, on a logarithmic scale">${h}</svg>
+      <div class="key"><span>▬ usual number (median of the styles of the time)</span><span>┄ the most known</span><span>● a piece</span><span>◌ attribution uncertain</span><span>■ many players, few voices</span><span>Vertical scale: logarithmic</span></div>
+      <div class="detail" id="vvd"><b>Click a dot to read about the piece.</b> Plainchant has one voice and the earliest polyphony two. Three voices carry the 13th and 14th centuries, four become normal around 1460, five and six in the 16th century. The largest numbers belong to a few exceptional works, and from the 17th century on the number of real voices stays small while the number of players grows.</div>
+      <h2 style="font-size:1.1rem;margin:22px 0 8px">Voices by period</h2>
+      <table class="vtab"><thead><tr><th>Period</th><th>Usual</th><th>Most</th><th></th></tr></thead><tbody>${VTABLE.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table>
+      <p class="small" style="color:var(--faint);font-size:12.5px">The numbers are rough guides, counted in real parts. In styles driven by harmony the count changes from bar to bar. In a canon the entries multiply but the lines do not.</p>`;
+    host.querySelectorAll('.mk').forEach(b => b.onclick = () => { const m = marks[+b.dataset.m]; $('#vvd').innerHTML = `<b>${esc(m.t)}</b> · c. ${m.y} · ${m.n} ${m.parts ? 'real voices' : 'parts'}${m.attributed ? ' (attribution uncertain)' : ''}<br>${esc(m.text)}`; });
+  }
+
+  /* ---------- views and routing ---------- */
+  let view = 'note', builtTL = false, builtC = false;
+  function show(v) {
+    view = v;
+    ['note', 'graph', 'timeline', 'combine', 'voices'].forEach(k => { $('#v-' + k).hidden = k !== v; });
+    document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.go === v));
+    document.querySelectorAll('.ribbon [data-go]').forEach(t => t.setAttribute('aria-pressed', t.dataset.go === v));
+    if (v === 'graph') { dims = sizeCanvas(cv); if (!G.fitted) { setYear(G.year); fit(); G.fitted = true; } kick(.1); }
+    if (v === 'timeline') timeline();
+    if (v === 'combine' && !builtC) { combine(); builtC = true; }
+    if (v === 'voices') voicesView();
+    $('#app').classList.remove('drawer');
+    $('#app').classList.toggle('viewonly', v !== 'note');
+    if (v === 'graph') { dims = sizeCanvas(cv); draw(); }
+  }
+  let lastNote = 'about';
+  function route() {
+    const h = decodeURIComponent(location.hash.slice(1));
+    if (h.startsWith('note/')) { lastNote = h.slice(5); renderNote(lastNote); show('note'); }
+    else if (['graph', 'timeline', 'combine', 'voices'].includes(h)) show(h);
+    else { renderNote('about'); show('note'); }
+  }
+  document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.go; location.hash = g === 'note' ? 'note/' + lastNote : g; }));
+  document.addEventListener('click', e => { const a = e.target.closest('a.il, a.file, a.lk'); if (a && a.dataset.id && window.innerWidth <= 760) $('#app').classList.remove('drawer'); });
+  window.addEventListener('hashchange', route);
+  window.addEventListener('resize', () => { if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); if (view === 'voices') voicesView(); if (view === 'note' && byId[lastNote]) drawLocal(byId[lastNote]); });
+  $('#menuBtn').onclick = () => { const o = $('#app').classList.toggle('drawer'); $('#menuBtn').setAttribute('aria-expanded', o); };
+  $('#scrim').onclick = () => $('#app').classList.remove('drawer');
+  $('#leftBtn').onclick = () => { const off = $('#app').classList.toggle('noleft'); $('#leftBtn').setAttribute('aria-pressed', !off); if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); };
+  $('#rightBtn').onclick = () => { const off = $('#app').classList.toggle('noright'); $('#rightBtn').setAttribute('aria-pressed', !off); if (view === 'graph') { setTimeout(() => { dims = sizeCanvas(cv); draw(); }, 0); } if (view === 'timeline') timeline(); };
+  try { const t = localStorage.getItem('morph-theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  $('#themeBtn').onclick = () => {
+    const dark = document.documentElement.dataset.theme ? document.documentElement.dataset.theme === 'dark' : !matchMedia('(prefers-color-scheme: light)').matches;
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem('morph-theme', document.documentElement.dataset.theme); } catch (e) {}
+    draw(); if (byId[lastNote]) drawLocal(byId[lastNote]); };
+  tree(); route();
+})();
+</script>
+<script src="../gym/feedback.js" data-topic="Atlas of Musical Style" defer></script>
+</body>
+</html>

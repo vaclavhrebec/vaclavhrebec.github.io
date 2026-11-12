@@ -36,7 +36,7 @@
   const tr = s => { const l = (document.documentElement.lang || 'en').slice(0, 2); return (L[l] && L[l][s]) || s; };
   const me = document.currentScript;
   const pageTopic = (me && me.dataset.topic) || 'General';
-  const INTRO = /\/morphology\//.test(location.pathname) ? 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.' : 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.';
+  const INTRO = /\/atlas\//.test(location.pathname) ? 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.' : 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.';
 
   const css = `
   .fb-open{font:inherit;font-size:.9rem;cursor:pointer;background:none;border:1px solid var(--line,#e4ddd1);
@@ -162,7 +162,7 @@
     el.addEventListener('click', e => { e.preventDefault(); open(el.dataset.topic || pageTopic); }));
 
   /* ---------- closing row: feedback · share · support ---------- */
-  const EAR = /\/ear\//.test(location.pathname), MORPH = /\/morphology\//.test(location.pathname);
+  const EAR = /\/ear\//.test(location.pathname), MORPH = /\/atlas\//.test(location.pathname);
   const SITE = MORPH ? 'Atlas of Musical Style' : EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
   const F = {
     de: { 'Do you find {s} useful?': 'Ist {s} für Sie nützlich?',
