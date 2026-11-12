@@ -372,7 +372,7 @@ window.E = (function () {
           return '<path d="M' + (60 + R * Math.cos(a0)).toFixed(1) + ' ' + (48 + R * Math.sin(a0)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (60 + R * Math.cos(a1)).toFixed(1) + ' ' + (48 + R * Math.sin(a1)).toFixed(1) + '" stroke="' + (i === 8 ? 'var(--accent)' : 'currentColor') + '" stroke-width="' + (i === 8 ? 5 : 2.5) + '"/>'; }).join('') +
         '</g></svg>' }),
       h('div', { class: 'body' },
-        h('span', { class: 'num' }, 'VII'),
+        h('span', { class: 'num' }, 'VIII'),
         h('h2', null, E.t('Tuning systems')),
         h('p', null, E.t('Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.')),
         h('span', { class: 'meta' }, E.t('17 tunings · listen, compare, sing')))));
