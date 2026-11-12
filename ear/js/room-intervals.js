@@ -95,6 +95,7 @@
     meta: 'Melodic and harmonic · up to two octaves',
     lede: 'Two notes sound, one after the other or together. Choose the interval. After a mistake you can compare your answer with the correct one.',
     icon: () => E.notation.notesSVG('treble', [{ dia: 30 }, { dia: 34 }], { SP: 9, gap: 4, minW: 150 }),
+    spec,
     mount(box) { box.classList.add('quiz'); E.quiz(spec, box); }
   });
 })();

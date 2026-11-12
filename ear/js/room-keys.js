@@ -64,6 +64,7 @@
     meta: '5 clefs · up to 7 sharps or flats',
     lede: 'A key signature appears in a random clef. Name the key. A silent exercise for the eye: speed comes with practice.',
     icon: () => E.notation.keySigSVG('alto', 3),
+    spec,
     mount(box) { box.classList.add('quiz'); E.quiz(spec, box); }
   });
 })();

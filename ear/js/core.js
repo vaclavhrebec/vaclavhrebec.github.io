@@ -51,6 +51,42 @@ window.E = (function () {
     return {n, today: days[dayKey(new Date())] || 0};
   };
 
+  /* ---------- teacher links ----------
+     A link ?set=… carries a room's settings (and the sound and pitch): opening it puts them in place.
+     The player's own settings are kept aside once, and come back with "Back to my own settings". */
+  const b64 = { enc: s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''),
+                dec: s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/')))) };
+  (function () {
+    let u; try { u = new URL(location.href); } catch (e) { return; }
+    const raw = u.searchParams.get('set'); if (!raw) return;
+    try {
+      const j = JSON.parse(b64.dec(raw)), keys = Object.keys(j.c || {}).filter(k => /^cfg\.[a-z]+$/.test(k));
+      const own = E.load('own', null) || { cfg: {}, settings: E.load('settings', null) };
+      keys.forEach(k => { if (!(k in own.cfg)) own.cfg[k] = E.load(k, null); E.save(k, j.c[k]); });
+      E.save('own', own);
+      if (j.s) { const cur = E.load('settings', {}); ['timbre', 'a4'].forEach(k => { if (j.s[k] != null) cur[k] = j.s[k]; }); E.save('settings', cur); }
+      u.searchParams.delete('set');
+      history.replaceState(null, '', u.pathname + u.search + (j.r ? '#' + j.r : u.hash));
+    } catch (e) {}
+  })();
+  E.ownBack = function () {
+    const own = E.load('own', null); if (!own) return;
+    Object.keys(own.cfg || {}).forEach(k => { try { own.cfg[k] == null ? localStorage.removeItem('ear.' + k) : E.save(k, own.cfg[k]); } catch (e) {} });
+    if (own.settings) E.save('settings', own.settings);
+    try { localStorage.removeItem('ear.own'); } catch (e) {}
+    location.reload();
+  };
+  /* a link that opens room r with its present settings; the daily mix takes every room's settings */
+  E.linkFor = function (r) {
+    const c = {};
+    try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (/^ear\.cfg\.[a-z]+$/.test(k) && (r === 'mix' || k === 'ear.cfg.' + r)) c[k.slice(4)] = JSON.parse(localStorage.getItem(k)); } } catch (e) {}
+    const s = { timbre: E.settings.timbre, a4: E.settings.a4 };
+    const u = new URL(location.href); u.hash = ''; u.search = '';
+    if (E.lang !== 'en') u.searchParams.set('lang', E.lang);
+    u.searchParams.set('set', b64.enc(JSON.stringify({ r, c, s })));
+    return u.toString().replace(/#$/, '') + '#' + r;
+  };
+
   /* ---------- sound ---------- */
   const A = E.audio = { ctx: null, out: null, live: new Set() };
   A.get = function () {
@@ -284,6 +320,7 @@ window.E = (function () {
       spec.settings(sb, () => { st.q = null; st.done = false; draw(); });
       if (spec.play && !spec.ownTimbre) sb.append(E.timbreField());
       sb.append(E.checkField(T('Go on to the next question automatically after a correct answer'), pref.autoNext !== false, v => { pref.autoNext = v; E.saveSettings(); }));
+      if (!spec.noShare) sb.append(E.shareField(spec.id));
       set.append(sb);
 
       root.append(h('div', { class: 'panel' }, el.stage, acts, fb), grid, stats, set);
@@ -311,13 +348,36 @@ window.E = (function () {
     h('label', { class: 'chip' + (it.on ? ' on' : '') },
       h('input', { type: 'checkbox', checked: !!it.on, onchange: e => { e.target.parentNode.classList.toggle('on', e.target.checked); onToggle(it.id, e.target.checked); } }),
       it.label)));
+  /* "Link with these settings": for teachers, to give students exactly this exercise */
+  E.shareField = function (room) {
+    const out = h('div', { class: 'share' });
+    const btn = h('button', { type: 'button', class: 'mini', onclick: async () => {
+      const link = E.linkFor(room);
+      out.querySelectorAll('input,.ok').forEach(n => n.remove());
+      const inp = h('input', { type: 'text', readonly: true, value: link, 'aria-label': E.t('Link') });
+      out.append(inp);
+      let done = false;
+      try { await navigator.clipboard.writeText(link); done = true; } catch (e) {}
+      inp.select();
+      out.append(h('span', { class: 'ok' }, done ? E.t('Copied. Students who open it get this exercise with these settings.') : E.t('Copy this link. Students who open it get this exercise with these settings.')));
+    } }, '🔗 ' + E.t('Link with these settings'));
+    out.prepend(btn);
+    return out;
+  };
   E.timbreField = () => E.selectField(E.t('Sound'), E.settings.timbre,
     [{ v: 'piano', l: E.t('Piano-like') }, { v: 'organ', l: E.t('Organ (principal)') }, { v: 'reed', l: E.t('Reed') }, { v: 'sine', l: E.t('Sine tone') }],
     v => { E.settings.timbre = v; E.saveSettings(); });
 
   /* ---------- rooms & router ---------- */
   E.rooms = [];
-  E.room = r => E.rooms.push(r);
+  E.specs = {};                                   // the quiz of each room, for the daily mix
+  E.room = r => { E.rooms.push(r); if (r.spec) E.specs[r.id] = r.spec; };
+  E.roman = n => { let s = ''; [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].forEach(([v, r]) => { while (n >= v) { s += r; n -= v; } }); return s; };
+  function ownBanner() {
+    if (!E.load('own', null)) return null;
+    return h('div', { class: 'ownbar' }, h('span', null, E.t('These exercises are set up from a teacher’s link.')),
+      h('button', { type: 'button', class: 'mini', onclick: E.ownBack }, E.t('Back to my own settings')));
+  }
   let current = null;
   E.render = function () {
     const id = location.hash.slice(1);
@@ -332,6 +392,7 @@ window.E = (function () {
     const main = document.getElementById('main');
     main.innerHTML = '';
     document.title = room ? E.t(room.title) + ' · The Ultimate Ear Trainer' : 'The Ultimate Ear Trainer · Václav Hřebec';
+    const ob = ownBanner(); if (ob) main.append(ob);
     if (!room) { E.hub(main); window.scrollTo(0, 0); return; }
     const box = h('div', { class: 'roombox' });
     main.append(
@@ -346,7 +407,8 @@ window.E = (function () {
   };
   E.hub = function (main) {
     /* today: the streak, and a room suggested for the day (a different one each day) */
-    const sk = E.streak(), day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), sug = E.rooms[day % E.rooms.length];
+    const shown = E.rooms.filter(r => !r.hidden);
+    const sk = E.streak(), day = Math.floor((Date.now() - new Date().getTimezoneOffset() * 6e4) / 864e5), sug = shown[day % shown.length];
     main.append(h('div', { class: 'today' },
       h('div', { class: 'tcol' },
         h('span', { class: 'tl' }, E.t('Today')),
@@ -355,12 +417,15 @@ window.E = (function () {
         h('span', { class: 'tl' }, E.t('Days in a row')),
         h('span', { class: 'tv' }, String(sk.n))),
       h('div', { class: 'tcol grow' },
+        h('span', { class: 'tl' }, E.t('Daily mix')),
+        h('a', { class: 'tv', href: '#mix' }, E.t('{n} minutes from all rooms', { n: E.load('cfg.mix', {}).min || 10 }) + ' →')),
+      h('div', { class: 'tcol grow' },
         h('span', { class: 'tl' }, E.t('Suggested for today')),
         h('a', { class: 'tv', href: '#' + sug.id }, E.t(sug.title) + ' →')),
       h('div', { class: 'tcol grow' },
         h('span', { class: 'tl' }, E.t('Then sing it')),
         h('a', { class: 'tv', href: '../gym/' }, 'The Ultimate Counterpoint Gym →'))));
-    main.append(h('div', { class: 'rooms' }, E.rooms.map(r =>
+    main.append(h('div', { class: 'rooms' }, shown.map(r =>
       h('a', { class: 'card', href: '#' + r.id },
         h('div', { class: 'pic', html: r.icon ? r.icon() : '' }),
         h('div', { class: 'body' },
@@ -375,7 +440,7 @@ window.E = (function () {
           return '<path d="M' + (60 + R * Math.cos(a0)).toFixed(1) + ' ' + (48 + R * Math.sin(a0)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (60 + R * Math.cos(a1)).toFixed(1) + ' ' + (48 + R * Math.sin(a1)).toFixed(1) + '" stroke="' + (i === 8 ? 'var(--accent)' : 'currentColor') + '" stroke-width="' + (i === 8 ? 5 : 2.5) + '"/>'; }).join('') +
         '</g></svg>' }),
       h('div', { class: 'body' },
-        h('span', { class: 'num' }, 'VIII'),
+        h('span', { class: 'num' }, E.roman(shown.length + 1)),
         h('h2', null, E.t('Tuning systems')),
         h('p', null, E.t('Pythagorean, meantone, Werckmeister, Vallotti, Neidhardt and more, with cents tables, tuning instructions and the Euler lattice in 2, 3 and 4 dimensions.')),
         h('span', { class: 'meta' }, E.t('17 tunings · listen, compare, sing')))));

@@ -111,6 +111,7 @@
     meta: '{n} chord types · inversions', metaVars: { n: C.length },
     lede: 'A chord sounds, broken and then together. Choose its type. In the settings you can add seventh chords, jazz chords and special chords, and switch inversions on.',
     icon: () => E.notation.notesSVG('treble', [{ dia: 30 }, { dia: 32, chord: 1 }, { dia: 34, chord: 1 }, { dia: 36, chord: 1 }], { SP: 9, minW: 150 }),
+    spec,
     mount(box) { box.classList.add('quiz'); E.quiz(spec, box); }
   });
 })();

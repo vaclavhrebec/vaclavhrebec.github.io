@@ -155,6 +155,7 @@
     meta: '{n} scales · quarter tones', metaVars: { n: S.length },
     lede: 'A scale is played from a random tonic. Choose its name. Scales that contain exactly the same notes (for example Aeolian and natural minor) count as the same answer.',
     icon: () => E.notation.notesSVG('treble', [28, 29, 30, 31, 32, 33].map(d => ({ dia: d })), { SP: 8, gap: 2.2, minW: 150 }),
+    spec,
     mount(box) { box.classList.add('quiz'); E.quiz(spec, box); }
   });
 })();

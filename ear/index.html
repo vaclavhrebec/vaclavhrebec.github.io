@@ -180,6 +180,33 @@
   .exinfo .q { font-family: var(--serif); font-size: 1.25em; line-height: 0; }
   .exinfo { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; font-size: .86rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
+  /* melodic dictation */
+  .dictsheet { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 8px 6px; overflow-x: auto; min-height: 120px; }
+  .dictsheet svg { display: block; max-width: none; touch-action: manipulation; cursor: crosshair; }
+  .dictsheet .veil { display: grid; place-items: center; min-height: 120px; padding: 1rem; text-align: center; color: var(--muted); font: italic 1.15rem var(--serif); }
+  .dictsheet .cap { margin: .4rem 0 0; }
+  .score .m-ok { fill: var(--ok); } .score .m-bad { fill: var(--accent); } .score .m-given { fill: var(--muted); } .score .m-sel { fill: var(--accent); }
+  .score .selbox { fill: var(--accent); opacity: .08; }
+  .score .slot { fill: none; stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 2 3; opacity: .7; }
+  .dicttools { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .dicttools .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .dicttools .mini { margin: 0; min-width: 2.4rem; font-size: .95rem; padding: .35rem .7rem; }
+  .mini.on { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  /* teacher links and the daily mix */
+  .share { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .share .mini { margin: 0; }
+  .share input { flex: 1 1 100%; min-width: 0; font: .8rem var(--sans); padding: .4rem .5rem; border: 1px solid var(--line); border-radius: 6px; background: var(--soft); color: var(--fg); }
+  .share .ok { font-size: .82rem; color: var(--muted); }
+  .ownbar { display: flex; flex-wrap: wrap; gap: .4rem 1rem; align-items: center; justify-content: space-between; background: var(--soft); border: 1px solid var(--line); border-radius: 10px; padding: .55rem .9rem; margin: 0 0 14px; font-size: .9rem; }
+  .ownbar .mini { margin: 0; }
+  .mixhead { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; font: 600 1.15rem var(--serif); }
+  .mixtime { font: 500 1rem var(--sans); font-variant-numeric: tabular-nums; color: var(--muted); }
+  .mixdone h2 { font: 600 1.8rem var(--serif); margin: 0; }
+  .mixdone p { margin: 0; }
+  .mixtable { border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .mixtable td { padding: .3rem 1.4rem .3rem 0; border-bottom: 1px solid var(--line); }
+  a.btn { text-decoration: none; display: inline-block; }
+
   footer { margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--line); color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .6rem; }
   footer a { color: inherit; }
   @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -224,6 +251,11 @@
 <script src="js/room-chords.js"></script>
 <script src="js/room-scales.js"></script>
 <script src="js/room-sing.js"></script>
+<script src="js/room-melody.js"></script>
+<script src="js/room-cadences.js"></script>
+<script src="js/room-metre.js"></script>
+<script src="js/room-mix.js"></script>
+<script src="js/i18n-more.js"></script>
 <script>
   (function () {
     const root = document.documentElement;

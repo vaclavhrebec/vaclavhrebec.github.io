@@ -84,6 +84,7 @@
     meta: '9 levels · 10 to ½ cent',
     lede: 'You hear four tones. Three are identical; one is raised or lowered by a few cents (a cent is a hundredth of an equal-tempered semitone). Find the odd one out.',
     icon: () => '<svg viewBox="0 0 160 80" class="score"><g class="stl">' + [0, 1, 2, 3].map(i => `<rect x="${14 + i * 36}" y="${i === 2 ? 30 : 36}" width="26" height="8" rx="2" class="${i === 2 ? 'acc' : ''}"/>`).join('') + '</g></svg>',
+    spec,
     mount(box) { box.classList.add('quiz'); spec._ctl = E.quiz(spec, box); }
   });
 })();
