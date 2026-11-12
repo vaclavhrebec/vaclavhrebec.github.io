@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Morphology of Music</title>
-<meta name="description" content="Nearly 200 musical elements and 55 styles from plainchant to hip hop: when the Picardy third, imitation, sonata form, the leitmotif or minimalist repetition appear, and how their combinations make a style. By Václav Hřebec.">
+<meta name="description" content="Nearly 200 musical elements and 55 styles from plainchant to hip hop: when the Picardy third, imitation, sonata form, the leitmotif or minimalist repetition appear, how their combinations make a style, and how many real voices each period uses. By Václav Hřebec.">
 <meta property="og:title" content="The Morphology of Music">
 <meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to the present.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e1e1e'/%3E%3Cg stroke='%23a88bfa' stroke-width='1.6'%3E%3Cpath d='M9 10 22 8M9 10l7 13M22 8l-6 15M22 8l3 12'/%3E%3C/g%3E%3Cg fill='%23a88bfa'%3E%3Ccircle cx='9' cy='10' r='3'/%3E%3Ccircle cx='22' cy='8' r='2.4'/%3E%3Ccircle cx='16' cy='23' r='3.4'/%3E%3Ccircle cx='25' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E">
@@ -192,6 +192,26 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 .pill:hover { color: var(--fg); border-color: var(--faint); }
 .pill[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); color: var(--fg); }
 .res { position: sticky; top: 0; align-self: start; }
+.vvw { max-width: 1120px; margin: 0 auto; padding: 24px 28px 60px; }
+.vvw h1 { font-size: 1.6rem; margin: 0 0 6px; }
+.vvw .lead { color: var(--muted); margin: 0 0 14px; max-width: 74ch; }
+.vvw svg { width: 100%; height: auto; display: block; overflow: visible; }
+.vvw .band { fill: var(--accent); fill-opacity: .2; stroke: var(--accent); stroke-opacity: .55; cursor: pointer; }
+.vvw .band:hover { fill-opacity: .42; }
+.vvw .peak { stroke: var(--accent); stroke-opacity: .6; stroke-dasharray: 2 3; }
+.vvw .pk { fill: var(--bg); stroke: var(--accent); }
+.vvw .gl { stroke: var(--line); }
+.vvw .ax { fill: var(--muted); font-size: 11px; }
+.vvw .mk { fill: var(--fg); cursor: pointer; }
+.vvw .mk.att { fill: var(--bg); stroke: var(--fg); stroke-dasharray: 2 2; }
+.vvw .ml { fill: var(--fg); font-size: 11.5px; pointer-events: none; }
+.vvw .key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 12.5px; color: var(--muted); margin: 6px 0 12px; }
+.vtab { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+.vtab th, .vtab td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.vtab th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.vtab td:nth-child(1) { white-space: nowrap; } .vtab td:nth-child(2), .vtab td:nth-child(3) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.vvw .detail { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--bg2); margin-top: 14px; min-height: 3.2em; }
+.vvw .detail b { color: var(--fg); }
 .res .box { border: 1px solid var(--line); border-radius: 9px; padding: 12px 14px; background: var(--bg2); margin-bottom: 12px; }
 .res .box h3 { margin: 0 0 6px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
 .era { font: 600 22px var(--mono); }
@@ -240,6 +260,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     <button class="iconbtn" data-go="graph" title="Graph view" aria-label="Graph view"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="2.3"/><circle cx="17" cy="5" r="2"/><circle cx="12" cy="17" r="2.6"/><circle cx="19" cy="15" r="1.7"/><path d="m8 8 3 7M15.4 6.2l-2.6 8.6M8.2 6.6 15 5.3M17.7 6.8l1 6.5"/></svg></button>
     <button class="iconbtn" data-go="timeline" title="Timeline" aria-label="Timeline"><svg viewBox="0 0 24 24"><path d="M3 20h18M5 6h7M8 10h9M4 14h6M11 16h8"/></svg></button>
     <button class="iconbtn" data-go="combine" title="Style finder: combine elements" aria-label="Style finder"><svg viewBox="0 0 24 24"><circle cx="9" cy="10" r="5"/><circle cx="15" cy="10" r="5"/><circle cx="12" cy="15" r="5"/></svg></button>
+    <button class="iconbtn" data-go="voices" title="Number of voices through history" aria-label="Voices"><svg viewBox="0 0 24 24"><path d="M3 20h18M4 17V13M8 17V9M12 17V6M16 17V10M20 17V4"/></svg></button>
     <span class="grow"></span>
     <button class="iconbtn" id="leftBtn" title="Show or hide the file explorer" aria-label="File explorer" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
   </aside>
@@ -254,6 +275,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <button class="tab" role="tab" data-go="graph">Graph view</button>
       <button class="tab" role="tab" data-go="timeline">Timeline</button>
       <button class="tab" role="tab" data-go="combine">Style finder</button>
+      <button class="tab" role="tab" data-go="voices">Voices</button>
     </div>
     <section class="view" id="v-note" role="tabpanel"><article class="note" id="note"></article>
       <div class="pagefoot"><div data-foot-slot></div><footer>© 2026 Václav Hřebec · <a href="../">vaclavhrebec.github.io</a> · <a href="../gym/">Counterpoint Gym</a> · <a href="../ear/">Ear Trainer</a></footer></div></section>
@@ -281,6 +303,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       </div>
     </section>
     <section class="view" id="v-combine" role="tabpanel" hidden><div class="cmb" id="cmb"></div></section>
+    <section class="view" id="v-voices" role="tabpanel" hidden><div class="vvw" id="vv"></div></section>
   </main>
   <aside class="right" id="right" aria-label="Links">
     <canvas id="local" aria-hidden="true"></canvas>
@@ -294,6 +317,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-modern.js"></script>
 <script src="vault-popular.js"></script>
 <script src="vault-crosslinks.js"></script>
+<script src="vault-voices.js"></script>
 <script>
 (function () {
   'use strict';
@@ -367,7 +391,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       const list = V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first);
       h += `<div class="folder closed"><button type="button">${chev}${esc(V.folders[f])} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
     }
-    h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this vault works</span></a></div></div>`;
+    h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this works</span></a></div></div>`;
     $('#tree').innerHTML = h;
     $('#tree').querySelectorAll('.folder > button').forEach(b => b.onclick = () => b.parentElement.classList.toggle('closed'));
   }
@@ -396,9 +420,10 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     return h + '</svg>';
   }
   function about() {
-    return `<div class="crumb">About</div><h1>How this vault works</h1>
+    return `<div class="crumb">About</div><h1>How this works</h1>
       <p>A style is not a thing but a <b>combination</b>. This vault breaks the history of composed music – from plainchant to spectralism, from the troubadours to hip hop – into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
       <p>Take the <a class="il" href="#note/picardy-third" data-id="picardy-third">major third in the final chord</a>: it needs a texture of four or more voices and a tuning in which the third is sweet. So it cannot belong to the <a class="il style" href="#note/notre-dame" data-id="notre-dame">Notre Dame school</a>, it appears rarely in the <a class="il style" href="#note/ockeghem" data-id="ockeghem">Ockeghem generation</a> and becomes the rule with <a class="il style" href="#note/palestrina" data-id="palestrina">Palestrina</a>.</p>
+      <p>Every style also has a number of <b>real voices</b> – independent contrapuntal lines, not performers – so that a piece in four voices stays a four-voice piece however many instruments play it. The <b>voices view</b> follows the number from the single line of plainchant, through the two voices that carry most of the Magnus liber organi, to the 40-part works of the 16th century; the <a class="il" href="#combine" data-go="combine">style finder</a> can filter by it.</p>
       <p>Open the <b>graph view</b> and move the year slider – or press Play – to watch elements appear and the styles form around them; switch on <b>Time axis</b> to line everything up chronologically, and click a colour in the legend to follow one family of elements (harmony, rhythm, timbre…) through the centuries. The <b>timeline</b> shows every element as a bar, era by era. The <b>style finder</b> works backwards: pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
       <p>Some elements return after centuries in a new guise – <a class="il" href="#note/parallel-chords" data-id="parallel-chords">Debussy’s parallel chords</a> after <a class="il" href="#note/parallel-organum" data-id="parallel-organum">parallel organum</a>, <a class="il" href="#note/swing" data-id="swing">swing</a> after <a class="il" href="#note/notes-inegales" data-id="notes-inegales">notes inégales</a>, <a class="il" href="#note/total-serialism" data-id="total-serialism">total serialism</a> after <a class="il" href="#note/isorhythm" data-id="isorhythm">isorhythm</a>. The links between such notes are the morphology: forms that grow, die back and sprout again.</p>
       <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the <b>Feedback</b> button below.</div>
@@ -431,6 +456,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         <details class="props" open><summary>Properties</summary><dl>
         <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.alive ? 'today' : n.to}</dd>
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
+        ${voiceRow(n.id)}
         <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
         </dl></details>
         <p>${md(n.text)}</p>
@@ -597,19 +623,23 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   $('#tlShow').addEventListener('change', timeline);
 
   /* ---------- style finder ---------- */
-  const pick = new Set();
+  const pick = new Set(); let vpick = null;
   function combine() {
     let h = `<h1>Style finder</h1><p class="lead">Choose the elements you hear in a piece. The finder shows when all of them could have coexisted and which styles share the combination – a style is a set of elements present at the same time.</p><div>`;
+    h += `<fieldset><legend>Number of real voices</legend><div class="opts">${[1, 2, 3, 4, 5, 6, 8, 12, 16, 24, 40].map(n => `<button class="pill" type="button" data-v="${n}" aria-pressed="${vpick === n}">${n}</button>`).join('')}</div></fieldset>`;
     for (const f in V.folders) h += `<fieldset><legend>${esc(V.folders[f])}</legend><div class="opts">${V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).map(e => `<button class="pill" type="button" data-p="${e.id}" aria-pressed="${pick.has(e.id)}">${esc(e.title)}</button>`).join('')}</div></fieldset>`;
     h += `</div><div class="res" id="res"></div>`;
     $('#cmb').innerHTML = h;
     $('#cmb').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pick.has(b.dataset.p) ? pick.delete(b.dataset.p) : pick.add(b.dataset.p); b.setAttribute('aria-pressed', pick.has(b.dataset.p)); results(); });
+    $('#cmb').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { vpick = vpick === +b.dataset.v ? null : +b.dataset.v; $('#cmb').querySelectorAll('[data-v]').forEach(x => x.setAttribute('aria-pressed', vpick === +x.dataset.v)); results(); });
     results();
   }
   function results() {
     const sel = [...pick].map(id => byId[id]);
     let h = '';
-    if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>, <button class="linkbtn" data-ex="sonata-form,alberti-bass,classical-orchestra">sonata form + Alberti bass + Classical orchestra</button> or <button class="linkbtn" data-ex="extended-tertian,parallel-chords,whole-tone">extended chords + parallel chords + whole-tone scale</button>.</p></div>`;
+    const usual = s => VV[s.id] && vpick >= VV[s.id][0] && vpick <= VV[s.id][1], rare = s => VV[s.id] && !usual(s) && vpick >= VV[s.id][0] && vpick <= VV[s.id][2];
+    if (!sel.length && vpick) h = '';
+    else if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>, <button class="linkbtn" data-ex="sonata-form,alberti-bass,classical-orchestra">sonata form + Alberti bass + Classical orchestra</button> or <button class="linkbtn" data-ex="extended-tertian,parallel-chords,whole-tone">extended chords + parallel chords + whole-tone scale</button>.</p></div>`;
     else {
       const lo = Math.max(...sel.map(n => n.first)), hi = Math.min(...sel.map(n => n.fade || NOW));
       const loC = Math.max(...sel.map(n => n.common));
@@ -617,25 +647,86 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         ? `<div class="era">c. ${lo}–${hi === NOW ? 'today' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
         : `<div class="era">—</div><p class="small">These elements never coexisted in the sources: one had faded before another appeared.</p>`) + `</div>`;
       const ranked = V.styles.map(s => { const inter = sel.filter(n => s.elements.includes(n.id)).length; const union = new Set(s.elements.concat([...pick])).size; return {s, inter, score: inter / union, cover: inter / sel.length}; })
-        .filter(r => r.inter).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
+        .filter(r => r.inter && (!vpick || usual(r.s) || rare(r.s))).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
       h += `<div class="box"><h3>Styles with this combination</h3>${ranked.length ? ranked.map(r => `<div class="match"><a class="il style" href="#note/${r.s.id}" data-id="${r.s.id}">${esc(r.s.title)}</a><span class="pc">${r.inter}/${sel.length}</span><span class="barw"><i style="width:${Math.round(r.cover * 100)}%"></i></span></div>`).join('') : '<p class="small">No style in the vault uses these elements.</p>'}</div>`;
       h += `<p><button class="linkbtn" id="clr">Clear the selection</button></p>`;
+    }
+    if (vpick) {
+      const f = V.styles.filter(usual).sort((a, b) => a.from - b.from), g = V.styles.filter(rare).sort((a, b) => a.from - b.from), li = s => `<div class="match"><a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a><span class="pc">${s.from}–${s.alive ? 'today' : s.to}</span></div>`;
+      h += `<div class="box"><h3>${vpick} real voice${vpick > 1 ? 's' : ''}: usual in</h3>${f.length ? f.map(li).join('') : '<p class="small">No style in the collection uses this many voices as a rule.</p>'}</div>` + (g.length ? `<div class="box"><h3>Possible but exceptional in</h3>${g.map(li).join('')}</div>` : '');
     }
     $('#res').innerHTML = h;
     $('#res').querySelectorAll('[data-ex]').forEach(b => b.onclick = () => { b.dataset.ex.split(',').forEach(i => pick.add(i)); combine(); });
     const c = $('#clr'); if (c) c.onclick = () => { pick.clear(); combine(); };
   }
 
+  /* ---------- the number of voices ---------- */
+  const VV = V.voices || {};
+  const vrange = r => r[0] === r[1] ? String(r[0]) : r[0] + '–' + r[1];
+  function voiceRow(id) {
+    const r = VV[id]; if (!r) return '';
+    return `<dt>${ICON.list}real voices</dt><dd>usually ${vrange(r)}${r[2] > r[1] ? ' · up to ' + r[2] : ''}${r[3] ? '<br><span class="small" style="color:var(--muted);font-size:12.5px">' + esc(r[3]) + '</span>' : ''}</dd>`;
+  }
+  const VTABLE = [
+    ['c. 800–1100', '1–2', '2', 'Plainchant, then parallel and free organum. Doubling at the octave adds sounding lines but no voice.'],
+    ['1100–1200', '2', '3', 'Two voices; three in a few pieces such as Congaudeant catholici.'],
+    ['1200–1250', '2–3', '4', 'The Magnus liber organi: mostly two voices, a small part in three, and Perotin’s Viderunt and Sederunt (1198, 1199) in four.'],
+    ['1250–1320', '3', '4', 'The motet: triplum, motetus and tenor. Four voices are exceptional.'],
+    ['1320–1400', '2–3', '4', 'Two in the Italian madrigal, three in the French song and motet, four in Machaut’s Mass. Five voices are a rarity.'],
+    ['1400–1450', '3', '4', 'Cantus, tenor and contratenor, the sweet sonority of the English style.'],
+    ['1450–1500', '3–4', '6', 'The contratenor splits into altus and bassus: four voices become the norm, from c. 1460.'],
+    ['1500–1600', '4–6', '40', 'Five and six in the motet and madrigal, eight in double choirs; masses and motets in 12 to 40 parts as exceptions (Striggio c. 1565, Tallis before 1572).'],
+    ['1600–1750', '2–5', '8', 'Fewer real parts, with the continuo as harmony: trio sonata, fugue in 3–5, double choirs. Lully’s 24 violins play in five parts.'],
+    ['1750–1900', '3–6', '16', 'The orchestra grows to a hundred players, but the number of real lines stays at about four to six.'],
+    ['since 1900', '3–8', '52', 'Micropolyphony and sound masses give every player a line (Ligeti, Penderecki); minimalism and tintinnabuli go back to two or three.']
+  ];
+  function voicesView() {
+    const host = $('#vv'), W = Math.max(680, host.clientWidth - 56 || 900), Hh = 440, L = 46, R = 16, T = 18, B = 40, ymax = 60;
+    const x = y => L + tOf(Math.min(y, NOW)) * (W - L - R), yv = n => T + (1 - Math.log(n) / Math.log(ymax)) * (Hh - T - B);
+    const active = y => V.styles.filter(s => VV[s.id] && VV[s.id][1] > 1 && s.from <= y && (s.alive || y <= s.to));
+    const med = a => { a = a.slice().sort((p, q) => p - q); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; };
+    const pts = []; for (let y = 840; y <= NOW; y += 5) { const A = active(y); if (A.length) pts.push({y, lo: med(A.map(s => VV[s.id][0])), hi: med(A.map(s => VV[s.id][1])), pk: Math.max(...A.map(s => VV[s.id][2]))}); }
+    for (const k of ['lo', 'hi']) { const src = pts.map(q => q[k]); pts.forEach((q, i) => { let a = 0, c = 0; for (let j = Math.max(0, i - 7); j <= Math.min(pts.length - 1, i + 7); j++) { a += src[j]; c++; } q[k] = a / c; }); }
+    let h = '';
+    ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="${T}" width="${x(b) - x(a)}" height="${Hh - T - B}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="ax" x="${(x(a) + x(b)) / 2}" y="${Hh - B + 30}" text-anchor="middle" font-style="italic">${name}</text>`; });
+    [1, 2, 3, 4, 6, 8, 12, 16, 24, 40].forEach(n => { h += `<line class="gl" x1="${L}" x2="${W - R}" y1="${yv(n)}" y2="${yv(n)}" stroke-dasharray="${n === 1 ? '0' : '2 4'}"/><text class="ax" x="${L - 8}" y="${yv(n) + 4}" text-anchor="end">${n}</text>`; });
+    TICKS.forEach(c => { h += `<text class="ax" x="${x(c)}" y="${Hh - B + 14}" text-anchor="middle">${c}</text>`; });
+    const step = (key, up) => pts.map((q, i) => `${i ? 'L' : 'M'}${x(q.y).toFixed(1)} ${yv(q[key] * (up || 1)).toFixed(1)}`).join('');
+    h += `<path d="${step('hi', 1.12)} ${pts.slice().reverse().map(q => `L${x(q.y).toFixed(1)} ${yv(q.lo / 1.12).toFixed(1)}`).join('')}Z" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-opacity=".6"><title>The usual number of voices (the median of the styles of the time)</title></path>`;
+    h += `<path d="${step('pk')}" fill="none" stroke="var(--accent)" stroke-opacity=".75" stroke-dasharray="3 4"><title>The most voices known in any style of the time</title></path>`;
+    const marks = V.voiceMarks || [], short = {850: 'Musica enchiriadis', 1150: 'Congaudeant', 1198: 'Viderunt omnes', 1365: 'Machaut’s Mass', 1490: 'Deo gratias', 1565: 'Striggio', 1570: 'Tallis', 1615: 'Gabrieli', 1670: 'Lully’s violins', 1682: 'Salisburgensis', 1788: 'Jupiter finale', 1913: 'Strauss', 1966: 'Ligeti'};
+    const placed = [], free = (bx) => !placed.some(q => bx.x0 < q.x1 && bx.x1 > q.x0 && bx.y0 < q.y1 && bx.y1 > q.y0);
+    marks.forEach(m => placed.push({x0: x(m.y) - 7, x1: x(m.y) + 7, y0: yv(m.n) - 7, y1: yv(m.n) + 7}));
+    marks.forEach((m, i) => {
+      const cx = x(m.y), cy = yv(m.n), txt = (short[m.y] || m.t) + ' ' + m.n, w = txt.length * 6.1;
+      h += (m.parts ? `<rect class="mk" data-m="${i}" x="${cx - 5}" y="${cy - 5}" width="10" height="10"><title>${esc(m.t)}</title></rect>` : `<circle class="mk${m.attributed ? ' att' : ''}" data-m="${i}" cx="${cx}" cy="${cy}" r="5.5"><title>${esc(m.t)}</title></circle>`);
+      for (const [dx, dy, an] of [[9, -8, 'start'], [9, 15, 'start'], [-9, -8, 'end'], [-9, 15, 'end'], [9, -24, 'start'], [9, 31, 'start'], [-9, -24, 'end'], [-9, 31, 'end'], [14, -40, 'start'], [-14, -40, 'end']]) {
+        const tx = cx + dx, ty = cy + dy, bx = {x0: an === 'start' ? tx : tx - w, x1: an === 'start' ? tx + w : tx, y0: ty - 11, y1: ty + 3};
+        if (bx.x0 < L - 30 || bx.x1 > W - 4 || !free(bx)) continue;
+        placed.push(bx); h += `<text class="ml" x="${tx}" y="${ty}" text-anchor="${an}">${esc(txt)}</text>`; break;
+      }
+    });
+    host.innerHTML = `<h1>The number of voices</h1><p class="lead">A voice is a real part, an independent contrapuntal line, not a performer: four voices played by twenty instruments are still four voices. The chart shows how many voices the styles of each time normally use (the shaded band), the most that occur in any of them (the dotted line) and single pieces with a documented number of parts (the dots). Open a style to see its own range.</p>
+      <svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Number of real voices from plainchant to today, on a logarithmic scale">${h}</svg>
+      <div class="key"><span>▬ usual number (median of the styles of the time)</span><span>┄ the most known</span><span>● a piece</span><span>◌ attribution uncertain</span><span>■ many players, few voices</span><span>Vertical scale: logarithmic</span></div>
+      <div class="detail" id="vvd"><b>Click a dot to read about the piece.</b> Plainchant has one voice and the earliest polyphony two. Three voices carry the 13th and 14th centuries, four become normal around 1460, five and six in the 16th century. The largest numbers belong to a few exceptional works, and from the 17th century on the number of real voices stays small while the number of players grows.</div>
+      <h2 style="font-size:1.1rem;margin:22px 0 8px">Voices by period</h2>
+      <table class="vtab"><thead><tr><th>Period</th><th>Usual</th><th>Most</th><th></th></tr></thead><tbody>${VTABLE.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table>
+      <p class="small" style="color:var(--faint);font-size:12.5px">The numbers are rough guides, counted in real parts. In styles driven by harmony the count changes from bar to bar. In a canon the entries multiply but the lines do not.</p>`;
+    host.querySelectorAll('.mk').forEach(b => b.onclick = () => { const m = marks[+b.dataset.m]; $('#vvd').innerHTML = `<b>${esc(m.t)}</b> · c. ${m.y} · ${m.n} ${m.parts ? 'real voices' : 'parts'}${m.attributed ? ' (attribution uncertain)' : ''}<br>${esc(m.text)}`; });
+  }
+
   /* ---------- views and routing ---------- */
   let view = 'note', builtTL = false, builtC = false;
   function show(v) {
     view = v;
-    ['note', 'graph', 'timeline', 'combine'].forEach(k => { $('#v-' + k).hidden = k !== v; });
+    ['note', 'graph', 'timeline', 'combine', 'voices'].forEach(k => { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.go === v));
     document.querySelectorAll('.ribbon [data-go]').forEach(t => t.setAttribute('aria-pressed', t.dataset.go === v));
     if (v === 'graph') { dims = sizeCanvas(cv); if (!G.fitted) { setYear(G.year); fit(); G.fitted = true; } kick(.1); }
     if (v === 'timeline') timeline();
     if (v === 'combine' && !builtC) { combine(); builtC = true; }
+    if (v === 'voices') voicesView();
     $('#app').classList.remove('drawer');
     $('#app').classList.toggle('viewonly', v !== 'note');
     if (v === 'graph') { dims = sizeCanvas(cv); draw(); }
@@ -644,13 +735,13 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   function route() {
     const h = decodeURIComponent(location.hash.slice(1));
     if (h.startsWith('note/')) { lastNote = h.slice(5); renderNote(lastNote); show('note'); }
-    else if (['graph', 'timeline', 'combine'].includes(h)) show(h);
+    else if (['graph', 'timeline', 'combine', 'voices'].includes(h)) show(h);
     else { renderNote('about'); show('note'); }
   }
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); const g = b.dataset.go; location.hash = g === 'note' ? 'note/' + lastNote : g; }));
   document.addEventListener('click', e => { const a = e.target.closest('a.il, a.file, a.lk'); if (a && a.dataset.id && window.innerWidth <= 760) $('#app').classList.remove('drawer'); });
   window.addEventListener('hashchange', route);
-  window.addEventListener('resize', () => { if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); if (view === 'note' && byId[lastNote]) drawLocal(byId[lastNote]); });
+  window.addEventListener('resize', () => { if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); if (view === 'voices') voicesView(); if (view === 'note' && byId[lastNote]) drawLocal(byId[lastNote]); });
   $('#menuBtn').onclick = () => { const o = $('#app').classList.toggle('drawer'); $('#menuBtn').setAttribute('aria-expanded', o); };
   $('#scrim').onclick = () => $('#app').classList.remove('drawer');
   $('#leftBtn').onclick = () => { const off = $('#app').classList.toggle('noleft'); $('#leftBtn').setAttribute('aria-pressed', !off); if (view === 'graph') { dims = sizeCanvas(cv); draw(); } if (view === 'timeline') timeline(); };
