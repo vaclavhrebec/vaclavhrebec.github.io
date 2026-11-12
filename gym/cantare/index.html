@@ -981,7 +981,7 @@ function sanitizeDoc(d){
   if (!d || !Array.isArray(d.notes)) return null;
   return {
     title: typeof d.title === 'string' ? d.title.slice(0, 120) : '',
-    clef: CLEFS[d.clef] ? (d.lines === 4 && d.clef === 'c5' ? 'c4' : d.clef) : 'c4',
+    clef: CLEFS[d.clef] ? (d.lines === 4 && d.clef === 'c5' ? 'baritone' : d.clef) : 'c4',
     bflat: !!d.bflat,
     lines: d.lines === 4 ? 4 : 5,
     ...(Array.isArray(d.stv) && d.stv.some(k => CLEFS[k]) ? {stv: d.stv.filter(k => CLEFS[k]).slice(0, 23)} : {}),
@@ -1477,7 +1477,7 @@ function drawScore(L, exp){
       const bot = line.sub[line.sub.length - 1].top + 4;
       o += `<rect class="bar" x="${f(L.staffL - 0.08)}" y="${f(top)}" width="0.16" height="${f(bot - top)}"/>`;
       line.sub.forEach((sb, si) => {
-        o += staffLines(L.staffL, xr, sb.top, 0, li * 10 + 2 + si, exp);
+        o += staffLines(L.staffL, xr, sb.top, t0, li * 10 + 2 + si, exp);   // every voice follows the 4/5-line switch
         o += clefUse(sb.clef, L.clefX, sb.top);
         if (doc.bflat) o += use('fl', L.sigX, sb.top + 4 - sigPos(sb.clef) * 0.5);
         if (ui.vw !== 'chant') o += mensSign(L.mensX + 1.1, sb.top + 2, false);
@@ -1588,7 +1588,7 @@ function cbMarkup(){
   scoreEl.classList.toggle('cb1', narrow);
   try {
     ui.sel = null; ui.hover = null; ui.playing = -1; ui.size = S; ui.inCB = true;
-    const key = [qpx | 0, S, blockH | 0, ncol, cbv.length].join('|');
+    const key = [qpx | 0, S, blockH | 0, ncol, cbv.length, keep.doc.lines].join('|');
     if (!ui.cbPg || ui.cbPg.doc !== keep.doc || ui.cbPg.key !== key) {
       const on = cbv.map(v => { const fst = []; v.at.forEach((j, c) => { if (fst[j] === undefined) fst[j] = c; }); return fst; });
       const slice = (k, a, b) => {
@@ -1597,7 +1597,7 @@ function cbMarkup(){
         return {jA, notes: jA <= jB ? v.notes.slice(jA, jB + 1) : []};
       };
       const fits = (a, b) => cbv.every((v, k) => {
-        doc = {title: '', clef: v.clef, bflat: keep.doc.bflat, lines: 5, notes: slice(k, a, b).notes};
+        doc = {title: '', clef: v.clef, bflat: keep.doc.bflat, lines: keep.doc.lines, notes: slice(k, a, b).notes};
         return layout(true, qpx).H * S <= blockH;
       });
       const pages = []; let a = 0;
@@ -1613,7 +1613,7 @@ function cbMarkup(){
     }
     const pg = ui.cbPg.pages[Math.max(0, Math.min(ui.cbPage || 0, ui.cbPg.pages.length - 1))];
     cbv.forEach((v, k) => {
-      doc = {title: '', clef: v.clef, bflat: keep.doc.bflat, lines: 5, notes: pg.sl[k].notes};
+      doc = {title: '', clef: v.clef, bflat: keep.doc.bflat, lines: keep.doc.lines, notes: pg.sl[k].notes};
       const L = layout(true, qpx);
       html += `<div class="cbq${vHid(k) ? ' vh' : ''}"><div class="cbl">${names[k] || ''}${vHid(k) ? ' · hidden' : ui.vm && ui.vm.mute[k] ? ' · muted' : ''}</div><svg xmlns="http://www.w3.org/2000/svg" data-v="${k}" viewBox="0 0 ${f(L.W)} ${f(L.H)}" width="${f(L.W * S)}" height="${f(L.H * S)}" aria-hidden="true">${drawScore(L, false)}</svg></div>`;
     });
@@ -4147,7 +4147,21 @@ function cbData(item, notes){
 }
 function presetDoc(item){
   const notes = item.poly ? gridNotes(item) : itemNotes(item), cbv = cbData(item, notes);
-  return {title: item.title, clef: CLEFS[item.c] ? item.c : 'c4', bflat: !!item.b, lines: 5, ...(item.poly ? {stv: item.poly.slice(1).map(v => v.c)} : item.st ? {stv: item.st.slice()} : {}), notes,
+  /* Plainchant on four lines, everything mensural on five. On four lines the chant gets a clef in which it fits without
+     ledger lines: its own clef if possible, otherwise the nearest one (a C clef on the fifth line becomes the F clef
+     on the third, which reads the same notes in the same places). */
+  const chant = !!item.s && !item.n && !item.poly && !item.fr;
+  let clef = CLEFS[item.c] ? item.c : 'c4', lines = 5;
+  if (chant) {
+    const st = notes.filter(n => !n.r && typeof n.s === 'number').map(n => n.s);
+    const fits = (k, x = 0) => !st.length || (Math.min(...st) - CLEFS[k].bottom >= -1 - x && Math.max(...st) - CLEFS[k].bottom <= 7 + x);
+    const four = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass'];
+    const order = [clef === 'c5' ? 'baritone' : clef, ...four.slice().sort((a, b) => Math.abs(CLEFS[a].bottom - CLEFS[clef].bottom) - Math.abs(CLEFS[b].bottom - CLEFS[clef].bottom))];
+    // a chant wider than a ninth gets one ledger line, as in the chant books
+    const k = order.find(k => four.includes(k) && fits(k)) || order.find(k => four.includes(k) && fits(k, 2));
+    if (k) { clef = k; lines = 4; }
+  }
+  return {title: item.title, clef, bflat: !!item.b, lines, ...(item.poly ? {stv: item.poly.slice(1).map(v => v.c)} : item.st ? {stv: item.st.slice()} : {}), notes,
           ...(cbv ? {cbv, cbSig: JSON.stringify(notes)} : {})};
 }
 function previewSVG(item){
@@ -4285,6 +4299,7 @@ function buildLibrary(){
     scoreEl.focus({preventScroll: true});
   }
   window.cantareLoadItem = loadItem;
+  window.cantareLibrary = () => LIBRARY;
   lib.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       e.stopPropagation();
@@ -4440,7 +4455,7 @@ function wire(){
   document.querySelectorAll('#linesBtns button').forEach(b => b.addEventListener('click', () => {
     const n = Number(b.dataset.lines);
     if (n === doc.lines || !canEdit()) return;
-    mutate(() => { doc.lines = n; if (n === 4 && doc.clef === 'c5') doc.clef = 'c4'; });
+    mutate(() => { doc.lines = n; if (n === 4 && doc.clef === 'c5') doc.clef = 'baritone'; /* F3 reads the same notes in the same places as C5 */ });
     syncLines();
   }));
   $('#play').addEventListener('click', togglePlay);
