@@ -7,7 +7,23 @@ export const TIMBRES = {
   chalumeau: { label: 'Chalumeau' },
   sackbut: { label: 'Sackbut' },
   voice: { label: 'Voice' },
+  gedackt: { label: 'Gedackt 8′ (stopped flute)' },
+  flute: { label: 'Open flute 8′' },
+  sine: { label: 'Sine' },
+  custom: { label: 'Your own (drawbars)' },
 };
+
+/* The organ registers of the first Cantare: the strength of each harmonic (1 = the note itself, 2 = its octave, …).
+   They speak with the pipe settings below; Your own takes the drawbars. */
+export const FEET = ['8′', '4′', '2⅔′', '2′', '1⅗′', '1⅓′', '1⅐′', '1′', '8/9′', '4/5′', '8/11′', '2/3′'];
+export const SOUND = { bright: 50, room: 40, atk: 120, rel: 150, chiff: 7, ens: .3, wind: 10, scoop: 5, draw: [100, 71, 55, 48, 37, 22, 12, 8, 0, 0, 0, 0] };
+export const REG = {
+  gedackt: [1, .03, .28, .02, .1, .01, .035],
+  flute: [1, .35, .12, .05, .02],
+  sine: [1],
+  get custom() { return SOUND.draw.map(v => v / 100); },
+};
+export const drawOf = k => Array.from({ length: 12 }, (_, i) => Math.round(((REG[k] || [])[i] || 0) * 100));
 
 /* Vowel formants (Hz, relative level) for a sung Latin vowel. */
 const VOWELS = {
@@ -42,7 +58,7 @@ function bankNote(midi, f0, vowel, at, env, sources) {
   return true;
 }
 
-let ctx = null, master = null, dry = null, wet = null;
+let ctx = null, master = null, dry = null, wet = null, shelf = null;
 
 export function ensure() {
   if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
@@ -50,9 +66,11 @@ export function ensure() {
   ctx = new AC();
   master = ctx.createGain(); master.gain.value = .8;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
-  dry = ctx.createGain(); wet = ctx.createGain(); dry.gain.value = .75; wet.gain.value = .35;
+  dry = ctx.createGain(); wet = ctx.createGain(); dry.gain.value = .75; wet.gain.value = roomLevel();
   const room = ctx.createConvolver(); room.buffer = impulse(ctx, 2.4);
-  dry.connect(comp); wet.connect(room); room.connect(comp); comp.connect(master); master.connect(ctx.destination);
+  /* brightness: a gentle shelf over everything above 1.5 kHz */
+  shelf = ctx.createBiquadFilter(); shelf.type = 'highshelf'; shelf.frequency.value = 1500; shelf.gain.value = shelfDb();
+  dry.connect(comp); wet.connect(room); room.connect(comp); comp.connect(shelf); shelf.connect(master); master.connect(ctx.destination);
   return ctx;
 }
 
@@ -66,6 +84,13 @@ function impulse(c, seconds) {
 }
 
 export const now = () => (ctx ? ctx.currentTime : 0);
+const roomLevel = () => SOUND.room / 100 * .9;
+const shelfDb = () => (SOUND.bright - 50) / 50 * 9;
+/* change the sound settings; the room and the brightness follow at once */
+export function setSound(o) {
+  Object.assign(SOUND, o);
+  if (ctx) { wet.gain.setTargetAtTime(roomLevel(), ctx.currentTime, .03); shelf.gain.setTargetAtTime(shelfDb(), ctx.currentTime, .03); }
+}
 export const setVolume = v => { if (master) master.gain.value = v; };
 
 function out(node, gain) {
@@ -80,7 +105,8 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   ensure();
   const f0 = hz(midi, a4), end = at + dur, vowel = vowelOf(text);
   const env = ctx.createGain();
-  const atk = timbre === 'organ' ? .045 : timbre === 'voice' ? .1 : timbre === 'sackbut' ? .08 : .055, rel = timbre === 'organ' ? .09 : .15;
+  const reg = REG[timbre];
+  const atk = reg ? Math.max(.005, SOUND.atk / 1000) : timbre === 'organ' ? .045 : timbre === 'voice' ? .1 : timbre === 'sackbut' ? .08 : .055, rel = reg ? Math.max(.01, SOUND.rel / 1000) : timbre === 'organ' ? .09 : .15;
   env.gain.setValueAtTime(0, at);
   env.gain.linearRampToValueAtTime(1, at + atk);
   env.gain.setValueAtTime(1, Math.max(at + atk, end - rel));
@@ -133,6 +159,27 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = Math.max(1600, f0 * 8);
     o.connect(lp); lp.connect(env); sources.push(o); vibrato(o, 4.2, .0015, .5);
     noise(.06, Math.min(f0 * 5, 5000), .8, .05);
+  } else if (reg) {
+    /* a pipe of the chosen register: its harmonics, tilted by the brightness; two pipes a little apart (ensemble),
+       a chiff of wind on the speech, a breath of wind under the tone, and a small scoop up to the pitch */
+    const tilt = reg.map((a, i) => a * Math.pow(2, (SOUND.bright / 100 - .5) * i * .55)).map((a, i) => (f0 * (i + 1) < 12000 ? a : 0));
+    const max = Math.max(...tilt, 1e-6), w = wave(tilt.map(a => a / max));
+    const spread = SOUND.ens, pair = spread > 0 ? [-spread / 2, spread / 2] : [0];
+    pair.forEach(c => {
+      const o = ctx.createOscillator(); o.setPeriodicWave(w); o.detune.value = c;
+      const sc = SOUND.scoop;
+      o.frequency.setValueAtTime(f0 * Math.pow(2, -sc / 1200), at); o.frequency.linearRampToValueAtTime(f0, at + Math.min(.12, atk + .03));
+      const g = ctx.createGain(); g.gain.value = 1 / pair.length; o.connect(g); g.connect(env); sources.push(o);
+    });
+    if (SOUND.chiff > 0) noise(.06 + SOUND.chiff / 2000, Math.min(f0 * 4, 5000), 1.2, SOUND.chiff / 100 * .5);
+    if (SOUND.wind > 0) {
+      const nb = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * Math.min(dur + .3, 12)), ctx.sampleRate), d = nb.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource(); src.buffer = nb;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = Math.min(f0 * 2, 4000); bp.Q.value = 2;
+      const g = ctx.createGain(); g.gain.value = SOUND.wind / 100 * .04;
+      src.connect(bp); bp.connect(g); g.connect(env); src.start(at); src.stop(stop + .05);
+    }
   } else if (bankNote(midi, f0, vowel, at, env, sources)) {
     /* sung by Chimera */
   } else {

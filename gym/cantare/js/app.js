@@ -17,9 +17,12 @@ const el = (tag, attrs = {}, ...kids) => {
 const STORE = 'cantare-next:v1';
 const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
-  micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0 };
+  micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
+  /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
+  unit: 'B', loop: false, audition: true, sound: {} };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 setFont(prefs.font);
+snd.setSound(prefs.sound || {});
 setLang(prefs.lang || guessLang());
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
@@ -133,7 +136,7 @@ function renderTree(filter = '') {
 function openItem(item, trail, opts = {}) {
   stopPlayback();
   S.base = pieceFrom(item, trail.length ? trail : S.flat.find(f => f.item === item)?.trail || []);
-  S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
+  S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.cut = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
   S.voice = S.base.voices.map(() => 'on');
   rebuildPiece();
   render(true);
@@ -151,6 +154,7 @@ function rebuildPiece() {
   const b = S.base;
   const p = { ...b, voices: b.voices.map(v => ({ ...v, notes: v.notes.map(n => ({ ...n })) })) };
   if (S.tempus) p.tempus = S.tempus;
+  if (S.cut != null) p.cut = S.cut;
   if (S.talea >= 0 && b.kind === 'chant') {
     const pat = TALEAE[S.talea][1], v = p.voices[0];
     v.notes.forEach((n, i) => {
@@ -251,6 +255,42 @@ function collectNotes() {
 function chipRow(label, buttons) { return el('div', { class: 'row' }, label ? el('label', {}, label) : '', buttons); }
 const chip = (text, pressed, fn, extra = {}) => el('button', { class: 'chip', 'aria-pressed': String(!!pressed), onclick: fn, ...extra }, text);
 
+/* ---------- transforming the melody itself (all voices; undo brings it back) ---------- */
+const VORDER = ['F', 'Sm', 'M', 'S', 'B', 'L', 'Mx'];
+const IV = { 1: 0, 2: 2, 3: 4, 4: 5, 5: 7, 6: 9, 7: 11, 8: 12 }; /* perfect or major, in semitones */
+const PERFECT = n => [1, 4, 5, 8].includes(n);
+const semis = (q, n) => IV[n] + (PERFECT(n) ? { P: 0, A: 1, d: -1 }[q] : { M: 0, m: -1, A: 1, d: -2 }[q]);
+const adv = { dir: 1, q: 'M', n: 2, exact: true };
+/* move every note by d steps and c semitones, writing the sharps and flats that keep each interval exactly */
+function transposeExact(d, c) {
+  const bf = S.base.bflat;
+  commit(() => S.base.voices.forEach(v => v.notes.forEach(n => {
+    if (n.rest) return;
+    const want = midiOf(n, bf, 0) + c;
+    let st = n.step + d;
+    for (let tries = 0; tries < 3; tries++) {
+      const nat = midiOf({ step: st, acc: 'n' }, false, 0), a = want - nat;
+      const sig = bf && ((st % 7) + 7) % 7 === 6 ? -1 : 0;
+      if (a >= -1 && a <= 1) { n.step = st; n.acc = a === sig ? '' : a === 0 ? 'n' : a < 0 ? 'b' : '#'; if (!n.acc) n.ficta = false; return; }
+      st += a > 0 ? 1 : -1; /* no double sharps or flats: the neighbouring step spells it */
+    }
+  })));
+}
+/* the next key on C D E F G A B♭, from the final of the melody */
+function toneStep(dir) {
+  const ns = S.base.voices[0].notes.filter(n => !n.rest); if (!ns.length) return;
+  const fin = ns.at(-1), pc = ((midiOf(fin, S.base.bflat, 0) % 12) + 12) % 12;
+  const KEYS = [0, 2, 4, 5, 7, 9, 10]; /* C D E F G A B♭ */
+  const idx = KEYS.reduce((b, k, i) => (Math.abs(k - pc) < Math.abs(KEYS[b] - pc) ? i : b), 0);
+  const to = (idx + dir + KEYS.length) % KEYS.length;
+  let c = KEYS[to] - KEYS[idx];
+  if (dir > 0 && c <= 0) c += 12; if (dir < 0 && c >= 0) c -= 12;
+  transposeExact(dir, c);
+}
+function scaleValues(dir) {
+  commit(() => S.base.voices.forEach(v => v.notes.forEach(n => { const i = VORDER.indexOf(n.v); if (i >= 0) n.v = VORDER[Math.max(0, Math.min(VORDER.length - 1, i + dir))]; })));
+}
+
 function buildTransform() {
   const b = S.base, c = $('#transformPop');
   c.textContent = '';
@@ -273,13 +313,35 @@ function buildTransform() {
   card(tr('Pitch'),
     el('div', { class: 'row' }, el('label', {}, tr('Step')), chip('−', false, () => { S.shift -= 1; redo(); }), chip('+', false, () => { S.shift += 1; redo(); }),
       el('label', {}, tr('Octave')), chip('−', false, () => { S.shift -= 7; redo(); }), chip('+', false, () => { S.shift += 7; redo(); }), chip(tr('Reset'), false, () => { S.shift = 0; redo(); })),
-    el('p', { class: 'hint' }, `Melody now spans ${range}. Steps move every voice along the white keys, so the mode stays as it is.`));
+    el('p', { class: 'hint' }, `Melody now spans ${range}. Steps move every voice along the white keys, so the mode stays as it is.`),
+    el('div', { class: 'row' }, chip(tr('Tone up'), false, () => toneStep(1), { title: tr('Move the whole melody up to the next key on C D E F G A B♭, adding sharps and flats to the notes where needed') }),
+      chip(tr('Tone down'), false, () => toneStep(-1), { title: tr('Move the whole melody down to the previous key on C D E F G A B♭, adding sharps and flats to the notes where needed') })));
+  /* advanced transposition: any interval, up or down, exact or along the scale */
+  const qs = PERFECT(adv.n) ? [['P', tr('perfect')], ['A', tr('augmented')], ['d', tr('diminished')]] : [['M', tr('major')], ['m', tr('minor')], ['A', tr('augmented')], ['d', tr('diminished')]];
+  if (!qs.some(([k]) => k === adv.q)) adv.q = qs[0][0];
+  const NUM = [[1, 'unison'], [2, 'second'], [3, 'third'], [4, 'fourth'], [5, 'fifth'], [6, 'sixth'], [7, 'seventh'], [8, 'octave']];
+  card(tr('Advanced transposition'),
+    chipRow(tr('Direction'), [chip(tr('Up'), adv.dir > 0, () => { adv.dir = 1; buildTransform(); }), chip(tr('Down'), adv.dir < 0, () => { adv.dir = -1; buildTransform(); })]),
+    el('div', { class: 'row' },
+      el('select', { 'aria-label': tr('Quality of the interval'), onchange: e => { adv.q = e.target.value; } }, ...qs.map(([k, n]) => el('option', { value: k, selected: k === adv.q }, n))),
+      el('select', { 'aria-label': tr('Interval'), onchange: e => { adv.n = +e.target.value; buildTransform(); } }, ...NUM.map(([k, n]) => el('option', { value: k, selected: k === adv.n }, tr(n))))),
+    el('label', { class: 'row check', title: tr('On: every interval stays exactly the same, so D minor becomes G minor, with sharps and flats on the notes. Off: every note moves the same number of steps along the scale, so D dorian becomes E phrygian') },
+      el('input', { type: 'checkbox', checked: adv.exact, onchange: e => { adv.exact = e.target.checked; } }), tr('Respect intervallic structure')),
+    el('div', { class: 'row' }, chip(tr('Transpose'), true, () => {
+      const d = adv.dir * (adv.n - 1);
+      if (adv.exact) transposeExact(d, adv.dir * semis(adv.q, adv.n));
+      else commit(() => S.base.voices.forEach(v => v.notes.forEach(n => { if (!n.rest) n.step += d; })));
+    })));
+  card(tr('Note values'),
+    el('div', { class: 'row' }, chip(tr('Double all values'), false, () => scaleValues(1), { title: tr('Doubles every note and rest: brevis becomes longa, and so on') }),
+      chip(tr('Halve all values'), false, () => scaleValues(-1), { title: tr('Halves every note and rest: brevis becomes semibrevis, and so on') })));
 
   /* mensuration */
   const t = S.tempus || b.tempus;
   if (b.kind !== 'chant') {
     card(tr('Mensuration'),
-      chipRow(tr('Tempus'), [['C', tr('Imperfectum')], ['O', tr('Perfectum')]].map(([k, n]) => chip(n, t === k, () => { S.tempus = k; redo(); }))),
+      chipRow(tr('Tempus'), [['C', false, 'C', tr('Tempus imperfectum')], ['C', true, '¢', tr('Tempus imperfectum diminutum, alla breve')], ['O', false, 'O', tr('Tempus perfectum')], ['O', true, '⌀', tr('Tempus perfectum diminutum')]]
+        .map(([k, cut, sign, name]) => chip(sign, t === k && !!(S.cut ?? b.cut) === cut, () => { S.tempus = k; S.cut = cut; redo(); }, { title: name, 'aria-label': name }))),
       el('p', { class: 'hint' }, tr('In tempus perfectum a brevis holds three semibreves.')));
   } else {
     const looks = [['chant', tr('Chant notation')], ['mensural', tr('Mensural notation')]];
@@ -292,6 +354,16 @@ function buildTransform() {
 
 }
 
+/* a labelled slider with its value; `done` runs when the hand lets go */
+function slider(label, min, max, value, fn, step = 1, unit = '', done) {
+  const out = el('output', {}, value + unit);
+  return el('div', { class: 'row slider' }, el('label', {}, label),
+    el('input', { type: 'range', min, max, step, value, oninput: e => { const v = +e.target.value; out.textContent = v + unit; fn(v); }, onchange: () => { testTone(); if (done) done(); } }), out);
+}
+function setSound(o) { snd.setSound(o); prefs.sound = { ...snd.SOUND }; savePrefs(); }
+/* a short note to hear what a setting does */
+function testTone() { if (S.playing) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: 57, a4: prefs.a4, at: ctx.currentTime + .02, dur: .7, text: 'a' }); }
+
 function buildStudio() {
   const b = S.base, c = $('#cards');
   c.textContent = '';
@@ -300,10 +372,32 @@ function buildStudio() {
 
   /* sound */
   card(tr('Sound'),
-    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); }))),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
-    chipRow(tr('Pitch'), [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); buildStudio(); }))),
+    chipRow(tr('Pitch'), [...[415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); buildStudio(); })),
+      el('label', { class: 'hzin', title: tr('The pitch of a′ in Hz') }, 'a′ =', el('input', { type: 'number', min: 300, max: 600, step: 'any', inputmode: 'decimal', value: prefs.a4,
+        onchange: e => { const v = +e.target.value; if (v >= 300 && v <= 600) { prefs.a4 = v; savePrefs(); syncMicOpt(); buildStudio(); } } }), 'Hz')]),
+    slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
+    slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
+    chipRow('', [chip(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); })]),
     chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); })]));
+
+  /* the organ registers speak with the pipe settings; Your own takes the drawbars */
+  if (snd.REG[prefs.timbre] || prefs.timbre === 'custom') {
+    const pipe = card(tr('Pipes'));
+    [['atk', 'Attack', 0, 300, 1, ' ms'], ['rel', 'Release', 10, 600, 5, ' ms'], ['chiff', 'Chiff', 0, 100, 1, ''], ['ens', 'Ensemble', 0, 12, .1, ' ct'], ['wind', 'Wind', 0, 100, 1, ''], ['scoop', 'Scoop', 0, 30, 1, ' ct']]
+      .forEach(([k, label, a, b, st, u]) => pipe.append(slider(tr(label), a, b, snd.SOUND[k], v => setSound({ [k]: v }), st, u)));
+    pipe.append(el('h4', {}, tr('Harmonics, as organ drawbars')));
+    const bars = prefs.timbre === 'custom' ? snd.SOUND.draw : snd.drawOf(prefs.timbre);
+    snd.FEET.forEach((ft, i) => pipe.append(slider(ft, 0, 100, bars[i], v => {
+      if (prefs.timbre !== 'custom') { setSound({ draw: snd.drawOf(prefs.timbre) }); prefs.timbre = 'custom'; savePrefs(); }
+      const d = [...snd.SOUND.draw]; d[i] = v; setSound({ draw: d });
+    }, 1, '', () => buildStudio())));
+    pipe.append(el('div', { class: 'row' }, chip(tr('Copy sound settings'), false, async e => {
+      const t = `Sound: ${tr(snd.TIMBRES[prefs.timbre].label)}; brightness ${snd.SOUND.bright}; room ${snd.SOUND.room}; attack ${snd.SOUND.atk} ms; release ${snd.SOUND.rel} ms; chiff ${snd.SOUND.chiff}; wind ${snd.SOUND.wind}; scoop ${snd.SOUND.scoop} cents; ensemble ${snd.SOUND.ens} cents; drawbars ${snd.FEET.map((f, i) => f + '=' + (prefs.timbre === 'custom' ? snd.SOUND.draw : bars)[i]).join(' ')}; volume ${Math.round(prefs.volume * 100)}; a′ = ${prefs.a4} Hz`;
+      try { await navigator.clipboard.writeText(t); toast(tr('Copied')); } catch (err) { window.prompt('', t); }
+    }, { title: tr('Copies the current sound settings as text, to send to whoever is tuning the sound') })));
+  }
 
   /* view */
   card(tr('View'),
@@ -361,7 +455,7 @@ function playNote(o) {
   SOUNDED.push({ t0: o.at, t1: o.at + o.dur, f: hz(o.midi, o.a4) });
   if (SOUNDED.length > 400) SOUNDED.splice(0, SOUNDED.length - 400);
 }
-function hear(n) { if (!n || n.rest) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .6 }); }
+function hear(n) { if (!n || n.rest || !prefs.audition) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: midiOf(n, S.piece.bflat, S.shift), a4: prefs.a4, text: n.text, at: ctx.currentTime + .02, dur: .6 }); }
 
 const EDIT = {
   pitch(d) { const n = selNote(); if (!n || n.rest) return; commit(() => { n.step = Math.max(7, Math.min(55, n.step + d)); }); hear(selNote()); },
@@ -427,10 +521,12 @@ $('#transformBtn').addEventListener('click', e => {
   if (!pop.hidden) { const r = $('#toolbar').getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; }
   $('#transformBtn').setAttribute('aria-expanded', String(!pop.hidden));
 });
-document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
+document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && e.target.isConnected && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
 
 /* ------------------------------------------------------------------ playback */
-const spm = () => (60 / prefs.tempo) / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4); /* seconds per minim */
+/* the beat in minimae: a brevis holds six of them in tempus perfectum, a longa twice the brevis */
+const beatMinims = () => { const O = S.piece.tempus === 'O' && !S.piece.talea; return { L: O ? 12 : 8, B: O ? 6 : 4, S: 2, M: 1 }[prefs.unit] || (O ? 6 : 4); };
+const spm = () => (60 / prefs.tempo) / beatMinims(); /* seconds per minim */
 
 let timer = 0, raf = 0, clock = null;
 
@@ -453,7 +549,7 @@ function startPlayback() {
   clock = { t0, from, k, end: p.end, ended: false };
   recHook(ctx, t0, from);
   singStart(from);
-  const beat = S.piece.tempus === 'O' && !p.talea ? 6 : 4;
+  const beat = beatMinims();
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
     while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
@@ -489,7 +585,7 @@ let lastSys = -1, lastLeaf = -1;
 function frame() {
   if (!clock) return;
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
-  if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; return; }
+  if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
     if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
@@ -527,6 +623,27 @@ paper.addEventListener('click', e => {
 
 $('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
 $('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; $('#bpm').textContent = prefs.tempo; savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
+/* the beat: which value the tactus counts, tapping it, the heartbeat, and looping */
+const UNITS = [['L', 'Longa'], ['B', 'Brevis'], ['S', 'Semibrevis'], ['M', 'Minima']];
+function setTempo(v) {
+  prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo; savePrefs();
+  if (S.playing && clock) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); }
+}
+function buildUnits() {
+  const sel = $('#unit'); sel.textContent = '';
+  UNITS.forEach(([k, n]) => sel.append(el('option', { value: k, selected: prefs.unit === k }, tr(n) + ' = ' + tr('tactus'))));
+}
+$('#unit').addEventListener('change', e => { prefs.unit = e.target.value; setTempo(prefs.tempo); });
+const taps = [];
+$('#tap').addEventListener('click', () => {
+  const t = performance.now();
+  if (taps.length && t - taps[taps.length - 1] > 2500) taps.length = 0;
+  taps.push(t); if (taps.length > 6) taps.shift();
+  if (taps.length >= 2) setTempo(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)));
+});
+$('#heart').addEventListener('click', () => { prefs.unit = 'S'; buildUnits(); setTempo(60); toast(tr('Semibrevis = 60')); });
+const syncLoop = () => $('#loopBtn').setAttribute('aria-pressed', String(prefs.loop));
+$('#loopBtn').addEventListener('click', () => { prefs.loop = !prefs.loop; savePrefs(); syncLoop(); });
 $('#prevLeaf').addEventListener('click', () => { S.leaf = Math.max(0, S.leaf - 1); render(); });
 $('#nextLeaf').addEventListener('click', () => { S.leaf = Math.min(S.leaves.length - 1, S.leaf + 1); render(); });
 document.addEventListener('keydown', e => {
@@ -792,7 +909,7 @@ $('#footShare').addEventListener('click', async () => {
 
 /* interface language */
 function applyLang() {
-  translatePage();
+  translatePage(); buildUnits();
   if (S.base) { renderTree($('#search').value); buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips(); render(); }
   $('#play').setAttribute('aria-label', tr(S.playing ? 'Stop' : 'Play'));
 }
@@ -814,6 +931,7 @@ new ResizeObserver(() => {
   applyTheme();
   translatePage();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
+  buildUnits(); syncLoop();
   const wide = innerWidth >= 1100;
   $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
   await loadLibrary();

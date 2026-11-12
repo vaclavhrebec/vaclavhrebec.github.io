@@ -223,3 +223,17 @@ g.sung .note.on .fill { fill: var(--accent); }
 .row.wrap { flex-wrap: wrap; }
 .latrow input { width: 5.2em; height: 30px; padding: 0 6px; text-align: center; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 .paper.singing .sys { margin-bottom: 34px; }
+
+/* the beat controls in the dock, the sliders in the Studio */
+.beatctl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.beatctl select { background: var(--surface); color: inherit; border: 1px solid var(--line); border-radius: 999px; padding: 4px 8px; font: inherit; font-size: 13px; }
+.beatctl #heart { display: inline-grid; place-items: center; padding: 5px 8px; color: #e0322b; }
+.beatctl #heart svg { width: 15px; height: 15px; fill: currentColor; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.row.slider { display: grid; grid-template-columns: 7.5em 1fr 3.6em; gap: 8px; }
+.row.slider input { accent-color: var(--accent); width: 100%; }
+.row.slider output { font-size: 12px; color: var(--soft); text-align: right; font-variant-numeric: tabular-nums; }
+.card h4 { margin: 10px 0 2px; font-size: 12px; font-weight: 600; color: var(--soft); text-transform: uppercase; letter-spacing: .06em; }
+.hzin { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
+.hzin input { width: 4.6em; padding: 3px 6px; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+#transformPop, #micPop { max-height: calc(100vh - 170px); overflow: auto; overscroll-behavior: contain; }
