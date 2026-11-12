@@ -2,6 +2,8 @@
    Musical names (intervals, chords, scales, clefs) are kept next to their data in the room files. */
 window.EAR_T = {
 de: {
+  'Baroque 415, classical 430, modern 440 to 442, 466 a semitone higher.': 'Barock 415, klassisch 430, modern 440 bis 442, 466 einen Halbton höher.',
+  'Pitch of a′': 'Stimmton a′',
   'Sing the next note': 'Die nächste Note singen',
   'Atonal melodies in 100 levels. You hear the first note and sing each next one, checked by the microphone to within a few cents. From white keys to scrambled chords.': 'Atonale Melodien in 100 Stufen. Sie hören den ersten Ton und singen jeden folgenden; das Mikrofon prüft ihn auf wenige Cent genau. Von weißen Tasten bis zu durcheinandergewürfelten Akkorden.',
   '100 levels · microphone · equal temperament': '100 Stufen · Mikrofon · gleichstufige Stimmung',
@@ -166,6 +168,8 @@ de: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Thaats und Ragas erklingen gleichstufig; ein Raga ist ebenso durch seine melodischen Wendungen bestimmt wie durch seine Töne.'
 },
 fr: {
+  'Baroque 415, classical 430, modern 440 to 442, 466 a semitone higher.': 'Baroque 415, classique 430, moderne 440 à 442, 466 un demi-ton plus haut.',
+  'Pitch of a′': 'Diapason la3',
   'Sing the next note': 'Chanter la note suivante',
   'Atonal melodies in 100 levels. You hear the first note and sing each next one, checked by the microphone to within a few cents. From white keys to scrambled chords.': 'Des mélodies atonales en 100 niveaux. Vous entendez la première note et chantez chacune des suivantes, vérifiée par le microphone à quelques cents près. Des touches blanches aux accords brouillés.',
   '100 levels · microphone · equal temperament': '100 niveaux · microphone · tempérament égal',
@@ -324,6 +328,8 @@ fr: {
   'Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.': 'Les thaats et les ragas sont joués en tempérament égal ; un raga se définit autant par ses tournures mélodiques que par ses notes.'
 },
 cs: {
+  'Baroque 415, classical 430, modern 440 to 442, 466 a semitone higher.': 'Baroko 415, klasicismus 430, dnes 440 až 442, 466 o půltón výš.',
+  'Pitch of a′': 'Komorní a¹',
   'Sing the next note': 'Zazpívejte další tón',
   'Atonal melodies in 100 levels. You hear the first note and sing each next one, checked by the microphone to within a few cents. From white keys to scrambled chords.': 'Atonální melodie ve 100 úrovních. Uslyšíte první tón a zpíváte každý další; mikrofon ho zkontroluje na několik centů přesně. Od bílých kláves až po zamíchané akordy.',
   '100 levels · microphone · equal temperament': '100 úrovní · mikrofon · rovnoměrné ladění',

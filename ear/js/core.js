@@ -87,7 +87,7 @@ window.E = (function () {
     return (A.waves[name] = ctx.createPeriodicWave(re, im));
   }
   E.timbres = ['piano', 'organ', 'reed', 'sine'];
-  E.mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+  E.mtof = m => (E.settings.a4 || 440) * Math.pow(2, (m - 69) / 12);   // a′ is a setting (default 440 Hz)
   /* one tone. f in Hz, t0 = absolute ctx time, d = seconds */
   A.tone = function (f, t0, d, o) {
     o = o || {};
@@ -133,7 +133,7 @@ window.E = (function () {
   A.now = () => A.get().currentTime + .06;
 
   /* global listening settings */
-  E.settings = Object.assign({ timbre: 'piano' }, E.load('settings', {}));
+  E.settings = Object.assign({ timbre: 'piano', a4: 440 }, E.load('settings', {}));
   E.saveSettings = () => E.save('settings', E.settings);
 
   /* ---------- pitch spelling & names ---------- */

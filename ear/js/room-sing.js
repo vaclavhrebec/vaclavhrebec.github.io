@@ -209,7 +209,8 @@
   const midiName = m => { const sp = (DN[m % 12][1] === 0 ? DN : UP)[m % 12]; return E.noteName({ l: sp[0], a: sp[1], o: 0 }) + (Math.floor(m / 12) - 1); };
   const holdOf = n => cfg.hold * HOLD[n.v];
   const target = () => st.mel.notes[st.i];
-  const hz = m => 440 * Math.pow(2, (m - 69) / 12);
+  const A4 = () => E.settings.a4 || 440;
+  const hz = m => A4() * Math.pow(2, (m - 69) / 12);
 
   function newMelody(box) {
     E.audio.stop(); clearTimeout(st.t1);
@@ -246,7 +247,7 @@
         const f = st.hist.slice().sort((a, b) => a - b)[st.hist.length >> 1];
         let c = 1200 * Math.log2(f / hz(target().m));
         if (cfg.anyOct) c = ((c + 600) % 1200 + 1200) % 1200 - 600;
-        st.cents = c; st.sung = 69 + 12 * Math.log2(f / 440); st.gap = 0;
+        st.cents = c; st.sung = 69 + 12 * Math.log2(f / A4()); st.gap = 0;
         if (Math.abs(c) <= cfg.tol) st.held += dt; else st.held = 0;
       } else {
         st.gap += dt; if (st.gap > 140) { st.held = 0; st.cents = null; st.sung = null; st.hist = []; }
@@ -298,7 +299,9 @@
   .singroom .lvsel{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
   .singroom .lvsel input[type=range]{flex:1 1 220px;accent-color:var(--accent)}
   .singroom .phases{display:flex;flex-wrap:wrap;gap:6px}
-  .singroom .hint{font-size:.88rem;color:var(--muted);margin:0}`;
+  .singroom .hint{font-size:.88rem;color:var(--muted);margin:0}
+  .singroom .pitchrow{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:.95rem}
+  .singroom .pitchrow input{width:5.2em;font:inherit;padding:.3rem .4rem;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}`;
   if (!document.getElementById('singcss')) document.head.append(h('style', { id: 'singcss' }, css));
 
   function redrawHead() {
@@ -362,16 +365,20 @@
       h('button', { type: 'button', class: 'mini', onclick: () => setLevel(cfg.level + 1, box) }, '+'),
       h('output', null, cfg.level),
       h('span', { class: 'hint' }, T('Furthest so far') + ': ' + cfg.best));
+    const a4in = h('input', { type: 'number', min: 380, max: 500, step: .5, value: A4(), 'aria-label': T('Pitch of a′'), oninput: e => setA4(+e.target.value) });
+    const pitch = h('div', { class: 'pitchrow' }, h('span', null, T('Pitch of a′')), a4in, h('span', null, 'Hz'),
+      [415, 430, 440, 442, 466].map(v => h('button', { type: 'button', class: 'mini', onclick: () => { a4in.value = v; setA4(v); } }, String(v))),
+      h('span', { class: 'hint' }, T('Baroque 415, classical 430, modern 440 to 442, 466 a semitone higher.')));
     const phases = h('div', { class: 'phases' }, PHASES.map(p => h('button', { type: 'button', class: 'mini', title: T(p[3]), onclick: () => setLevel(p[0], box) }, p[0] + '–' + p[1] + ' ' + T(p[2]))));
     const panel = h('div', { class: 'panel' },
-      h('div', { class: 'lvhead' }), lvl, phases, staff, meter, h('div', { class: 'mstat' }), h('div', { class: 'status', 'aria-live': 'polite' }),
+      h('div', { class: 'lvhead' }), lvl, phases, pitch, staff, meter, h('div', { class: 'mstat' }), h('div', { class: 'status', 'aria-live': 'polite' }),
       h('div', { class: 'acts' },
         h('button', { id: 'sg-start', class: 'btn primary', type: 'button', onclick: () => start(box) }, ''),
         h('button', { class: 'btn', type: 'button', onclick: hear }, '🔊 ' + T('Hear this note')),
         h('button', { class: 'btn', type: 'button', onclick: () => { if (micOn() && st.state !== 'done') { st.state = 'ref'; playFirst(); } else if (st.mel) tone(st.mel.notes[0].m, 1); } }, T('First note again')),
         h('button', { class: 'btn', type: 'button', onclick: () => newMelody(box) }, T('New melody')),
         h('button', { class: 'btn', type: 'button', onclick: () => { if (st.state === 'sing') { st.hints++; hit(); } } }, T('Skip note'))),
-      h('p', { class: 'hint' }, T('Use headphones: otherwise the microphone hears the played notes. The pitch is judged in equal temperament (A = 440 Hz); the written notes are the sounding notes.')));
+      h('p', { class: 'hint', 'data-eq': 1 }, eqText()));
     const set = h('details', { class: 'settings', open: draw._open || null, ontoggle: e => draw._open = e.target.open },
       h('summary', null, T('Settings')),
       h('div', { class: 'setbody' },
@@ -394,6 +401,12 @@
     draw._ro = new ResizeObserver(paint); draw._ro.observe(staff);
     redrawHead(); setStatus(); mark();
   }
+  function setA4(v) {
+    if (!(v >= 380 && v <= 500)) return;          // a half-typed number is ignored until it is valid
+    E.settings.a4 = v; E.saveSettings();
+    const hnt = root && root.querySelector('[data-eq]'); if (hnt) hnt.textContent = eqText();
+  }
+  const eqText = () => T('Use headphones: otherwise the microphone hears the played notes. The pitch is judged in equal temperament (A = 440 Hz); the written notes are the sounding notes.').replace('440', String(A4()));
   function setLevel(L, box) { cfg.level = Math.max(1, Math.min(100, L)); cfg.best = Math.max(cfg.best, cfg.level); save(); newMelody(box); }
 
   E.room({
