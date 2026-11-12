@@ -16,10 +16,11 @@
 <meta property="og:image:alt" content="Improvising canons">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=IM+Fell+Double+Pica:ital@0;1&family=IM+Fell+English:ital@0;1&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
+/* Fondamento, the chancery hand of Cantare super librum (SIL Open Font License 1.1) */
+@font-face { font-family: "Fondamento"; font-style: normal; font-weight: 400; font-display: swap; src: url(../cantare/fonts/fondamento-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Fondamento"; font-style: normal; font-weight: 400; font-display: swap; src: url(../cantare/fonts/fondamento-latin-ext-400-normal.woff2) format("woff2"); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
   :root {
     --bg: #faf7f2; --fg: #1c1a17; --muted: #6b655c; --line: #e4ddd1;
     --accent: #c8102e; --card: #ffffff; --soft: #f3eee6;
@@ -39,14 +40,14 @@
   }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
-  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 "Inter", system-ui, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
   .wrap { max-width: 980px; margin: 0 auto; padding: 0 16px 48px; }
   header { padding: 1.4rem 0 1rem; }
   .back { color: var(--muted); text-decoration: none; font-size: .9rem; }
   .back:hover { color: var(--accent); }
-  h1 { font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: clamp(2.2rem, 6vw, 3.2rem);
+  h1 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 400; font-size: clamp(2.2rem, 6vw, 3.2rem);
     line-height: 1.05; margin: .5rem 0 .2rem; }
-  .tagline { font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--muted); margin: 0; }
+  .tagline { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--muted); margin: 0; }
   .staff { height: 25px; margin: 1rem 0 1.4rem; opacity: .5;
     background: repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 6px); }
 
@@ -54,14 +55,14 @@
   .trace { position: relative; }
   canvas { display: block; width: 100%; height: 280px; border-radius: 8px; background: var(--soft); }
   .hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none;
-    font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); padding: 1rem 2.6rem; }
+    font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); padding: 1rem 2.6rem; }
   .hint[hidden] { display: none; }
   .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: .7rem 2px 0; font-size: .85rem; color: var(--muted); }
   .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px;
     background: var(--c); margin-right: 6px; vertical-align: middle; }
   .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 14px; }
   #start { height: 54px; padding: 0 26px; border-radius: 27px; border: 0; background: var(--accent); color: #fff;
-    font: 500 1.05rem/1 "Inter", system-ui, sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
+    font: 500 1.05rem/1 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; cursor: pointer; display: inline-flex; align-items: center; gap: 10px; }
   #start:hover { filter: brightness(1.08); }
   #start svg { width: 16px; height: 16px; fill: currentColor; }
   #start.on { background: var(--fg); color: var(--bg); }
@@ -78,7 +79,7 @@
   .grid > * { min-width: 0; }
   @media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
-  h2 { font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: 1.45rem; margin: 0 0 .7rem;
+  h2 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 400; font-size: 1.45rem; margin: 0 0 .7rem;
     display: flex; align-items: baseline; gap: .55rem; }
   h2::before { content: "◆"; color: var(--accent); font-size: .7rem; transform: translateY(-.12rem); }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; }
@@ -104,7 +105,7 @@
   .stepper button:last-child { border-radius: 0 8px 8px 0; }
   .stepper input { border-radius: 0; border-left: 0; border-right: 0; -moz-appearance: textfield; appearance: textfield; }
   .stepper input::-webkit-outer-spin-button, .stepper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-  #now { font-family: "EB Garamond", Georgia, serif; font-size: 1.15rem; color: var(--fg); flex-basis: 100%; margin: 0; min-height: 1.5em; }
+  #now { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-size: 1.15rem; color: var(--fg); flex-basis: 100%; margin: 0; min-height: 1.5em; }
   .note { font-size: .85rem; color: var(--muted); margin: .2rem 0 0; }
 
   .voices { list-style: none; margin: 4px 0 0; padding: 0; border-top: 1px solid var(--line); }
@@ -116,7 +117,7 @@
   .voices input[type=range] { width: 90px; }
 
   details.help { margin-top: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; }
-  details.help summary { cursor: pointer; font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: 1.25rem; }
+  details.help summary { cursor: pointer; font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 400; font-size: 1.25rem; }
   .help p, .help li { color: var(--muted); }
   .help ol { padding-left: 1.2rem; }
   .pats { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: .6rem; }
@@ -132,9 +133,11 @@
   footer { margin-top: 26px; color: var(--muted); font-size: .85rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; }
   footer a { color: inherit; }
   :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .sitenav{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding-top:1rem;font:italic 1rem/1.3 "IM Fell English","Palatino Linotype",Palatino,Georgia,serif;color:var(--muted)}
+  .sitenav{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;padding-top:1rem;font:italic 1rem/1.3 "Fondamento", "Palatino Linotype", Palatino, Georgia, serif;color:var(--muted)}
   .sitenav a{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
   .sitenav a:hover,.sitenav a:focus-visible{color:var(--fg);border-bottom-color:currentColor}
+  .ft-row, dialog.fb, dialog.fb h2 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif !important; }
+  .ft-btns button, .ft-btns a, .fb-open, .sh-grid a, .sh-grid button { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif !important; }
 </style>
 </head>
 <body>
@@ -790,7 +793,7 @@ function draw() {
   const y = m => H - (m - lo) / (hi - lo) * H, x = t => W - (now - t) / span * W;
   const fg = css('--fg'), muted = css('--muted'), line = css('--line');
   // note lines
-  g2.font = '11px Inter, system-ui, sans-serif'; g2.textBaseline = 'middle';
+  g2.font = '11px system-ui, sans-serif'; g2.textBaseline = 'middle';
   for (let m = Math.ceil(lo); m <= Math.floor(hi); m++) {
     const pc = ((m % 12) + 12) % 12; if (!(pc in NAMES)) continue;
     const yy = Math.round(y(m)) + 0.5;
