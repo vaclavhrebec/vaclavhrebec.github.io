@@ -11,7 +11,7 @@
 (function () {
   const TO = 'vaclavhrebec2000@gmail.com';
   const ENDPOINT = 'https://formsubmit.co/ajax/' + TO;
-  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'Idea for a new room'];
+  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'The Morphology of Music', 'Idea for a new room'];
   /* translations: the page's <html lang> decides (en, de, fr, cs); topics are always sent in English */
   const L = {
     de: { 'Feedback & wishes': 'Feedback & Wünsche', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Einen Fehler gefunden, fehlt ein Choral, wünschen Sie sich eine neue Übung? Schreiben Sie mir – jede Nachricht hilft dem Projekt zu wachsen.',
@@ -19,23 +19,24 @@
       'Send it from your email app instead': 'Stattdessen aus Ihrer Mail-App senden', 'Please write a message.': 'Bitte schreiben Sie eine Nachricht.', 'Please check the email address.': 'Bitte prüfen Sie die E-Mail-Adresse.', 'Sending…': 'Wird gesendet …', 'Thank you! Your message has been sent.': 'Vielen Dank! Ihre Nachricht wurde gesendet.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte versuchen Sie es später erneut oder schreiben Sie an ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung oder schreiben Sie an ',
-      'General': 'Allgemein', 'Improvising canons': 'Kanons improvisieren', 'Guidonian hand': 'Guidonische Hand', 'Idea for a new room': 'Idee für einen neuen Raum' },
+      'General': 'Allgemein', 'Improvising canons': 'Kanons improvisieren', 'Guidonian hand': 'Guidonische Hand', 'Idea for a new room': 'Idee für einen neuen Raum', 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.': 'Einen Fehler gefunden, ein falsches Datum, fehlt ein Element oder Stil? Schreiben Sie mir – jede Nachricht hilft dem Archiv zu wachsen.' },
     fr: { 'Feedback & wishes': 'Remarques et souhaits', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Une erreur, un chant qui manque, l’envie d’un nouvel exercice ? Écrivez-moi – chaque message aide le projet à grandir.',
       'About': 'Sujet', 'Your message': 'Votre message', 'Name (optional)': 'Nom (facultatif)', 'Email (optional, for a reply)': 'E-mail (facultatif, pour une réponse)', 'or write directly:': 'ou directement à :', 'Send': 'Envoyer', 'Close': 'Fermer',
       'Send it from your email app instead': 'L’envoyer plutôt depuis votre application de messagerie', 'Please write a message.': 'Veuillez écrire un message.', 'Please check the email address.': 'Veuillez vérifier l’adresse e-mail.', 'Sending…': 'Envoi…', 'Thank you! Your message has been sent.': 'Merci ! Votre message a bien été envoyé.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Le message n’a pas pu être envoyé. Veuillez réessayer plus tard ou écrire à ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Le message n’a pas pu être envoyé. Veuillez vérifier votre connexion ou écrire à ',
-      'General': 'Général', 'Improvising canons': 'Improviser des canons', 'Guidonian hand': 'Main guidonienne', 'Idea for a new room': 'Idée pour une nouvelle salle' },
+      'General': 'Général', 'Improvising canons': 'Improviser des canons', 'Guidonian hand': 'Main guidonienne', 'Idea for a new room': 'Idée pour une nouvelle salle', 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.': 'Une erreur, une date fausse, un élément ou un style qui manque ? Écrivez-moi – chaque message aide le coffre à grandir.' },
     cs: { 'Feedback & wishes': 'Připomínky a přání', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Našli jste chybu, chybí vám chorál, přejete si nové cvičení? Napište mi – každá zpráva pomáhá projektu růst.',
       'About': 'Téma', 'Your message': 'Vaše zpráva', 'Name (optional)': 'Jméno (nepovinné)', 'Email (optional, for a reply)': 'E-mail (nepovinný, pro odpověď)', 'or write directly:': 'nebo přímo na:', 'Send': 'Odeslat', 'Close': 'Zavřít',
       'Send it from your email app instead': 'Odeslat místo toho z vaší e-mailové aplikace', 'Please write a message.': 'Napište prosím zprávu.', 'Please check the email address.': 'Zkontrolujte prosím e-mailovou adresu.', 'Sending…': 'Odesílám…', 'Thank you! Your message has been sent.': 'Děkuji! Vaše zpráva byla odeslána.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Zprávu se nepodařilo odeslat. Zkuste to prosím později nebo napište na ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Zprávu se nepodařilo odeslat. Zkontrolujte prosím připojení nebo napište na ',
-      'General': 'Obecné', 'Improvising canons': 'Improvizace kánonů', 'Guidonian hand': 'Guidonská ruka', 'Idea for a new room': 'Nápad na novou místnost' }
+      'General': 'Obecné', 'Improvising canons': 'Improvizace kánonů', 'Guidonian hand': 'Guidonská ruka', 'Idea for a new room': 'Nápad na novou místnost', 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.': 'Našli jste chybu, špatné datum, chybí vám prvek nebo styl? Napište mi – každá zpráva pomáhá archivu růst.' }
   };
   const tr = s => { const l = (document.documentElement.lang || 'en').slice(0, 2); return (L[l] && L[l][s]) || s; };
   const me = document.currentScript;
   const pageTopic = (me && me.dataset.topic) || 'General';
+  const INTRO = /\/morphology\//.test(location.pathname) ? 'Found a mistake, a wrong date, a missing element or style? Tell me — every message helps the vault grow.' : 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.';
 
   const css = `
   .fb-open{font:inherit;font-size:.9rem;cursor:pointer;background:none;border:1px solid var(--line,#e4ddd1);
@@ -72,7 +73,7 @@
     <form novalidate>
       <button type="button" class="x" aria-label="Close" data-tr-aria="Close">×</button>
       <h2 data-tr="Feedback & wishes">Feedback &amp; wishes</h2>
-      <p data-tr="Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.">Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.</p>
+      <p data-tr="${INTRO}">${INTRO}</p>
       <label><span data-tr="About">About</span><select name="topic">${TOPICS.map(t => `<option value="${t}" data-tr="${t}">${t}</option>`).join('')}</select></label>
       <label><span data-tr="Your message">Your message</span><textarea name="message" required maxlength="5000"></textarea></label>
       <div class="two">
@@ -161,26 +162,29 @@
     el.addEventListener('click', e => { e.preventDefault(); open(el.dataset.topic || pageTopic); }));
 
   /* ---------- closing row: feedback · share · support ---------- */
-  const EAR = /\/ear\//.test(location.pathname);
-  const SITE = EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
+  const EAR = /\/ear\//.test(location.pathname), MORPH = /\/morphology\//.test(location.pathname);
+  const SITE = MORPH ? 'The Morphology of Music' : EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
   const F = {
     de: { 'Do you find {s} useful?': 'Ist {s} für Sie nützlich?',
       'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Sagen Sie mir, was ich verbessern kann, teilen Sie es mit Freunden und Kollegen oder unterstützen Sie die Weiterentwicklung.',
       'Feedback': 'Feedback', 'Share': 'Teilen', 'Support': 'Unterstützen', 'Share this page': 'Diese Seite teilen',
       'Copy link': 'Link kopieren', 'Link copied.': 'Link kopiert.', 'Email': 'E-Mail', 'More…': 'Mehr …',
       'counterpoint and improvisation exercises in the browser': 'Übungen zu Kontrapunkt und Improvisation im Browser',
+      'musical elements and styles from plainchant to today, as linked notes, a graph and a timeline': 'Musikalische Elemente und Stile vom gregorianischen Choral bis heute – als verknüpfte Notizen, Graph und Zeitleiste',
       'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'Gehörbildung im Browser: Intervalle, Intonation, Vorzeichen, Rhythmus, Akkorde und Skalen' },
     fr: { 'Do you find {s} useful?': '{s} vous est utile ?',
       'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Dites-moi ce qu’il faudrait améliorer, partagez-le avec vos amis et collègues, ou soutenez son développement.',
       'Feedback': 'Remarques', 'Share': 'Partager', 'Support': 'Soutenir', 'Share this page': 'Partager cette page',
       'Copy link': 'Copier le lien', 'Link copied.': 'Lien copié.', 'Email': 'E-mail', 'More…': 'Plus…',
       'counterpoint and improvisation exercises in the browser': 'exercices de contrepoint et d’improvisation dans le navigateur',
+      'musical elements and styles from plainchant to today, as linked notes, a graph and a timeline': 'éléments et styles musicaux du plain-chant à nos jours, en notes reliées, graphe et frise chronologique',
       'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'formation de l’oreille dans le navigateur : intervalles, justesse, armures, rythme, accords et gammes' },
     cs: { 'Do you find {s} useful?': 'Je pro vás {s} užitečný?',
       'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Napište mi, co zlepšit, sdílejte ho s přáteli a kolegy, nebo podpořte jeho další rozvoj.',
       'Feedback': 'Připomínky', 'Share': 'Sdílet', 'Support': 'Podpořit', 'Share this page': 'Sdílet tuto stránku',
       'Copy link': 'Kopírovat odkaz', 'Link copied.': 'Odkaz zkopírován.', 'Email': 'E-mail', 'More…': 'Další…',
       'counterpoint and improvisation exercises in the browser': 'cvičení kontrapunktu a improvizace v prohlížeči',
+      'musical elements and styles from plainchant to today, as linked notes, a graph and a timeline': 'hudební prvky a styly od gregoriánského chorálu po současnost jako propojené poznámky, graf a časová osa',
       'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales': 'sluchová výchova v prohlížeči: intervaly, intonace, předznamenání, rytmus, akordy a stupnice' }
   };
   const tf = s => { const l = (document.documentElement.lang || 'en').slice(0, 2); return ((F[l] && F[l][s]) || s).replace('{s}', SITE); };
@@ -209,7 +213,7 @@
   const st2 = document.createElement('style'); st2.textContent = fcss; document.head.appendChild(st2);
 
   const shareUrl = () => location.origin + location.pathname;
-  const shareText = () => SITE + ' – ' + tf(EAR ? 'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales' : 'counterpoint and improvisation exercises in the browser');
+  const shareText = () => SITE + ' – ' + tf(MORPH ? 'musical elements and styles from plainchant to today, as linked notes, a graph and a timeline' : EAR ? 'ear training in the browser: intervals, intonation, key signatures, rhythm, chords and scales' : 'counterpoint and improvisation exercises in the browser');
   const sh = document.createElement('dialog'); sh.className = 'fb sh';
   document.body.appendChild(sh);
   function openShare() {
