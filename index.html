@@ -952,9 +952,17 @@ const CONTACT_TO = 'vaclavhrebec2000@gmail.com';
       });
       const j = await r.json().catch(() => ({}));
       if (r.ok && String(j.success) === 'true') { f.reset(); show('Thank you, your message has been sent.', 'ok'); }
-      else show('Sorry, the message could not be sent. Please try again later.', 'err');
-    } catch (e) { show('Sorry, the message could not be sent. Please try again later.', 'err'); }
+      else { console.warn('contact', r.status, j); failed(); }
+    } catch (e) { failed(); }
     btn.disabled = false;
+    /* if the form service fails, the message can still go out from the visitor's own mail app */
+    function failed() {
+      show('Sorry, the message could not be sent. Please try again later.', 'err');
+      const a = document.createElement('a');
+      a.href = 'mailto:' + CONTACT_TO + '?subject=' + encodeURIComponent('Website message from ' + f.name.value.trim()) + '&body=' + encodeURIComponent(f.message.value.trim());
+      a.textContent = ({de: 'Stattdessen aus Ihrer Mail-App senden', fr: 'L’envoyer plutôt depuis votre application de messagerie', cs: 'Odeslat místo toho z vaší e-mailové aplikace'})[document.documentElement.lang] || 'Send it from your email app instead';
+      a.style.cssText = 'display:block;margin-top:6px;font-weight:600'; st.append(a);
+    }
   });
 })();
 </script>

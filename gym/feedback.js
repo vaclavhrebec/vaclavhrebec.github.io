@@ -16,19 +16,19 @@
   const L = {
     de: { 'Feedback & wishes': 'Feedback & Wünsche', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Einen Fehler gefunden, fehlt ein Choral, wünschen Sie sich eine neue Übung? Schreiben Sie mir – jede Nachricht hilft dem Projekt zu wachsen.',
       'About': 'Betreff', 'Your message': 'Ihre Nachricht', 'Name (optional)': 'Name (freiwillig)', 'Email (optional, for a reply)': 'E-Mail (freiwillig, für eine Antwort)', 'or write directly:': 'oder direkt an:', 'Send': 'Senden', 'Close': 'Schließen',
-      'Please write a message.': 'Bitte schreiben Sie eine Nachricht.', 'Please check the email address.': 'Bitte prüfen Sie die E-Mail-Adresse.', 'Sending…': 'Wird gesendet …', 'Thank you! Your message has been sent.': 'Vielen Dank! Ihre Nachricht wurde gesendet.',
+      'Send it from your email app instead': 'Stattdessen aus Ihrer Mail-App senden', 'Please write a message.': 'Bitte schreiben Sie eine Nachricht.', 'Please check the email address.': 'Bitte prüfen Sie die E-Mail-Adresse.', 'Sending…': 'Wird gesendet …', 'Thank you! Your message has been sent.': 'Vielen Dank! Ihre Nachricht wurde gesendet.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte versuchen Sie es später erneut oder schreiben Sie an ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Die Nachricht konnte leider nicht gesendet werden. Bitte prüfen Sie Ihre Verbindung oder schreiben Sie an ',
       'General': 'Allgemein', 'Improvising canons': 'Kanons improvisieren', 'Guidonian hand': 'Guidonische Hand', 'Idea for a new room': 'Idee für einen neuen Raum' },
     fr: { 'Feedback & wishes': 'Remarques et souhaits', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Une erreur, un chant qui manque, l’envie d’un nouvel exercice ? Écrivez-moi – chaque message aide le projet à grandir.',
       'About': 'Sujet', 'Your message': 'Votre message', 'Name (optional)': 'Nom (facultatif)', 'Email (optional, for a reply)': 'E-mail (facultatif, pour une réponse)', 'or write directly:': 'ou directement à :', 'Send': 'Envoyer', 'Close': 'Fermer',
-      'Please write a message.': 'Veuillez écrire un message.', 'Please check the email address.': 'Veuillez vérifier l’adresse e-mail.', 'Sending…': 'Envoi…', 'Thank you! Your message has been sent.': 'Merci ! Votre message a bien été envoyé.',
+      'Send it from your email app instead': 'L’envoyer plutôt depuis votre application de messagerie', 'Please write a message.': 'Veuillez écrire un message.', 'Please check the email address.': 'Veuillez vérifier l’adresse e-mail.', 'Sending…': 'Envoi…', 'Thank you! Your message has been sent.': 'Merci ! Votre message a bien été envoyé.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Le message n’a pas pu être envoyé. Veuillez réessayer plus tard ou écrire à ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Le message n’a pas pu être envoyé. Veuillez vérifier votre connexion ou écrire à ',
       'General': 'Général', 'Improvising canons': 'Improviser des canons', 'Guidonian hand': 'Main guidonienne', 'Idea for a new room': 'Idée pour une nouvelle salle' },
     cs: { 'Feedback & wishes': 'Připomínky a přání', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Našli jste chybu, chybí vám chorál, přejete si nové cvičení? Napište mi – každá zpráva pomáhá projektu růst.',
       'About': 'Téma', 'Your message': 'Vaše zpráva', 'Name (optional)': 'Jméno (nepovinné)', 'Email (optional, for a reply)': 'E-mail (nepovinný, pro odpověď)', 'or write directly:': 'nebo přímo na:', 'Send': 'Odeslat', 'Close': 'Zavřít',
-      'Please write a message.': 'Napište prosím zprávu.', 'Please check the email address.': 'Zkontrolujte prosím e-mailovou adresu.', 'Sending…': 'Odesílám…', 'Thank you! Your message has been sent.': 'Děkuji! Vaše zpráva byla odeslána.',
+      'Send it from your email app instead': 'Odeslat místo toho z vaší e-mailové aplikace', 'Please write a message.': 'Napište prosím zprávu.', 'Please check the email address.': 'Zkontrolujte prosím e-mailovou adresu.', 'Sending…': 'Odesílám…', 'Thank you! Your message has been sent.': 'Děkuji! Vaše zpráva byla odeslána.',
       'Sorry, the message could not be sent. Please try again later, or write to ': 'Zprávu se nepodařilo odeslat. Zkuste to prosím později nebo napište na ',
       'Sorry, the message could not be sent. Please check your connection, or write to ': 'Zprávu se nepodařilo odeslat. Zkontrolujte prosím připojení nebo napište na ',
       'General': 'Obecné', 'Improvising canons': 'Improvizace kánonů', 'Guidonian hand': 'Guidonská ruka', 'Idea for a new room': 'Nápad na novou místnost' }
@@ -124,11 +124,19 @@
       const j = await r.json().catch(() => ({}));
       if (r.ok && String(j.success) === 'true') {
         E.message.value = ''; show(tr('Thank you! Your message has been sent.'), 'ok');
-      } else show(tr('Sorry, the message could not be sent. Please try again later, or write to ') + TO + '.', 'err');
+      } else { console.warn('feedback', r.status, j); fail(tr('Sorry, the message could not be sent. Please try again later, or write to ') + TO + '.'); }
     } catch (err) {
-      show(tr('Sorry, the message could not be sent. Please check your connection, or write to ') + TO + '.', 'err');
+      fail(tr('Sorry, the message could not be sent. Please check your connection, or write to ') + TO + '.');
     }
     btn.disabled = false;
+    /* if the form service fails, the same message can still go out from the visitor's own mail app */
+    function fail(t) {
+      show(t, 'err');
+      const a = document.createElement('a');
+      a.href = 'mailto:' + TO + '?subject=' + encodeURIComponent(body._subject) + '&body=' + encodeURIComponent(msg + '\n\n' + (E.name.value.trim() ? E.name.value.trim() + '\n' : '') + body.Page);
+      a.textContent = tr('Send it from your email app instead'); a.className = 'fb-mailto'; a.style.cssText = 'display:block;margin-top:8px;font-weight:600';
+      status.append(' ', a);
+    }
   });
 
   function makeButton() {
