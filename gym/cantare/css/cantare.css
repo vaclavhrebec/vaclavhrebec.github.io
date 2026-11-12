@@ -3,6 +3,7 @@
 @font-face { font-family: "Fondamento"; font-style: normal; font-weight: 400; font-display: swap; src: url(../fonts/fondamento-latin-ext-400-normal.woff2) format("woff2"); unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 /* Light: white page, tulip-red staves. Dark: black page, brighter red staves, white notes. */
 :root {
+  --fg: var(--ink); --muted: var(--soft); --card: var(--surface); --accent-ink: #fff;
   --bg: #ffffff; --surface: #ffffff; --raised: #ffffff; --line: #e4dfe0; --ink: #1b1416; --soft: #6f6568;
   --accent: #c9202f; --accent-ink: #ffffff; --note: #14100f; --staff: #c9202f; --hl: #e08a00; --sel: #1a6be0; --shadow: 0 6px 24px rgba(20, 10, 10, .10);
   --serif: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif;
@@ -181,3 +182,33 @@ svg.glyph .fill { fill: currentColor; } svg.glyph .hollow { fill: none; stroke: 
 .pop { position: fixed; top: 130px; right: 12px; width: min(380px, calc(100vw - 24px)); max-height: min(70vh, 640px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); padding: 10px; display: grid; gap: 10px; z-index: 30; }
 .pop[hidden] { display: none; }
 .pop .card { background: var(--raised); }
+
+/* language picker */
+.ib.lang { position: relative; padding: 0 .35rem; }
+.ib.lang select { appearance: none; -webkit-appearance: none; background: transparent; border: 0; color: inherit; font: inherit; font-size: .8rem; letter-spacing: .04em; padding: .5rem .2rem; cursor: pointer; }
+.ib.lang select option { color: #222; }
+
+/* closing row under the music */
+.stagefoot { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; align-items: center; justify-content: center; margin: 2.5rem 0 1rem; font-size: .82rem; color: var(--soft); }
+.stagefoot button, .stagefoot a { display: inline-flex; gap: .4rem; align-items: center; background: none; border: 0; padding: .3rem .2rem; font: inherit; color: inherit; cursor: pointer; text-decoration: none; }
+.stagefoot button:hover, .stagefoot a:hover { color: var(--accent); }
+.stagefoot svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+
+/* microphone */
+a.chip { text-decoration: none; color: inherit; display: inline-flex; align-items: center; }
+.tuner { display: grid; grid-template-columns: auto auto 1fr; gap: 4px 12px; align-items: center; padding: 6px 2px; }
+.tuner b { font: 600 28px/1 var(--serif); min-width: 3.4ch; }
+.tuner span { color: var(--soft); font-size: 13px; min-width: 5ch; }
+.meter { position: relative; height: 6px; background: var(--line); border-radius: 3px; }
+.meter .mid { position: absolute; left: 50%; top: -3px; width: 2px; height: 12px; background: var(--soft); opacity: .6; }
+.meter #micNeedle { position: absolute; top: -4px; left: 50%; width: 4px; height: 14px; margin-left: -2px; background: var(--accent); border-radius: 2px; opacity: .2; transition: left .08s linear; }
+.take { display: grid; gap: 8px; }
+.take label { color: var(--soft); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* the Guidonian hand over the page */
+.overlay { position: fixed; inset: 0; z-index: 60; background: var(--bg); display: flex; flex-direction: column; }
+.overlay[hidden] { display: none; }
+.ov-head { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.ov-head .grow { flex: 1; }
+.ov-head a { color: var(--soft); font-size: 13px; }
+.overlay iframe { flex: 1; width: 100%; border: 0; background: var(--bg); }

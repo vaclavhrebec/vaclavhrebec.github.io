@@ -1,6 +1,8 @@
 import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, midiOf, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont } from './engrave.js';
 import * as snd from './audio.js';
+import { createMic, describe } from './mic.js';
+import { tr, setLang, getLang, guessLang, LANGS, translatePage } from './i18n.js';
 
 const $ = s => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
@@ -12,9 +14,10 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript' };
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '' };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 setFont(prefs.font);
+setLang(prefs.lang || guessLang());
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
 const S = {
@@ -38,7 +41,7 @@ const TALEAE = [
   ['Three longas, perfect maxima', [2, 2, 2, 6]], ['Perfect longa, longa, brevis', [3, 2, 1]],
 ];
 
-const T = { hidden: 'improvise this voice' };
+const T = { get hidden() { return tr('improvise this voice'); } };
 
 /* ------------------------------------------------------------------ utilities */
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2600); }
@@ -49,35 +52,78 @@ function applyTheme() {
 }
 
 /* ------------------------------------------------------------------ library */
+let uid = 100000;
+const jrpCache = {};
+const jrpGet = path => (jrpCache[path] ||= fetch('jrp/' + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(e => { delete jrpCache[path]; throw e; }));
+const dispTitle = it => it.title;
+
 async function loadLibrary() {
   const [lib, tags] = await Promise.all([fetch('data/library.json').then(r => r.json()), fetch('data/taglines.json').then(r => r.json())]);
+  /* the Josquin Research Project: far too much to carry at once, so it is fetched piece by piece, only when opened */
+  lib.push({ group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and many more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1379 });
+  lib.push({ group: 'Canons from the Josquin Research Project', note: 'Every piece of that collection that contains a canon, sorted by the interval of the answer. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself.', lazy: 'canons.json', count: 216 });
   S.library = lib;
-  (function walk(list, trail) { list.forEach(g => { const t = [...trail, g.group]; (g.items || []).forEach(it => S.flat.push({ item: it, trail: t })); if (g.subs) walk(g.subs, t); }); })(lib, []);
+  (function walk(list, trail) { list.forEach(g => { const t = [...trail, g.group]; (g.items || []).forEach(it => { it.id ??= ++uid; S.flat.push({ item: it, trail: t }); }); if (g.subs) walk(g.subs, t); }); })(lib.filter(g => !g.lazy), []);
   $('#tagline').textContent = tags[Math.floor(Math.random() * tags.length)];
 }
 
+/* a lazy group fills itself in when it is first opened */
+async function fillLazy(g, trail) {
+  if (g.loaded || g.loading) return;
+  g.loading = true; g.failed = false;
+  try {
+    const data = await jrpGet(g.lazy);
+    if (g.lazy === 'index.json') g.subs = data.map(c => ({ group: c.group, note: c.note, lazy: 'c/' + c.code + '.json', count: c.count }));
+    else g.subs = data.subs || [];
+    if (data.items) g.items = data.items;
+    (function walk(list, t) { list.forEach(x => { const tt = [...t, x.group]; (x.items || []).forEach(it => { it.id ??= ++uid; S.flat.push({ item: it, trail: tt }); }); if (x.subs) walk(x.subs, tt); }); })(g.subs || [], trail);
+    (g.items || []).forEach(it => { it.id ??= ++uid; S.flat.push({ item: it, trail: [...trail, g.group] }); });
+    g.loaded = true;
+  } catch (e) { g.failed = true; }
+  g.loading = false;
+  renderTree($('#search').value);
+}
+
 const countIn = g => (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
+const openGroups = new Set();
+let jrpTitles = null;
 
 function renderTree(filter = '') {
   const q = filter.trim().toLowerCase();
   const tree = $('#tree');
   tree.textContent = '';
-  const make = (g, trail, open) => {
+  const make = (g, trail, first) => {
+    const key = [...trail, g.group].join('/');
     const items = (g.items || []).filter(it => !q || (it.title + ' ' + (it.desc || '')).toLowerCase().includes(q));
-    const subs = (g.subs || []).map(s => make(s, [...trail, g.group], open)).filter(Boolean);
-    if (!items.length && !subs.length && !g.lazy) return null;
-    if (g.lazy && q) return null;
-    const d = el('details', { class: trail.length ? 'sub' : '' }, el('summary', {}, g.group, el('small', {}, String(countIn(g) || g.count || ''))));
-    if (open || q) d.open = true;
+    const subs = (g.subs || []).map(s => make(s, [...trail, g.group])).filter(Boolean);
+    if (!items.length && !subs.length && !(g.lazy && !q)) return null;
+    const d = el('details', { class: trail.length ? 'sub' : '' }, el('summary', {}, g.group, el('small', {}, String(g.count || countIn(g) || ''))));
+    if (first || q || openGroups.has(key)) d.open = true;
+    d.addEventListener('toggle', () => { if (d.open) { openGroups.add(key); if (g.lazy && !g.loaded) fillLazy(g, trail); } else openGroups.delete(key); });
     if (g.note && !q) d.append(el('p', { class: 'gnote' }, g.note));
-    items.forEach(it => d.append(el('button', { class: 'item', 'data-id': it.id, 'aria-current': S.base && S.base.id === it.id ? 'true' : 'false', onclick: () => { openItem(it, [...trail, g.group]); if (innerWidth < 1100) closeDrawer('library'); } },
-      el('b', {}, it.title))));
-    subs.forEach(s => d.append(s));
-    if (g.lazy) d.append(el('p', { class: 'more' }, 'The Josquin Research Project collection (' + g.count + ' pieces) comes with the next version.'));
+    items.forEach(it => d.append(el('button', { class: 'item', 'data-id': it.id, 'aria-current': S.base && S.base.id === it.id ? 'true' : 'false', onclick: () => { openItem(it, [...trail, g.group]); if (innerWidth < 1100) closeDrawer('library'); } }, el('b', {}, it.title))));
+    subs.forEach(x => d.append(x));
+    if (g.lazy && !g.loaded) d.append(el('p', { class: 'more' }, g.failed ? tr('Could not load this part of the collection (offline?).') : g.loading || d.open ? tr('Loading…') : tr('Open to load.')));
     return d;
   };
   S.library.forEach((g, i) => { const d = make(g, [], i === 0); if (d) tree.append(d); });
-  if (!tree.children.length) tree.append(el('p', { class: 'more' }, 'Nothing found.'));
+  /* searching the whole Josquin collection by title and composer */
+  if (q.length >= 3) {
+    if (!jrpTitles) jrpGet('search.json').then(d => { jrpTitles = d; if ($('#search').value.trim().toLowerCase() === q) renderTree(filter); }).catch(() => {});
+    else {
+      const words = q.split(/\s+/);
+      const hits = jrpTitles.filter(([, t, c]) => { const h = (t + ' ' + c).toLowerCase(); return words.every(w => h.includes(w)); }).slice(0, 60);
+      if (hits.length) {
+        const d = el('details', {}, el('summary', {}, tr('Josquin Research Project'), el('small', {}, String(hits.length) + (hits.length === 60 ? '+' : ''))));
+        d.open = true;
+        hits.forEach(([id, t, c]) => d.append(el('button', { class: 'item', onclick: async () => {
+          try { const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid; openItem(it, ['Josquin Research Project', c]); if (innerWidth < 1100) closeDrawer('library'); } catch (e) { toast(tr('Could not load that piece (offline?).')); }
+        } }, el('b', {}, t))));
+        tree.append(d);
+      }
+    }
+  }
+  if (!tree.children.length) tree.append(el('p', { class: 'more' }, tr('Nothing found.')));
 }
 
 /* ------------------------------------------------------------------ opening a piece */
@@ -206,34 +252,34 @@ function buildTransform() {
 
   /* clefs */
   const multi = b.voices.length > 1;
-  const clefCard = card('Clef and staff');
+  const clefCard = card(tr('Clef and staff'));
   b.voices.forEach((v, i) => {
     const cur = S.clefs[i] || v.clef;
-    clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || 'Voice ' + (i + 1)) : 'Clef'),
-      el('select', { 'aria-label': 'Clef', onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_ORDER.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
+    clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || tr('Voice') + ' ' + (i + 1)) : tr('Clef')),
+      el('select', { 'aria-label': tr('Clef'), onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_ORDER.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
   });
-  clefCard.append(chipRow('Lines', [[0, 'Auto'], [4, '4'], [5, '5']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
-  clefCard.append(el('p', { class: 'hint' }, 'Plainchant stands on four lines, everything mensural on five; Auto follows that rule.'));
+  clefCard.append(chipRow(tr('Lines'), [[0, tr('Auto')], [4, '4'], [5, '5']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
+  clefCard.append(el('p', { class: 'hint' }, tr('Plainchant stands on four lines, everything mensural on five; Auto follows that rule.')));
 
   /* pitch */
   const range = (() => { const st = b.voices[0].notes.filter(n => !n.rest).map(n => n.step + S.shift); return st.length ? stepName(Math.min(...st)) + '–' + stepName(Math.max(...st)) : ''; })();
-  card('Pitch',
-    el('div', { class: 'row' }, el('label', {}, 'Step'), chip('−', false, () => { S.shift -= 1; redo(); }), chip('+', false, () => { S.shift += 1; redo(); }),
-      el('label', {}, 'Octave'), chip('−', false, () => { S.shift -= 7; redo(); }), chip('+', false, () => { S.shift += 7; redo(); }), chip('Reset', false, () => { S.shift = 0; redo(); })),
+  card(tr('Pitch'),
+    el('div', { class: 'row' }, el('label', {}, tr('Step')), chip('−', false, () => { S.shift -= 1; redo(); }), chip('+', false, () => { S.shift += 1; redo(); }),
+      el('label', {}, tr('Octave')), chip('−', false, () => { S.shift -= 7; redo(); }), chip('+', false, () => { S.shift += 7; redo(); }), chip(tr('Reset'), false, () => { S.shift = 0; redo(); })),
     el('p', { class: 'hint' }, `Melody now spans ${range}. Steps move every voice along the white keys, so the mode stays as it is.`));
 
   /* mensuration */
   const t = S.tempus || b.tempus;
   if (b.kind !== 'chant') {
-    card('Mensuration',
-      chipRow('Tempus', [['C', 'Imperfectum'], ['O', 'Perfectum']].map(([k, n]) => chip(n, t === k, () => { S.tempus = k; redo(); }))),
-      el('p', { class: 'hint' }, 'In tempus perfectum a brevis holds three semibreves.'));
+    card(tr('Mensuration'),
+      chipRow(tr('Tempus'), [['C', tr('Imperfectum')], ['O', tr('Perfectum')]].map(([k, n]) => chip(n, t === k, () => { S.tempus = k; redo(); }))),
+      el('p', { class: 'hint' }, tr('In tempus perfectum a brevis holds three semibreves.')));
   } else {
-    const looks = [['chant', 'Chant notation'], ['mensural', 'Mensural notation']];
-    card('Talea',
-      el('div', { class: 'row' }, chip('None', S.talea < 0, () => { S.talea = -1; redo(); })),
+    const looks = [['chant', tr('Chant notation')], ['mensural', tr('Mensural notation')]];
+    card(tr('Talea'),
+      el('div', { class: 'row' }, chip(tr('None'), S.talea < 0, () => { S.talea = -1; redo(); })),
       ...TALEAE.map(([name], i) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }))),
-      S.talea >= 0 ? chipRow('Shown as', looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
+      S.talea >= 0 ? chipRow(tr('Shown as'), looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
       el('p', { class: 'hint' }, 'A talea lays a repeating rhythmic pattern over the chant. Dotted values are perfect.'));
   }
 
@@ -246,23 +292,23 @@ function buildStudio() {
   const card = (title, ...kids) => { const d = el('section', { class: 'card' }, el('h3', {}, title), ...kids); c.append(d); return d; };
 
   /* sound */
-  card('Sound',
-    chipRow('Timbre', Object.entries(snd.TIMBRES).map(([k, v]) => chip(v.label, prefs.timbre === k, () => { prefs.timbre = k; savePrefs(); buildStudio(); }))),
-    el('div', { class: 'row' }, el('label', {}, 'Volume'), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
-    chipRow('Pitch', [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); buildStudio(); }))),
-    chipRow('Tactus', [chip('Click', prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip('Hand', prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); applyHand(); buildStudio(); })]));
+  card(tr('Sound'),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; savePrefs(); buildStudio(); }))),
+    el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
+    chipRow(tr('Pitch'), [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); buildStudio(); }))),
+    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); applyHand(); buildStudio(); })]));
 
   /* view */
-  card('View',
-    chipRow('Notation', [['manuscript', 'Manuscript'], ['bravura', 'Engraved']].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
-    chipRow('Layout', [['score', 'Score'], ['book', 'Choir book']].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
-    el('div', { class: 'row' }, el('label', {}, 'Size'), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
-    chipRow('Theme', [chip('Dark', prefs.theme === 'dark', () => { prefs.theme = 'dark'; savePrefs(); applyTheme(); buildStudio(); }), chip('Light', prefs.theme === 'light', () => { prefs.theme = 'light'; savePrefs(); applyTheme(); buildStudio(); })]));
+  card(tr('View'),
+    chipRow(tr('Notation'), [['manuscript', tr('Manuscript')], ['bravura', tr('Engraved')]].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
+    chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
+    el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
+    chipRow(tr('Theme'), [chip(tr('Dark'), prefs.theme === 'dark', () => { prefs.theme = 'dark'; savePrefs(); applyTheme(); buildStudio(); }), chip(tr('Light'), prefs.theme === 'light', () => { prefs.theme = 'light'; savePrefs(); applyTheme(); buildStudio(); })]));
 
-  card('Share', el('div', { class: 'row' }, chip('Copy link', false, async () => {
+  card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
     const url = location.origin + location.pathname + '#' + slug(b.title);
-    try { await navigator.clipboard.writeText(url); toast('Link copied'); } catch (e) { toast(url); }
-  }), chip('Print', false, () => window.print())));
+    try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
+  }), chip(tr('Print'), false, () => window.print())));
 }
 
 function buildVoiceChips() {
@@ -271,9 +317,9 @@ function buildVoiceChips() {
   if (S.base.voices.length < 2) return;
   S.base.voices.forEach((v, i) => {
     const set = st => () => { S.voice[i] = S.voice[i] === st ? 'on' : st; render(); buildVoiceChips(); if (S.playing) { /* sound follows at once */ } };
-    box.append(el('div', { class: 'vc' }, el('span', {}, v.name || 'Voice ' + (i + 1)),
-      el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: 'Seen, not heard: sing it from the notation', onclick: set('mute') }, 'Mute'),
-      el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: 'Neither seen nor heard: improvise it', onclick: set('hide') }, 'Hide')));
+    box.append(el('div', { class: 'vc' }, el('span', {}, v.name || tr('Voice') + ' ' + (i + 1)),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: tr('Seen, not heard: sing it from the notation'), onclick: set('mute') }, tr('Mute')),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: tr('Neither seen nor heard: improvise it'), onclick: set('hide') }, tr('Hide'))));
   });
 }
 
@@ -345,15 +391,15 @@ function buildEditTools() {
   const btn = (html, title, fn, o = {}) => { const b = el('button', { class: 'tbtn' + (o.on ? ' on' : ''), title, 'aria-label': title, disabled: !!o.dis, onclick: fn }); b.innerHTML = html; return b; };
   const grp = (...k) => el('div', { class: 'tb-group' }, ...k.flat());
   box.append(
-    grp(btn(ICON.undo, 'Undo', undo, { dis: !hist.undo.length }), btn(ICON.redo, 'Redo', redoEdit, { dis: !hist.redo.length })),
-    grp(btn(ICON.left, 'Previous note', () => EDIT.move(-1), { dis: !has }), btn(ICON.right, 'Next note', () => EDIT.move(1), { dis: !has }),
-      btn(ICON.up, 'Higher', () => EDIT.pitch(1), { dis: !has || n.rest }), btn(ICON.down, 'Lower', () => EDIT.pitch(-1), { dis: !has || n.rest })),
+    grp(btn(ICON.undo, tr('Undo'), undo, { dis: !hist.undo.length }), btn(ICON.redo, tr('Redo'), redoEdit, { dis: !hist.redo.length })),
+    grp(btn(ICON.left, tr('Previous note'), () => EDIT.move(-1), { dis: !has }), btn(ICON.right, tr('Next note'), () => EDIT.move(1), { dis: !has }),
+      btn(ICON.up, tr('Higher'), () => EDIT.pitch(1), { dis: !has || n.rest }), btn(ICON.down, tr('Lower'), () => EDIT.pitch(-1), { dis: !has || n.rest })),
     grp(['Mx', 'L', 'B', 'S', 'M', 'Sm', 'F'].map(v => btn(glyphIcon('note', v), VALUE_NAME[v], () => EDIT.value(v), { on: has && n.v === v, dis: !has }))),
-    grp(btn(glyphIcon('rest'), 'Rest', () => EDIT.rest(), { on: has && n.rest, dis: !has }), btn(ICON.dot, 'Dot', () => EDIT.dot(), { on: has && n.dot, dis: !has })),
-    grp([['b', 'Flat'], ['n', 'Natural'], ['#', 'Sharp']].map(([k, t]) => btn(glyphIcon('acc', k), t, () => EDIT.acc(k), { on: has && n.acc === k, dis: !has || n.rest }))),
-    grp(btn(ICON.plus, 'Add a note after this one', () => EDIT.add()), btn(ICON.trash, 'Delete', () => EDIT.del(), { dis: !has })),
+    grp(btn(glyphIcon('rest'), tr('Rest'), () => EDIT.rest(), { on: has && n.rest, dis: !has }), btn(ICON.dot, tr('Dot'), () => EDIT.dot(), { on: has && n.dot, dis: !has })),
+    grp([['b', tr('Flat')], ['n', tr('Natural')], ['#', tr('Sharp')]].map(([k, t]) => btn(glyphIcon('acc', k), t, () => EDIT.acc(k), { on: has && n.acc === k, dis: !has || n.rest }))),
+    grp(btn(ICON.plus, tr('Add a note after this one'), () => EDIT.add()), btn(ICON.trash, tr('Delete'), () => EDIT.del(), { dis: !has })),
   );
-  if (!has) box.append(el('span', { class: 'edit-hint' }, 'Tap a note to select it.'));
+  if (!has) box.append(el('span', { class: 'edit-hint' }, tr('Tap a note to select it.')));
 }
 
 $('#editBtn').addEventListener('click', () => {
@@ -404,6 +450,7 @@ function startPlayback() {
   let ei = 0, bi = Math.ceil(from / (S.piece.tempus === 'O' ? 6 : 4));
   const t0 = ctx.currentTime + .15;
   clock = { t0, from, k, end: p.end, ended: false };
+  recHook(ctx, t0, from);
   const beat = S.piece.tempus === 'O' && !p.talea ? 6 : 4;
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
@@ -423,6 +470,7 @@ function startPlayback() {
 
 function stopPlayback(keep) {
   clearInterval(timer); cancelAnimationFrame(raf);
+  recStop();
   clock = null;
   if (S.playing) setPlaying(false);
   S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
@@ -432,7 +480,7 @@ function stopPlayback(keep) {
 function setPlaying(on) {
   S.playing = on;
   $('#playIcon').innerHTML = on ? '<path d="M6 5h4.5v14H6zM13.500 5H18v14h-4.500z"/>' : '<path d="M7 4.500v15l12-7.500z"/>';
-  $('#play').setAttribute('aria-label', on ? 'Stop' : 'Play');
+  $('#play').setAttribute('aria-label', on ? tr('Stop') : tr('Play'));
 }
 
 let lastSys = -1, lastLeaf = -1;
@@ -504,6 +552,106 @@ document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click
 $('#toggleTheme').addEventListener('click', () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; savePrefs(); applyTheme(); if (S.base) buildStudio(); });
 $('#search').addEventListener('input', e => renderTree(e.target.value));
 
+/* ------------------------------------------------------------------ microphone and recording */
+const mic = createMic(() => snd.ensure());
+const rec = { me: false, listen: null, src: null };
+function micTone(midi) { const d = describe(midi, prefs.a4); return d; }
+mic.onFrame = (hit) => {
+  const nameEl = $('#micNote'), needle = $('#micNeedle'), cents = $('#micCents');
+  if (!nameEl) return;
+  if (!hit) { nameEl.textContent = '–'; cents.textContent = ''; needle.style.opacity = '.2'; needle.style.left = '50%'; return; }
+  const d = micTone(hit.midi);
+  nameEl.textContent = d.name; cents.textContent = (d.cents > 0 ? '+' : '') + d.cents + ' ¢';
+  needle.style.opacity = '1'; needle.style.left = (50 + Math.max(-50, Math.min(50, d.cents))) + '%';
+};
+mic.onTake = () => { buildMic(); toast(tr('Recording saved')); };
+mic.onRecState = () => buildMic();
+async function micToggle() {
+  if (mic.on) { mic.stop(); rec.me = false; buildMic(); $('#micBtn').classList.remove('on'); return; }
+  const r = await mic.start();
+  if (r === 'blocked') toast(tr('The microphone is blocked: allow it in the browser settings.'));
+  else if (r !== 'ok') toast(tr('This browser cannot use the microphone here.'));
+  $('#micBtn').classList.toggle('on', mic.on);
+  buildMic();
+}
+function buildMic() {
+  const pop = $('#micPop'); if (!pop) return;
+  pop.textContent = '';
+  const card = el('div', { class: 'card' });
+  card.append(el('div', { class: 'row' }, chip(tr(mic.on ? 'Close the microphone' : 'Open the microphone'), mic.on, micToggle)));
+  if (mic.on) {
+    card.append(el('div', { class: 'tuner' }, el('b', { id: 'micNote' }, '–'), el('span', { id: 'micCents' }), el('div', { class: 'meter' }, el('i', { class: 'mid' }), el('i', { id: 'micNeedle' }))));
+    card.append(el('div', { class: 'row' }, chip(tr('Record me') + (mic.recording ? ' · ' + tr('Recording…') : ''), rec.me, () => { rec.me = !rec.me; buildMic(); })));
+    card.append(el('p', { class: 'hint' }, tr('Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.')));
+  }
+  if (mic.take && mic.take.url) {
+    const t = mic.take;
+    const au = el('audio', { controls: true, src: t.url, style: 'width:100%' });
+    const ext = /mp4|aac/.test(t.mime) ? 'm4a' : /ogg/.test(t.mime) ? 'ogg' : 'webm';
+    card.append(el('div', { class: 'take' }, el('label', {}, tr('Your recording')), au,
+      el('div', { class: 'row' },
+        chip(tr('Play back'), false, () => listenBack(), { disabled: !t.buffer }),
+        el('a', { class: 'chip', href: t.url, download: 'cantare-' + slug(S.base?.title || 'recording').slice(0, 40) + '.' + ext }, tr('Download')),
+        chip(tr('Delete'), false, () => { URL.revokeObjectURL(t.url); mic.take = null; buildMic(); }))));
+  }
+  pop.append(card);
+}
+/* hear the take again with the music: the music starts where it did, the voice a little earlier by the latency */
+function listenBack() {
+  const t = mic.take; if (!t || !t.buffer) return;
+  stopPlayback(); rec.listen = t; S.startAt = t.from; startPlayback();
+}
+function recHook(ctx, t0, from) {
+  if (rec.listen) {
+    const t = rec.listen; rec.listen = null;
+    const s = t0 - (t.t0 - t.startCtx) - mic.latency(), now = ctx.currentTime;
+    const src = ctx.createBufferSource(); src.buffer = t.buffer;
+    const g = ctx.createGain(); g.gain.value = 1.4; src.connect(g); g.connect(ctx.destination);
+    if (s >= now) src.start(s); else if (now - s < t.buffer.duration) src.start(now, now - s);
+    rec.src = src;
+    return;
+  }
+  if (mic.on && rec.me) mic.beginTake(t0, from);
+}
+function recStop() {
+  if (rec.src) { try { rec.src.stop(); } catch (e) { /* ignore */ } rec.src = null; }
+  if (mic.recording) mic.endTake();
+}
+$('#micBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const pop = $('#micPop'); pop.hidden = !pop.hidden;
+  if (!pop.hidden) { buildMic(); const r = $('#toolbar').getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; }
+  $('#micBtn').setAttribute('aria-expanded', String(!pop.hidden));
+});
+document.addEventListener('click', e => { const pop = $('#micPop'); if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.chip')) { pop.hidden = true; $('#micBtn').setAttribute('aria-expanded', 'false'); } });
+
+/* Guidonian hand: the Gym's hand room, opened over the page so the camera works with the music still in view */
+$('#handBtn').addEventListener('click', () => {
+  const v = $('#handView'), f = $('#handFrame');
+  if (!f.getAttribute('src')) f.setAttribute('src', '../hand/');
+  v.hidden = false; stopPlayback();
+});
+$('#handClose').addEventListener('click', () => { $('#handView').hidden = true; });
+
+/* share */
+$('#footShare').addEventListener('click', async () => {
+  const url = location.href.split('#')[0] + location.hash, title = 'Cantare super librum';
+  try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
+  try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
+});
+
+/* interface language */
+function applyLang() {
+  translatePage();
+  if (S.base) { renderTree($('#search').value); buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips(); render(); }
+  $('#play').setAttribute('aria-label', tr(S.playing ? 'Stop' : 'Play'));
+}
+(function langPicker() {
+  const sel = $('#lang');
+  LANGS.forEach(([k, short, name]) => sel.append(el('option', { value: k, title: name, selected: k === getLang() }, short)));
+  sel.addEventListener('change', () => { prefs.lang = sel.value; setLang(prefs.lang); savePrefs(); applyLang(); });
+})();
+
 let rt = 0, lastW = 0;
 new ResizeObserver(() => {
   const w = paper.clientWidth + $('#stage').clientHeight * 1000;
@@ -514,6 +662,7 @@ new ResizeObserver(() => {
 /* ------------------------------------------------------------------ start */
 (async function start() {
   applyTheme();
+  translatePage();
   $('#hand').innerHTML = HAND;
   applyHand();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
@@ -528,4 +677,4 @@ new ResizeObserver(() => {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 
-window.cantare = { S, prefs };
+window.cantare = { S, prefs, openItem, jrpGet };

@@ -13,23 +13,27 @@
 </head>
 <body>
 <header class="bar">
-  <button class="ib" id="openLib" aria-label="Library" title="Library"><svg viewBox="0 0 24 24"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z" /></svg><span>Library</span></button>
+  <button class="ib" id="openLib" aria-label="Library" title="Library" data-i18n-title="Library"><svg viewBox="0 0 24 24"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z" /></svg><span data-i18n="Library">Library</span></button>
   <div class="brand"><a href="../" class="back" title="The Ultimate Counterpoint Gym">&larr; Gym</a><h1>Cantare <em>super librum</em></h1><p id="tagline"></p></div>
   <div class="grow"></div>
-  <button class="ib" id="toggleTheme" aria-label="Light or dark" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
-  <button class="ib" id="openStudio" aria-label="Studio" title="Studio"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/></svg><span>Studio</span></button>
+  <label class="ib lang" title="Language" data-i18n-title="Language"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.500 0 18M12 3c-3 3.500-3 14.500 0 18"/></svg><select id="lang" aria-label="Language"></select></label>
+  <button class="ib" id="toggleTheme" aria-label="Light / dark" title="Light / dark" data-i18n-title="Light / dark"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
+  <button class="ib" id="openStudio" aria-label="Studio" title="Studio" data-i18n-title="Studio"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/></svg><span data-i18n="Studio">Studio</span></button>
 </header>
 
 <div class="toolbar" id="toolbar">
-  <div class="tb-group"><button class="tbtn" id="editBtn" aria-pressed="false" title="Edit the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20l1-4L16.500 4.500a2.100 2.100 0 0 1 3 3L8 19z"/><path d="M14.500 6.500l3 3"/></svg><span>Edit</span></button></div>
+  <div class="tb-group"><button class="tbtn" id="editBtn" aria-pressed="false" title="Edit the melody" data-i18n-title="Edit the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20l1-4L16.500 4.500a2.100 2.100 0 0 1 3 3L8 19z"/><path d="M14.500 6.500l3 3"/></svg><span data-i18n="Edit">Edit</span></button></div>
   <div id="editTools" class="edit-tools" hidden></div>
   <span class="sp"></span>
-  <div class="tb-group"><button class="tbtn" id="transformBtn" aria-expanded="false" title="Transform the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 12-4.500l2 2"/><path d="M19 4v4.500h-4.500"/><path d="M19 13a7 7 0 0 1-12 4.500l-2-2"/><path d="M5 20v-4.500h4.500"/><path d="M12 10l2 2-2 2-2-2z"/></svg><span>Transform</span></button></div>
+  <div class="tb-group"><button class="tbtn" id="handBtn" title="Guidonian hand" data-i18n-title="Guidonian hand"><svg class="ico" viewBox="0 0 24 24"><path d="M8 13V5.500a1.500 1.500 0 0 1 3 0V11M11 10V4a1.500 1.500 0 0 1 3 0v6M14 10V5.500a1.500 1.500 0 0 1 3 0V12M17 10.500a1.500 1.500 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a6 6 0 0 1-4.600-2.200L4 15.500a1.600 1.600 0 0 1 2.400-2L8 15"/></svg><span data-i18n="Guidonian hand">Guidonian hand</span></button></div>
+  <div class="tb-group"><button class="tbtn" id="micBtn" aria-expanded="false" title="Microphone" data-i18n-title="Microphone"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.500 11a6.500 6.500 0 0 0 13 0M12 17.500V21M9 21h6"/></svg><span data-i18n="Microphone">Microphone</span></button></div>
+  <div class="tb-group"><button class="tbtn" id="transformBtn" aria-expanded="false" title="Transform the melody" data-i18n-title="Transform the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 12-4.500l2 2"/><path d="M19 4v4.500h-4.500"/><path d="M19 13a7 7 0 0 1-12 4.500l-2-2"/><path d="M5 20v-4.500h4.500"/><path d="M12 10l2 2-2 2-2-2z"/></svg><span data-i18n="Transform">Transform</span></button></div>
+  <div class="pop" id="micPop" hidden></div>
   <div class="pop" id="transformPop" hidden></div>
 </div>
 <div class="shell">
   <aside class="drawer left" id="library" aria-label="Library">
-    <div class="drawer-head"><input id="search" type="search" placeholder="Search the library" autocomplete="off"><button class="x" data-close="library" aria-label="Close">&times;</button></div>
+    <div class="drawer-head"><input id="search" type="search" placeholder="Search the library" data-i18n-ph="Search the library" autocomplete="off"><button class="x" data-close="library" aria-label="Close" data-i18n-title="Close">&times;</button></div>
     <div class="tree" id="tree"></div>
   </aside>
 
@@ -40,11 +44,13 @@
       <p class="note" id="note"></p>
     </section>
     <div class="paper" id="paper" aria-live="polite"></div>
-    <nav class="pager" id="pager" hidden><button id="prevLeaf" aria-label="Previous leaf">&lsaquo;</button><span id="leafNo"></span><button id="nextLeaf" aria-label="Next leaf">&rsaquo;</button></nav>
+    <footer class="stagefoot" id="stagefoot"><button type="button" id="footFeedback" data-feedback-open data-topic="Cantare super librum"><span data-i18n="Feedback">Feedback</span></button><button type="button" id="footShare"><span data-i18n="Share">Share</span></button><a id="footCoffee" href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2.500 2.500 0 0 1 0 5h-2M7 3v3M10 3v3M13 3v3"/></svg><span data-i18n="Buy me a coffee">Buy me a coffee</span></a></footer>
+    <div data-foot-slot hidden></div>
+    <nav class="pager" id="pager" hidden><button id="prevLeaf" aria-label="Previous leaf" data-i18n-title="Previous leaf">&lsaquo;</button><span id="leafNo"></span><button id="nextLeaf" aria-label="Next leaf" data-i18n-title="Next leaf">&rsaquo;</button></nav>
   </main>
 
   <aside class="drawer right" id="studio" aria-label="Studio">
-    <div class="drawer-head"><strong>Studio</strong><button class="x" data-close="studio" aria-label="Close">&times;</button></div>
+    <div class="drawer-head"><strong data-i18n="Studio">Studio</strong><button class="x" data-close="studio" aria-label="Close" data-i18n-title="Close">&times;</button></div>
     <div class="cards" id="cards"></div>
   </aside>
 </div>
@@ -52,10 +58,11 @@
 <footer class="dock" id="dock">
   <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12-7.5z"/></svg></button>
   <div class="tactus" id="tactusBox" title="Tactus"><svg viewBox="0 0 64 72" id="hand" aria-hidden="true"></svg></div>
-  <label class="tempo"><span>Tactus <b id="bpm">52</b></span><input type="range" id="tempo" min="30" max="110" value="52"></label>
+  <label class="tempo"><span><span data-i18n="Tactus">Tactus</span> <b id="bpm">52</b></span><input type="range" id="tempo" min="30" max="110" value="52"></label>
   <div class="voices" id="voiceChips"></div>
 </footer>
 
+<div class="overlay" id="handView" hidden role="dialog" aria-label="Guidonian hand"><div class="ov-head"><strong data-i18n="Guidonian hand">Guidonian hand</strong><span class="grow"></span><a id="handFull" href="../hand/" target="_blank" rel="noopener" data-i18n="Open in a full page">Open in a full page</a><button class="x" id="handClose" aria-label="Close" data-i18n-title="Close">&times;</button></div><iframe id="handFrame" title="Guidonian hand" allow="camera; fullscreen"></iframe></div>
 <div class="toast" id="toast" role="status"></div>
 <script type="module" src="js/app.js"></script>
 <script src="../feedback.js" data-topic="Cantare super librum" defer></script>
