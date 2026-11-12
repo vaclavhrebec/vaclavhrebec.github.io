@@ -2,13 +2,15 @@
    Every ELEMENT is one note. Dates are approximate and mean:
      first  – earliest clear instances in surviving sources
      common – becomes a normal feature of the repertory named in "scope"
-     fade   – stops being normal (it may survive as an archaism); null = still current in 1750
-   Every STYLE is a combination of elements. Links inside text: [[id]] or [[id|shown text]].
+     fade   – stops being normal (it may survive as an archaism); null = still in use today
+   Every STYLE is a combination of elements (to: null = still alive). Links inside text: [[id]] or [[id|shown text]].
+   More elements and styles are added by the files vault-*.js, loaded after this one.
    To correct a date or add a note, edit this file only. */
 window.VAULT = {
   folders: {
-    texture: 'Texture & voices', cadence: 'Cadence & sonority', counterpoint: 'Counterpoint & dissonance',
-    rhythm: 'Rhythm & notation', form: 'Form & genre', pitch: 'Pitch, mode & tuning', practice: 'Performance practice'
+    texture: 'Texture & voices', harmony: 'Harmony & tonality', cadence: 'Cadence & sonority', counterpoint: 'Counterpoint & dissonance',
+    rhythm: 'Rhythm, metre & notation', form: 'Form & genre', pitch: 'Pitch, scale & tuning', timbre: 'Instruments, timbre & technology',
+    practice: 'Performance practice', popular: 'Jazz & popular idioms'
   },
 
   elements: [
@@ -26,7 +28,7 @@ window.VAULT = {
       scope: 'Guido of Arezzo, Epistola de ignoto cantu (c.1030); taught until the 17th century',
       text: 'The six syllables ut re mi fa sol la, placed on C, F and G (natural, soft and hard hexachord), and the Guidonian hand on which they are learned. *Mi–fa* is always the semitone, which is how singers found where the half step lies and where [[musica-ficta]] was needed. Practised in the Gym’s Guidonian hand room.',
       link: {href: '../gym/', label: 'Train the Guidonian hand in the Gym'}},
-    {id: 'church-modes', title: 'Eight church modes', folder: 'pitch', first: 800, common: 900, fade: 1700,
+    {id: 'church-modes', title: 'Eight church modes', folder: 'harmony', first: 800, common: 900, fade: 1700,
       scope: 'Carolingian theory (Alia musica, Hucbald); Glarean adds four modes in 1547',
       text: 'Final and range define a melody: four finals (D, E, F, G), each authentic and plagal. Polyphony is composed *in* a mode until the late 17th century, when [[tonality]] takes over. Glarean’s Dodecachordon (1547) adds Aeolian and Ionian, i.e. the later minor and major.'},
     {id: 'musica-ficta', title: 'Musica ficta', folder: 'pitch', first: 1300, common: 1320, fade: 1600,
@@ -36,20 +38,20 @@ window.VAULT = {
       scope: 'theory and organs of the Middle Ages',
       text: 'Pure fifths, wide thirds (81:64). Thirds and sixths sound restless and need to move – which fits a style where they are only passing [[open-final|towards an open fifth or octave]]. Hear it on the Ear Trainer’s Tuning page.',
       link: {href: '../ear/tuning/', label: 'Hear it in the Ear Trainer'}},
-    {id: 'meantone', title: 'Meantone temperament', folder: 'pitch', first: 1480, common: 1520, fade: 1750,
+    {id: 'meantone', title: 'Meantone temperament', folder: 'pitch', first: 1480, common: 1520, fade: 1800,
       scope: 'keyboards; Pietro Aron, Toscanello (1523); Salinas (1577) gives the exact ¼ comma',
       text: 'Pure major thirds at the cost of slightly narrow fifths. It arrives together with the full triad as a sound to rest on – the [[picardy-third]] and the [[four-voice|four- and five-voice]] texture make the third a stable consonance, and keyboards are retuned to match.',
       link: {href: '../ear/tuning/', label: 'Hear it in the Ear Trainer'}},
-    {id: 'well-temperament', title: 'Well temperament', folder: 'pitch', first: 1680, common: 1700, fade: null,
+    {id: 'well-temperament', title: 'Well temperament', folder: 'pitch', first: 1680, common: 1700, fade: 1850,
       scope: 'Werckmeister (1691), Neidhardt (1724), Vallotti; German and Italian keyboards',
       text: 'All keys playable but not identical. Needed once [[tonality]] travels through remote keys; each key keeps its own colour.',
       link: {href: '../ear/tuning/', label: 'Hear it in the Ear Trainer'}},
-    {id: 'chromaticism', title: 'Chromatic writing', folder: 'pitch', first: 1550, common: 1580, fade: null,
+    {id: 'chromaticism', title: 'Chromatic writing', folder: 'harmony', first: 1550, common: 1580, fade: null,
       scope: 'Italian madrigal; Vicentino, L’antica musica (1555); Rore, Marenzio, Gesualdo',
       text: 'Written-out chromatic semitones and remote triads used for expression, mostly for [[word-painting]]. Vicentino even builds an archicembalo with 31 notes per octave.'},
-    {id: 'tonality', title: 'Major–minor tonality', folder: 'pitch', first: 1650, common: 1690, fade: null,
+    {id: 'tonality', title: 'Major–minor tonality', folder: 'harmony', first: 1650, common: 1690, fade: null,
       scope: 'Corelli’s generation; Rameau’s Traité (1722) theorises it',
-      text: 'Two modes, major and minor, transposable to every degree; harmony driven by the bass progression V–I ([[bass-cadence]]) and by modulation to related keys. It grows out of [[basso-continuo]] practice and replaces the [[church-modes]].'},
+      text: 'Two modes, major and minor, transposable to every degree; harmony driven by the bass progression V–I ([[bass-cadence]]) and by modulation to related keys. It grows out of [[basso-continuo]] practice and replaces the [[church-modes]]. Stretched by [[chromatic-mediants]] and [[tristan-chromaticism]], suspended in [[free-atonality]], it still governs most [[verse-chorus|popular song]] today.'},
 
     /* ---------- texture and voices ---------- */
     {id: 'parallel-organum', title: 'Parallel organum', folder: 'texture', first: 850, common: 900, fade: 1100,
@@ -101,10 +103,10 @@ window.VAULT = {
     {id: 'cori-spezzati', title: 'Cori spezzati (polychoral writing)', folder: 'texture', first: 1550, common: 1580, fade: 1650,
       scope: 'Willaert’s Salmi spezzati (1550), Andrea and Giovanni Gabrieli in Venice (Sacrae symphoniae 1597)',
       text: 'Two or more choirs placed apart, answering each other and joining in [[homophony]]. Leads directly to the concertato style and the [[basso-continuo]].'},
-    {id: 'basso-continuo', title: 'Basso continuo', folder: 'texture', first: 1600, common: 1620, fade: null,
+    {id: 'basso-continuo', title: 'Basso continuo', folder: 'texture', first: 1600, common: 1620, fade: 1800,
       scope: 'Viadana, Cento concerti ecclesiastici (1602); Peri and Caccini',
       text: 'A bass line realised by keyboard, lute or theorbo with chords. The texture becomes melody plus bass, the harmony is thought from the bass, and [[tonality]] follows.'},
-    {id: 'monody', title: 'Monody & recitative', folder: 'texture', first: 1600, common: 1610, fade: null,
+    {id: 'monody', title: 'Monody & recitative', folder: 'texture', first: 1600, common: 1610, fade: 1900,
       scope: 'Florentine Camerata; Peri, Euridice (1600); Caccini, Le nuove musiche (1602)',
       text: 'One voice over the [[basso-continuo]], declaiming the text with the freedom of speech. Ends the dominance of the polyphonic texture in secular music.'},
 
@@ -124,10 +126,10 @@ window.VAULT = {
     {id: 'bass-cadence', title: 'Bass cadence (fifth down, V–I)', folder: 'cadence', first: 1440, common: 1470, fade: null,
       scope: 'with the [[contratenor-bassus]]; in theory Tinctoris (1477), later the clausula basizans',
       text: 'The lowest voice falls a fifth (or rises a fourth) under the tenor’s step down. The harmony of the cadence is now carried by the bass – the root of [[tonality]].'},
-    {id: 'picardy-third', title: 'Major third in the final chord (Picardy third)', folder: 'cadence', first: 1450, common: 1530, fade: null,
+    {id: 'picardy-third', title: 'Major third in the final chord (Picardy third)', folder: 'cadence', first: 1450, common: 1530, fade: 1780,
       scope: 'first occasionally in 4+ voices; normal in 5–6 voices from c.1530; standard by c.1580; name from Rousseau (1768)',
-      text: 'The final chord includes a **major** third, even in minor-mode pieces. It appears first in pieces for **four or more voices**, where a voice is free to take the third instead of doubling the octave or fifth – a by-product of the [[four-voice]] and [[five-plus-voices]] texture and of [[meantone]] tuning, in which the third is sweet. By the late 16th century it is the normal ending, and it remains the normal ending of minor-mode pieces into the 18th century. Before it: the [[open-final]].'},
-    {id: 'full-triad', title: 'The triad as basic sonority', folder: 'cadence', first: 1430, common: 1480, fade: null,
+      text: 'The final chord includes a **major** third, even in minor-mode pieces. It appears first in pieces for **four or more voices**, where a voice is free to take the third instead of doubling the octave or fifth – a by-product of the [[four-voice]] and [[five-plus-voices]] texture and of [[meantone]] tuning, in which the third is sweet. By the late 16th century it is the normal ending, and it remains the normal ending of minor-mode pieces into the 18th century; the [[galant]] and Classical style finally allow a piece in minor to end in minor. Before it: the [[open-final]].'},
+    {id: 'full-triad', title: 'The triad as basic sonority', folder: 'harmony', first: 1430, common: 1480, fade: null,
       scope: 'from the [[contenance-angloise]]; theorised by Zarlino (1558) as the harmonia perfetta',
       text: 'Fifth plus third (5–3) as the normal sonority of a texture, rather than fifth and octave with occasional thirds. Zarlino calls it the *harmonia perfetta*; Lippius (1612) the *trias harmonica*.'},
 
@@ -199,7 +201,7 @@ window.VAULT = {
   ],
 
   styles: [
-    {id: 'chant-style', title: 'Gregorian chant', from: 750, to: 1750,
+    {id: 'chant-style', title: 'Gregorian chant', from: 750, to: null,
       elements: ['plainchant', 'church-modes', 'neumes', 'staff'],
       text: 'Single-line liturgical song, notated in neumes and from the 11th century on the staff. The material on which nearly all later styles in this vault are built.'},
     {id: 'early-organum', title: 'Early organum', from: 850, to: 1100,
@@ -250,7 +252,7 @@ window.VAULT = {
     {id: 'early-baroque', title: 'Early Baroque (seconda pratica)', from: 1600, to: 1660,
       elements: ['basso-continuo', 'monody', 'seconda-pratica', 'homophony', 'picardy-third', 'meantone', 'bass-cadence', 'full-triad', 'chromaticism'],
       text: 'Monteverdi, Caccini, Schütz, Frescobaldi: the text rules the harmony, one voice sings over a continuo bass, and dissonance becomes an affect.'},
-    {id: 'high-baroque', title: 'High Baroque', from: 1680, to: 1750,
+    {id: 'high-baroque', title: 'High Baroque', from: 1680, to: 1760,
       elements: ['tonality', 'basso-continuo', 'ritornello', 'fugue', 'well-temperament', 'bass-cadence', 'picardy-third', 'full-triad', 'suspension', 'four-voice'],
       text: 'Corelli, Vivaldi, Handel, Bach: major–minor tonality, ritornello form and fugue, all keys opened by well temperament. Minor-key pieces still often end with a major third.'}
   ]

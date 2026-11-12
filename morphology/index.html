@@ -4,15 +4,15 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Morphology of Music</title>
-<meta name="description" content="A vault of musical elements and the styles they combine into: when the Picardy third, imitation, the basso continuo or isorhythm appear, and how their combinations make a style. By Václav Hřebec.">
+<meta name="description" content="Nearly 200 musical elements and 55 styles from plainchant to hip hop: when the Picardy third, imitation, sonata form, the leitmotif or minimalist repetition appear, and how their combinations make a style. By Václav Hřebec.">
 <meta property="og:title" content="The Morphology of Music">
-<meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to Bach.">
+<meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to the present.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e1e1e'/%3E%3Cg stroke='%23a88bfa' stroke-width='1.6'%3E%3Cpath d='M9 10 22 8M9 10l7 13M22 8l-6 15M22 8l3 12'/%3E%3C/g%3E%3Cg fill='%23a88bfa'%3E%3Ccircle cx='9' cy='10' r='3'/%3E%3Ccircle cx='22' cy='8' r='2.4'/%3E%3Ccircle cx='16' cy='23' r='3.4'/%3E%3Ccircle cx='25' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E">
 <style>
 :root {
   --bg: #1e1e1e; --bg2: #262626; --bg3: #2f2f2f; --line: #363636; --fg: #dcddde; --muted: #999; --faint: #6b6b6b;
   --accent: #a88bfa; --accent2: #8a5cf5; --sel: rgba(138,92,245,.18); --hover: rgba(255,255,255,.06);
-  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a;
+  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a; --c-harmony: #f08a6c; --c-timbre: #a6d96a; --c-popular: #f2a4d8;
   --c-style: #a88bfa;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -21,14 +21,14 @@
 :root[data-theme="light"] {
   --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
   --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
-  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510;
+  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
   --c-style: #7b55e6; color-scheme: light;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
     --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
-    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510;
+    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
     --c-style: #7b55e6; color-scheme: light;
   }
 }
@@ -79,6 +79,7 @@ button { font: inherit; color: inherit; }
 .file.on { background: var(--sel); color: var(--fg); }
 .file .dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .file .yr { margin-left: auto; font: 11px var(--mono); color: var(--faint); }
+.folder .cnt { margin-left: auto; font: 11px var(--mono); color: var(--faint); font-weight: 400; }
 .file.hidden { display: none; }
 
 /* main */
@@ -131,12 +132,17 @@ button { font: inherit; color: inherit; }
 #graph.drag { cursor: grabbing; }
 .panel { position: absolute; top: 10px; right: 10px; width: 250px; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
 .panel h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.panel h4 button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
+.panel.min > :not(h4):not(.row) { display: none; }
+.panel.min { width: 230px; }
 .panel label { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
 .panel .row { display: flex; align-items: center; gap: 8px; }
 .panel input[type=range] { flex: 1; accent-color: var(--accent2); }
 .yr-big { font: 600 20px var(--mono); color: var(--fg); }
 .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
-.legend span { display: flex; align-items: center; gap: 5px; }
+.legend span, .legend button { display: flex; align-items: center; gap: 5px; border: 0; background: none; padding: 1px 3px; margin: 0 -3px; border-radius: 4px; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.legend button:hover { color: var(--fg); }
+.legend button[aria-pressed="true"] { background: var(--sel); color: var(--fg); }
 .legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
 .zoom { position: absolute; left: 10px; bottom: 10px; display: flex; gap: 4px; }
 .zoom button { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--bg2); border-radius: 7px; cursor: pointer; font-size: 17px; }
@@ -154,6 +160,8 @@ button { font: inherit; color: inherit; }
 #tlsvg .rowlab:hover { fill: var(--accent); }
 #tlsvg .grp { fill: var(--muted); font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
 #tlsvg .tick { fill: var(--faint); font-size: 11px; font-family: var(--mono); }
+#tlsvg .era { fill: var(--muted); font-size: 11.5px; font-style: italic; }
+.tl select { height: 28px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg2); color: var(--fg); font: 13px var(--sans); }
 #tlsvg .gl { stroke: var(--line); }
 #tlsvg .bar { cursor: pointer; }
 #tlsvg .dim { opacity: .18; }
@@ -237,19 +245,22 @@ button { font: inherit; color: inherit; }
       <canvas id="graph" aria-label="Graph of musical elements and styles. Use the file explorer or the timeline for a text version."></canvas>
       <div class="yearnow" id="yearNow"></div>
       <div class="panel">
-        <h4>Filters</h4>
+        <h4><button type="button" id="panelBtn" aria-expanded="true">Filters <span aria-hidden="true">▾</span></button></h4>
         <div class="row"><span class="yr-big" id="yrLab">all years</span><button class="playyr" id="yrPlay" title="Let the centuries pass">▶ Play</button></div>
-        <div class="row"><input type="range" id="yr" min="740" max="1760" step="5" value="1760" aria-label="Year"></div>
+        <div class="row"><input type="range" id="yr" min="0" max="1000" step="1" value="1000" aria-label="Year"></div>
         <label><input type="checkbox" id="showStyles" checked> Styles</label>
         <label><input type="checkbox" id="showLabels" checked> Labels</label>
+        <label title="Line the nodes up from left (early) to right (today)"><input type="checkbox" id="timeAxis"> Time axis</label>
         <div class="legend" id="legend"></div>
-        <p class="mini">Bright: established at that year. Faint: just emerging. Hidden: not yet there or gone. Drag nodes, scroll to zoom, click to open.</p>
+        <p class="mini">Bright: established in that year. Faint: just emerging. Hidden: not yet there, or gone. Drag nodes, scroll to zoom, click to open. Click a colour to show only that folder.</p>
       </div>
       <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Fit" title="Fit">⤢</button></div>
     </section>
     <section class="view" id="v-timeline" role="tabpanel" hidden>
       <div class="tl">
-        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="740" max="1760" step="5" value="1450" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b><span>· thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements</span></div>
+        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="310" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
+          <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option></select>
+          <span>thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
         <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
       </div>
     </section>
@@ -261,13 +272,27 @@ button { font: inherit; color: inherit; }
   </aside>
 </div>
 <script src="vault.js"></script>
+<script src="vault-renaissance.js"></script>
+<script src="vault-baroque.js"></script>
+<script src="vault-classical-romantic.js"></script>
+<script src="vault-modern.js"></script>
+<script src="vault-popular.js"></script>
+<script src="vault-crosslinks.js"></script>
 <script>
 (function () {
   'use strict';
   const V = window.VAULT;
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-  const MIN = 740, MAX = 1760, NOW = 1750;
+  const MIN = 700, NOW = Math.max(2026, new Date().getFullYear()), MAX = NOW + 14;
+  V.styles.forEach(st => { if (st.to == null) { st.to = NOW; st.alive = true; } });
+  /* the historical scale: early centuries compressed, every era gets room */
+  const KNOTS = [[MIN, 0], [1200, .15], [1450, .31], [1600, .43], [1750, .56], [1850, .68], [1900, .75], [1950, .84], [2000, .94], [MAX, 1]];
+  function tOf(y) { for (let i = 1; i < KNOTS.length; i++) if (y <= KNOTS[i][0]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return t0 + (y - y0) / (y1 - y0) * (t1 - t0); } return 1; }
+  function yOf(t) { for (let i = 1; i < KNOTS.length; i++) if (t <= KNOTS[i][1]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return Math.round(y0 + (t - t0) / (t1 - t0) * (y1 - y0)); } return MAX; }
+  const TICKS = [800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
+  const ERAS = [['Middle Ages', MIN, 1430], ['Renaissance', 1430, 1600], ['Baroque', 1600, 1750], ['Classical', 1750, 1820], ['Romantic', 1820, 1910], ['Modernism', 1910, 1975], ['Contemporary', 1975, NOW]];
+  const sliderYear = el => yOf(+el.value / 1000);
 
   /* ---------- the vault as nodes and links ---------- */
   const nodes = [], byId = {};
@@ -294,7 +319,7 @@ button { font: inherit; color: inherit; }
     if (n.fade && y > n.fade) return 0;
     return y < n.common ? 0.5 : 1;
   }
-  const yrs = n => n.kind === 'style' ? `${n.from}–${n.to === NOW ? '' : n.to}` : `${n.first}`;
+  const yrs = n => n.kind === 'style' ? `${n.from}–${n.alive ? 'today' : n.to}` : `${n.first}`;
 
   /* ---------- markup ---------- */
   function md(s) {
@@ -315,11 +340,16 @@ button { font: inherit; color: inherit; }
   const chev = '<svg class="chev" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   function tree() {
     const file = n => `<a class="file" href="#note/${n.id}" data-id="${n.id}"><span class="dot" style="background:var(${colorVar(n.folder)})"></span><span>${esc(n.title)}</span><span class="yr">${n.kind === 'style' ? n.from : n.first}</span></a>`;
-    let h = `<div class="folder"><button type="button">${chev}Styles</button><div class="kids">${V.styles.slice().sort((a, b) => a.from - b.from).map(s => file(byId[s.id])).join('')}</div></div>`;
+    const POP = new Set(['ragtime', 'early-jazz', 'swing-era', 'bebop', 'modal-jazz-style', 'free-jazz', 'rock', 'hip-hop', 'electronic-dance']);
+    const eraOf = st => POP.has(st.id) ? 'Jazz & popular' : st.from < 1430 ? 'Middle Ages' : st.from < 1600 ? 'Renaissance' : st.from < 1720 ? 'Baroque' : st.from < 1810 ? 'Galant & Classical' : st.from < 1900 ? 'Romantic' : '20th & 21st centuries';
+    const groups = ['Middle Ages', 'Renaissance', 'Baroque', 'Galant & Classical', 'Romantic', '20th & 21st centuries', 'Jazz & popular'];
+    let h = `<div class="folder"><button type="button">${chev}Styles <span class="cnt">${V.styles.length}</span></button><div class="kids">` + groups.map(g => {
+      const list = V.styles.filter(st => eraOf(st) === g).sort((a, b) => a.from - b.from);
+      return `<div class="folder closed"><button type="button">${chev}${g} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(st => file(byId[st.id])).join('')}</div></div>`; }).join('') + `</div></div>`;
     h += `<div class="folder"><button type="button">${chev}Elements</button><div class="kids">`;
     for (const f in V.folders) {
       const list = V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first);
-      h += `<div class="folder"><button type="button">${chev}${esc(V.folders[f])}</button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
+      h += `<div class="folder closed"><button type="button">${chev}${esc(V.folders[f])} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
     }
     h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this vault works</span></a></div></div>`;
     $('#tree').innerHTML = h;
@@ -332,14 +362,14 @@ button { font: inherit; color: inherit; }
       const hay = n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
       f.classList.toggle('hidden', !!q && !hay.includes(q));
     });
-    if (q) document.querySelectorAll('#tree .folder').forEach(f => f.classList.remove('closed'));
+    document.querySelectorAll('#tree .folder').forEach(f => { if (q) f.classList.toggle('closed', !f.querySelector('.file:not(.hidden)')); });
   });
 
   /* ---------- notes ---------- */
   function miniTimeline(ids, from, to) {
-    const W = 680, rowH = 17, top = 18, lab = 190, x = y => lab + (y - MIN) / (MAX - MIN) * (W - lab - 6);
+    const W = 680, rowH = 17, top = 18, lab = 190, x = y => lab + tOf(y) * (W - lab - 6);
     let h = `<svg viewBox="0 0 ${W} ${top + ids.length * rowH + 4}" role="img" aria-label="When these elements are present">`;
-    for (let c = 800; c <= 1700; c += 100) h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c}</text>`;
+    [800, 1200, 1450, 1600, 1750, 1850, 1900, 1950, 2000].forEach(c => { h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c}</text>`; });
     if (from != null) h += `<rect x="${x(from)}" y="12" width="${x(to) - x(from)}" height="${ids.length * rowH + 6}" fill="var(--sel)"/>`;
     ids.forEach((id, i) => {
       const n = byId[id], y = top + i * rowH, c = `var(${colorVar(n.folder)})`, end = n.fade || NOW;
@@ -351,11 +381,12 @@ button { font: inherit; color: inherit; }
   }
   function about() {
     return `<div class="crumb">About</div><h1>How this vault works</h1>
-      <p>A style is not a thing but a <b>combination</b>. This vault breaks music from plainchant to Bach into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
+      <p>A style is not a thing but a <b>combination</b>. This vault breaks the history of composed music – from plainchant to spectralism, from the troubadours to hip hop – into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
       <p>Take the <a class="il" href="#note/picardy-third" data-id="picardy-third">major third in the final chord</a>: it needs a texture of four or more voices and a tuning in which the third is sweet. So it cannot belong to the <a class="il style" href="#note/notre-dame" data-id="notre-dame">Notre Dame school</a>, it appears rarely in the <a class="il style" href="#note/ockeghem" data-id="ockeghem">Ockeghem generation</a> and becomes the rule with <a class="il style" href="#note/palestrina" data-id="palestrina">Palestrina</a>.</p>
-      <p>Open the <b>graph view</b> and move the year slider to watch elements appear and the styles form around them; the <b>timeline</b> shows every element as a bar; the <b>style finder</b> works backwards – pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
+      <p>Open the <b>graph view</b> and move the year slider – or press Play – to watch elements appear and the styles form around them; switch on <b>Time axis</b> to line everything up chronologically, and click a colour in the legend to follow one family of elements (harmony, rhythm, timbre…) through the centuries. The <b>timeline</b> shows every element as a bar, era by era. The <b>style finder</b> works backwards: pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
+      <p>Some elements return after centuries in a new guise – <a class="il" href="#note/parallel-chords" data-id="parallel-chords">Debussy’s parallel chords</a> after <a class="il" href="#note/parallel-organum" data-id="parallel-organum">parallel organum</a>, <a class="il" href="#note/swing" data-id="swing">swing</a> after <a class="il" href="#note/notes-inegales" data-id="notes-inegales">notes inégales</a>, <a class="il" href="#note/total-serialism" data-id="total-serialism">total serialism</a> after <a class="il" href="#note/isorhythm" data-id="isorhythm">isorhythm</a>. The links between such notes are the morphology: forms that grow, die back and sprout again.</p>
       <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the contact form on the homepage.</div>
-      <p class="small" style="color:var(--faint)">${V.elements.length} elements · ${V.styles.length} styles · ${edges.length} links · © 2026 Václav Hřebec</p>`;
+      <p class="small" style="color:var(--faint)">${V.elements.length} elements · ${V.styles.length} styles · ${edges.length} links · last updated November 2026 · © 2026 Václav Hřebec</p>`;
   }
   function renderNote(id) {
     const el = $('#note');
@@ -370,7 +401,7 @@ button { font: inherit; color: inherit; }
         <details class="props" open><summary>Properties</summary><dl>
         <dt>${ICON.cal}first</dt><dd>c. ${n.first}</dd>
         <dt>${ICON.cal}common</dt><dd>c. ${n.common}</dd>
-        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + n.fade : '— still current in 1750'}</dd>
+        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + n.fade : '— still in use today'}</dd>
         <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
         <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
         <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
@@ -382,7 +413,7 @@ button { font: inherit; color: inherit; }
       const els = n.elements.slice().sort((a, b) => byId[a].first - byId[b].first);
       h = `<div class="crumb">Styles</div><h1>${esc(n.title)}</h1>
         <details class="props" open><summary>Properties</summary><dl>
-        <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.to === NOW ? '1750 and beyond' : n.to}</dd>
+        <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.alive ? 'today' : n.to}</dd>
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
         <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
         </dl></details>
@@ -410,7 +441,10 @@ button { font: inherit; color: inherit; }
   }
 
   /* ---------- force-directed graph ---------- */
-  const G = {scale: 1, ox: 0, oy: 0, year: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true};
+  const G = {scale: 1, ox: 0, oy: 0, year: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true, axis: false, only: null};
+  const AXW = 2400;
+  const timeOf = n => n.kind === 'style' ? (n.from + Math.min(n.to, n.from + 80)) / 2 : n.first;
+  nodes.forEach(n => n.tx = (tOf(timeOf(n)) - .5) * AXW);
   nodes.forEach((n, i) => { const a = i * 2.399, r = 30 + 9 * Math.sqrt(i); n.x = Math.cos(a) * r; n.y = Math.sin(a) * r; n.vx = 0; n.vy = 0; n.r = n.kind === 'style' ? 6 + n.elements.length * 0.3 : 3 + Math.sqrt(n.deg) * 0.9; });
   const nb = {}; nodes.forEach(n => nb[n.id] = new Set()); edges.forEach(e => { nb[e.a].add(e.b); nb[e.b].add(e.a); });
   function tick(list, E, a) {
@@ -419,16 +453,22 @@ button { font: inherit; color: inherit; }
         if (d2 > 160000) continue; const f = 2600 * a / d2, d = Math.sqrt(d2); dx /= d; dy /= d; p.vx -= dx * f; p.vy -= dy * f; q.vx += dx * f; q.vy += dy * f; } }
     E.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return; let dx = q.x - p.x, dy = q.y - p.y, d = Math.sqrt(dx * dx + dy * dy) || 1;
       const L = e.type === 'style' ? 120 : 80, f = (d - L) * 0.022 * a; dx /= d; dy /= d; p.vx += dx * f; p.vy += dy * f; q.vx -= dx * f; q.vy -= dy * f; });
-    list.forEach(n => { n.vx -= n.x * 0.004 * a; n.vy -= n.y * 0.004 * a; if (n === G.drag) { n.vx = n.vy = 0; return; } n.x += n.vx; n.y += n.vy; n.vx *= .55; n.vy *= .55; });
+    list.forEach(n => { if (G.axis) { n.vx += (n.tx - n.x) * 0.08 * a; n.vy -= n.y * 0.004 * a; } else { n.vx -= n.x * 0.004 * a; n.vy -= n.y * 0.004 * a; } if (n === G.drag) { n.vx = n.vy = 0; return; } n.x += n.vx; n.y += n.vy; n.vx *= .55; n.vy *= .55; });
   }
   const cv = $('#graph'), cx = cv.getContext('2d');
   function sizeCanvas(c) { const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(1, r.width * d); c.height = Math.max(1, r.height * d); return {w: r.width, h: r.height, d}; }
   let dims = {w: 1, h: 1, d: 1};
-  function visible(n) { if (n.kind === 'style' && !G.styles) return false; return G.year >= MAX || presence(n, G.year) > 0; }
+  function visible(n) { if (n.kind === 'style' && !G.styles) return false; if (G.only && n.kind !== 'style' && n.folder !== G.only) return false; if (G.only && n.kind === 'style' && ![...nb[n.id]].some(i => byId[i].folder === G.only)) return false; return G.year >= MAX || presence(n, G.year) > 0; }
   function draw() {
     const {w, h, d} = dims; cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h);
     cx.save(); cx.translate(w / 2 + G.ox, h / 2 + G.oy); cx.scale(G.scale, G.scale);
     const hov = G.hover, hl = hov ? nb[hov.id] : null, line = css('--line'), fg = css('--fg'), muted = css('--muted'), acc = css('--accent');
+    if (G.axis) { cx.save(); cx.font = `${11 / G.scale}px ${css('--sans')}`; cx.textAlign = 'center';
+      const top = (-h / 2 - G.oy) / G.scale, bot = (h / 2 - G.oy) / G.scale;
+      ERAS.forEach(([name, a, b], i) => { const x0 = (tOf(a) - .5) * AXW, x1 = (tOf(b) - .5) * AXW; cx.globalAlpha = i % 2 ? .07 : .02; cx.fillStyle = muted; cx.fillRect(x0, top, x1 - x0, bot - top); cx.globalAlpha = .9; cx.font = `italic ${12 / G.scale}px ${css('--sans')}`; cx.fillText(name, (x0 + x1) / 2, top + 22 / G.scale); });
+      cx.font = `${10.5 / G.scale}px ${css('--mono')}`; cx.fillStyle = muted;
+      TICKS.forEach(c => { const xx = (tOf(c) - .5) * AXW; cx.globalAlpha = .75; cx.fillText(c, xx, bot - 12 / G.scale); });
+      cx.restore(); }
     cx.lineWidth = 1 / G.scale;
     edges.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return;
       const on = hov && (e.a === hov.id || e.b === hov.id);
@@ -448,7 +488,7 @@ button { font: inherit; color: inherit; }
         const fs = (n.kind === 'style' ? 12 : 10.5) / Math.max(G.scale, .7);
         cx.font = `${n.kind === 'style' ? 600 : 400} ${fs}px ${css('--sans')}`; cx.fillStyle = n.kind === 'style' ? fg : muted;
         cx.globalAlpha = (G.year >= MAX ? 1 : presence(n, G.year)) === 0.5 ? .55 : 1;
-        cx.fillText(n.title.length > 34 ? n.title.slice(0, 33) + '…' : n.title, n.x, n.y + n.r + 3 / G.scale); });
+        const tt = n.title.length > 34 ? n.title.slice(0, 33) + '…' : n.title; cx.lineJoin = 'round'; cx.strokeStyle = css('--bg'); cx.lineWidth = 3.5 / G.scale; cx.strokeText(tt, n.x, n.y + n.r + 3 / G.scale); cx.fillText(tt, n.x, n.y + n.r + 3 / G.scale); });
     }
     cx.restore(); cx.globalAlpha = 1;
   }
@@ -456,7 +496,7 @@ button { font: inherit; color: inherit; }
   function loop() { raf = 0; const list = nodes.filter(n => n.vis); if (G.alpha > .02) { tick(list, edges, G.alpha); G.alpha *= .985; } draw(); if (G.alpha > .02 || G.drag) raf = requestAnimationFrame(loop); }
   const kick = (a = .5) => { G.alpha = Math.max(G.alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
   function setYear(y) {
-    G.year = y; const all = y >= MAX;
+    G.year = y; const all = y >= MAX - 2;
     $('#yrLab').textContent = all ? 'all years' : 'c. ' + y; $('#yearNow').textContent = all ? '' : y;
     nodes.forEach(n => { const was = n.vis; n.vis = visible(n); if (n.vis && !was) { const nbv = [...nb[n.id]].map(i => byId[i]).find(m => m.vis); if (nbv) { n.x = nbv.x + (Math.random() - .5) * 30; n.y = nbv.y + (Math.random() - .5) * 30; } } });
     kick(.35);
@@ -477,14 +517,19 @@ button { font: inherit; color: inherit; }
   function fit() { const v = nodes.filter(n => n.vis); if (!v.length) return; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; v.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); });
     G.scale = Math.min(2, Math.max(.3, Math.min((dims.w - 60) / (x1 - x0 + 120), (dims.h - 60) / (y1 - y0 + 80)))); G.ox = -(x0 + x1) / 2 * G.scale; G.oy = -(y0 + y1) / 2 * G.scale; draw(); }
   $('#zfit').onclick = fit;
-  $('#yr').addEventListener('input', e => setYear(+e.target.value));
+  $('#panelBtn').onclick = () => { const m = document.querySelector('.panel').classList.toggle('min'); $('#panelBtn').setAttribute('aria-expanded', !m); $('#panelBtn span').textContent = m ? '▸' : '▾'; };
+  if (window.innerWidth <= 760) { document.querySelector('.panel').classList.add('min'); $('#panelBtn').setAttribute('aria-expanded', 'false'); $('#panelBtn span').textContent = '▸'; }
+  $('#yr').addEventListener('input', e => setYear(+e.target.value >= 1000 ? MAX : sliderYear(e.target)));
+  $('#timeAxis').onchange = e => { G.axis = e.target.checked; G.alpha = 1; kick(1); setTimeout(fit, 1200); };
   $('#showStyles').onchange = e => { G.styles = e.target.checked; setYear(G.year); };
   $('#showLabels').onchange = e => { G.labels = e.target.checked; draw(); };
   let playT = 0;
   $('#yrPlay').onclick = () => { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; return; }
-    let y = G.year >= MAX - 10 ? 760 : G.year; $('#yrPlay').textContent = '❚❚ Pause';
-    playT = setInterval(() => { y += 10; if (y > NOW) { y = MAX; clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; } $('#yr').value = y; setYear(y); }, 120); };
-  $('#legend').innerHTML = Object.keys(V.folders).map(f => `<span><i style="background:var(--c-${f})"></i>${esc(V.folders[f].split(' &')[0].split(',')[0])}</span>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
+    let t = G.year >= MAX - 2 ? 0.04 : tOf(G.year); $('#yrPlay').textContent = '❚❚ Pause';
+    playT = setInterval(() => { t += 0.004; if (t >= .995) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; $('#yr').value = 1000; setYear(MAX); return; } $('#yr').value = Math.round(t * 1000); setYear(yOf(t)); }, 110); };
+  const short = f => ({texture: 'Texture', harmony: 'Harmony', cadence: 'Cadence', counterpoint: 'Counterpoint', rhythm: 'Rhythm', form: 'Form', pitch: 'Pitch & tuning', timbre: 'Timbre & tech', practice: 'Practice', popular: 'Jazz & popular'})[f] || f;
+  $('#legend').innerHTML = Object.keys(V.folders).map(f => `<button type="button" data-only="${f}"><i style="background:var(--c-${f})"></i>${esc(short(f))}</button>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
+  $('#legend').querySelectorAll('[data-only]').forEach(b => b.onclick = () => { G.only = G.only === b.dataset.only ? null : b.dataset.only; $('#legend').querySelectorAll('[data-only]').forEach(x => x.setAttribute('aria-pressed', x.dataset.only === G.only)); setYear(G.year); setTimeout(fit, 700); });
   /* settle the layout once before showing it */
   nodes.forEach(n => n.vis = true); for (let i = 0; i < 600; i++) tick(nodes, edges, Math.max(.05, 1 - i / 600)); G.alpha = 0;
 
@@ -508,28 +553,32 @@ button { font: inherit; color: inherit; }
   /* ---------- timeline ---------- */
   let tlFocus = null;
   function timeline() {
-    const year = +$('#tlyr').value, W = Math.max(860, $('#v-timeline').clientWidth - 36), lab = 250, rowH = 19, x = y => lab + (y - MIN) / (MAX - MIN) * (W - lab - 10);
+    const year = sliderYear($('#tlyr')), only = $('#tlShow').value, narrow = window.innerWidth <= 760, W = Math.max(narrow ? 1100 : 860, $('#v-timeline').clientWidth - 36), lab = narrow ? 168 : 250, rowH = 19, x = y => lab + tOf(y) * (W - lab - 10);
     const rows = []; rows.push({grp: 'Styles'}); V.styles.slice().sort((a, b) => a.from - b.from).forEach(s => rows.push({n: byId[s.id]}));
-    for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    if (only === 'all') for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    else if (only !== 'styles') { rows.length = 0; rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
     const H = 26 + rows.length * rowH + 10; let h = '';
-    for (let c = 800; c <= 1700; c += 50) h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/>` + (c % 100 ? '' : `<text class="tick" x="${x(c)}" y="13" text-anchor="middle">${c}</text>`);
+    ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${name}</text>`; });
+    TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${c}</text>`; });
     const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
     rows.forEach((r, i) => { const y = 26 + i * rowH;
       if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
       const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
-      h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > 38 ? n.title.slice(0, 37) + '…' : n.title)}</text>`;
+      const cut = narrow ? 25 : 38; h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > cut ? n.title.slice(0, cut - 1) + '…' : n.title)}<title>${esc(n.title)}</title></text>`;
       if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${n.from}–${n.to}</title></rect>`;
       else { const end = n.fade || NOW;
         h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${n.first}</title></rect>`;
         h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${n.common}${n.fade ? '–' + n.fade : ''}</title></rect>`; }
       h += '</g>'; });
     h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
-    const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.style.height = H + 'px'; svg.innerHTML = h;
+    const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H + 22}`); svg.style.height = (H + 22) + 'px'; svg.innerHTML = h;
     svg.querySelectorAll('[data-id]').forEach(t => t.onclick = () => location.hash = 'note/' + t.dataset.id);
     svg.querySelectorAll('[data-style]').forEach(t => t.onclick = () => { tlFocus = tlFocus === t.dataset.style ? null : t.dataset.style; timeline(); });
     $('#tlyrLab').textContent = year;
   }
   $('#tlyr').addEventListener('input', timeline);
+  $('#tlShow').innerHTML += Object.keys(V.folders).map(f => `<option value="${f}">${esc(V.folders[f])}</option>`).join('');
+  $('#tlShow').addEventListener('change', timeline);
 
   /* ---------- style finder ---------- */
   const pick = new Set();
@@ -544,12 +593,12 @@ button { font: inherit; color: inherit; }
   function results() {
     const sel = [...pick].map(id => byId[id]);
     let h = '';
-    if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>.</p></div>`;
+    if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>, <button class="linkbtn" data-ex="sonata-form,alberti-bass,classical-orchestra">sonata form + Alberti bass + Classical orchestra</button> or <button class="linkbtn" data-ex="extended-tertian,parallel-chords,whole-tone">extended chords + parallel chords + whole-tone scale</button>.</p></div>`;
     else {
       const lo = Math.max(...sel.map(n => n.first)), hi = Math.min(...sel.map(n => n.fade || NOW));
       const loC = Math.max(...sel.map(n => n.common));
       h += `<div class="box"><h3>Possible period</h3>` + (lo <= hi
-        ? `<div class="era">c. ${lo}–${hi === NOW ? '1750' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
+        ? `<div class="era">c. ${lo}–${hi === NOW ? 'today' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
         : `<div class="era">—</div><p class="small">These elements never coexisted in the sources: one had faded before another appeared.</p>`) + `</div>`;
       const ranked = V.styles.map(s => { const inter = sel.filter(n => s.elements.includes(n.id)).length; const union = new Set(s.elements.concat([...pick])).size; return {s, inter, score: inter / union, cover: inter / sel.length}; })
         .filter(r => r.inter).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
