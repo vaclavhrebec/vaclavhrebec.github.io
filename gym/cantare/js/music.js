@@ -79,11 +79,67 @@ export function lengthOf(n, tempus) {
 }
 
 /* time stamps in minims */
+/* Mensural reading of one voice in tempus perfectum (O), in minims, by the rules of the theorists:
+   - a brevis next to a single semibreve (or its worth in smaller notes or rests) loses a third: imperfection,
+     preferably by what follows it (a parte post), otherwise by what precedes it (a parte ante);
+   - of two semibreves between breves, the second is doubled: alteration;
+   - a dot after a brevis or longa keeps it perfect; a dot after a semibreve followed by a semibreve or a longer
+     value separates the perfections (punctus divisionis); any other dot adds half the value.
+   Prolatio minor and modus imperfectus throughout. */
+const BIG = { Mx: 1, L: 1, B: 1 };
+function perfectValues(notes) {
+  const N = notes.length, v = new Array(N);
+  const dotted = i => notes[i].dot && !notes[i].rest;
+  const isDiv = i => dotted(i) && notes[i].v === 'S' && (i + 1 >= N || VALUE[notes[i + 1].v] >= 2);
+  for (let i = 0; i < N; i++) {
+    const m = VALUE[notes[i].v];
+    v[i] = BIG[notes[i].v] ? m * 1.5 : (dotted(i) && !isDiv(i) ? m * 1.5 : m);
+  }
+  const done = new Set();
+  const canImp = j => j !== null && !notes[j].rest && !dotted(j) && !done.has(j);
+  const imperfect = j => { done.add(j); v[j] -= 2; };
+  const alter = seg => {
+    const k = seg[seg.length - 1], n = notes[k];
+    if (seg.length < 2 || n.rest || n.v !== 'S' || dotted(k)) return false;
+    v[k] = 4; return true;
+  };
+  const rest6 = seg => (((Math.round(seg.reduce((a, k) => a + v[k], 0) * 8)) % 48) + 48) % 48 / 8;
+  let X = null, run = [];
+  const settle = Y => {
+    if (!run.length) return;
+    const segs = [[]];
+    run.forEach(k => { segs[segs.length - 1].push(k); if (isDiv(k)) segs.push([]); });
+    if (!segs[segs.length - 1].length) segs.pop();
+    if (segs.length === 1) {
+      const sg = segs[0], r = rest6(sg);
+      if (r === 2) { if (canImp(X)) imperfect(X); else if (canImp(Y)) imperfect(Y); }
+      else if (r === 4) { if (!alter(sg) && canImp(X) && canImp(Y)) { imperfect(X); imperfect(Y); } }
+    } else {
+      segs.forEach((sg, j) => {
+        const r = rest6(sg);
+        if (r === 2 && j === 0 && canImp(X)) { imperfect(X); return; }
+        if (r === 2 && j === segs.length - 1 && canImp(Y)) { imperfect(Y); return; }
+        if (r === 4) alter(sg);
+      });
+    }
+    run = [];
+  };
+  for (let i = 0; i < N; i++) {
+    if (BIG[notes[i].v]) { settle(i); X = i; } else run.push(i);
+  }
+  settle(null);
+  return v.map((x, i) => notes[i].col ? x * 2 / 3 : x);
+}
+
+/* tempus 'O' reads one voice by the mensural rules above; 'C' (and every voice of a polyphonic piece,
+   whose values are written out as they sound, perfect breves with a dot) counts the values as written. */
 export function stamp(notes, tempus) {
+  const vals = tempus === 'O' ? perfectValues(notes) : notes.map(n => lengthOf(n, 'C'));
   let t = 0;
-  for (const n of notes) { n.t = t; n.len = lengthOf(n, tempus); t += n.len; }
+  notes.forEach((n, i) => { n.t = t; n.len = vals[i]; t += n.len; });
   return t;
 }
+export const readingOf = p => (p.voices && p.voices.length > 1 ? 'C' : p.tempus);
 
 /* ---------- from library entry to piece ---------- */
 export function pieceFrom(item, trail) {
@@ -118,7 +174,7 @@ export function pieceFrom(item, trail) {
   }
   const DEFAULT_NAMES = { 2: ['Superius', 'Tenor'], 3: ['Superius', 'Tenor', 'Bassus'], 4: ['Superius', 'Altus', 'Tenor', 'Bassus'] };
   if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT_NAMES[voices.length]) voices.forEach((v, i) => { v.name = DEFAULT_NAMES[voices.length][i]; });
-  voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, voices.length > 1 ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
   const lines = kind === 'chant' ? 4 : 5;

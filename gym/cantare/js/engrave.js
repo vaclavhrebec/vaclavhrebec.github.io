@@ -185,6 +185,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     const { n, i } = e;
     const x = xs.at[k];
     if (n.rest) {
+      notesHere.push({ n, x, k, rest: true });
       body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${restGlyph(n, x + .55, restLine, style)}</g>`;
       return;
     }
@@ -213,17 +214,28 @@ function drawStaff(piece, vi, cols, xs, opts) {
   });
   /* text underlay */
   const base = Math.max(textY, lowest + 1.3);
-  notesHere.forEach(({ n, x, k }, j) => {
-    if (!n.text) return;
-    words += `<text x="${f(x - .5)}" y="${f(base)}" class="lyric">${esc(n.text)}</text>`;
+  notesHere.forEach(({ n, x, rest }, j) => {
+    if (rest || !n.text) return;
+    const tx = x - .5, tw = n.text.length * .62;
+    words += `<text x="${f(tx)}" y="${f(base)}" class="lyric">${esc(n.text)}</text>`;
+    /* the notes this syllable is held over, up to the next syllable or rest */
+    let last = null, next = null;
+    for (let m = j + 1; m < notesHere.length; m++) {
+      const e = notesHere[m];
+      if (e.rest) break;
+      if (e.n.text) { next = e; break; }
+      last = e;
+    }
     if (n.hyphen) {
-      const nxt = notesHere[j + 1];
-      const x2 = nxt ? nxt.x - .5 : xs.end;
-      const hx = (x - .5 + n.text.length * .62 + x2) / 2;
-      if (x2 - (x - .5) > n.text.length * .62 + .7) words += `<text x="${f(hx)}" y="${f(base)}" class="lyric" text-anchor="middle">-</text>`;
+      /* a dash between the syllables of one word, centred in the gap */
+      const x2 = next ? next.x - .5 : (last ? last.x + .6 : xs.end);
+      if (x2 - tx > tw + .7) words += `<text x="${f((tx + tw + x2) / 2)}" y="${f(base)}" class="lyric" text-anchor="middle">-</text>`;
+    } else if (last && last.x + .5 > tx + tw + .5) {
+      /* the last syllable of a word held over several notes: an extender line */
+      words += `<path d="M${f(tx + tw + .15)} ${f(base + .12)}H${f(last.x + .5)}" class="lyx"/>`;
     }
   });
-  const hasWords = piece.voices[vi].lyrics && notesHere.some(e => e.n.text);
+  const hasWords = piece.voices[vi].lyrics && notesHere.some(e => !e.rest && e.n.text);
   bottom = Math.max(bottom, hasWords ? base + .6 : bottom);
   let cap = '';
   if (state === 'hide') {

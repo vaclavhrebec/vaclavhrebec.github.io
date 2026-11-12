@@ -77,6 +77,7 @@ svg { display: block; }
 .system .stroke { fill: none; stroke: currentColor; stroke-width: .14; stroke-linecap: butt; }
 .system .stroke.thick { stroke-width: .28; }
 .system .lyric { font: 1.12px var(--serif); fill: currentColor; }
+.system .lyx { stroke: currentColor; stroke-width: .07; fill: none; }
 .system .vname { font: italic 1.1px var(--serif); fill: var(--soft); }
 .system .clefnum { font: .9px var(--serif); fill: currentColor; }
 .system .hidden-note { font: italic 1.2px var(--serif); fill: var(--soft); }

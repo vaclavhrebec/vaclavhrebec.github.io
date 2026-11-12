@@ -1,4 +1,4 @@
-import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, midiOf, slug, stepName, VALUE_NAME } from './music.js';
+import { pieceFrom, stamp, readingOf, CLEFS, CLEF_ORDER, clefFor, midiOf, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont } from './engrave.js';
 import * as snd from './audio.js';
 import { createMic, describe } from './mic.js';
@@ -158,7 +158,7 @@ function rebuildPiece() {
     if (S.taleaLook === 'mensural') { p.kind = 'mensural'; p.lines = 5; }
   }
   /* durations: in the talea every value is read in tempus imperfectum */
-  p.voices.forEach(v => { stamp(v.notes, p.talea ? 'C' : p.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  p.voices.forEach(v => { stamp(v.notes, p.talea ? 'C' : readingOf(p)); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
   p.end = Math.max(...p.voices.map(v => v.end));
   if (S.lines) p.lines = S.lines;
   else if (S.talea >= 0 && S.taleaLook === 'mensural') p.lines = 5;
@@ -328,7 +328,7 @@ function buildVoiceChips() {
 const hist = { undo: [], redo: [] };
 const snap = () => JSON.stringify(S.base.voices.map(v => v.notes));
 function afterEdit() {
-  S.base.voices.forEach(v => { stamp(v.notes, S.base.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  S.base.voices.forEach(v => { stamp(v.notes, readingOf(S.base)); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
   S.base.end = Math.max(...S.base.voices.map(v => v.end));
   stopPlayback();
   rebuildPiece(); render(); buildEditTools(); buildTransform();
