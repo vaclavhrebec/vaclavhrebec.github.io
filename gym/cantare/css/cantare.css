@@ -237,3 +237,25 @@ g.sung .note.on .fill { fill: var(--accent); }
 .hzin { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; }
 .hzin input { width: 4.6em; padding: 3px 6px; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 #transformPop, #micPop { max-height: calc(100vh - 170px); overflow: auto; overscroll-behavior: contain; }
+#title.editable { outline: 1px dashed var(--line); outline-offset: 4px; border-radius: 4px; cursor: text; }
+#title.editable:focus { outline-color: var(--accent); }
+/* while editing, the buttons on the right keep only their icons, so everything fits */
+.toolbar.editing #clearBtn span, .toolbar.editing #handBtn span, .toolbar.editing #micBtn span, .toolbar.editing #transformBtn span { display: none; }
+
+/* Vellum: the music on an old page, brown ink and a red rastrum */
+:root[data-theme="vellum"] {
+  --bg: #e6d7b3; --surface: #efe4c8; --raised: #f5ecd6; --line: #d3c29a; --ink: #2a2218; --soft: #76664a;
+  --accent: #8e2a1e; --accent-ink: #fbf4e8; --note: #2a2218; --staff: #b9392a; --hl: #b8620e; --sel: #1f5aa8; --shadow: 0 6px 24px rgba(60, 40, 10, .16);
+  color-scheme: light;
+}
+:root[data-theme="vellum"] .stage { background: radial-gradient(120% 90% at 50% 40%, #efe2c2 0%, #e6d5ad 60%, #d9c597 100%); }
+:root[data-theme="vellum"] .paper { background: radial-gradient(140% 100% at 40% 30%, rgba(255, 250, 235, .5), rgba(150, 108, 40, .08)); border-radius: 3px; box-shadow: inset 0 0 70px rgba(150, 108, 40, .16), 0 1px 1px rgba(60, 40, 10, .14); }
+
+/* Focus: only the music */
+html.focus .bar, html.focus .toolbar, html.focus .drawer, html.focus .edge-tab, html.focus .stagefoot, html.focus [data-foot-slot], html.focus .pop { display: none !important; }
+html.focus .stage { padding-top: 40px; }
+.focusbar { display: none; position: fixed; top: 10px; right: 12px; z-index: 40; gap: 6px; opacity: .45; transition: opacity .2s; }
+html.focus .focusbar { display: flex; }
+.focusbar:hover, .focusbar:focus-within { opacity: 1; }
+.focusbar button { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 18px; line-height: 1; }
+@media (max-width: 700px) { #clearBtn span, #handBtn span, #micBtn span, #transformBtn span { display: none; } }

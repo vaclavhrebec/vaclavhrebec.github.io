@@ -44,6 +44,7 @@ const TOKEN = /^(r)?(\d+)?(\^)?([bn#])?(Mx|Sm|L|B|S|M|F)(k)?(\.)?$/;
 export function readTokens(text) {
   const notes = [];
   let last = 26;
+  if (!text || !text.trim()) return notes; /* an empty staff, to write on */
   for (const tok of text.trim().split(/\s+/)) {
     const m = TOKEN.exec(tok);
     if (!m) throw new Error('Unreadable note: ' + tok);
@@ -94,7 +95,7 @@ export function pieceFrom(item, trail) {
   if (item.poly) {
     kind = 'poly';
     voices = item.poly.map((v, i) => ({ clef: v.c || 'c4', name: v.nm || '', notes: readTokens(v.n), lyrics: i === 0 ? item.lyr || v.lyr : v.lyr }));
-  } else if (item.n) {
+  } else if (item.n != null) {
     kind = item.fr ? 'fractus' : 'mensural';
     voices = [{ clef: item.c || 'c4', name: '', notes: readTokens(item.n), lyrics: item.lyr }];
   } else {

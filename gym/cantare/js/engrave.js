@@ -150,6 +150,7 @@ function flatStep(bottom, lines) {
 
 const hasSign = piece => piece.kind !== 'chant' && !piece.talea;
 const HEAD = (piece, clef) => clefWidth(clef, styleOf(piece)) + .5 + (piece.bflat ? 1.2 : 0) + (hasSign(piece) ? 2.1 : 0) + .6;
+export const headWidth = (piece, clef) => HEAD(piece, clef);
 
 /* Draw one staff for one voice over the given columns. Returns {svg, top, bottom} relative to the staff's top line. */
 function drawStaff(piece, vi, cols, xs, opts) {
@@ -253,6 +254,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const clefOf = vi => clefFor(opts.clefs?.[vi] || piece.voices[vi].clef);
   const headW = Math.max(...vidx.map(v => HEAD(piece, clefOf(v))));
   const ranges = breakLines(cols, width, headW);
+  if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
     const slice = cols.slice(a, b);
@@ -262,7 +264,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const at = [];
     let x = headW;
     slice.forEach(c => { at.push(x + (c.ligature ? 0 : .35)); x += c.need * (c.ligature ? 1 : stretch); });
-    const xs = { at, end: Math.min(Math.max(x, headW + 2), width) };
+    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x, headW + 2), width) : width };
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
       const s = drawStaff(piece, vi, slice, xs, opts);
@@ -272,7 +274,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       return place;
     });
     const h = y - gap;
-    const t0 = slice[0].t, t1 = b < cols.length ? cols[b].t : piece.end;
+    const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
     return { svg, w: xs.end, h, t0, t1, from: a, to: b, staves };
   });
 }
