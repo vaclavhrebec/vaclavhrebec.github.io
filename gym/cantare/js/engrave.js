@@ -130,34 +130,13 @@ export function buildColumns(piece, vidx) {
     if (style === 'chant') {
       const e = c.notes[vidx[0]];
       c.ligature = !!(hasText && k > 0 && e && !e.n.rest && !e.n.text && !cols[k - 1].restHere);
-      c.need = Math.max(need + .5, textW + .15);
+      c.need = c.ligature ? 1.18 : Math.max(need + .5, textW + .15);
     } else {
       const next = k + 1 < cols.length ? cols[k + 1].t : c.t + Math.max(...vidx.map(v => (c.notes[v] ? c.notes[v].n.len : 0)), 1);
       c.need = Math.max(need + .45, textW + .15, spacing(next - c.t));
     }
     c.restHere = vidx.some(v => c.notes[v] && c.notes[v].n.rest);
   });
-  /* Plainchant is written in ligatures: the notes sung to one syllable touch each other
-     (a small space only between two notes of the same pitch); the room the syllable's text needs
-     is added after the last note of the group, so the group itself never opens up. */
-  if (style === 'chant') {
-    const v0 = vidx[0];
-    for (let k = 0; k < cols.length; k++) {
-      if (cols[k].ligature || !cols[k + 1] || !cols[k + 1].ligature) continue;
-      let e = k; while (cols[e + 1] && cols[e + 1].ligature) e++;
-      let span = 0;
-      for (let j = k; j < e; j++) {
-        const a = cols[j].notes[v0], b = cols[j + 1].notes[v0];
-        const same = a && b && a.n.step === b.n.step;
-        const sign = b && b.n.acc && !b.n.ficta ? 1.05 : 0;   /* room for a written flat or natural inside the group */
-        cols[j].need = (same ? 1.5 : .97) + sign;   /* 1 is the width of a square note: .97 makes them just touch */
-        cols[j].fixed = true;
-        span += cols[j].need;
-      }
-      const lastNeed = Math.max(...vidx.map(v => (cols[e].notes[v] ? glyphNeed(cols[e].notes[v].n, style) : 0))) + .5;
-      cols[e].need = Math.max(lastNeed, cols[k].textW + .15 - span, cols[e].textW + .15);
-    }
-  }
   return cols;
 }
 
@@ -261,13 +240,7 @@ export function breakLines(cols, width, headW) {
   let start = 0, used = 0;
   for (let k = 0; k < cols.length; k++) {
     const w = cols[k].need;
-    if (k > start && used + w > width - headW) {
-      /* a ligature is never split between two lines: break before its first note */
-      let g = k; while (g > start && cols[g].ligature) g--;
-      if (g === start) g = k;
-      out.push([start, g]); start = g; used = 0;
-      for (let j = g; j < k; j++) used += cols[j].need;
-    }
+    if (k > start && used + w > width - headW) { out.push([start, k]); start = k; used = 0; }
     used += w;
   }
   if (start < cols.length) out.push([start, cols.length]);
@@ -283,14 +256,12 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
     const slice = cols.slice(a, b);
-    const fixedW = slice.reduce((a, c) => a + (c.fixed ? c.need : 0), 0);
-    const natural = slice.reduce((a, c) => a + (c.fixed ? 0 : c.need), 0) || 1;
+    const natural = slice.reduce((a, c) => a + c.need, 0);
     const last = b >= cols.length;
-    /* justify by widening the space between syllables only, never inside a ligature */
-    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - headW - fixedW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
+    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
     const at = [];
     let x = headW;
-    slice.forEach(c => { at.push(x + .35); x += c.need * (c.fixed ? 1 : stretch); });
+    slice.forEach(c => { at.push(x + (c.ligature ? 0 : .35)); x += c.need * (c.ligature ? 1 : stretch); });
     const xs = { at, end: Math.min(Math.max(x, headW + 2), width) };
     let y = 0, svg = '';
     const staves = vidx.map(vi => {

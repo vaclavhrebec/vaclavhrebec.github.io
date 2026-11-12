@@ -33,11 +33,10 @@
 </div>
 <div class="shell">
   <aside class="drawer left" id="library" aria-label="Library">
-    <div class="drawer-head"><input id="search" type="search" placeholder="Search the library" data-i18n-ph="Search the library" autocomplete="off"><button class="x" data-close="library" aria-label="Close" data-i18n-title="Close">&times;</button><button class="fold" id="foldLib" aria-label="Collapse the library" data-i18n-title="Collapse the library"><svg viewBox="0 0 24 24"><path d="M14.5 6l-6 6 6 6"/></svg></button></div>
+    <div class="drawer-head"><input id="search" type="search" placeholder="Search the library" data-i18n-ph="Search the library" autocomplete="off"><button class="x" data-close="library" aria-label="Close" data-i18n-title="Close">&times;</button></div>
     <div class="tree" id="tree"></div>
   </aside>
 
-  <button class="edge-tab" id="unfoldLib" aria-label="Show the library" data-i18n-title="Show the library"><svg viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></svg><span data-i18n="Library">Library</span></button>
   <main class="stage" id="stage">
     <section class="piece-head">
       <p class="trail" id="trail"></p>
@@ -57,7 +56,8 @@
 </div>
 
 <footer class="dock" id="dock">
-  <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.6v12.8a1.6 1.6 0 0 0 2.45 1.36l10.1-6.4a1.6 1.6 0 0 0 0-2.72L10.45 4.24A1.6 1.6 0 0 0 8 5.6z"/></svg></button>
+  <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12-7.5z"/></svg></button>
+  <div class="tactus" id="tactusBox" title="Tactus"><svg viewBox="0 0 64 72" id="hand" aria-hidden="true"></svg></div>
   <label class="tempo"><span><span data-i18n="Tactus">Tactus</span> <b id="bpm">52</b></span><input type="range" id="tempo" min="30" max="110" value="52"></label>
   <div class="voices" id="voiceChips"></div>
 </footer>

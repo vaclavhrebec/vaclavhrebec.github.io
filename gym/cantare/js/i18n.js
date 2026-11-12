@@ -7,6 +7,7 @@ export const guessLang = () => { const n = (navigator.language || 'en').slice(0,
 
 const D = {
   de: {
+    'Organ, Principal 8′': 'Orgel, Principal 8′', 'Regal': 'Regal',
     'Open in a full page': 'Als eigene Seite öffnen',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Auf „Abspielen“ drücken: Deine Stimme wird zusammen mit der Musik aufgenommen. Kopfhörer verwenden, damit die Orgel nicht in die Aufnahme gelangt.',
     'Library': 'Bibliothek', 'Studio': 'Studio', 'Edit': 'Bearbeiten', 'Transform': 'Verwandeln', 'Search the library': 'Bibliothek durchsuchen',
@@ -20,7 +21,7 @@ const D = {
     'In tempus perfectum a brevis holds three semibreves.': 'Im Tempus perfectum umfasst eine Brevis drei Semibreven.',
     'Talea': 'Talea', 'None': 'Keine', 'Shown as': 'Dargestellt als', 'Chant notation': 'Choralnotation', 'Mensural notation': 'Mensuralnotation',
     'Sound': 'Klang', 'Timbre': 'Klangfarbe', 'Volume': 'Lautstärke', 'Click': 'Klick', 'Hand': 'Hand', 'View': 'Ansicht', 'Notation': 'Notation', 'Manuscript': 'Handschrift', 'Engraved': 'Gestochen',
-    'Layout': 'Anordnung', 'Score': 'Partitur', 'Choir book': 'Chorbuch', 'Size': 'Größe', 'Fit to screen': 'An den Bildschirm anpassen', 'Collapse the library': 'Bibliothek einklappen', 'Show the library': 'Bibliothek zeigen', 'Theme': 'Farbschema', 'Dark': 'Dunkel', 'Light': 'Hell',
+    'Layout': 'Anordnung', 'Score': 'Partitur', 'Choir book': 'Chorbuch', 'Size': 'Größe', 'Theme': 'Farbschema', 'Dark': 'Dunkel', 'Light': 'Hell',
     'Share': 'Teilen', 'Copy link': 'Link kopieren', 'Print': 'Drucken', 'Link copied': 'Link kopiert',
     'Organ': 'Orgel', 'Sackbut': 'Posaune', 'Chalumeau': 'Chalumeau',
     'Undo': 'Rückgängig', 'Redo': 'Wiederholen', 'Previous note': 'Vorherige Note', 'Next note': 'Nächste Note', 'Higher': 'Höher', 'Lower': 'Tiefer', 'Rest': 'Pause', 'Dot': 'Punkt',
@@ -36,6 +37,7 @@ const D = {
     'The camera is not available here.': 'Die Kamera ist hier nicht verfügbar.', 'Loading the hand reader…': 'Handerkennung wird geladen …', 'Open the Guidonian hand': 'Guidonische Hand öffnen',
   },
   fr: {
+    'Organ, Principal 8′': 'Orgue, Principal 8′', 'Regal': 'Régale',
     'Open in a full page': 'Ouvrir en pleine page',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Appuyez sur Lecture : votre voix est enregistrée avec la musique. Utilisez un casque, pour que l’orgue ne passe pas dans l’enregistrement.',
     'Library': 'Bibliothèque', 'Studio': 'Studio', 'Edit': 'Modifier', 'Transform': 'Transformer', 'Search the library': 'Chercher dans la bibliothèque',
@@ -49,7 +51,7 @@ const D = {
     'In tempus perfectum a brevis holds three semibreves.': 'Au tempus perfectum, une brève vaut trois semibrèves.',
     'Talea': 'Talea', 'None': 'Aucune', 'Shown as': 'Affichée en', 'Chant notation': 'Notation grégorienne', 'Mensural notation': 'Notation mensurale',
     'Sound': 'Son', 'Timbre': 'Timbre', 'Volume': 'Volume', 'Click': 'Clic', 'Hand': 'Main', 'View': 'Affichage', 'Notation': 'Notation', 'Manuscript': 'Manuscrite', 'Engraved': 'Gravée',
-    'Layout': 'Mise en page', 'Score': 'Partition', 'Choir book': 'Livre de chœur', 'Size': 'Taille', 'Fit to screen': 'Adapter à l’écran', 'Collapse the library': 'Replier la bibliothèque', 'Show the library': 'Afficher la bibliothèque', 'Theme': 'Thème', 'Dark': 'Sombre', 'Light': 'Clair',
+    'Layout': 'Mise en page', 'Score': 'Partition', 'Choir book': 'Livre de chœur', 'Size': 'Taille', 'Theme': 'Thème', 'Dark': 'Sombre', 'Light': 'Clair',
     'Share': 'Partager', 'Copy link': 'Copier le lien', 'Print': 'Imprimer', 'Link copied': 'Lien copié',
     'Organ': 'Orgue', 'Sackbut': 'Sacqueboute', 'Chalumeau': 'Chalumeau',
     'Undo': 'Annuler', 'Redo': 'Rétablir', 'Previous note': 'Note précédente', 'Next note': 'Note suivante', 'Higher': 'Plus haut', 'Lower': 'Plus bas', 'Rest': 'Silence', 'Dot': 'Point',
@@ -65,6 +67,7 @@ const D = {
     'The camera is not available here.': 'La caméra n’est pas disponible ici.', 'Loading the hand reader…': 'Chargement du lecteur de main…', 'Open the Guidonian hand': 'Ouvrir la main guidonienne',
   },
   cs: {
+    'Organ, Principal 8′': 'Varhany, Principál 8′', 'Regal': 'Regál',
     'Open in a full page': 'Otevřít na celou stránku',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Stiskni Přehrát: tvůj hlas se nahrává spolu s hudbou. Použij sluchátka, aby varhany neprosakovaly do nahrávky.',
     'Library': 'Knihovna', 'Studio': 'Studio', 'Edit': 'Upravit', 'Transform': 'Proměnit', 'Search the library': 'Hledat v knihovně',
@@ -78,7 +81,7 @@ const D = {
     'In tempus perfectum a brevis holds three semibreves.': 'V tempus perfectum má brevis hodnotu tří semibrevis.',
     'Talea': 'Talea', 'None': 'Žádná', 'Shown as': 'Zobrazit jako', 'Chant notation': 'Chorální notace', 'Mensural notation': 'Mensurální notace',
     'Sound': 'Zvuk', 'Timbre': 'Barva zvuku', 'Volume': 'Hlasitost', 'Click': 'Klik', 'Hand': 'Ruka', 'View': 'Zobrazení', 'Notation': 'Notace', 'Manuscript': 'Rukopisná', 'Engraved': 'Rytá',
-    'Layout': 'Rozvržení', 'Score': 'Partitura', 'Choir book': 'Chórová kniha', 'Size': 'Velikost', 'Fit to screen': 'Přizpůsobit obrazovce', 'Collapse the library': 'Sbalit knihovnu', 'Show the library': 'Ukázat knihovnu', 'Theme': 'Vzhled', 'Dark': 'Tmavý', 'Light': 'Světlý',
+    'Layout': 'Rozvržení', 'Score': 'Partitura', 'Choir book': 'Chórová kniha', 'Size': 'Velikost', 'Theme': 'Vzhled', 'Dark': 'Tmavý', 'Light': 'Světlý',
     'Share': 'Sdílet', 'Copy link': 'Zkopírovat odkaz', 'Print': 'Tisk', 'Link copied': 'Odkaz zkopírován',
     'Organ': 'Varhany', 'Sackbut': 'Pozoun', 'Chalumeau': 'Chalumeau',
     'Undo': 'Zpět', 'Redo': 'Znovu', 'Previous note': 'Předchozí nota', 'Next note': 'Další nota', 'Higher': 'Výš', 'Lower': 'Níž', 'Rest': 'Pomlka', 'Dot': 'Tečka',
