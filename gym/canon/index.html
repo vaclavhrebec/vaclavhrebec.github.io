@@ -54,7 +54,7 @@
   .trace { position: relative; }
   canvas { display: block; width: 100%; height: 280px; border-radius: 8px; background: var(--soft); }
   .hint { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none;
-    font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); padding: 1rem; }
+    font-family: "EB Garamond", Georgia, serif; font-style: italic; font-size: 1.2rem; color: var(--muted); padding: 1rem 2.6rem; }
   .hint[hidden] { display: none; }
   .legend { display: flex; flex-wrap: wrap; gap: .3rem 1rem; margin: .7rem 2px 0; font-size: .85rem; color: var(--muted); }
   .legend span::before { content: ""; display: inline-block; width: 14px; height: 3px; border-radius: 2px;
@@ -74,8 +74,9 @@
   #status { font-size: .9rem; color: var(--muted); flex-basis: 100%; min-height: 1.4em; }
   #status.err { color: var(--accent); }
 
-  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
+  .grid > * { min-width: 0; }
+  @media (max-width: 720px) { .grid { grid-template-columns: minmax(0, 1fr); } }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 18px; }
   h2 { font-family: "IM Fell Double Pica", "IM Fell English", Georgia, serif; font-weight: 400; font-size: 1.45rem; margin: 0 0 .7rem;
     display: flex; align-items: baseline; gap: .55rem; }
@@ -580,7 +581,7 @@ function syncUI() {
   selP.value = S.preset; $('entry').value = S.entry; $('bpm').value = S.bpm; $('bar').value = S.bar;
   $('metro').checked = S.metro; $('metroVol').value = S.metroVol; $('snap').checked = S.snap; $('ref').value = S.ref;
   $('hear').checked = S.hear; $('speakers').checked = S.speakers; $('vol').value = S.vol;
-  $('lat').value = S.lat ?? ''; $('latR').value = S.lat ?? 0;
+  $('lat').value = S.lat ?? 45; $('latR').value = S.lat ?? 45;   // before the first Start: the usual guess, refined when the sound starts
   document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === S.mode));
   document.querySelectorAll('[data-tune]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tune === S.tune));
   $('snapRow').style.opacity = S.mode === 'organ' ? 1 : .5;

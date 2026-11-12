@@ -163,7 +163,7 @@
 
   /* ---------- language: the page chrome in four languages, the explanations in English ---------- */
   const L = {
-    de: {'Tuning systems': 'Stimmungssysteme', 'All exercises': 'Alle Übungen', 'Temperament': 'Stimmung', 'Compare with': 'Vergleichen mit', 'nothing': 'nichts',
+    de: {'Agenda': 'Termine', 'Projects': 'Projekte', 'Course Rheinfelden 2027': 'Kurs Rheinfelden 2027', 'Tuning systems': 'Stimmungssysteme', 'All exercises': 'Alle Übungen', 'Temperament': 'Stimmung', 'Compare with': 'Vergleichen mit', 'nothing': 'nichts',
       'Root': 'Grundton', 'Pitch of a′': 'Stimmton a′', 'Sound': 'Klang', 'Speed': 'Tempo', 'Major scale': 'Durtonleiter', 'Minor scale': 'Molltonleiter', 'Chromatic scale': 'Chromatische Tonleiter',
       'Major triad': 'Durdreiklang', 'Minor triad': 'Molldreiklang', 'Cadence I–IV–V–I': 'Kadenz I–IV–V–I', 'Drone for singing': 'Bordun zum Singen', 'Stop': 'Stopp',
       'Play': 'Spielen', 'Scales': 'Tonleitern', 'Chords': 'Akkorde', 'Sing': 'Singen', 'Keyboard': 'Klaviatur', 'Notes': 'Töne', 'cents above C': 'Cent über C', 'deviation from equal': 'Abweichung von gleichstufig',
@@ -175,7 +175,7 @@
       'Tap a key to hear the note in this temperament.': 'Tippen Sie auf eine Taste, um den Ton in dieser Stimmung zu hören.', 'Pythagorean': 'Pythagoreisch', 'Equal temperament': 'Gleichstufige Stimmung',
       'Pure tunings': 'Reine Stimmungen', 'Meantone': 'Mitteltönig', 'Well temperaments': 'Wohltemperierte Stimmungen', 'The explanations are in English for now.': 'Die Erläuterungen sind vorerst auf Englisch.',
       'wolf': 'Wolf', 'pure': 'rein', 'narrow': 'eng', 'wide': 'weit', 'A/B: play the same with the comparison': 'A/B: dasselbe mit der Vergleichsstimmung spielen', 'Hold': 'Halten'},
-    fr: {'Tuning systems': 'Systèmes d’accord', 'All exercises': 'Tous les exercices', 'Temperament': 'Tempérament', 'Compare with': 'Comparer avec', 'nothing': 'rien',
+    fr: {'Agenda': 'Agenda', 'Projects': 'Projets', 'Course Rheinfelden 2027': 'Cours Rheinfelden 2027', 'Tuning systems': 'Systèmes d’accord', 'All exercises': 'Tous les exercices', 'Temperament': 'Tempérament', 'Compare with': 'Comparer avec', 'nothing': 'rien',
       'Root': 'Tonique', 'Pitch of a′': 'Diapason (la)', 'Sound': 'Son', 'Speed': 'Tempo', 'Major scale': 'Gamme majeure', 'Minor scale': 'Gamme mineure', 'Chromatic scale': 'Gamme chromatique',
       'Major triad': 'Accord majeur', 'Minor triad': 'Accord mineur', 'Cadence I–IV–V–I': 'Cadence I–IV–V–I', 'Drone for singing': 'Bourdon pour chanter', 'Stop': 'Arrêt',
       'Play': 'Jouer', 'Scales': 'Gammes', 'Chords': 'Accords', 'Sing': 'Chanter', 'Keyboard': 'Clavier', 'Notes': 'Notes', 'cents above C': 'cents au-dessus de do', 'deviation from equal': 'écart du tempérament égal',
@@ -187,7 +187,7 @@
       'Tap a key to hear the note in this temperament.': 'Touchez une touche pour entendre la note dans ce tempérament.', 'Pythagorean': 'Pythagoricien', 'Equal temperament': 'Tempérament égal',
       'Pure tunings': 'Accords purs', 'Meantone': 'Mésotonique', 'Well temperaments': 'Tempéraments inégaux', 'The explanations are in English for now.': 'Les explications sont pour l’instant en anglais.',
       'wolf': 'loup', 'pure': 'pure', 'narrow': 'étroite', 'wide': 'large', 'A/B: play the same with the comparison': 'A/B : jouer la même chose avec la comparaison', 'Hold': 'Tenir'},
-    cs: {'Tuning systems': 'Ladicí systémy', 'All exercises': 'Všechna cvičení', 'Temperament': 'Ladění', 'Compare with': 'Porovnat s', 'nothing': 'nic',
+    cs: {'Agenda': 'Kalendář', 'Projects': 'Projekty', 'Course Rheinfelden 2027': 'Kurz v Rheinfeldenu 2027', 'Tuning systems': 'Ladicí systémy', 'All exercises': 'Všechna cvičení', 'Temperament': 'Ladění', 'Compare with': 'Porovnat s', 'nothing': 'nic',
       'Root': 'Základní tón', 'Pitch of a′': 'Ladička a′', 'Sound': 'Zvuk', 'Speed': 'Tempo', 'Major scale': 'Durová stupnice', 'Minor scale': 'Mollová stupnice', 'Chromatic scale': 'Chromatická stupnice',
       'Major triad': 'Durový kvintakord', 'Minor triad': 'Mollový kvintakord', 'Cadence I–IV–V–I': 'Kadence I–IV–V–I', 'Drone for singing': 'Prodleva ke zpěvu', 'Stop': 'Stop',
       'Play': 'Přehrát', 'Scales': 'Stupnice', 'Chords': 'Akordy', 'Sing': 'Zpívat', 'Keyboard': 'Klaviatura', 'Notes': 'Tóny', 'cents above C': 'centů nad C', 'deviation from equal': 'odchylka od rovnoměrného',

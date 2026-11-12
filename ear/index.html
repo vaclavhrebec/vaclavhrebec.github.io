@@ -43,7 +43,9 @@
   .sitenav { display: flex; flex-wrap: wrap; gap: 4px 12px; font: italic 1.02rem/1.3 var(--serif); color: var(--muted); }
   .sitenav a { color: inherit; text-decoration: none; border-bottom: 1px solid transparent; }
   .sitenav a:hover { color: var(--fg); border-bottom-color: currentColor; }
-  .tools { display: flex; gap: .5rem; align-items: center; }
+  .tools { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  #theme { white-space: nowrap; }
+  .tools .fb-open { white-space: nowrap; font-size: .8rem; border-radius: 999px; padding: .35rem .7rem; }
   .lang { display: flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--card); }
   .lang button { font: 500 .76rem/1 var(--sans); letter-spacing: .05em; color: var(--muted); background: none; border: 0; border-radius: 999px; padding: .42rem .62rem; cursor: pointer; }
   .lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
@@ -187,7 +189,7 @@
 <div class="wrap">
   <div class="top">
     <nav class="sitenav" aria-label="Václav Hřebec">
-      <a href="../">&#8592; Václav Hřebec</a><span aria-hidden="true">·</span>
+      <a href="../">&#8592; Václav Hřebec</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#agenda" data-t="Agenda">Agenda</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#projects" data-t="Projects">Projects</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/rheinfelden2027/" data-t="Course Rheinfelden 2027">Course Rheinfelden 2027</a><span aria-hidden="true">·</span>
       <a href="../gym/" data-t="The Ultimate Counterpoint Gym">The Ultimate Counterpoint Gym</a>
     </nav>
     <div class="tools">
@@ -195,6 +197,7 @@
         <button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="de" lang="de">DE</button><button type="button" data-lang="fr" lang="fr">FR</button><button type="button" data-lang="cs" lang="cs">CZ</button>
       </div>
       <button id="theme" type="button" data-t="Light / dark">Light / dark</button>
+      <span data-feedback-slot></span>
     </div>
   </div>
   <header class="site">

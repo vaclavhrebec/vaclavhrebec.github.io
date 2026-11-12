@@ -176,6 +176,10 @@
   .event p { margin: .1rem 0 0; color: var(--muted); }
   .past .event { opacity: .7; }
   .event .reg { margin: .6rem 0 0; }
+  .event .reg a.btn, .event .reg a.btn:hover { color: #fff; text-decoration: none; }
+  .past-more { margin: .4rem 0 0; font: inherit; font-weight: 500; color: var(--accent); background: transparent; border: 1px solid var(--accent); border-radius: 6px; padding: .45rem .95rem; cursor: pointer; }
+  .events .event.older { display: none; }
+  .events.all .event.older { display: grid; }
   .event .thumbs { display: flex; gap: .6rem; flex-wrap: wrap; }
   .event .thumb { display: block; margin: .6rem 0 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
   .event .thumb img { display: block; width: 110px; height: auto; border-radius: 4px;
@@ -562,6 +566,16 @@
       .forEach(e => up.appendChild(e));
     if (!up.querySelector('.event')) up.insertAdjacentHTML('beforeend', '<li class="empty" data-i18n>New dates coming soon.</li>');
     if (!past.querySelector('.event')) document.getElementById('past-block').hidden = true;
+    // only the three most recent past events at first; the rest behind a button
+    const older = [...past.querySelectorAll('.event')].slice(3);
+    if (older.length) {
+      older.forEach(e => e.classList.add('older'));
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'past-more';
+      b.innerHTML = '<span data-i18n>Show all past events</span> (' + older.length + ')';
+      b.addEventListener('click', () => { past.classList.add('all'); b.remove(); });
+      past.after(b);
+    }
   })();
 
   // nav links: land exactly on the section even while lazy images above it are still loading
@@ -627,7 +641,7 @@ de: {
   "Photos": "Fotos",
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Musiktheorie · Improvisation · Contrapunto alla mente · Orgel · Laute",
   "About": "Über mich", "Agenda": "Termine", "Gallery": "Galerie", "Projects": "Projekte", "Socials": "Soziale Medien", "Popular": "Beliebt", "Latest video": "Neuestes Video", "All videos on YouTube": "Alle Videos auf YouTube",
-  "Upcoming": "Demnächst", "Past": "Rückblick", "New dates coming soon.": "Neue Termine folgen in Kürze.",
+  "Upcoming": "Demnächst", "Past": "Rückblick", "Show all past events": "Alle vergangenen Termine zeigen", "New dates coming soon.": "Neue Termine folgen in Kürze.",
   "Light / dark": "Hell / dunkel",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
     "Václav Hřebec ist ein tschechischer Musiktheoretiker und Organist mit Wohnsitz in Basel. Er studierte klassische Gitarre an den Konservatorien in Pilsen und Prag. Sein Interesse an Alter Musik führte ihn 2023 nach Basel, wo er derzeit an der Schola Cantorum Basiliensis einen Master in historischer Musiktheorie mit Schwerpunkt auf Contrapunto alla mente und Improvisation absolviert und daneben Orgel und Laute studiert. Er ist als Kirchenorganist tätig und gibt Konzerte, Vorträge und Workshops zur Alten Musik.",
@@ -719,7 +733,7 @@ fr: {
   "Latest video": "Dernière vidéo",
   "All videos on YouTube": "Toutes les vidéos sur YouTube",
   "Upcoming": "À venir",
-  "Past": "Passé",
+  "Past": "Passé", "Show all past events": "Afficher tous les événements passés",
   "New dates coming soon.": "De nouvelles dates suivront bientôt.",
   "Light / dark": "Clair / sombre",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.": "Václav Hřebec est un théoricien de la musique et organiste tchèque établi à Bâle, en Suisse. Il a étudié la guitare classique aux conservatoires de Plzeň et de Prague. Son intérêt pour la musique ancienne l’a conduit à Bâle en 2023, où il prépare actuellement un master en théorie historique de la musique à la Schola Cantorum Basiliensis, consacré au contrapunto alla mente et à l’improvisation, tout en étudiant l’orgue et le luth. Il est organiste d’église et donne des concerts, des conférences et des ateliers sur la musique ancienne.",
@@ -808,7 +822,7 @@ cs: {
   "Photos": "Fotografie",
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Hudební teorie · improvizace · contrapunto alla mente · varhany · loutna",
   "About": "O mně", "Agenda": "Kalendář", "Gallery": "Galerie", "Projects": "Projekty", "Socials": "Sociální sítě", "Popular": "Oblíbené", "Latest video": "Nejnovější video", "All videos on YouTube": "Všechna videa na YouTube",
-  "Upcoming": "Nadcházející", "Past": "Proběhlé", "New dates coming soon.": "Nové termíny budou brzy doplněny.",
+  "Upcoming": "Nadcházející", "Past": "Proběhlé", "Show all past events": "Zobrazit všechny proběhlé akce", "New dates coming soon.": "Nové termíny budou brzy doplněny.",
   "Light / dark": "Světlý / tmavý",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
     "Václav Hřebec je český hudební teoretik a varhaník žijící ve švýcarské Basileji. Vystudoval klasickou kytaru na konzervatořích v Plzni a v Praze. Zájem o starou hudbu ho v roce 2023 přivedl do Basileje, kde nyní na Schola Cantorum Basiliensis studuje magisterský obor historická hudební teorie se zaměřením na contrapunto alla mente a improvizaci; vedle toho se věnuje hře na varhany a loutnu. Působí jako kostelní varhaník, koncertuje, přednáší a vede workshopy o staré hudbě.",

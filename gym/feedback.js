@@ -141,7 +141,9 @@
 
   function makeButton() {
     const b = document.createElement('button');
-    b.type = 'button'; b.className = 'fb-open'; b.textContent = '✎ ' + tr('Feedback & wishes');
+    b.type = 'button'; b.className = 'fb-open';
+    const label = () => { b.textContent = '✎ ' + tr('Feedback & wishes'); };
+    label(); new MutationObserver(label).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
     b.addEventListener('click', () => open(pageTopic));
     return b;
   }
