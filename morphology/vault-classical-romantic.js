@@ -1,4 +1,4 @@
-/* The Morphology of Music — additions: galant, Classical and Romantic */
+/* Atlas of Musical Style — additions: galant, Classical and Romantic */
 (function (V) {
   V.elements.push(
     /* ----- galant and Classical ----- */

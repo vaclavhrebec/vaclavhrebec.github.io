@@ -1,4 +1,4 @@
-/* The Morphology of Music — additions: Baroque */
+/* Atlas of Musical Style — additions: Baroque */
 (function (V) {
   const add = (style, ids) => { const s = V.styles.find(x => x.id === style); ids.forEach(i => s.elements.includes(i) || s.elements.push(i)); };
   V.elements.push(

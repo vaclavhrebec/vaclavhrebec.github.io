@@ -11,7 +11,7 @@
 (function () {
   const TO = 'vaclavhrebec2000@gmail.com';
   const ENDPOINT = 'https://formsubmit.co/ajax/' + TO;
-  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'The Morphology of Music', 'Idea for a new room'];
+  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'Atlas of Musical Style', 'Idea for a new room'];
   /* translations: the page's <html lang> decides (en, de, fr, cs); topics are always sent in English */
   const L = {
     de: { 'Feedback & wishes': 'Feedback & Wünsche', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Einen Fehler gefunden, fehlt ein Choral, wünschen Sie sich eine neue Übung? Schreiben Sie mir – jede Nachricht hilft dem Projekt zu wachsen.',
@@ -163,7 +163,7 @@
 
   /* ---------- closing row: feedback · share · support ---------- */
   const EAR = /\/ear\//.test(location.pathname), MORPH = /\/morphology\//.test(location.pathname);
-  const SITE = MORPH ? 'The Morphology of Music' : EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
+  const SITE = MORPH ? 'Atlas of Musical Style' : EAR ? 'The Ultimate Ear Trainer' : 'The Ultimate Counterpoint Gym';
   const F = {
     de: { 'Do you find {s} useful?': 'Ist {s} für Sie nützlich?',
       'Tell me what to improve, share it with friends and colleagues, or support its development.': 'Sagen Sie mir, was ich verbessern kann, teilen Sie es mit Freunden und Kollegen oder unterstützen Sie die Weiterentwicklung.',

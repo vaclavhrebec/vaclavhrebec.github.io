@@ -1,4 +1,4 @@
-/* The Morphology of Music — the vault.
+/* Atlas of Musical Style — the vault.
    Every ELEMENT is one note. Dates are approximate and mean:
      first  – earliest clear instances in surviving sources
      common – becomes a normal feature of the repertory named in "scope"

@@ -1,4 +1,4 @@
-/* The Morphology of Music — the number of voices.
+/* Atlas of Musical Style — the number of voices.
    A VOICE here is a real part: an independent contrapuntal line. It is not a performer. A piece in four voices stays a piece in four voices when
    twenty instruments play it, and a chorus of forty singers can still be sung in four voices.
    For every style: [lowest usual, highest usual, highest known in the repertory]. The numbers are rough guides: in styles driven by harmony,

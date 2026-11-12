@@ -1,4 +1,4 @@
-/* The Morphology of Music — additions: jazz and popular idioms */
+/* Atlas of Musical Style — additions: jazz and popular idioms */
 (function (V) {
   V.elements.push(
     {id: 'ragtime-syncopation', title: 'Ragtime syncopation', folder: 'popular', first: 1895, common: 1900, fade: 1920,

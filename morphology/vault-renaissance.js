@@ -1,4 +1,4 @@
-/* The Morphology of Music — additions: Middle Ages and Renaissance */
+/* Atlas of Musical Style — additions: Middle Ages and Renaissance */
 (function (V) {
   V.elements.push(
     {id: 'sequence-trope', title: 'Sequences & tropes', folder: 'form', first: 850, common: 900, fade: 1570,

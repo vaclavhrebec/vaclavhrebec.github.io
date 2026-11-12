@@ -1,4 +1,4 @@
-/* The Morphology of Music — additions: 20th and 21st centuries */
+/* Atlas of Musical Style — additions: 20th and 21st centuries */
 (function (V) {
   V.elements.push(
     {id: 'free-atonality', title: 'Free atonality', folder: 'harmony', first: 1908, common: 1912, fade: null,

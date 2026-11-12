@@ -1,4 +1,4 @@
-/* The Morphology of Music — cross-links loaded last: elements added in later files that also belong to earlier styles,
+/* Atlas of Musical Style — cross-links loaded last: elements added in later files that also belong to earlier styles,
    and revivals (an old element taken up again appears as its modern counterpart, so no style lists an element outside its dates). */
 (function (V) {
   const st = id => V.styles.find(s => s.id === id);

@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Morphology of Music</title>
+<title>Atlas of Musical Style</title>
 <meta name="description" content="Nearly 200 musical elements and 55 styles from plainchant to hip hop: when the Picardy third, imitation, sonata form, the leitmotif or minimalist repetition appear, how their combinations make a style, and how many real voices each period uses. By Václav Hřebec.">
-<meta property="og:title" content="The Morphology of Music">
+<meta property="og:title" content="Atlas of Musical Style">
 <meta property="og:description" content="Musical elements as linked notes, a graph and a timeline: how their combinations make the styles from chant to the present.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231e1e1e'/%3E%3Cg stroke='%23a88bfa' stroke-width='1.6'%3E%3Cpath d='M9 10 22 8M9 10l7 13M22 8l-6 15M22 8l3 12'/%3E%3C/g%3E%3Cg fill='%23a88bfa'%3E%3Ccircle cx='9' cy='10' r='3'/%3E%3Ccircle cx='22' cy='8' r='2.4'/%3E%3Ccircle cx='16' cy='23' r='3.4'/%3E%3Ccircle cx='25' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E">
 <style>
@@ -249,7 +249,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <div class="app" id="app">
   <header class="titlebar">
     <button class="iconbtn" id="menuBtn" aria-label="Files" aria-expanded="false"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
-    <span class="vault">The Morphology of Music</span>
+    <span class="vault">Atlas of Musical Style</span>
     <nav aria-label="Václav Hřebec's website"><a href="../">← Václav Hřebec</a><a href="../#agenda">Agenda</a><a href="../#projects">Projects</a><a href="../gym/">Counterpoint Gym</a><a href="../ear/">Ear Trainer</a><a href="../rheinfelden2027/">Course Rheinfelden 2027</a></nav>
     <span class="fbslot" data-feedback-slot></span>
     <button class="iconbtn" id="themeBtn" aria-label="Light or dark" title="Light or dark"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg></button>
@@ -432,9 +432,9 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   function renderNote(id) {
     const el = $('#note');
     document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
-    if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'The Morphology of Music'; renderLinks(null); return; }
+    if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'Atlas of Musical Style'; renderLinks(null); return; }
     const n = byId[id];
-    document.title = n.title + ' · The Morphology of Music';
+    document.title = n.title + ' · Atlas of Musical Style';
     let h;
     if (n.kind === 'el') {
       const st = stylesOf(id);
@@ -754,6 +754,6 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   tree(); route();
 })();
 </script>
-<script src="../gym/feedback.js" data-topic="The Morphology of Music" defer></script>
+<script src="../gym/feedback.js" data-topic="Atlas of Musical Style" defer></script>
 </body>
 </html>
