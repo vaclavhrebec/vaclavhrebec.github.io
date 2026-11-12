@@ -50,6 +50,8 @@ for code in sorted(NAMES, key=lambda c: (c == 'Ano', NAMES[c].split()[-1])):
     works = {}   # key -> {title, note, items, kind}
     order = []
     for f in files:
+        if re.search(r'^!!!YEC:.*All Rights Reserved', open(f, encoding='utf-8', errors='replace').read(), re.M):
+            fails.append((f, 'all rights reserved: left out')); continue   # not under the project's CC licence
         try:
             meta, item = build(f)
         except Exception as e:
@@ -87,8 +89,16 @@ for code in sorted(NAMES, key=lambda c: (c == 'Ano', NAMES[c].split()[-1])):
         if meta.get('PED'):
             ed.append(f'edited by {credit_name(meta["PED"])} ({u(meta.get("PTL", ""))}{", " + u(meta["PDT"]) if meta.get("PDT") else ""})')
         enc = meta.get('EED')
+        lic = 'CC BY-NC 4.0'
+        if meta.get('YEM') and 'SA' in meta['YEM']:
+            lic = 'CC BY-SA 4.0'
         bits.append(f'From the Josquin Research Project (josquin.stanford.edu, {jid})' + (', ' + ed[0] if ed else '') +
-                    (f'; encoded by {credit_name(enc)}' if enc else '') + '. CC BY-NC 4.0.')
+                    (f'; encoded by {credit_name(enc)}' if enc else '') + '.')
+        if meta.get('PPR'):
+            bits.append(f'Edition published by {u(meta["PPR"])}.')
+        if meta.get('YEC'):
+            bits.append(u(meta['YEC']).replace('All Rights Reserved', '').strip(' ,.') + '.')
+        bits.append(f'Licence: {lic}; converted to Cantare notation (tools/kern2cantare.py).')
         bits.append('Note values as in the edition (whole note = semibreve); coloured notes stand for the triplet groups; editorial accidentals small above the staff.')
         if not any(v.get('lyr') for v in item['poly']):
             bits.append('No text in this edition.')

@@ -685,7 +685,11 @@ html.dark .popbody,html.dark .menu,html.dark .library{box-shadow:0 14px 34px -10
     <p>Your work is kept in this browser automatically. Copy link gives you an address that opens this exact cantus firmus anywhere, for instance to send to a student.</p>
   </details>
 
-  <footer>Note shapes from the Bravura music font by Steinberg, SIL Open Font License 1.1.</footer>
+  <footer>
+    <p>Note shapes from the Bravura music font by Steinberg, SIL Open Font License 1.1.</p>
+    <p>The library of polyphonic pieces and canons (about 1420 to 1540) is from the <a href="https://josquin.stanford.edu/about" target="_blank" rel="noopener">Josquin Research Project</a>, Stanford University (Project Director Jesse Rodin, Technical Director Craig Stuart Sapp, created in 2010 by Jesse Rodin in collaboration with Craig Sapp at CCARH), digital scores at <a href="https://github.com/josquin-research-project/jrp-scores" target="_blank" rel="noopener">github.com/josquin-research-project/jrp-scores</a>. Each piece names its editor and encoder, the edition and the copyright holder where the score gives them. Licence <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0</a> (non-commercial use; the few scores marked “All Rights Reserved” are left out). Changes: the Humdrum files were converted to Cantare notation; in the canon list, the editors’ remarks are quoted, and the canons marked “found in the notes” were detected by a computer search for a voice that repeats another at a fixed interval, so they are not the project’s own statements.</p>
+    <p>Canon remarks and pieces also appear in the Josquin Research Project’s own pages; for the scholarly edition, the sources and the full critical notes, see josquin.stanford.edu.</p>
+  </footer>
 </main>
 <div class="focusbar" aria-label="Focus">
   <button id="fPlay" aria-label="Play" title="Play"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1 13 7 2 13Z"/></svg></button>
@@ -4011,15 +4015,15 @@ const LUTHERAN = [
   );
   LIBRARY.find(g => g.group === 'Cantus fractus').items.forEach(x => { x.fr = true; });
 })();
-/* The Josquin Research Project (josquin.stanford.edu): 1,381 pieces from about 1420 to 1540, in all their voices.
+/* The Josquin Research Project (josquin.stanford.edu): 1,379 pieces from about 1420 to 1540, in all their voices.
    Too much to carry in this page, so it comes in three steps, each fetched only when it is opened and kept offline
    by the service worker afterwards: jrp/index.json (the composers), jrp/c/<code>.json (one composer's works, with a
    short preview of each), jrp/p/<id>.json (the whole piece). Converted from the JRP Humdrum files, CC BY-NC 4.0. */
 const JRP_BASE = 'jrp/';
-LIBRARY.push({group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and twenty more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1381,
+LIBRARY.push({group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and twenty more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1379,
   pv: {title: 'Kyrie (Josquin, Missa Pange lingua)', c: 'c1', t: 'O', b: false, n: 'rB. rB. 30S 30S 31S 30B 29M 32M 33M 35S 34Sm 33Sm 34M. 35Sm 36M 37M. 36Sm 35S 34M 35M. 34Sm 33M 32M 31M 30Sm 29Sm 30S rS'}});
 /* every canon among them: the editors' own remarks plus the strict canons found in the notes (tools/find_canons.py), sorted by interval */
-LIBRARY.push({group: 'Canons from the Josquin Research Project', note: 'The pieces of the Josquin Research Project that contain a canon, sorted by the interval of the answer: Josquin’s Missa Sine nomine and Missa Mater patris, Okeghem’s Missa Prolationum, riddle canons, mensuration canons and many more. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself, or Mute to sing it from the notation. CC BY-NC 4.0.', lazy: 'canons.json', count: 217,
+LIBRARY.push({group: 'Canons from the Josquin Research Project', note: 'The pieces of the Josquin Research Project that contain a canon, sorted by the interval of the answer: Josquin’s Missa Sine nomine and Missa Mater patris, Okeghem’s Missa Prolationum, riddle canons, mensuration canons and many more. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself, or Mute to sing it from the notation. CC BY-NC 4.0.', lazy: 'canons.json', count: 216,
   pv: {title: 'Credo (Josquin, Missa Mater patris)', c: 'c1', t: 'O', b: false, n: 'rB. 30S 30S 31S 30B 29M 32M 33M 35S 34Sm 33Sm 34M. 35Sm 36M'}});
 const jrpCache = {};
 function jrpFetch(path){
