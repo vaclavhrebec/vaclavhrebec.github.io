@@ -178,6 +178,10 @@ label.ctl{display:flex;align-items:center;gap:8px;color:var(--muted)}
 #score.cb1{grid-template-columns:1fr}
 #score.cb1 .cbq,#score.cb1 .cbq:nth-child(odd),#score.cb1 .cbq:nth-child(even){padding:0;border-left:0}
 body.playing .transport{position:sticky;bottom:0;z-index:30;background:var(--ground);padding:10px 0;margin-top:8px}
+/* The score never grows taller or wider than the screen: what does not fit scrolls inside the leaf,
+   so the page itself is never moved by the playback and the play and stop buttons stay in reach. */
+.leaf{max-height:calc(100vh - var(--tpH,0px) - 32px);max-height:calc(100dvh - var(--tpH,0px) - 32px);overflow:auto;overscroll-behavior:contain;max-width:100%}
+html.focus .leaf{max-height:calc(100dvh - 110px)}
 #score .cbq{min-width:0;padding:0 14px}
 #score .cbq:nth-child(odd){padding-left:0}
 #score .cbq:nth-child(even){padding-right:0;border-left:1px solid var(--rule)}
@@ -1711,10 +1715,11 @@ function handFollow(){
   const leaf = lead.offsetParent; if (!leaf) return;
   const lr = leaf.getBoundingClientRect(), tools = document.querySelector('.tools');
   const tb = tools && getComputedStyle(tools).position === 'sticky' ? Math.max(0, tools.getBoundingClientRect().bottom) : 0;
-  const shift = document.body.classList.contains('playing') ? Math.max(0, Math.min(tb + 6 - lr.top, lr.height - lead.offsetHeight - 16)) : 0;
+  const shift = document.body.classList.contains('playing') ? Math.max(0, Math.min(Math.max(0, tb + 6 - lr.top) + leaf.scrollTop, leaf.scrollHeight - lead.offsetHeight - 16)) : 0;
   for (const e of [lead, $('#pendBox')]) if (e && e.dataset.home) e.style.top = (parseFloat(e.dataset.home) + shift) + 'px';
 }
 window.addEventListener('scroll', () => requestAnimationFrame(handFollow), {passive: true});
+{ const lf = document.querySelector('.leaf'); if (lf) lf.addEventListener('scroll', () => requestAnimationFrame(handFollow), {passive: true}); }
 function render(){
   lay = layout();
   const S = ui.size;
@@ -2751,15 +2756,31 @@ function setPlaying(i){
   ui.playing = i;
   if (followEl) followPlay(followEl);
 }
-/* while playing, the score moves up by itself so that the sounding note stays in view */
+/* While playing, the score follows the sounding note inside its own leaf; the page itself stays where the reader put it.
+   Scrolling the leaf by hand pauses the following for a few seconds. */
+let handScrollT = 0;
 function followPlay(el){
-  const r = el.getBoundingClientRect(), H = window.innerHeight, tools = document.querySelector('.tools'), tb = tools && getComputedStyle(tools).position === 'sticky' ? tools.getBoundingClientRect().bottom : 0;
-  const top = Math.max(tb, 0) + 24, bot = H - 150;
+  const leaf = document.querySelector('.leaf'); if (!leaf) return;
+  if (performance.now() - handScrollT < 4000) return;
+  const r = el.getBoundingClientRect(), L = leaf.getBoundingClientRect(), H = leaf.clientHeight;
+  const top = L.top + 16, bot = L.top + H - 40;
   if (r.top >= top && r.bottom <= bot) return;
-  /* going down, move only as far as needed (and a little ahead), so the tactus hand at the top of the page stays in view as long as it can */
-  const want = r.bottom > bot ? Math.min(r.bottom - bot + H * 0.25, r.top - Math.max(top, H * 0.22)) : r.top - Math.max(top, H * 0.22);
-  window.scrollBy({top: want, behavior: 'smooth'});
+  const want = r.top - L.top - H * 0.2;    // bring the sounding row a fifth of the way down the leaf
+  leaf.scrollBy({top: want, behavior: 'smooth'});
 }
+/* When playing starts: if the leaf is not on screen as a whole, bring it into view once (never again during the piece). */
+function showLeafOnce(){
+  const leaf = document.querySelector('.leaf'); if (!leaf) return;
+  const r = leaf.getBoundingClientRect(), tp = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tpH')) || 0;
+  if (r.top < 0 || r.bottom > window.innerHeight - tp) window.scrollBy({top: r.top - 8, behavior: 'smooth'});
+}
+(function(){
+  const leaf = document.querySelector('.leaf'), tp = document.querySelector('.transport');
+  if (leaf) ['wheel', 'touchmove', 'pointerdown'].forEach(ev => leaf.addEventListener(ev, e => { if (ev !== 'pointerdown' || e.target === leaf) handScrollT = performance.now(); }, {passive: true}));
+  const setTp = () => document.documentElement.style.setProperty('--tpH', (tp ? Math.ceil(tp.getBoundingClientRect().height) : 0) + 'px');
+  if (tp && window.ResizeObserver) new ResizeObserver(setTp).observe(tp);
+  window.addEventListener('resize', setTp); setTp();
+})();
 function stopPlayback(){
   recStop();
   if (!audio.timeline) return;
@@ -2781,7 +2802,9 @@ function replayIfPlaying(){
 }
 function togglePlay(){ audio.timeline ? stopPlayback() : startPlayback(ui.sel !== null ? ui.sel : 0); }
 function setPlayButton(on){
+  const was = document.body.classList.contains('playing');
   document.body.classList.toggle('playing', !!on); handFollow();
+  if (on && !was) requestAnimationFrame(showLeafOnce);
   const fp = $('#fPlay');
   fp.setAttribute('aria-label', on ? 'Stop' : 'Play'); fp.title = on ? 'Stop' : 'Play';
   fp.innerHTML = on ? '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2h10v10H2Z"/></svg>' : '<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1 13 7 2 13Z"/></svg>';
