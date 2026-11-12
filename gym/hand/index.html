@@ -682,7 +682,7 @@ async function loadTracker(){
   const {FilesetResolver, HandLandmarker} = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + VER + '/vision_bundle.mjs');
   const files = await FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@' + VER + '/wasm');
   const opts = d => ({baseOptions: {modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', delegate: d},
-    runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.5, minHandPresenceConfidence: 0.5, minTrackingConfidence: 0.5});
+    runningMode: 'VIDEO', numHands: 2, minHandDetectionConfidence: 0.4, minHandPresenceConfidence: 0.4, minTrackingConfidence: 0.4});
   try { landmarker = await HandLandmarker.createFromOptions(files, opts('GPU')); }
   catch (e) { landmarker = await HandLandmarker.createFromOptions(files, opts('CPU')); }
   return landmarker;
@@ -717,6 +717,38 @@ function stopCam(){
   $('#hint').hidden = false; $('#start').classList.remove('on'); $('#start span').textContent = 'Start the camera';
   [0, 1].forEach(s => { feed(s, null); feed(s, null); feed(s, null); });
 }
+/* ---------- which hand is which ----------
+   With both hands in the picture, the hand on the left of the screen (as the player sees it) is the left hand.
+   Each hand is then followed from frame to frame, so that two hands close together, or a hand that turns,
+   never swap or merge. With one hand in the picture, it belongs to the hand that was last seen nearest to it;
+   only a hand coming in fresh is judged by its shape. */
+const track = [null, null];   // the last place of each hand: centre and size, and when
+const centreOf = P => ({x: (P[0].x + P[5].x + P[9].x + P[17].x) / 4, y: (P[0].y + P[5].y + P[9].y + P[17].y) / 4});
+function assignHands(list, W){
+  const now = performance.now(), got = [null, null];
+  const sx = P => { const c = centreOf(P); return mirrored ? W - c.x : c.x; };    // across the screen as the player sees it
+  const near = (P, k) => { const c = centreOf(P); return Math.hypot(c.x - track[k].x, c.y - track[k].y) / Math.max(track[k].s, scaleOf(P)); };
+  const fresh = k => track[k] && now - track[k].t < 700;
+  if (list.length >= 2) {
+    // the two most hand-like detections, if there were more
+    let [A, B] = list.slice(0, 2);
+    let L = sx(A) <= sx(B) ? A : B, R = L === A ? B : A;
+    // hands crossed over: keep each hand's own voice when following them says so clearly
+    if (fresh(0) && fresh(1)) {
+      const keep = near(L, 0) + near(R, 1), swap = near(R, 0) + near(L, 1);
+      if (swap < keep * 0.4) [L, R] = [R, L];
+    }
+    got[0] = L; got[1] = R;
+  } else if (list.length === 1) {
+    const P = list[0];
+    const ks = [0, 1].filter(fresh).sort((a, b) => near(P, a) - near(P, b));
+    if (ks.length && near(P, ks[0]) < 1.6) got[ks[0]] = P;                     // the same hand as a moment ago
+    else if (ks.length === 1) got[1 - ks[0]] = P;                               // far from the hand we know: the other one
+    else got[isLeft(P) ? 0 : 1] = P;                                            // a hand coming in fresh: by its shape
+  }
+  got.forEach((P, k) => { if (P) { const c = centreOf(P); track[k] = {x: c.x, y: c.y, s: scaleOf(P), t: now}; } });
+  return got;
+}
 function loop(){
   if (!running) return;
   if (video.readyState >= 2 && video.currentTime !== lastT) {
@@ -727,7 +759,7 @@ function loop(){
     const got = [null, null];
     if (res && res.landmarks) {
       const list = res.landmarks.map(L => L.map(p => ({x: p.x * W, y: p.y * H, z: p.z * W})));
-      if (prefs.hands === 2) list.forEach(P => { const s = isLeft(P) ? 0 : 1; if (!got[s]) got[s] = P; });
+      if (prefs.hands === 2) { const two = assignHands(list, W); got[0] = two[0]; got[1] = two[1]; }
       else if (list.length) { const wantLeft = prefs.side !== 'R'; got[0] = list.find(P => isLeft(P) === wantLeft) || list[0]; }
     }
     feed(0, got[0]); feed(1, prefs.hands === 2 ? got[1] : null);
@@ -971,7 +1003,7 @@ function gamut(){
 }
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $('#start').disabled = true; status('This browser offers no camera here. You can still tap the notes on the painted hand.'); }
 applyHands(); gamut();
-window.__manus = {classify, places, POS, TPL, setPos, feed, hands, normalize, gammaOrE, features, setTemplates};
+window.__manus = {assignHands, track, setMirrored: m => { mirrored = m; }, classify, places, POS, TPL, setPos, feed, hands, normalize, gammaOrE, features, setTemplates};
 </script>
 <script src="../feedback.js" data-topic="Guidonian hand" defer></script>
 </body>
