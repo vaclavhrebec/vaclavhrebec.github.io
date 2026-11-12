@@ -4018,6 +4018,9 @@ const LUTHERAN = [
 const JRP_BASE = 'jrp/';
 LIBRARY.push({group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and twenty more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1381,
   pv: {title: 'Kyrie (Josquin, Missa Pange lingua)', c: 'c1', t: 'O', b: false, n: 'rB. rB. 30S 30S 31S 30B 29M 32M 33M 35S 34Sm 33Sm 34M. 35Sm 36M 37M. 36Sm 35S 34M 35M. 34Sm 33M 32M 31M 30Sm 29Sm 30S rS'}});
+/* every canon among them: the editors' own remarks plus the strict canons found in the notes (tools/find_canons.py), sorted by interval */
+LIBRARY.push({group: 'Canons from the Josquin Research Project', note: 'The pieces of the Josquin Research Project that contain a canon, sorted by the interval of the answer: Josquin’s Missa Sine nomine and Missa Mater patris, Okeghem’s Missa Prolationum, riddle canons, mensuration canons and many more. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself, or Mute to sing it from the notation. CC BY-NC 4.0.', lazy: 'canons.json', count: 217,
+  pv: {title: 'Credo (Josquin, Missa Mater patris)', c: 'c1', t: 'O', b: false, n: 'rB. 30S 30S 31S 30B 29M 32M 33M 35S 34Sm 33Sm 34M. 35Sm 36M'}});
 const jrpCache = {};
 function jrpFetch(path){
   if (!jrpCache[path]) jrpCache[path] = fetch(JRP_BASE + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
