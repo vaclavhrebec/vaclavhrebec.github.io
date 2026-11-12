@@ -14,7 +14,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '' };
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '' };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 setFont(prefs.font);
 setLang(prefs.lang || guessLang());
@@ -296,7 +296,7 @@ function buildStudio() {
     chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; savePrefs(); buildStudio(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     chipRow(tr('Pitch'), [415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); buildStudio(); }))),
-    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); applyHand(); buildStudio(); })]));
+    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); })]));
 
   /* view */
   card(tr('View'),
@@ -415,19 +415,6 @@ $('#transformBtn').addEventListener('click', e => {
 });
 document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
 
-/* ------------------------------------------------------------------ the tactus hand */
-const HAND = `<g id="handArm"><rect x="26" y="46" width="12" height="30" rx="5" fill="currentColor" opacity=".45"/>
-<g id="baton"><path d="M31 36L52 2" stroke="currentColor" stroke-width="2.400" stroke-linecap="round" fill="none"/><path d="M31 36L35 29" stroke="currentColor" stroke-width="4" stroke-linecap="round" fill="none"/></g>
-<rect x="21" y="32" width="22" height="19" rx="7.500" fill="currentColor"/><path d="M27.500 37v8M32 37v8M36.500 37v8" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/>
-<path d="M40 39c4.500 0 5.500 5 2 7.500" stroke="var(--bg)" stroke-width="1.300" stroke-linecap="round" fill="none"/></g>`;
-function applyHand() { $('#tactusBox').classList.toggle('off', !prefs.hand); }
-function swing(phase) {
-  const c = Math.cos(phase * Math.PI * 2);
-  const arm = $('#handArm'), bat = $('#baton');
-  if (arm) arm.setAttribute('transform', `rotate(${(8 * c).toFixed(1)} 32 70)`);
-  if (bat) bat.setAttribute('transform', `rotate(${(28 * c).toFixed(1)} 31 36)`);
-}
-
 /* ------------------------------------------------------------------ playback */
 const spm = () => (60 / prefs.tempo) / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4); /* seconds per minim */
 
@@ -474,7 +461,6 @@ function stopPlayback(keep) {
   clock = null;
   if (S.playing) setPlaying(false);
   S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
-  if (!keep) swing(0);
 }
 
 function setPlaying(on) {
@@ -488,7 +474,6 @@ function frame() {
   if (!clock) return;
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
   if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; return; }
-  swing(pos > 0 ? ((pos / (S.piece.tempus === 'O' && !S.piece.talea ? 6 : 4)) % 1) : 0);
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
     if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
@@ -663,8 +648,6 @@ new ResizeObserver(() => {
 (async function start() {
   applyTheme();
   translatePage();
-  $('#hand').innerHTML = HAND;
-  applyHand();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
   const wide = innerWidth >= 1100;
   $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
