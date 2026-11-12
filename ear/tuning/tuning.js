@@ -167,7 +167,7 @@
       'Root': 'Grundton', 'Pitch of a′': 'Stimmton a′', 'Sound': 'Klang', 'Speed': 'Tempo', 'Major scale': 'Durtonleiter', 'Minor scale': 'Molltonleiter', 'Chromatic scale': 'Chromatische Tonleiter',
       'Major triad': 'Durdreiklang', 'Minor triad': 'Molldreiklang', 'Cadence I–IV–V–I': 'Kadenz I–IV–V–I', 'Drone for singing': 'Bordun zum Singen', 'Stop': 'Stopp',
       'Play': 'Spielen', 'Scales': 'Tonleitern', 'Chords': 'Akkorde', 'Sing': 'Singen', 'Keyboard': 'Klaviatur', 'Notes': 'Töne', 'cents above C': 'Cent über C', 'deviation from equal': 'Abweichung von gleichstufig',
-      'Fifths': 'Quinten', 'Major thirds': 'Große Terzen', 'Minor thirds': 'Kleine Terzen', 'size': 'Größe', 'from pure': 'von rein', 'beats/s': 'Schwebungen/s', 'How it works': 'Wie sie funktioniert', 'How to tune it': 'Wie man sie stimmt',
+      'Fifths': 'Quinten', 'Major thirds': 'Große Terzen', 'Minor thirds': 'Kleine Terzen', 'size': 'Größe', 'from pure': 'von rein', 'beats/s': 'Schweb./s', 'How it works': 'Wie sie funktioniert', 'How to tune it': 'Wie man sie stimmt',
       'All temperaments compared': 'Alle Stimmungen im Vergleich', 'Deviation of each note from equal temperament, in cents (A = 0).': 'Abweichung jedes Tons von der gleichstufigen Stimmung, in Cent (A = 0).',
       'Major thirds on every note': 'Große Terzen auf jedem Ton', 'Each cell shows how much the major third above that note is wider than pure (in cents). White = pure; the darker, the wider.': 'Jede Zelle zeigt, um wie viel die große Terz über diesem Ton größer als rein ist (in Cent). Weiß = rein; je dunkler, desto größer.',
       'The commas': 'Die Kommata', 'Marchetto of Padua: the whole tone in five parts': 'Marchetto von Padua: der Ganzton in fünf Teilen',
@@ -176,34 +176,70 @@
       'Pure tunings': 'Reine Stimmungen', 'Meantone': 'Mitteltönig', 'Well temperaments': 'Wohltemperierte Stimmungen', 'The explanations are in English for now.': 'Die Erläuterungen sind vorerst auf Englisch.',
       'wolf': 'Wolf', 'pure': 'rein', 'narrow': 'eng', 'wide': 'weit', 'A/B: play the same with the comparison': 'A/B: dasselbe mit der Vergleichsstimmung spielen', 'Hold': 'Halten'},
     fr: {'Agenda': 'Agenda', 'Projects': 'Projets', 'Course Rheinfelden 2027': 'Cours Rheinfelden 2027', 'Tuning systems': 'Systèmes d’accord', 'All exercises': 'Tous les exercices', 'Temperament': 'Tempérament', 'Compare with': 'Comparer avec', 'nothing': 'rien',
-      'Root': 'Tonique', 'Pitch of a′': 'Diapason (la)', 'Sound': 'Son', 'Speed': 'Tempo', 'Major scale': 'Gamme majeure', 'Minor scale': 'Gamme mineure', 'Chromatic scale': 'Gamme chromatique',
-      'Major triad': 'Accord majeur', 'Minor triad': 'Accord mineur', 'Cadence I–IV–V–I': 'Cadence I–IV–V–I', 'Drone for singing': 'Bourdon pour chanter', 'Stop': 'Arrêt',
+      'Root': 'Tonique', 'Pitch of a′': 'Diapason (la₃)', 'Sound': 'Son', 'Speed': 'Tempo', 'Major scale': 'Gamme majeure', 'Minor scale': 'Gamme mineure', 'Chromatic scale': 'Gamme chromatique',
+      'Major triad': 'Accord majeur', 'Minor triad': 'Accord mineur', 'Cadence I–IV–V–I': 'Cadence I–IV–V–I', 'Drone for singing': 'Bourdon pour chanter', 'Stop': 'Arrêter',
       'Play': 'Jouer', 'Scales': 'Gammes', 'Chords': 'Accords', 'Sing': 'Chanter', 'Keyboard': 'Clavier', 'Notes': 'Notes', 'cents above C': 'cents au-dessus de do', 'deviation from equal': 'écart du tempérament égal',
-      'Fifths': 'Quintes', 'Major thirds': 'Tierces majeures', 'Minor thirds': 'Tierces mineures', 'size': 'taille', 'from pure': 'par rapport au pur', 'beats/s': 'battements/s', 'How it works': 'Principe', 'How to tune it': 'Comment l’accorder',
+      'Fifths': 'Quintes', 'Major thirds': 'Tierces majeures', 'Minor thirds': 'Tierces mineures', 'size': 'grandeur', 'from pure': 'écart au pur', 'beats/s': 'batt./s', 'How it works': 'Principe', 'How to tune it': 'Comment l’accorder',
       'All temperaments compared': 'Tous les tempéraments comparés', 'Deviation of each note from equal temperament, in cents (A = 0).': 'Écart de chaque note par rapport au tempérament égal, en cents (la = 0).',
       'Major thirds on every note': 'Tierces majeures sur chaque note', 'Each cell shows how much the major third above that note is wider than pure (in cents). White = pure; the darker, the wider.': 'Chaque case montre de combien la tierce majeure au-dessus de cette note est plus large que pure (en cents). Blanc = pure ; plus c’est foncé, plus elle est large.',
       'The commas': 'Les commas', 'Marchetto of Padua: the whole tone in five parts': 'Marchetto de Padoue : le ton divisé en cinq parties',
-      'Hear Marchetto’s sharp': 'Entendre le dièse de Marchetto', 'Light / dark': 'Clair / sombre', 'Beat rates in the octave f–e′ with a′ as chosen above.': 'Battements dans l’octave fa–mi′ avec le la choisi ci-dessus.',
+      'Hear Marchetto’s sharp': 'Entendre le dièse de Marchetto', 'Light / dark': 'Clair / sombre', 'Beat rates in the octave f–e′ with a′ as chosen above.': 'Battements dans l’octave fa₂–mi₃ avec le la₃ choisi ci-dessus.',
       'Tap a key to hear the note in this temperament.': 'Touchez une touche pour entendre la note dans ce tempérament.', 'Pythagorean': 'Pythagoricien', 'Equal temperament': 'Tempérament égal',
       'Pure tunings': 'Accords purs', 'Meantone': 'Mésotonique', 'Well temperaments': 'Tempéraments inégaux', 'The explanations are in English for now.': 'Les explications sont pour l’instant en anglais.',
       'wolf': 'loup', 'pure': 'pure', 'narrow': 'étroite', 'wide': 'large', 'A/B: play the same with the comparison': 'A/B : jouer la même chose avec la comparaison', 'Hold': 'Tenir'},
     cs: {'Agenda': 'Kalendář', 'Projects': 'Projekty', 'Course Rheinfelden 2027': 'Kurz v Rheinfeldenu 2027', 'Tuning systems': 'Ladicí systémy', 'All exercises': 'Všechna cvičení', 'Temperament': 'Ladění', 'Compare with': 'Porovnat s', 'nothing': 'nic',
-      'Root': 'Základní tón', 'Pitch of a′': 'Ladička a′', 'Sound': 'Zvuk', 'Speed': 'Tempo', 'Major scale': 'Durová stupnice', 'Minor scale': 'Mollová stupnice', 'Chromatic scale': 'Chromatická stupnice',
-      'Major triad': 'Durový kvintakord', 'Minor triad': 'Mollový kvintakord', 'Cadence I–IV–V–I': 'Kadence I–IV–V–I', 'Drone for singing': 'Prodleva ke zpěvu', 'Stop': 'Stop',
+      'Root': 'Základní tón', 'Pitch of a′': 'Výška a¹', 'Sound': 'Zvuk', 'Speed': 'Tempo', 'Major scale': 'Durová stupnice', 'Minor scale': 'Mollová stupnice', 'Chromatic scale': 'Chromatická stupnice',
+      'Major triad': 'Durový kvintakord', 'Minor triad': 'Mollový kvintakord', 'Cadence I–IV–V–I': 'Kadence I–IV–V–I', 'Drone for singing': 'Prodleva ke zpěvu', 'Stop': 'Zastavit',
       'Play': 'Přehrát', 'Scales': 'Stupnice', 'Chords': 'Akordy', 'Sing': 'Zpívat', 'Keyboard': 'Klaviatura', 'Notes': 'Tóny', 'cents above C': 'centů nad C', 'deviation from equal': 'odchylka od rovnoměrného',
       'Fifths': 'Kvinty', 'Major thirds': 'Velké tercie', 'Minor thirds': 'Malé tercie', 'size': 'velikost', 'from pure': 'od čisté', 'beats/s': 'záznějů/s', 'How it works': 'Jak funguje', 'How to tune it': 'Jak ho naladit',
       'All temperaments compared': 'Všechna ladění v porovnání', 'Deviation of each note from equal temperament, in cents (A = 0).': 'Odchylka každého tónu od rovnoměrně temperovaného ladění v centech (A = 0).',
       'Major thirds on every note': 'Velké tercie na každém tónu', 'Each cell shows how much the major third above that note is wider than pure (in cents). White = pure; the darker, the wider.': 'Každé pole ukazuje, o kolik je velká tercie nad tímto tónem širší než čistá (v centech). Bílá = čistá; čím tmavší, tím širší.',
-      'The commas': 'Kómata', 'Marchetto of Padua: the whole tone in five parts': 'Marchetto z Padovy: celý tón v pěti dílech',
-      'Hear Marchetto’s sharp': 'Poslechnout Marchettův křížek', 'Light / dark': 'Světlý / tmavý', 'Beat rates in the octave f–e′ with a′ as chosen above.': 'Zázněje v oktávě f–e′ s výše zvoleným a′.',
+      'The commas': 'Komata', 'Marchetto of Padua: the whole tone in five parts': 'Marchetto z Padovy: celý tón v pěti dílech',
+      'Hear Marchetto’s sharp': 'Poslechnout Marchettův křížek', 'Light / dark': 'Světlý / tmavý', 'Beat rates in the octave f–e′ with a′ as chosen above.': 'Zázněje v oktávě f–e¹ s výše zvoleným a¹.',
       'Tap a key to hear the note in this temperament.': 'Klepněte na klávesu a uslyšíte tón v tomto ladění.', 'Pythagorean': 'Pythagorejské', 'Equal temperament': 'Rovnoměrně temperované ladění',
       'Pure tunings': 'Čistá ladění', 'Meantone': 'Středotónové', 'Well temperaments': 'Dobře temperovaná ladění', 'The explanations are in English for now.': 'Vysvětlení jsou zatím v angličtině.',
       'wolf': 'vlk', 'pure': 'čistá', 'narrow': 'úzká', 'wide': 'široká', 'A/B: play the same with the comparison': 'A/B: zahrát totéž ve srovnávacím ladění', 'Hold': 'Držet'}
   };
-  let lang = 'en';
-  try { lang = localStorage.getItem('lang') || (navigator.language || 'en').slice(0, 2); } catch (e) {}
-  if (!['en', 'de', 'fr', 'cs'].includes(lang)) lang = 'en';
-  const t = s => (lang !== 'en' && L[lang] && L[lang][s]) || s;
+  /* the explanations, note names and everything else live in l10n-de.js, l10n-fr.js, l10n-cs.js (window.TUNING_L) */
+  const TL = window.TUNING_L || {};
+  const LANGS = ['en', 'de', 'fr', 'cs'];
+  let lang = new URL(location.href).searchParams.get('lang');
+  if (!lang) { try { lang = localStorage.getItem('lang'); } catch (e) {} }
+  if (!lang) lang = (navigator.language || 'en').slice(0, 2);
+  if (lang === 'sk') lang = 'cs';
+  if (!LANGS.includes(lang)) lang = 'en';
+  try { localStorage.setItem('lang', lang); } catch (e) {}
+  const t = (s, vars) => {
+    let r = (lang !== 'en' && ((L[lang] && L[lang][s]) || (TL[lang] && TL[lang].ui && TL[lang].ui[s]))) || s;
+    if (vars) for (const k in vars) r = r.split('{' + k + '}').join(vars[k]);
+    return r;
+  };
+  /* a field of a temperament (name, who, temp, text, how) in the current language */
+  const loc = (tm, f) => (lang !== 'en' && TL[lang] && TL[lang].tun && TL[lang].tun[tm.id] && TL[lang].tun[tm.id][f]) || tm[f];
+  /* note names: C♯ → Cis, B♭ → B, B → H (German, Czech); C♯ → do♯ (French) */
+  const SOL = {C: 'do', D: 'ré', E: 'mi', F: 'fa', G: 'sol', A: 'la', B: 'si'};
+  function nn(x) {
+    if (lang === 'en') return x;
+    return String(x).replace(/([A-G])([♯♭]*)/g, (m, l, acc) => {
+      const k = [...acc].reduce((a, c) => a + (c === '♯' ? 1 : -1), 0);
+      if (lang === 'fr') return SOL[l] + acc;
+      if (l === 'B') return k === 0 ? 'H' : k === -1 ? 'B' : k < -1 ? 'Heses' + 'es'.repeat(-k - 2) : 'H' + 'is'.repeat(k);
+      if (k >= 0) return l + 'is'.repeat(k);
+      const st = (l === 'E' || l === 'A') ? l + 's' : l + 'es';
+      return st + 'es'.repeat(-k - 1);
+    });
+  }
+  /* a key: "C major" / "C-Dur" / "do majeur" / "C dur"; German and Czech write minor keys in lower case */
+  function key(n, minor) {
+    const x = nn(n);
+    if (lang === 'de') return minor ? x.toLowerCase() + '-Moll' : x + '-Dur';
+    if (lang === 'cs') return minor ? x.toLowerCase() + ' moll' : x + ' dur';
+    if (lang === 'fr') return x + (minor ? ' mineur' : ' majeur');
+    return n + (minor ? ' minor' : ' major');
+  }
+  const N = i => nn(NAMES[i]);
+  const tname = tm => loc(tm, 'name');
+  const hooks = [];
 
   /* ---------- sound ---------- */
   let ctx = null, out = null, live = [], timers = [];
@@ -288,7 +324,7 @@
       timers.push(setTimeout(() => lightKey(x.n, true), ev.at * 1000 + 50));
       if (isFinite(dur)) timers.push(setTimeout(() => lightKey(x.n, false), (ev.at + dur) * 1000));
     }));
-    $('#now').textContent = tm.name;
+    $('#now').textContent = tname(tm);
   }
   function lightKey(n, on) { const k = document.querySelector('.k[data-n="' + n + '"]'); if (k) k.classList.toggle('on', on); }
 
@@ -302,25 +338,25 @@
     const groups = {};
     T.forEach(x => (groups[x.group] = groups[x.group] || []).push(x));
     return `<select id="${id}">` + (withNone ? `<option value="none"${cur === 'none' ? ' selected' : ''}>${t('nothing')}</option>` : '') +
-      Object.keys(GROUPS).map(g => `<optgroup label="${esc(t(GROUPS[g]))}">` + groups[g].map(x => `<option value="${x.id}"${x.id === cur ? ' selected' : ''}>${esc(x.name)}</option>`).join('') + '</optgroup>').join('') + '</select>';
+      Object.keys(GROUPS).map(g => `<optgroup label="${esc(t(GROUPS[g]))}">` + groups[g].map(x => `<option value="${x.id}"${x.id === cur ? ' selected' : ''}>${esc(tname(x))}</option>`).join('') + '</optgroup>').join('') + '</select>';
   }
 
   /* the circle of fifths: each arc coloured by how far the fifth is from pure */
   function circleSVG(tm) {
     const c = cents(tm), R = 118, cx = 160, cy = 150;
-    let o = `<svg viewBox="0 0 320 300" class="circ" role="img" aria-label="Circle of fifths">`;
+    let o = `<svg viewBox="0 0 320 300" class="circ" role="img" aria-label="${esc(t('Circle of fifths'))}">`;
     FIFTHS.forEach(([a, b], i) => {
       const dev = size(c, a, b) - FIFTH;      /* negative = narrow */
       const a0 = -Math.PI / 2 + i * Math.PI / 6 + .13, a1 = a0 + Math.PI / 6 - .26;
       const w = Math.min(12, 2 + Math.abs(dev) * 0.9);
       const col = Math.abs(dev) < .05 ? 'var(--line-strong)' : dev < 0 ? 'var(--accent)' : 'var(--blue)';
-      o += `<path d="M${(cx + R * Math.cos(a0)).toFixed(1)} ${(cy + R * Math.sin(a0)).toFixed(1)} A${R} ${R} 0 0 1 ${(cx + R * Math.cos(a1)).toFixed(1)} ${(cy + R * Math.sin(a1)).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w.toFixed(1)}" stroke-linecap="round"><title>${NAMES[a]}–${NAMES[b]}: ${f1(size(c, a, b))} c (${sgn(dev)})</title></path>`;
+      o += `<path d="M${(cx + R * Math.cos(a0)).toFixed(1)} ${(cy + R * Math.sin(a0)).toFixed(1)} A${R} ${R} 0 0 1 ${(cx + R * Math.cos(a1)).toFixed(1)} ${(cy + R * Math.sin(a1)).toFixed(1)}" fill="none" stroke="${col}" stroke-width="${w.toFixed(1)}" stroke-linecap="round"><title>${N(a)}–${N(b)}: ${f1(size(c, a, b))} c (${sgn(dev)})</title></path>`;
       const am = -Math.PI / 2 + (i + .5) * Math.PI / 6, rl = R + 24;
       if (Math.abs(dev) >= .05) o += `<text class="dv" x="${(cx + rl * Math.cos(am)).toFixed(1)}" y="${(cy + rl * Math.sin(am) + 4).toFixed(1)}" text-anchor="middle">${sgn(dev)}</text>`;
     });
     CIRCLE.forEach((n, i) => {
       const a = -Math.PI / 2 + i * Math.PI / 6, x = cx + R * Math.cos(a), y = cy + R * Math.sin(a);
-      o += `<g class="cn" data-n="${n}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15"/><text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle">${NAMES[n]}</text></g>`;
+      o += `<g class="cn" data-n="${n}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="15"/><text x="${x.toFixed(1)}" y="${(y + 5).toFixed(1)}" text-anchor="middle"${N(n).length > 3 ? ' class="lg"' : ''}>${N(n)}</text></g>`;
     });
     o += `<text class="mid" x="${cx}" y="${cy - 4}" text-anchor="middle">${esc(t('Fifths'))}</text><text class="mid2" x="${cx}" y="${cy + 16}" text-anchor="middle">${esc(t('narrow'))} · <tspan class="wd">${esc(t('wide'))}</tspan></text>`;
     return o + '</svg>';
@@ -329,9 +365,9 @@
   function keyboard(tm) {
     const c = cents(tm), cmp = S.cmp !== 'none' ? cents(byId(S.cmp)) : null;
     const white = [0, 2, 4, 5, 7, 9, 11], black = {1: 1, 3: 2, 6: 4, 8: 5, 10: 6};
-    let o = '<div class="kb" role="group" aria-label="Keyboard">';
-    white.forEach(n => { o += `<button type="button" class="k w" data-n="${n}"><span>${NAMES[n]}</span><small>${sgn(devET(c, n))}</small></button>`; });
-    Object.entries(black).forEach(([n, pos]) => { o += `<button type="button" class="k b" data-n="${n}" style="left:calc(${pos} * (100% / 7) - 3.2%)"><span>${NAMES[n]}</span></button>`; });
+    let o = `<div class="kb" role="group" aria-label="${esc(t('Keyboard'))}">`;
+    white.forEach(n => { o += `<button type="button" class="k w" data-n="${n}"><span>${N(n)}</span><small>${sgn(devET(c, n))}</small></button>`; });
+    Object.entries(black).forEach(([n, pos]) => { o += `<button type="button" class="k b" data-n="${n}" style="left:calc(${pos} * (100% / 7) - 3.2%)"><span>${N(n)}</span></button>`; });
     return o + '</div>';
   }
   /* deviation of each note from equal temperament with A fixed */
@@ -343,7 +379,7 @@
     /* frequencies in the bearing octave f (F3) … e′ (E4) */
     const fb = n => freq(tm, n, n >= 5 ? 3 : 4);
     let h = `<div class="tbls"><div class="tb"><h3>${esc(t('Notes'))}</h3><table><thead><tr><th></th><th>${esc(t('cents above C'))}</th><th>${esc(t('deviation from equal'))}</th></tr></thead><tbody>`;
-    for (let n = 0; n < 12; n++) h += `<tr><th>${NAMES[n]}</th><td>${(c[n]).toFixed(1)}</td><td class="${Math.abs(devET(c, n)) < .05 ? 'z' : ''}">${sgn(devET(c, n))}</td></tr>`;
+    for (let n = 0; n < 12; n++) h += `<tr><th>${N(n)}</th><td>${(c[n]).toFixed(1)}</td><td class="${Math.abs(devET(c, n)) < .05 ? 'z' : ''}">${sgn(devET(c, n))}</td></tr>`;
     h += '</tbody></table></div>';
     h += `<div class="tb"><h3>${esc(t('Fifths'))}</h3><table><thead><tr><th></th><th>${esc(t('size'))}</th><th>${esc(t('from pure'))}</th><th>${esc(t('beats/s'))}</th></tr></thead><tbody>`;
     FIFTHS.forEach(([a, b]) => {
@@ -352,7 +388,7 @@
       const fa = fb(a), fbb = fb(b) > fa ? fb(b) : fb(b) * 2;
       const bt = fbb > freq(tm, 5, 4) ? beats(fbb / 2, fa, 4, 3) : beats(fa, fbb, 3, 2);   /* above f′: tune the fourth down instead */
       const cls = Math.abs(dev) < .05 ? 'z' : Math.abs(dev) > 12 ? 'wolf' : '';
-      h += `<tr class="${cls}"><th>${NAMES[a]}–${NAMES[b]}</th><td>${f1(s)}</td><td>${sgn(dev)}${cls === 'wolf' ? ' · ' + esc(t('wolf')) : ''}</td><td>${Math.abs(dev) < .05 ? '0' : bt.toFixed(2)}</td></tr>`;
+      h += `<tr class="${cls}"><th>${N(a)}–${N(b)}</th><td>${f1(s)}</td><td>${sgn(dev)}${cls === 'wolf' ? ' · ' + esc(t('wolf')) : ''}</td><td>${Math.abs(dev) < .05 ? '0' : bt.toFixed(2)}</td></tr>`;
     });
     h += '</tbody></table></div>';
     h += `<div class="tb"><h3>${esc(t('Major thirds'))}</h3><table><thead><tr><th></th><th>${esc(t('size'))}</th><th>${esc(t('from pure'))}</th><th>${esc(t('beats/s'))}</th></tr></thead><tbody>`;
@@ -361,53 +397,62 @@
       const fa = fb(a), fbb = fb(b) > fa ? fb(b) : fb(b) * 2;
       const bt = beats(fa, fbb, 5, 4);
       const cls = Math.abs(dev) < .05 ? 'z' : dev > 30 ? 'wolf' : '';
-      h += `<tr class="${cls}"><th>${NAMES[a]}–${NAMES[b]}</th><td>${f1(s)}</td><td>${sgn(dev)}</td><td>${Math.abs(dev) < .05 ? '0' : bt.toFixed(2)}</td></tr>`;
+      h += `<tr class="${cls}"><th>${N(a)}–${N(b)}</th><td>${f1(s)}</td><td>${sgn(dev)}</td><td>${Math.abs(dev) < .05 ? '0' : bt.toFixed(2)}</td></tr>`;
     }
     h += '</tbody></table></div>';
     h += `<div class="tb"><h3>${esc(t('Minor thirds'))}</h3><table><thead><tr><th></th><th>${esc(t('size'))}</th><th>${esc(t('from pure'))}</th></tr></thead><tbody>`;
     for (let a = 0; a < 12; a++) {
       const b = (a + 3) % 12, s = size(c, a, b), dev = s - MINOR;
-      h += `<tr class="${Math.abs(dev) < .05 ? 'z' : Math.abs(dev) > 30 ? 'wolf' : ''}"><th>${NAMES[a]}–${NAMES[b]}</th><td>${f1(s)}</td><td>${sgn(dev)}</td></tr>`;
+      h += `<tr class="${Math.abs(dev) < .05 ? 'z' : Math.abs(dev) > 30 ? 'wolf' : ''}"><th>${N(a)}–${N(b)}</th><td>${f1(s)}</td><td>${sgn(dev)}</td></tr>`;
     }
     h += `</tbody></table></div></div><p class="note">${esc(t('Beat rates in the octave f–e′ with a′ as chosen above.'))} ${esc(S.a4)} Hz.</p>`;
     return h;
   }
 
   function compareTable() {
-    let h = `<div class="scroll"><table class="cmp"><thead><tr><th></th>${NAMES.map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>`;
+    let h = `<div class="scroll"><table class="cmp"><thead><tr><th></th>${NAMES.map((_, i) => `<th>${N(i)}</th>`).join('')}</tr></thead><tbody>`;
     T.forEach(tm => {
       const c = cents(tm);
-      h += `<tr${tm.id === S.id ? ' class="cur"' : ''}><th><button type="button" class="pick" data-id="${tm.id}">${esc(tm.name)}</button></th>` +
+      h += `<tr${tm.id === S.id ? ' class="cur"' : ''}><th><button type="button" class="pick" data-id="${tm.id}">${esc(tname(tm))}</button></th>` +
         NAMES.map((_, n) => { const d = devET(c, n); return `<td style="--v:${Math.min(1, Math.abs(d) / 20).toFixed(2)}" class="${d < -0.05 ? 'lo' : d > 0.05 ? 'hi' : ''}">${Math.abs(d) < .05 ? '0' : (d > 0 ? '+' : '−') + Math.abs(d).toFixed(1)}</td>`; }).join('') + '</tr>';
     });
     h += '</tbody></table></div>';
     h += `<h3 class="sub">${esc(t('Major thirds on every note'))}</h3><p class="note">${esc(t('Each cell shows how much the major third above that note is wider than pure (in cents). White = pure; the darker, the wider.'))}</p>`;
-    h += `<div class="scroll"><table class="cmp heat"><thead><tr><th></th>${NAMES.map(n => `<th>${n}</th>`).join('')}</tr></thead><tbody>`;
+    h += `<div class="scroll"><table class="cmp heat"><thead><tr><th></th>${NAMES.map((_, i) => `<th>${N(i)}</th>`).join('')}</tr></thead><tbody>`;
     T.forEach(tm => {
       const c = cents(tm);
-      h += `<tr${tm.id === S.id ? ' class="cur"' : ''}><th><button type="button" class="pick" data-id="${tm.id}">${esc(tm.name)}</button></th>` +
+      h += `<tr${tm.id === S.id ? ' class="cur"' : ''}><th><button type="button" class="pick" data-id="${tm.id}">${esc(tname(tm))}</button></th>` +
         NAMES.map((_, n) => { const d = size(c, n, (n + 4) % 12) - THIRD; return `<td style="--h:${Math.max(0, Math.min(1, d / 42)).toFixed(3)}" class="${Math.abs(d) < .3 ? 'pure' : d > 30 ? 'wolf' : ''}">${Math.abs(d) < .05 ? '0' : (d > 0 ? '+' : '−') + Math.abs(d).toFixed(0)}</td>`; }).join('') + '</tr>';
     });
     return h + '</tbody></table></div>';
   }
 
   function detail(tm) {
-    return `<div class="det"><p class="who">${esc(tm.who)} · ${esc(tm.temp)}</p>
-      <h3>${esc(t('How it works'))}</h3>${tm.text.map(p => `<p>${esc(p)}</p>`).join('')}
-      <h3>${esc(t('How to tune it'))}</h3><ol>${tm.how.map(p => `<li>${esc(p)}</li>`).join('')}</ol></div>`;
+    return `<div class="det"><p class="who">${esc(loc(tm, 'who'))} · ${esc(loc(tm, 'temp'))}</p>
+      <h3>${esc(t('How it works'))}</h3>${loc(tm, 'text').map(p => `<p>${esc(p)}</p>`).join('')}
+      <h3>${esc(t('How to tune it'))}</h3><ol>${loc(tm, 'how').map(p => `<li>${esc(p)}</li>`).join('')}</ol></div>`;
   }
 
   function render() {
     const tm = byId(S.id);
     document.documentElement.lang = lang;
     document.querySelectorAll('[data-t]').forEach(n => n.textContent = t(n.dataset.t));
+    /* longer passages with markup: [data-h] keeps its English HTML and takes the translation from TUNING_L[lang].html */
+    document.querySelectorAll('[data-h]').forEach(n => {
+      if (n.dataset.en === undefined) n.dataset.en = n.innerHTML;
+      n.innerHTML = (lang !== 'en' && TL[lang] && TL[lang].html && TL[lang].html[n.dataset.h]) || n.dataset.en;
+    });
+    document.querySelectorAll('[data-ta]').forEach(n => n.setAttribute('aria-label', t(n.dataset.ta)));
+    document.title = t('Tuning systems') + ' · The Ultimate Ear Trainer';
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === lang));
+    document.querySelectorAll('a[data-keeplang]').forEach(a => { const u = new URL(a.getAttribute('href'), location.href); if (lang === 'en') u.searchParams.delete('lang'); else u.searchParams.set('lang', lang); a.href = u.href; });
+    $('#commas').innerHTML = commas();
     $('#controls').innerHTML = `
       <label class="fld"><span>${esc(t('Temperament'))}</span>${select('sel', T, S.id)}</label>
       <label class="fld"><span>${esc(t('Compare with'))}</span>${select('cmpSel', T, S.cmp, true)}</label>
-      <label class="fld"><span>${esc(t('Root'))}</span><select id="root">${NAMES.map((n, i) => `<option value="${i}"${i === S.root ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+      <label class="fld"><span>${esc(t('Root'))}</span><select id="root">${NAMES.map((n, i) => `<option value="${i}"${i === S.root ? ' selected' : ''}>${N(i)}</option>`).join('')}</select></label>
       <label class="fld"><span>${esc(t('Pitch of a′'))}</span><select id="a4">${[392, 415, 440, 442, 466].map(v => `<option value="${v}"${v === S.a4 ? ' selected' : ''}>${v} Hz</option>`).join('')}</select></label>
-      <label class="fld"><span>${esc(t('Sound'))}</span><select id="tim">${['organ', 'strings', 'flute'].map(v => `<option value="${v}"${v === S.timbre ? ' selected' : ''}>${v === 'organ' ? 'Organ' : v === 'strings' ? 'Strings' : 'Flute'}</option>`).join('')}</select></label>
+      <label class="fld"><span>${esc(t('Sound'))}</span><select id="tim">${['organ', 'strings', 'flute'].map(v => `<option value="${v}"${v === S.timbre ? ' selected' : ''}>${esc(t(v === 'organ' ? 'Organ' : v === 'strings' ? 'Strings' : 'Flute'))}</option>`).join('')}</select></label>
       <label class="fld"><span>${esc(t('Speed'))}</span><input id="spd" type="range" min=".5" max="2" step=".1" value="${S.speed}"></label>`;
     const row = (k, lab) => `<button type="button" class="btn" data-play="${k}">${esc(t(lab))}</button>`;
     $('#plays').innerHTML = `
@@ -415,14 +460,23 @@
       <div class="pg"><span class="pl">${esc(t('Chords'))}</span>${row('majT', 'Major triad')}${row('minT', 'Minor triad')}${row('cad', 'Cadence I–IV–V–I')}</div>
       <div class="pg"><span class="pl">${esc(t('Sing'))}</span>${row('drone', 'Drone for singing')}<label class="chk"><input id="hold" type="checkbox"${S.hold ? ' checked' : ''}> ${esc(t('Hold'))}</label>
         <button type="button" class="btn ghost" id="stop">${esc(t('Stop'))}</button></div>
-      <div class="pg ab"${S.cmp === 'none' ? ' hidden' : ''}><span class="pl">A/B</span><span class="abn">${esc(t('A/B: play the same with the comparison'))}</span><button type="button" class="btn" id="playB">${esc(byId(S.cmp === 'none' ? S.id : S.cmp).name)}</button></div>
-      <p class="now">▶ <span id="now">${esc(tm.name)}</span></p>`;
+      <div class="pg ab"${S.cmp === 'none' ? ' hidden' : ''}><span class="pl">A/B</span><span class="abn">${esc(t('A/B: play the same with the comparison'))}</span><button type="button" class="btn" id="playB">${esc(tname(byId(S.cmp === 'none' ? S.id : S.cmp)))}</button></div>
+      <p class="now">▶ <span id="now">${esc(tname(tm))}</span></p>`;
     $('#visual').innerHTML = `<div class="circwrap">${circleSVG(tm)}</div><div class="kbwrap"><p class="note">${esc(t('Tap a key to hear the note in this temperament.'))}</p>${keyboard(tm)}</div>`;
-    $('#title2').textContent = tm.name;
+    $('#title2').textContent = tname(tm);
     $('#detail').innerHTML = detail(tm);
     $('#tables').innerHTML = tables(tm);
     $('#compare').innerHTML = compareTable();
     bind();
+    hooks.forEach(f => f());
+  }
+  function commas() {
+    const row = (n, r, c, d) => `<tr><th>${esc(t(n))}</th><td>${r}</td><td>${c.toFixed(2)} c</td><td>${esc(t(d))}</td></tr>`;
+    return `<table class="cm"><tbody>` +
+      row('Pythagorean comma', '531441 : 524288', PC, 'twelve pure fifths minus seven octaves') +
+      row('Syntonic comma', '81 : 80', SC, 'four pure fifths minus a pure major third and two octaves') +
+      row('Schisma', '32805 : 32768', SCH, 'the difference between the two') +
+      row('Diesis', '128 : 125', 1200 * Math.log2(128 / 125), 'an octave minus three pure major thirds') + '</tbody></table>';
   }
   let last = 'major';
   function bind() {
@@ -461,13 +515,12 @@
   /* ---------- page ---------- */
   document.addEventListener('DOMContentLoaded', () => {
     render();
-    document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => { lang = b.dataset.lang; try { localStorage.setItem('lang', lang); } catch (e) {} render(); }));
+    document.querySelectorAll('.lang button').forEach(b => b.addEventListener('click', () => {
+      lang = b.dataset.lang; try { localStorage.setItem('lang', lang); } catch (e) {}
+      const u = new URL(location.href); if (lang === 'en') u.searchParams.delete('lang'); else u.searchParams.set('lang', lang);
+      history.replaceState(null, '', u); render();
+    }));
     document.querySelectorAll('[data-mar]').forEach(b => b.addEventListener('click', () => marchetto(b.dataset.mar)));
-    $('#commas').innerHTML = `<table class="cm"><tbody>
-      <tr><th>Pythagorean comma</th><td>531441 : 524288</td><td>${PC.toFixed(2)} c</td><td>twelve pure fifths minus seven octaves</td></tr>
-      <tr><th>Syntonic comma</th><td>81 : 80</td><td>${SC.toFixed(2)} c</td><td>four pure fifths minus a pure major third and two octaves</td></tr>
-      <tr><th>Schisma</th><td>32805 : 32768</td><td>${SCH.toFixed(2)} c</td><td>the difference between the two</td></tr>
-      <tr><th>Diesis</th><td>128 : 125</td><td>${(1200 * Math.log2(128 / 125)).toFixed(2)} c</td><td>an octave minus three pure major thirds</td></tr></tbody></table>`;
     const root = document.documentElement;
     try { const th = localStorage.getItem('theme'); if (th) root.dataset.theme = th; } catch (e) {}
     $('#theme').addEventListener('click', () => {
@@ -476,5 +529,5 @@
       try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
     });
   });
-  window.TUNING = {T, cents, PC, SC, tone, stopAll, ac, S, t: s => t(s), lang: () => lang, L};
+  window.TUNING = {T, cents, PC, SC, tone, stopAll, ac, S, t, nn, key, lang: () => lang, L, onLang: f => hooks.push(f)};
 })();

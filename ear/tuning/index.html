@@ -83,6 +83,7 @@
   .circ { width: 100%; max-width: 320px; display: block; margin: 0 auto; }
   .circ .cn circle { fill: var(--bg); stroke: var(--fg); stroke-width: 1.2; }
   .circ .cn text { font: 15px var(--serif); fill: var(--fg); }
+  .circ .cn text.lg { font-size: 11px; }
   .circ .dv { font: 600 10px var(--sans); fill: var(--muted); }
   .circ .mid { font: 600 15px var(--serif); fill: var(--fg); }
   .circ .mid2 { font: 12px var(--sans); fill: var(--accent); }
@@ -106,7 +107,8 @@
   .tb h3 { margin-top: .4rem; }
   table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: .88rem; }
   th, td { padding: .28rem .45rem; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
-  thead th { font: 500 .7rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  thead th { font: 500 .7rem var(--sans); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: normal; vertical-align: bottom; line-height: 1.25; }
+  .tbls table { table-layout: auto; width: 100%; }
   tbody th { text-align: left; font: 500 .95rem var(--serif); }
   tr.z td { color: var(--muted); }
   tr.wolf td, tr.wolf th { color: var(--accent); }
@@ -188,9 +190,9 @@
 <body>
 <div class="wrap">
   <div class="top">
-    <nav class="sitenav"><a href="../../">← Václav Hřebec</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#agenda" data-t="Agenda">Agenda</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#projects" data-t="Projects">Projects</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/rheinfelden2027/" data-t="Course Rheinfelden 2027">Course Rheinfelden 2027</a><span aria-hidden="true">·</span><a href="../" data-t="All exercises">All exercises</a></nav>
+    <nav class="sitenav"><a href="../../" data-keeplang>← Václav Hřebec</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#agenda" data-t="Agenda">Agenda</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/#projects" data-t="Projects">Projects</a><span aria-hidden="true">·</span><a href="https://vaclavhrebec.github.io/rheinfelden2027/" data-t="Course Rheinfelden 2027">Course Rheinfelden 2027</a><span aria-hidden="true">·</span><a href="../" data-keeplang data-t="All exercises">All exercises</a></nav>
     <div class="tools">
-      <div class="lang" role="group" aria-label="Language">
+      <div class="lang" role="group" aria-label="Language" data-ta="Language">
         <button type="button" data-lang="en" lang="en">EN</button><button type="button" data-lang="de" lang="de">DE</button><button type="button" data-lang="fr" lang="fr">FR</button><button type="button" data-lang="cs" lang="cs">CZ</button>
       </div>
       <button id="theme" type="button" data-t="Light / dark">Light / dark</button>
@@ -199,14 +201,13 @@
   </div>
   <header class="site">
     <h1 data-t="Tuning systems">Tuning systems</h1>
-    <p>How the twelve notes of the octave were tuned from the Middle Ages to today. Listen to scales and chords in each system, compare them, sing against them, and learn to tune them yourself.</p>
+    <p data-h="lede">How the twelve notes of the octave were tuned from the Middle Ages to today. Listen to scales and chords in each system, compare them, sing against them, and learn to tune them yourself.</p>
   </header>
   <div class="staff" aria-hidden="true"></div>
 
   <section class="intro">
-    <p>Pure fifths (3:2) and pure major thirds (5:4) cannot live together on a keyboard. Twelve pure fifths overshoot seven octaves by the <em>Pythagorean comma</em>; four pure fifths overshoot a pure major third (plus two octaves) by the <em>syntonic comma</em>. Every tuning system on this page is a decision about where to put these small leftovers – into one unusable “wolf” fifth, evenly into all fifths, or unevenly, so that some keys are sweeter than others.</p>
+    <p data-h="intro">Pure fifths (3:2) and pure major thirds (5:4) cannot live together on a keyboard. Twelve pure fifths overshoot seven octaves by the <em>Pythagorean comma</em>; four pure fifths overshoot a pure major third (plus two octaves) by the <em>syntonic comma</em>. Every tuning system on this page is a decision about where to put these small leftovers – into one unusable “wolf” fifth, evenly into all fifths, or unevenly, so that some keys are sweeter than others.</p>
     <div id="commas"></div>
-    <p class="note" data-t="The explanations are in English for now.">The explanations are in English for now.</p>
   </section>
 
   <section id="player">
@@ -227,56 +228,56 @@
   </section>
 
   <section id="euler">
-    <h2>The Euler lattice (Tonnetz)</h2>
+    <h2 data-h="eulerH">The Euler lattice (Tonnetz)</h2>
     <div class="intro">
-      <p>In his <em>Tentamen novae theoriae musicae</em> (1739) Leonhard Euler drew the notes of pure intonation as a network: one direction multiplies by 3 (pure fifths), the other by 5 (pure major thirds). In the 19th century Arthur von Oettingen and Hugo Riemann turned it into the <em>Tonnetz</em>, and today neo-Riemannian theory uses it to describe how chords move: flipping a triangle over one of its edges keeps two notes and moves the third by a step.</p>
-      <p>Drawn with triangles, every upward triangle is a pure major triad and every downward triangle a pure minor triad. The position of a note matters: the E reached by a third from C (5:4) is a syntonic comma lower than the E reached by four fifths (81:64). The small marks show this: <b>−S</b> means a syntonic comma lower than the Pythagorean note of the same name.</p>
+      <p data-h="euler1">In his <em>Tentamen novae theoriae musicae</em> (1739) Leonhard Euler drew the notes of pure intonation as a network: one direction multiplies by 3 (pure fifths), the other by 5 (pure major thirds). In the 19th century Arthur von Oettingen and Hugo Riemann turned it into the <em>Tonnetz</em>, and today neo-Riemannian theory uses it to describe how chords move: flipping a triangle over one of its edges keeps two notes and moves the third by a step.</p>
+      <p data-h="euler2">Drawn with triangles, every upward triangle is a pure major triad and every downward triangle a pure minor triad. The position of a note matters: the E reached by a third from C (5:4) is a syntonic comma lower than the E reached by four fifths (81:64). The small marks show this: <b>−S</b> means a syntonic comma lower than the Pythagorean note of the same name.</p>
     </div>
     <div class="panel">
-      <h3 class="lh">Two dimensions: fifths and thirds</h3>
-      <p class="note">Tap a note to hear it; tap a triangle to hear its chord. Your path is drawn, so you can see where you drift.</p>
+      <h3 class="lh" data-h="d2h">Two dimensions: fifths and thirds</h3>
+      <p class="note" data-h="d2note">Tap a note to hear it; tap a triangle to hear its chord. Your path is drawn, so you can see where you drift.</p>
       <div id="lat2d" class="latwrap"></div>
       <p id="walk" class="walk" aria-live="polite"></p>
-      <div class="pg"><button type="button" class="btn" data-demo="pump">The comma pump: C – Am – Dm – G – C</button><button type="button" class="btn ghost" id="clearWalk">Clear the path</button></div>
+      <div class="pg"><button type="button" class="btn" data-demo="pump" data-h="pump">The comma pump: C – Am – Dm – G – C</button><button type="button" class="btn ghost" id="clearWalk" data-h="clear">Clear the path</button></div>
     </div>
 
     <div class="panel" style="margin-top:18px">
-      <div class="dimsw" role="group" aria-label="Dimensions"><button type="button" data-dims="3" aria-pressed="true">3D: + 7</button><button type="button" data-dims="4" aria-pressed="false">4D: + 11</button></div>
+      <div class="dimsw" role="group" aria-label="Dimensions" data-ta="Dimensions"><button type="button" data-dims="3" aria-pressed="true">3D: + 7</button><button type="button" data-dims="4" aria-pressed="false">4D: + 11</button></div>
       <div id="txt3">
-        <h3 class="lh">Three dimensions: the harmonic seventh</h3>
-        <p>Euler himself suggested in 1764 that the dominant seventh chord owes its sound to the seventh harmonic. Add 7:4 as a third axis and the plane becomes a space; in the 20th century Harry Partch, Ben Johnston and James Tenney explored it. The harmonic seventh (968.8 c) is 31 c lower than the equal-tempered minor seventh; together with the major triad it makes the chord 4:5:6:7, which barbershop quartets tune by ear. The mark <b>−Z</b> stands for the septimal comma 64:63 (27.3 c).</p>
+        <h3 class="lh" data-h="d3h">Three dimensions: the harmonic seventh</h3>
+        <p data-h="d3p">Euler himself suggested in 1764 that the dominant seventh chord owes its sound to the seventh harmonic. Add 7:4 as a third axis and the plane becomes a space; in the 20th century Harry Partch, Ben Johnston and James Tenney explored it. The harmonic seventh (968.8 c) is 31 c lower than the equal-tempered minor seventh; together with the major triad it makes the chord 4:5:6:7, which barbershop quartets tune by ear. The mark <b>−Z</b> stands for the septimal comma 64:63 (27.3 c).</p>
       </div>
       <div id="txt4" hidden>
-        <h3 class="lh">Four dimensions: the eleventh harmonic</h3>
-        <p>A fourth axis cannot be built in our space, but it can be imagined – the way a cube is drawn as two squares joined at the corners. Here the whole 3D lattice is shown three times, each copy one step of 11:8 away. The interval 11:8 (551.3 c) lies almost exactly between the fourth and the tritone; Partch built his 43-note scale on this 11-limit space. <b>+U</b> stands for the undecimal comma 33:32 (53.3 c). Every further prime – 13, 17, 19 … – adds another dimension: the harmonic series as a space of ever more directions, which Tenney called harmonic space.</p>
+        <h3 class="lh" data-h="d4h">Four dimensions: the eleventh harmonic</h3>
+        <p data-h="d4p">A fourth axis cannot be built in our space, but it can be imagined – the way a cube is drawn as two squares joined at the corners. Here the whole 3D lattice is shown three times, each copy one step of 11:8 away. The interval 11:8 (551.3 c) lies almost exactly between the fourth and the tritone; Partch built his 43-note scale on this 11-limit space. <b>+U</b> stands for the undecimal comma 33:32 (53.3 c). Every further prime – 13, 17, 19 … – adds another dimension: the harmonic series as a space of ever more directions, which Tenney called harmonic space.</p>
       </div>
       <div id="lat3d" class="latwrap grab"></div>
       <p id="walk3" class="walk" aria-live="polite"></p>
       <div class="pg"><span class="pl">7</span>
-        <button type="button" class="btn" data-demo="sev">4:5:6:7 harmonic seventh chord</button>
-        <button type="button" class="btn" data-demo="sevET">the same in equal temperament</button>
-        <button type="button" class="btn" data-demo="sevs">four minor sevenths: 16:9, 9:5, 1000 c, 7:4</button>
-        <button type="button" class="btn" data-demo="sub">7:6 subminor triad</button></div>
+        <button type="button" class="btn" data-demo="sev" data-h="dSev">4:5:6:7 harmonic seventh chord</button>
+        <button type="button" class="btn" data-demo="sevET" data-h="dSevET">the same in equal temperament</button>
+        <button type="button" class="btn" data-demo="sevs" data-h="dSevs">four minor sevenths: 16:9, 9:5, 1000 c, 7:4</button>
+        <button type="button" class="btn" data-demo="sub" data-h="dSub">7:6 subminor triad</button></div>
       <div class="pg"><span class="pl">11</span>
-        <button type="button" class="btn" data-demo="eleven">4:3, 11:8, the tritone 600 c, 45:32</button>
-        <button type="button" class="btn" data-demo="otonal">4:5:6:7:9:11 (harmonic series)</button></div>
+        <button type="button" class="btn" data-demo="eleven" data-h="dEleven">4:3, 11:8, the tritone 600 c, 45:32</button>
+        <button type="button" class="btn" data-demo="otonal" data-h="dOtonal">4:5:6:7:9:11 (harmonic series)</button></div>
     </div>
 
     <div class="ex">
       <div class="panel">
-        <h3 class="lh">Exercise: which way through the lattice?</h3>
-        <p class="note">Two notes in pure intonation, one after the other and then together. Which step in the lattice was it?</p>
-        <div class="pg"><button type="button" class="btn primary" id="qstart">New example</button><button type="button" class="btn" id="qagain">Hear again</button>
-          <label class="fld inl"><select id="qlvl"><option value="2">2D: fifths and thirds</option><option value="3">3D: with the harmonic seventh</option></select></label></div>
+        <h3 class="lh" data-h="ex1h">Exercise: which way through the lattice?</h3>
+        <p class="note" data-h="ex1note">Two notes in pure intonation, one after the other and then together. Which step in the lattice was it?</p>
+        <div class="pg"><button type="button" class="btn primary" id="qstart" data-h="newEx">New example</button><button type="button" class="btn" id="qagain" data-h="again">Hear again</button>
+          <label class="fld inl"><select id="qlvl"><option value="2" data-h="lvl2">2D: fifths and thirds</option><option value="3" data-h="lvl3">3D: with the harmonic seventh</option></select></label></div>
         <div id="qans" class="ansgrid"></div>
         <p id="qfb" class="qfb" aria-live="polite"></p>
       </div>
       <div class="panel">
-        <h3 class="lh">Exercise: pure or tempered?</h3>
-        <p class="note">The same interval twice: once pure, once equal-tempered.</p>
-        <div class="pg"><button type="button" class="btn primary" id="rstart">New example</button><button type="button" class="btn" id="ragain">Hear again</button></div>
+        <h3 class="lh" data-h="ex2h">Exercise: pure or tempered?</h3>
+        <p class="note" data-h="ex2note">The same interval twice: once pure, once equal-tempered.</p>
+        <div class="pg"><button type="button" class="btn primary" id="rstart" data-h="newEx">New example</button><button type="button" class="btn" id="ragain" data-h="again">Hear again</button></div>
         <p id="rq" class="rq"></p>
-        <div id="rans" class="ansgrid two"><button type="button" class="btn ans" data-k="A">The first was pure</button><button type="button" class="btn ans" data-k="B">The second was pure</button></div>
+        <div id="rans" class="ansgrid two"><button type="button" class="btn ans" data-k="A" data-h="first">The first was pure</button><button type="button" class="btn ans" data-k="B" data-h="second">The second was pure</button></div>
         <p id="rfb" class="qfb" aria-live="polite"></p>
       </div>
     </div>
@@ -285,20 +286,23 @@
   <section>
     <h2 data-t="Marchetto of Padua: the whole tone in five parts">Marchetto of Padua: the whole tone in five parts</h2>
     <div class="mar">
-      <p>Long before temperaments, Marchetto of Padua described an extraordinary way of placing the sharps. In his <em>Lucidarium in arte musicae planae</em> (1317–18) and <em>Pomerium in arte musicae mensuratae</em> (1318–19) he divides the whole tone into five parts, which he calls <em>dieses</em>. A semitone can be <em>enharmonic</em> (two dieses), <em>diatonic</em> (three) or <em>chromatic</em> (four).</p>
-      <p>When a voice is raised to lead into a perfect consonance – the sixth widening to the octave (A–F♯ → G–G) or the third widening to the fifth (A–C♯ → G–D) – Marchetto takes the large chromatic semitone. The sharp then stands only one diesis (about a fifth of a tone, roughly 40–50 cents) below the note it resolves to. The imperfect consonance becomes very wide and very tense, and its resolution all the more satisfying: the opposite of meantone, where sharps are low.</p>
-      <p>How literally Marchetto meant his numbers is debated. John Rahn (<a href="https://mtosmt.org/issues/mto.98.4.6/mto.98.4.6.rahn.html" target="_blank" rel="noopener">Music Theory Online, 1998</a>) shows how they can be realised on the monochord and finds that listeners easily hear the difference. Here the diesis is taken as exactly one fifth of a Pythagorean whole tone (40.8 c). Listen to the two cadences with the sharp placed in three ways:</p>
+      <p data-h="mar1">Long before temperaments, Marchetto of Padua described an extraordinary way of placing the sharps. In his <em>Lucidarium in arte musicae planae</em> (1317–18) and <em>Pomerium in arte musicae mensuratae</em> (1318–19) he divides the whole tone into five parts, which he calls <em>dieses</em>. A semitone can be <em>enharmonic</em> (two dieses), <em>diatonic</em> (three) or <em>chromatic</em> (four).</p>
+      <p data-h="mar2">When a voice is raised to lead into a perfect consonance – the sixth widening to the octave (A–F♯ → G–G) or the third widening to the fifth (A–C♯ → G–D) – Marchetto takes the large chromatic semitone. The sharp then stands only one diesis (about a fifth of a tone, roughly 40–50 cents) below the note it resolves to. The imperfect consonance becomes very wide and very tense, and its resolution all the more satisfying: the opposite of meantone, where sharps are low.</p>
+      <p data-h="mar3">How literally Marchetto meant his numbers is debated. John Rahn (<a href="https://mtosmt.org/issues/mto.98.4.6/mto.98.4.6.rahn.html" target="_blank" rel="noopener">Music Theory Online, 1998</a>) shows how they can be realised on the monochord and finds that listeners easily hear the difference. Here the diesis is taken as exactly one fifth of a Pythagorean whole tone (40.8 c). Listen to the two cadences with the sharp placed in three ways:</p>
       <div class="acts">
-        <button type="button" class="btn" data-mar="march">Marchetto (⁴⁄₅ tone, 163 c)</button>
-        <button type="button" class="btn" data-mar="pyth">Pythagorean (apotome, 114 c)</button>
-        <button type="button" class="btn" data-mar="mean">¼-comma meantone (76 c)</button>
+        <button type="button" class="btn" data-mar="march" data-h="marM">Marchetto (⁴⁄₅ tone, 163 c)</button>
+        <button type="button" class="btn" data-mar="pyth" data-h="marP">Pythagorean (apotome, 114 c)</button>
+        <button type="button" class="btn" data-mar="mean" data-h="marQ">¼-comma meantone (76 c)</button>
       </div>
-      <p class="note">Each button plays A–F♯ → G–g (sixth to octave), then A–C♯ → G–d (third to fifth). The numbers give the distance of the sharp above its natural.</p>
+      <p class="note" data-h="marNote">Each button plays A–F♯ → G–g (sixth to octave), then A–C♯ → G–d (third to fifth). The numbers give the distance of the sharp above its natural.</p>
     </div>
   </section>
 
-  <footer>© 2026 Václav Hřebec · <a href="../">The Ultimate Ear Trainer</a></footer>
+  <footer>© 2026 Václav Hřebec · <a href="../" data-keeplang>The Ultimate Ear Trainer</a></footer>
 </div>
+<script src="l10n-de.js"></script>
+<script src="l10n-fr.js"></script>
+<script src="l10n-cs.js"></script>
 <script src="tuning.js"></script>
 <script src="lattice.js"></script>
 <script src="../../gym/feedback.js" data-topic="Tuning systems" defer></script>

@@ -174,7 +174,9 @@ window.E = (function () {
       l = pref.find(x => ['de', 'fr', 'cs', 'sk', 'en'].includes(x)) || 'en';
       if (l === 'sk') l = 'cs';
     }
-    return E.LANGS.includes(l) ? l : 'en';
+    l = E.LANGS.includes(l) ? l : 'en';
+    try { localStorage.setItem('lang', l); } catch (e) {}   /* so the Tuning systems page opens in the same language */
+    return l;
   })();
   E.t = function (s, vars) {
     let r = (E.lang !== 'en' && window.EAR_T && EAR_T[E.lang] && EAR_T[E.lang][s]) || s;
@@ -326,6 +328,7 @@ window.E = (function () {
     document.body.classList.toggle('in-room', !!room);
     document.querySelectorAll('[data-t]').forEach(n => n.textContent = E.t(n.dataset.t));
     document.querySelectorAll('.lang button').forEach(b => b.setAttribute('aria-pressed', b.dataset.lang === E.lang));
+    document.querySelectorAll('.lang').forEach(g => g.setAttribute('aria-label', ({de: 'Sprache', fr: 'Langue', cs: 'Jazyk'})[E.lang] || 'Language'));
     const main = document.getElementById('main');
     main.innerHTML = '';
     document.title = room ? E.t(room.title) + ' · The Ultimate Ear Trainer' : 'The Ultimate Ear Trainer · Václav Hřebec';
@@ -366,7 +369,7 @@ window.E = (function () {
           h('p', null, E.t(r.desc)),
           h('span', { class: 'meta' }, E.t(r.meta, r.metaVars)))))));
     /* a page of its own: the tuning systems and the Euler lattice */
-    main.querySelector('.rooms').append(h('a', { class: 'card', href: 'tuning/' },
+    main.querySelector('.rooms').append(h('a', { class: 'card', href: 'tuning/' + (E.lang === 'en' ? '' : '?lang=' + E.lang) },
       h('div', { class: 'pic', html: '<svg viewBox="0 0 120 96" width="120" height="96" aria-hidden="true"><g fill="none" stroke-width="3" stroke-linecap="round">' +
         Array.from({length: 12}, (_, i) => { const a0 = -Math.PI / 2 + i * Math.PI / 6 + .12, a1 = a0 + Math.PI / 6 - .24, R = 38;
           return '<path d="M' + (60 + R * Math.cos(a0)).toFixed(1) + ' ' + (48 + R * Math.sin(a0)).toFixed(1) + ' A' + R + ' ' + R + ' 0 0 1 ' + (60 + R * Math.cos(a1)).toFixed(1) + ' ' + (48 + R * Math.sin(a1)).toFixed(1) + '" stroke="' + (i === 8 ? 'var(--accent)' : 'currentColor') + '" stroke-width="' + (i === 8 ? 5 : 2.5) + '"/>'; }).join('') +

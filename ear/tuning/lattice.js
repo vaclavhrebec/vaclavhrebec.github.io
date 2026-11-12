@@ -4,6 +4,7 @@
   'use strict';
   const TU = window.TUNING;
   const $ = s => document.querySelector(s);
+  const T = (s, v) => TU.t(s, v), NN = x => TU.nn(x), cap = x => x.charAt(0).toUpperCase() + x.slice(1);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
 
   /* ---------- ratios and names ---------- */
@@ -64,16 +65,16 @@
     const xs = [], ys = [];
     for (let a = A2.a[0]; a <= A2.a[1]; a++) for (let b = A2.b[0]; b <= A2.b[1]; b++) { const p = P(a, b); xs.push(p[0]); ys.push(p[1]); }
     const x0 = Math.min(...xs) - 30, y0 = Math.min(...ys) - 30, W = Math.max(...xs) + 30 - x0, H = Math.max(...ys) + 30 - y0 + 34;
-    let o = `<svg viewBox="${x0} ${y0} ${W} ${H}" class="lat" role="img" aria-label="Euler lattice">`;
+    let o = `<svg viewBox="${x0} ${y0} ${W} ${H}" class="lat" role="img" aria-label="${esc(T('Euler lattice'))}">`;
     /* triangles */
     for (let a = A2.a[0]; a < A2.a[1]; a++) for (let b = A2.b[0]; b <= A2.b[1]; b++) {
       if (b < A2.b[1]) {                      /* major: root, fifth, third */
         const p = [P(a, b), P(a + 1, b), P(a, b + 1)];
-        o += `<polygon class="tri maj" data-ch="${a},${b},M" points="${p.map(x => x.join(',')).join(' ')}"><title>${name([a, b]).n} major</title></polygon>`;
+        o += `<polygon class="tri maj" data-ch="${a},${b},M" points="${p.map(x => x.join(',')).join(' ')}"><title>${esc(TU.key(name([a, b]).n, false))}</title></polygon>`;
       }
       if (b > A2.b[0]) {                      /* minor: root, minor third (= fifth up, third down), fifth */
         const p = [P(a, b), P(a + 1, b), P(a + 1, b - 1)];
-        o += `<polygon class="tri min" data-ch="${a},${b},m" points="${p.map(x => x.join(',')).join(' ')}"><title>${name([a, b]).n} minor</title></polygon>`;
+        o += `<polygon class="tri min" data-ch="${a},${b},m" points="${p.map(x => x.join(',')).join(' ')}"><title>${esc(TU.key(name([a, b]).n, true))}</title></polygon>`;
       }
     }
     /* edges */
@@ -89,9 +90,9 @@
     for (let a = A2.a[0]; a <= A2.a[1]; a++) for (let b = A2.b[0]; b <= A2.b[1]; b++) {
       const p = P(a, b), nm = name([a, b]);
       o += `<g class="nd${a === 0 && b === 0 ? ' one' : ''}" data-v="${a},${b}" tabindex="0" role="button" aria-label="${nm.n} ${ratio([a, b])}">
-        <circle cx="${p[0]}" cy="${p[1]}" r="23"/><text x="${p[0]}" y="${p[1] + (nm.m ? 1 : 5)}" class="nn">${nm.n}</text>${nm.m ? `<text x="${p[0]}" y="${p[1] + 14}" class="nm">${nm.m}</text>` : ''}<title>${ratio([a, b])} · ${cents([a, b]).toFixed(1)} c</title></g>`;
+        <circle cx="${p[0]}" cy="${p[1]}" r="23"/><text x="${p[0]}" y="${p[1] + (nm.m ? 1 : 5)}" class="nn">${NN(nm.n)}</text>${nm.m ? `<text x="${p[0]}" y="${p[1] + 14}" class="nm">${nm.m}</text>` : ''}<title>${ratio([a, b])} · ${cents([a, b]).toFixed(1)} c</title></g>`;
     }
-    o += `<g class="axes"><text x="${x0 + 8}" y="${y0 + H - 10}"><tspan class="k5">— 3:2 fifth</tspan>   <tspan class="k3">— 5:4 major third</tspan>   <tspan class="km">- - 6:5 minor third</tspan>   ▲ major triad   ▼ minor triad</text></g>`;
+    o += `<g class="axes"><text x="${x0 + 8}" y="${y0 + H - 10}"><tspan class="k5">— 3:2 ${esc(T('fifth'))}</tspan>   <tspan class="k3">— 5:4 ${esc(T('major third'))}</tspan>   <tspan class="km">- - 6:5 ${esc(T('minor third'))}</tspan>   ▲ ${esc(T('major triad'))}   ▼ ${esc(T('minor triad'))}</text></g>`;
     $('#lat2d').innerHTML = o + '</svg>';
     $('#lat2d').querySelectorAll('.nd').forEach(g => {
       const go = () => { const v = g.dataset.v.split(',').map(Number); walkTo(v); play([v], 1.4); };
@@ -115,8 +116,9 @@
     trail.push(v); if (trail.length > 24) trail.shift();
     const st = trail[0], d = cents(v) - cents(st);
     const nm = name(v);
-    $('#walk').innerHTML = `<b>${nm.n}</b> ${nm.m ? `<span class="nm2">${nm.m}</span>` : ''} = ${ratio(v)} · ${cents(v).toFixed(1)} c above C` +
-      (Math.abs(v[1]) ? ` · ${Math.abs(v[1]) === 1 ? 'one syntonic comma' : Math.abs(v[1]) + ' syntonic commas'} ${v[1] > 0 ? 'lower' : 'higher'} than the Pythagorean ${nm.n}` : '');
+    const k = Math.abs(v[1]);
+    $('#walk').innerHTML = `<b>${NN(nm.n)}</b> ${nm.m ? `<span class="nm2">${nm.m}</span>` : ''} = ${ratio(v)} · ${esc(T('{c} c above C', {c: cents(v).toFixed(1)}))}` +
+      (k ? ' · ' + esc(T(k === 1 ? (v[1] > 0 ? 'one syntonic comma lower than the Pythagorean {n}' : 'one syntonic comma higher than the Pythagorean {n}') : (v[1] > 0 ? '{k} syntonic commas lower than the Pythagorean {n}' : '{k} syntonic commas higher than the Pythagorean {n}'), {k, n: NN(nm.n)})) : '');
     draw2D();
   }
 
@@ -140,7 +142,7 @@
     }
     const key = v => v.join(',');
     const P = new Map(pts.map(v => [key(v), proj(v)]));
-    let o = `<svg viewBox="0 0 ${W} ${H}" class="lat l3" role="img" aria-label="Lattice in ${dims} dimensions">`;
+    let o = `<svg viewBox="0 0 ${W} ${H}" class="lat l3" role="img" aria-label="${esc(T('Lattice in {d} dimensions', {d: dims}))}">`;
     const edges = [];
     pts.forEach(v => [[1, 0, 0, 0, 'e5'], [0, 1, 0, 0, 'e3'], [0, 0, 1, 0, 'e7'], [0, 0, 0, 1, 'e11']].forEach(([da, db, dc, dd, cl]) => {
       const w = [v[0] + da, v[1] + db, v[2] + dc, v[3] + dd];
@@ -153,14 +155,14 @@
     pts.map(v => [v, P.get(key(v))]).sort((x, y) => y[1][2] - x[1][2]).forEach(([v, p]) => {
       const nm = nameFull(v), r = (dims === 4 ? 13 : 16) / (1 + p[2] * .08);
       const cls = 'nd' + (v.every(x => !x) ? ' one' : '') + (v[2] ? ' z7' : '') + (v[3] ? ' z11' : '');
-      o += `<g class="${cls}" data-v="${v.join(',')}" tabindex="0" role="button" aria-label="${nm.n} ${ratio(v)}"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r.toFixed(1)}"/>` +
-        `<text x="${p[0].toFixed(1)}" y="${(p[1] + 4).toFixed(1)}" class="nn" style="font-size:${(dims === 4 ? 11 : 13) / (1 + p[2] * .08)}px">${nm.n}</text><title>${ratio(v)} · ${cents(v).toFixed(1)} c${nm.m ? ' · ' + nm.m : ''}</title></g>`;
+      o += `<g class="${cls}" data-v="${v.join(',')}" tabindex="0" role="button" aria-label="${esc(NN(nm.n))} ${ratio(v)}"><circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="${r.toFixed(1)}"/>` +
+        `<text x="${p[0].toFixed(1)}" y="${(p[1] + 4).toFixed(1)}" class="nn" style="font-size:${(dims === 4 ? 11 : 13) / (1 + p[2] * .08)}px">${NN(nm.n)}</text><title>${ratio(v)} · ${cents(v).toFixed(1)} c${nm.m ? ' · ' + nm.m : ''}</title></g>`;
     });
-    if (dims === 4) [-1, 0, 1].forEach(d => { o += `<text class="lay" x="${cx + d * 250}" y="${H - 14}">${d === 0 ? 'no 11' : d > 0 ? '× 11:8' : '× 8:11'}</text>`; });
-    o += `<g class="axes"><text x="16" y="22"><tspan class="k5">— 3:2</tspan>  <tspan class="k3">— 5:4</tspan>  <tspan class="k7">— 7:4</tspan>${dims === 4 ? '  <tspan class="k11">— 11:8</tspan>' : ''}</text><text x="16" y="42" class="hint">drag to turn</text></g>`;
+    if (dims === 4) [-1, 0, 1].forEach(d => { o += `<text class="lay" x="${cx + d * 250}" y="${H - 14}">${d === 0 ? esc(T('no 11')) : d > 0 ? '× 11:8' : '× 8:11'}</text>`; });
+    o += `<g class="axes"><text x="16" y="22"><tspan class="k5">— 3:2</tspan>  <tspan class="k3">— 5:4</tspan>  <tspan class="k7">— 7:4</tspan>${dims === 4 ? '  <tspan class="k11">— 11:8</tspan>' : ''}</text><text x="16" y="42" class="hint">${esc(T('drag to turn'))}</text></g>`;
     $('#lat3d').innerHTML = o + '</svg>';
     $('#lat3d').querySelectorAll('.nd').forEach(g => {
-      const go = () => { const v = g.dataset.v.split(',').map(Number); play([v], 1.4); const nm = nameFull(v); $('#walk3').innerHTML = `<b>${nm.n}</b> ${nm.m ? `<span class="nm2">${nm.m}</span>` : ''} = ${ratio(v)} · ${cents(v).toFixed(1)} c above C`; };
+      const go = () => { const v = g.dataset.v.split(',').map(Number); play([v], 1.4); const nm = nameFull(v); $('#walk3').innerHTML = `<b>${NN(nm.n)}</b> ${nm.m ? `<span class="nm2">${nm.m}</span>` : ''} = ${ratio(v)} · ${esc(T('{c} c above C', {c: cents(v).toFixed(1)}))}`; };
       g.addEventListener('click', go);
       g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
@@ -182,7 +184,7 @@
       steps.forEach((ch, i) => stack(ch).forEach(x => TU.tone(hz(x.v, x.o - 1), t0 + i * 1.5, 1.45, .1)));
       TU.tone(hz([0, 0], -1), t0 + steps.length * 1.5, 1.6, .1); TU.tone(hz([0, 0], 0), t0 + steps.length * 1.5, 1.6, .1);
       trail = [[0, 0], [-1, 1], [-2, 1], [-3, 1], [-4, 1]]; draw2D();
-      $('#walk').innerHTML = 'C → A minor → D minor → G major → C major, every chord pure, every common tone held: the last C (−S) is 21.5 c lower than the first. At the end the original C sounds again for comparison.';
+      $('#walk').textContent = T('C → A minor → D minor → G major → C major, every chord pure, every common tone held: the last C (−S) is 21.5 c lower than the first. At the end the original C sounds again for comparison.');
     },
     sev: () => chord(stack([[0, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]]), 3.2),
     sevET: () => { TU.stopAll(); const c = TU.ac(), t0 = c.currentTime + .05; [0, 400, 700, 1000].forEach(x => TU.tone(cOne() * Math.pow(2, x / 1200 - 1), t0, 3.2, .1)); },
@@ -204,7 +206,7 @@
     Q.answered = false;
     hearQ();
     $('#qfb').textContent = ''; $('#qfb').className = 'qfb';
-    $('#qans').innerHTML = pool.map(s => `<button type="button" class="btn ans" data-k="${s[0]}">${esc(s[2])}</button>`).join('');
+    $('#qans').innerHTML = pool.map(s => `<button type="button" class="btn ans" data-k="${s[0]}">${esc(T(s[2]))}</button>`).join('');
     $('#qans').querySelectorAll('.ans').forEach(b => b.onclick = () => answer(b));
   }
   function hearQ() {
@@ -227,7 +229,7 @@
     if (!ok) $('#qans').querySelector(`[data-k="${Q.cur.st[0]}"]`).classList.add('right');
     const na = name(Q.cur.from), nb = nameFull(Q.cur.to);
     $('#qfb').className = 'qfb ' + (ok ? 'ok' : 'bad');
-    $('#qfb').innerHTML = `<b>${ok ? 'Correct.' : 'Not quite.'}</b> ${na.n}${na.m ? ' (' + na.m + ')' : ''} → ${nb.n}${nb.m ? ' (' + nb.m + ')' : ''}: ${esc(Q.cur.st[2])}. <span class="sc">${Q.ok} / ${Q.n}</span>`;
+    $('#qfb').innerHTML = `<b>${esc(T(ok ? 'Correct.' : 'Not quite.'))}</b> ${esc(NN(na.n))}${na.m ? ' (' + na.m + ')' : ''} → ${esc(NN(nb.n))}${nb.m ? ' (' + nb.m + ')' : ''}: ${esc(T(Q.cur.st[2]))}. <span class="sc">${Q.ok} / ${Q.n}</span>`;
   }
 
   /* ---------- exercise: pure or tempered? ---------- */
@@ -237,7 +239,7 @@
     const it = PT[Math.floor(Math.random() * PT.length)], pureFirst = Math.random() < .5;
     R.cur = {it, pureFirst}; R.answered = false; hearR();
     $('#rfb').textContent = ''; $('#rfb').className = 'qfb';
-    $('#rq').textContent = it[0] + ': which one is pure?';
+    $('#rq').textContent = cap(T('{i}: which one is pure?', {i: T(it[0])}));
     $('#rans').querySelectorAll('.ans').forEach(b => { b.classList.remove('right', 'wrong'); b.onclick = () => answerR(b); });
   }
   function hearR() {
@@ -256,12 +258,18 @@
     b.classList.add(ok ? 'right' : 'wrong');
     const [nm, r, et] = R.cur.it, diff = 1200 * Math.log2(r) - et;
     $('#rfb').className = 'qfb ' + (ok ? 'ok' : 'bad');
-    $('#rfb').innerHTML = `<b>${ok ? 'Correct.' : 'Not quite.'}</b> The pure one was ${R.cur.pureFirst ? 'the first' : 'the second'}: ${esc(nm)} pure ${(1200 * Math.log2(r)).toFixed(1)} c, equal-tempered ${et} c (${diff > 0 ? '+' : '−'}${Math.abs(diff).toFixed(1)} c). Listen for the beating in the tempered one. <span class="sc">${R.ok} / ${R.n}</span>`;
+    $('#rfb').innerHTML = `<b>${esc(T(ok ? 'Correct.' : 'Not quite.'))}</b> ${esc(T(R.cur.pureFirst ? 'The pure one was the first: {i} pure {p} c, equal-tempered {e} c ({d} c). Listen for the beating in the tempered one.' : 'The pure one was the second: {i} pure {p} c, equal-tempered {e} c ({d} c). Listen for the beating in the tempered one.', {i: T(nm), p: (1200 * Math.log2(r)).toFixed(1), e: et, d: (diff > 0 ? '+' : '−') + Math.abs(diff).toFixed(1)}))} <span class="sc">${R.ok} / ${R.n}</span>`;
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     if (!$('#lat2d')) return;
     draw2D(); draw3D(); drag3D();
+    TU.onLang(() => {
+      draw2D(); draw3D();
+      $('#walk').textContent = ''; $('#walk3').textContent = ''; trail = [];
+      if (Q.cur) { const pool = Q.lvl === '3' ? STEPS2.concat(STEPS3) : STEPS2; $('#qans').innerHTML = pool.map(s => `<button type="button" class="btn ans" data-k="${s[0]}">${esc(T(s[2]))}</button>`).join(''); $('#qans').querySelectorAll('.ans').forEach(b => b.onclick = () => answer(b)); $('#qfb').textContent = ''; Q.answered = false; }
+      if (R.cur) { $('#rq').textContent = cap(T('{i}: which one is pure?', {i: T(R.cur.it[0])})); $('#rfb').textContent = ''; }
+    });
     document.querySelectorAll('[data-dims]').forEach(b => b.addEventListener('click', () => {
       dims = +b.dataset.dims;
       document.querySelectorAll('[data-dims]').forEach(x => x.setAttribute('aria-pressed', x === b));
