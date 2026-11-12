@@ -14,7 +14,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '' };
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '', fit: true, libOpen: true };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 setFont(prefs.font);
 setLang(prefs.lang || guessLang());
@@ -186,10 +186,32 @@ function render(resetLeaf) {
   markSel();
 }
 
+/* "Fit to screen": the largest size at which the whole piece still fits the visible stage
+   (never smaller than 13, never larger than 34; long pieces simply scroll at 13). */
+function fitZoom(p, vis, opts) {
+  const st = $('#stage');
+  const cs = getComputedStyle(st);
+  const availW = (paper.clientWidth || st.clientWidth) - 40;
+  const head = $('.piece-head').offsetHeight + 16;
+  const availH = st.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - head - 30;
+  const fits = z => {
+    const sy = engraveSystems(p, vis, Math.max(20, availW / z), opts);
+    return sy.reduce((h, s) => h + s.h * z + 14, 0) <= availH;
+  };
+  let lo = 13, hi = 34;
+  if (!fits(lo)) return lo;
+  if (fits(hi)) return hi;
+  for (let k = 0; k < 7; k++) { const mid = (lo + hi) / 2; if (fits(mid)) lo = mid; else hi = mid; }
+  return Math.floor(lo * 4) / 4;
+}
+
 function renderScore(p, opts) {
-  const w = spaceW();
-  const systems = engraveSystems(p, p.voices.map((_, i) => i), w, opts);
-  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, prefs.zoom)))));
+  const vis = p.voices.map((_, i) => i);
+  const z = prefs.fit !== false ? fitZoom(p, vis, opts) : prefs.zoom;
+  S.zoomNow = z;
+  const w = Math.max(20, (paper.clientWidth || $('#stage').clientWidth - 40) - 40) / z;
+  const systems = engraveSystems(p, vis, w, opts);
+  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, z)))));
   S.systems = systems;
 }
 
@@ -302,7 +324,8 @@ function buildStudio() {
   card(tr('View'),
     chipRow(tr('Notation'), [['manuscript', tr('Manuscript')], ['bravura', tr('Engraved')]].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
-    el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
+    chipRow(tr('Size'), [chip(tr('Fit to screen'), prefs.fit !== false, () => { prefs.fit = prefs.fit === false; savePrefs(); render(); buildStudio(); })]),
+    el('div', { class: 'row' }, el('label', {}, ''), el('input', { type: 'range', min: 9, max: 34, value: Math.round(prefs.fit !== false && S.zoomNow ? S.zoomNow : prefs.zoom), oninput: e => { prefs.zoom = +e.target.value; if (prefs.fit !== false) { prefs.fit = false; buildStudio(); } savePrefs(); render(); } })),
     chipRow(tr('Theme'), [chip(tr('Dark'), prefs.theme === 'dark', () => { prefs.theme = 'dark'; savePrefs(); applyTheme(); buildStudio(); }), chip(tr('Light'), prefs.theme === 'light', () => { prefs.theme = 'light'; savePrefs(); applyTheme(); buildStudio(); })]));
 
   card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
@@ -465,7 +488,7 @@ function stopPlayback(keep) {
 
 function setPlaying(on) {
   S.playing = on;
-  $('#playIcon').innerHTML = on ? '<path d="M6 5h4.5v14H6zM13.500 5H18v14h-4.500z"/>' : '<path d="M7 4.500v15l12-7.500z"/>';
+  $('#playIcon').innerHTML = on ? '<rect x="5.5" y="4.5" width="4.6" height="15" rx="1.6"/><rect x="13.9" y="4.5" width="4.6" height="15" rx="1.6"/>' : '<path d="M8 5.6v12.8a1.6 1.6 0 0 0 2.45 1.36l10.1-6.4a1.6 1.6 0 0 0 0-2.72L10.45 4.24A1.6 1.6 0 0 0 8 5.6z"/>';
   $('#play').setAttribute('aria-label', on ? tr('Stop') : tr('Play'));
 }
 
@@ -528,10 +551,13 @@ document.addEventListener('keydown', e => {
 
 /* ------------------------------------------------------------------ drawers, theme, search */
 const relayout = () => {};
-function openDrawer(id) { $('#' + id).dataset.open = 'true'; if (innerWidth >= 1100) relayout(); }
-function closeDrawer(id) { $('#' + id).dataset.open = 'false'; if (innerWidth >= 1100) relayout(); }
+function libState() { document.body.dataset.lib = $('#library').dataset.open; }
+function openDrawer(id) { $('#' + id).dataset.open = 'true'; if (id === 'library') { if (innerWidth >= 1100) { prefs.libOpen = true; savePrefs(); } libState(); } if (innerWidth >= 1100) relayout(); }
+function closeDrawer(id) { $('#' + id).dataset.open = 'false'; if (id === 'library') { if (innerWidth >= 1100) { prefs.libOpen = false; savePrefs(); } libState(); } if (innerWidth >= 1100) relayout(); }
 const toggleDrawer = id => ($('#' + id).dataset.open === 'true' ? closeDrawer : openDrawer)(id);
 $('#openLib').addEventListener('click', () => toggleDrawer('library'));
+$('#foldLib').addEventListener('click', () => closeDrawer('library'));
+$('#unfoldLib').addEventListener('click', () => openDrawer('library'));
 $('#openStudio').addEventListener('click', () => toggleDrawer('studio'));
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeDrawer(b.dataset.close)));
 $('#toggleTheme').addEventListener('click', () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; savePrefs(); applyTheme(); if (S.base) buildStudio(); });
@@ -650,7 +676,8 @@ new ResizeObserver(() => {
   translatePage();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
   const wide = innerWidth >= 1100;
-  $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
+  $('#library').dataset.open = String(wide && prefs.libOpen !== false); $('#studio').dataset.open = 'false';
+  libState();
   await loadLibrary();
   renderTree();
   const want = decodeURIComponent(location.hash.slice(1));
