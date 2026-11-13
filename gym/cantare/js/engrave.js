@@ -142,6 +142,26 @@ export function buildColumns(piece, vidx) {
     }
     c.restHere = vidx.some(v => c.notes[v] && c.notes[v].n.rest);
   });
+  /* chant: the notes of one syllable are a ligature, written touching each other
+     (a small space only between repeated notes on the same pitch); the syllable's text may widen the whole group */
+  if (style === 'chant') {
+    let head = 0;
+    cols.forEach((c, k) => {
+      if (!c.ligature) head = k;
+      const nx = cols[k + 1];
+      if (nx && nx.ligature) {
+        const a = c.notes[vidx[0]]?.n, b = nx.notes[vidx[0]]?.n;
+        c.tight = true;
+        c.need = 1 + (a && b && a.step === b.step ? .3 : 0) + (b && b.acc && !b.ficta ? .9 : 0);
+      } else {
+        c.tight = false;
+        let inner = 0;
+        for (let j = head; j < k; j++) inner += cols[j].need;
+        const e = c.notes[vidx[0]];
+        c.need = Math.max((e ? glyphNeed(e.n, style) : 1) + .5, cols[head].textW + .15 - inner);
+      }
+    });
+  }
   return cols;
 }
 
@@ -243,10 +263,15 @@ function drawStaff(piece, vi, cols, xs, opts) {
 /* Place the columns on lines of the given width (in staff spaces). Returns arrays of column ranges. */
 export function breakLines(cols, width, headW) {
   const out = [];
-  let start = 0, used = 0;
+  let start = 0, used = 0, head = 0;
   for (let k = 0; k < cols.length; k++) {
+    if (!cols[k].ligature) head = k;
     const w = cols[k].need;
-    if (k > start && used + w > width - headW) { out.push([start, k]); start = k; used = 0; }
+    if (k > start && used + w > width - headW) {
+      /* never break inside a ligature: the whole syllable moves to the next line */
+      const at = cols[k].ligature ? head : k;
+      if (at > start) { out.push([start, at]); start = at; used = 0; for (let j = at; j < k; j++) used += cols[j].need; }
+    }
     used += w;
   }
   if (start < cols.length) out.push([start, cols.length]);
@@ -268,7 +293,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
     const at = [];
     let x = headW;
-    slice.forEach(c => { at.push(x + (c.ligature ? 0 : .35)); x += c.need * (c.ligature ? 1 : stretch); });
+    slice.forEach(c => { at.push(x + .35); x += c.need * (c.tight ? 1 : stretch); });
     const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x, headW + 2), width) : width };
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
