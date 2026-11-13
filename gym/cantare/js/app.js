@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '',
+const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'manuscript', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -62,12 +62,16 @@ let uid = 100000;
 const jrpCache = {};
 const jrpGet = path => (jrpCache[path] ||= fetch('jrp/' + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(e => { delete jrpCache[path]; throw e; }));
 const dispTitle = it => it.title;
+const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 async function loadLibrary() {
   const [lib, tags] = await Promise.all([fetch('data/library.json').then(r => r.json()), fetch('data/taglines.json').then(r => r.json())]);
-  /* the Josquin Research Project: far too much to carry at once, so it is fetched piece by piece, only when opened */
-  lib.push({ group: 'Josquin Research Project', note: 'Masses, motets and songs from about 1420 to 1540, by Josquin, Ockeghem, La Rue, Busnoys, Du Fay and many more, in all their voices. From the Josquin Research Project (josquin.stanford.edu, Stanford University), CC BY-NC 4.0.', lazy: 'index.json', count: 1379 });
-  lib.push({ group: 'Canons from the Josquin Research Project', note: 'Every piece of that collection that contains a canon, sorted by the interval of the answer. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself.', lazy: 'canons.json', count: 216 });
+  /* the Josquin Research Project sits inside Polyphonic models under plain names; far too much to carry at once,
+     so it is fetched piece by piece, only when opened. Its credit appears under each piece once it is opened. */
+  const poly = lib.find(g => g.group === 'Polyphonic models');
+  (poly.subs ||= []).push(
+    { group: 'Masses, motets and songs, 1420–1540', note: 'By Josquin, Ockeghem, La Rue, Busnoys, Du Fay and many more, in all their voices, sorted by composer.', lazy: 'index.json', count: 1379 },
+    { group: 'Canons', note: 'Every piece here that contains a canon, sorted by the interval of the answer. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself.', lazy: 'canons.json', count: 216 });
   S.library = lib;
   (function walk(list, trail) { list.forEach(g => { const t = [...trail, g.group]; (g.items || []).forEach(it => { it.id ??= ++uid; S.flat.push({ item: it, trail: t }); }); if (g.subs) walk(g.subs, t); }); })(lib.filter(g => !g.lazy), []);
   $('#tagline').textContent = tags[Math.floor(Math.random() * tags.length)];
@@ -92,9 +96,22 @@ async function fillLazy(g, trail) {
 
 /* a random piece: first a category at random (each equally likely), then a piece within it */
 const RANDOM_GROUPS = ['Cantus planus', 'Cantus fractus', 'Cantus mensurabilis', 'Polyphonic models'];
-function randomPick() {
+async function randomPick() {
   const pools = RANDOM_GROUPS.map(g => S.flat.filter(f => f.trail[0] === g)).filter(p => p.length);
   const pool = pools.length ? pools[Math.floor(Math.random() * pools.length)] : S.flat;
+  /* the polyphonic models also hold the whole Josquin collection: draw from all of it */
+  if (pool[0]?.trail[0] === 'Polyphonic models') {
+    try {
+      const all = jrpTitles || (jrpTitles = await jrpGet('search.json'));
+      const k = Math.floor(Math.random() * (pool.length + all.length));
+      if (k >= pool.length) {
+        const [id, , c] = all[k - pool.length];
+        const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid;
+        return { item: it, trail: ['Polyphonic models', c] };
+      }
+      return pool[k];
+    } catch (e) { /* offline: one of the models carried here */ }
+  }
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -128,10 +145,10 @@ function renderTree(filter = '') {
       const words = q.split(/\s+/);
       const hits = jrpTitles.filter(([, t, c]) => { const h = (t + ' ' + c).toLowerCase(); return words.every(w => h.includes(w)); }).slice(0, 60);
       if (hits.length) {
-        const d = el('details', {}, el('summary', {}, tr('Josquin Research Project'), el('small', {}, String(hits.length) + (hits.length === 60 ? '+' : ''))));
+        const d = el('details', {}, el('summary', {}, tr('Masses, motets and songs, 1420–1540'), el('small', {}, String(hits.length) + (hits.length === 60 ? '+' : ''))));
         d.open = true;
         hits.forEach(([id, t, c]) => d.append(el('button', { class: 'item', onclick: async () => {
-          try { const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid; openItem(it, ['Josquin Research Project', c]); if (innerWidth < 1100) closeDrawer('library'); } catch (e) { toast(tr('Could not load that piece (offline?).')); }
+          try { const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid; openItem(it, ['Polyphonic models', c]); if (innerWidth < 1100) closeDrawer('library'); } catch (e) { toast(tr('Could not load that piece (offline?).')); }
         } }, el('b', {}, t))));
         tree.append(d);
       }
@@ -154,7 +171,9 @@ function openItem(item, trail, opts = {}) {
   hist.undo = []; hist.redo = [];
   buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips();
   document.querySelectorAll('.tree .item').forEach(b => b.setAttribute('aria-current', String(+b.dataset.id === item.id)));
-  try { history.replaceState(null, '', item.mine ? location.pathname : '#' + slug(item.title)); } catch (e) { /* ignore */ }
+  /* a piece of the Josquin collection is addressed by its number, which a link can open again */
+  const jrpId = item.jrp || (item.desc || '').match(/josquin\.stanford\.edu, (\w+)\)/)?.[1];
+  try { history.replaceState(null, '', item.mine ? location.pathname : '#' + (jrpId ? 'jrp:' + jrpId : slug(item.title))); } catch (e) { /* ignore */ }
   syncTitleEdit();
   $('#stage').scrollTop = 0;
   if (opts.toast) toast(opts.toast);
@@ -195,6 +214,8 @@ function render(resetLeaf) {
   $('#trail').textContent = (p.trail || []).join('  ›  ');
   $('#title').textContent = p.title;
   $('#note').textContent = p.note + (p.talea ? ' Talea: ' + TALEAE[S.talea][0] + '.' : '');
+  $('#credit').hidden = !p.credit;
+  $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>') : '';
   const useBook = prefs.view === 'book' && p.voices.length > 1;
   $('#pager').hidden = !useBook;
   paper.className = useBook ? 'book' : 'paper';
@@ -393,7 +414,7 @@ function buildStudio() {
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
     chipRow('', [chip(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); })]),
-    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); })]));
+    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); }), chip(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); })]));
 
   /* the organ registers speak with the pipe settings; Your own takes the drawbars */
   if (snd.REG[prefs.timbre] || prefs.timbre === 'custom') {
@@ -426,7 +447,7 @@ function buildStudio() {
     try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
   }, { title: tr('Copy a link that opens this exact melody') }), chip(tr('Save as PDF'), false, () => exportPDF())),
     el('div', { class: 'row' }, b.mine
-      ? chip(tr('Delete this melody'), false, () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = randomPick(); openItem(pick.item, pick.trail); })
+      ? chip(tr('Delete this melody'), false, async () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = await randomPick(); openItem(pick.item, pick.trail); })
       : chip(tr('Keep as my melody'), false, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, { title: tr('Keep this melody, as it is now, among your own, to change and send') })));
 }
 
@@ -575,7 +596,16 @@ function beatHand(pos) {
   const lift = ph < up ? ease(up - rise, up, ph) : 1 - ease(1 - fall, 1, ph);
   poseHand(lift);
 }
+/* the pendulum swings once for each part of the tactus (each semibrevis under a brevis tactus: two in duple, three in triple time),
+   reaching the end of its swing exactly on each part, as a real pendulum: a sine */
+function swingPendulum(pos) {
+  const unit = beatMinims(), parts = isTriple() && unit === 6 ? 3 : 2;
+  const x = (pos - (S.piece.beatOff || 0)) / (unit / parts);
+  $('#pdArm').style.transform = `rotate(${(14 * Math.cos(Math.PI * x)).toFixed(2)}deg)`;
+}
 function syncHand() {
+  $('#pendulum').hidden = !prefs.pendulum;
+  if (!S.playing) $('#pdArm').style.transform = '';
   $('#tactusHand').hidden = !prefs.hand;
   $('#tactusHand').classList.toggle('beating', !!S.playing);
   if (!S.playing) poseHand(.5);
@@ -639,6 +669,7 @@ function frame() {
   if (!clock) return;
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
   if (prefs.hand) beatHand(Math.max(0, pos));
+  if (prefs.pendulum) swingPendulum(Math.max(0, pos));
   if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
@@ -1142,6 +1173,7 @@ function exportPDF() {
     el('h1', {}, p.title),
     p.note ? el('p', { class: 'ps-note' }, p.note) : '',
     ...systems.map(s => el('div', { class: 'ps-sys' }, parse(systemSVG(s, zoom)))),
+    p.credit ? el('p', { class: 'ps-credit' }, p.credit) : '',
     el('p', { class: 'ps-foot' }, 'Cantare super librum · vaclavhrebec.github.io/gym/cantare'));
   $('#printSheet')?.remove();
   document.body.append(sheet);
@@ -1202,9 +1234,16 @@ new ResizeObserver(() => {
       opened = true;
     }
   }
+  if (!opened && /^jrp:\w+$/.test(want)) {
+    try {
+      const it = await jrpGet('p/' + want.slice(4) + '.json'); it.id ??= ++uid;
+      const comp = (it.desc || '').split(',')[0];
+      openItem(it, ['Polyphonic models', comp]); opened = true;
+    } catch (e) { /* not there or offline: a random piece instead */ }
+  }
   if (!opened) {
     const hit = want && S.flat.find(f => slug(f.item.title) === want);
-    const pick = hit || randomPick();
+    const pick = hit || await randomPick();
     openItem(pick.item, pick.trail);
   }
   /* the lyrics are measured in their own font: draw again once it has arrived */

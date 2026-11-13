@@ -38,6 +38,29 @@
     --accent: #e5394f; --card: #1b1916; --soft: #221f1b;
     --v1: #ef5a6c; --v2: #6b9be0; --v3: #6fbf84;
   }
+  .libbtn { display: inline-flex; align-items: center; gap: .45rem; }
+  .libbtn svg { width: 1.1rem; height: 1.1rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linejoin: round; }
+  dialog.lib { position: fixed; inset: 0; margin: auto; width: min(720px, calc(100vw - 24px)); height: min(84vh, 820px); padding: 0; border: 1px solid var(--line); border-radius: 14px;
+    background: var(--card); color: var(--fg); box-shadow: 0 20px 60px rgba(0,0,0,.35); display: none; flex-direction: column; overflow: hidden; }
+  dialog.lib[open] { display: flex; }
+  dialog.lib::backdrop { background: rgba(20,16,12,.55); }
+  .libhead { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }
+  .libhead h2 { margin: 0; font: 400 1.7rem "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; }
+  .lib .x { background: none; border: 0; font-size: 1.7rem; line-height: 1; cursor: pointer; color: var(--muted); }
+  #libSearch { margin: 4px 16px 8px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--soft); color: var(--fg); font: inherit; }
+  .libbody { overflow: auto; padding: 0 16px 12px; flex: 1; }
+  .libbody details { border-top: 1px solid var(--line); }
+  .libbody summary { cursor: pointer; padding: 10px 2px; font: 400 1.15rem "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; display: flex; justify-content: space-between; }
+  .libbody summary small { font: .8rem system-ui, sans-serif; color: var(--muted); }
+  .cn { padding: 8px 4px 12px 14px; border-left: 2px solid var(--line); margin: 0 0 8px 4px; }
+  .cn h4 { margin: 0; font-size: .98rem; }
+  .cn .w { font-size: .82rem; color: var(--muted); }
+  .cn ul { margin: 4px 0 6px; padding-left: 1.1rem; font-size: .88rem; }
+  .cn .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cn .acts a { text-decoration: none; color: var(--accent); align-self: center; font-size: .92rem; }
+  .cn .acts a:hover { text-decoration: underline; }
+  .libcredit { margin: 0; padding: 8px 16px 12px; border-top: 1px solid var(--line); font-size: .78rem; color: var(--muted); }
+  .libcredit a { color: inherit; }
   * { box-sizing: border-box; }
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; }
@@ -169,6 +192,7 @@
     <section class="card" aria-labelledby="h-canon">
       <h2 id="h-canon">Canon</h2>
       <div class="row"><label for="preset">Type</label><select id="preset"></select></div>
+      <div class="row"><button class="b libbtn" id="openLib" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z"/></svg>Library of canons</button><span class="note">322 real canons, about 1450–1530</span></div>
       <div class="row"><label for="entry">Entry</label><select id="entry"></select></div>
       <ul class="voices" id="voices"></ul>
       <div id="diaBox" hidden>
@@ -219,7 +243,7 @@
 
   <details class="help" id="realcanons">
     <summary>Real canons to study</summary>
-    <p class="note">216 pieces by Josquin, Okeghem, La Rue, Busnoys, Compère and others contain a canon: at the unison, the fourth, the fifth, the octave, by augmentation, by inversion, as a riddle. They are in the Cantare library under <em>Canons from the Josquin Research Project</em>, sorted by the interval of the answer, and each says which voice follows which. Hide the following voice and improvise it yourself. <a href="../cantare/">Open Cantare super librum</a>. Edited by the Josquin Research Project (Stanford University), CC BY-NC 4.0.</p>
+    <p class="note">Open the <a href="#" id="openLib2">Library of canons</a>: every canon in the masses, motets and songs of Josquin, Ockeghem, La Rue, Busnoys, Compère and their contemporaries, sorted by the interval of the answer, each saying which voice follows which. <em>Practise</em> sets this page to that interval and entry; <em>See the score</em> opens the piece in Cantare super librum, where you can hide the following voice and improvise it yourself.</p>
   </details>
 
   <details class="help">
@@ -234,6 +258,13 @@
     <p><strong>Your voice</strong> shifts the recording of your singing to the new pitch. <strong>Organ</strong> follows the pitch you sing with a soft organ stop, which sounds cleaner in the higher voices.</p>
     <p>For three voices in the usual way, choose <em>fifth below, then fourth above</em> with an entry of one beat: the first comes enters one beat after you a fifth lower, the second two beats after you a fourth higher. For four voices, choose <em>rising fourths</em> and sing the lowest part: each comes enters one beat later and a fourth higher than the one before.</p>
   </details>
+
+  <dialog class="lib" id="lib" aria-labelledby="libTitle">
+    <div class="libhead"><h2 id="libTitle">Library of canons</h2><button class="x" id="libClose" type="button" aria-label="Close">×</button></div>
+    <input type="search" id="libSearch" placeholder="Search: composer, mass, motet, voice…" aria-label="Search the canons">
+    <div class="libbody" id="libBody"><p class="note">Loading…</p></div>
+    <p class="libcredit" id="libCredit" hidden></p>
+  </dialog>
 
   <footer>
     <span>© <span id="yr"></span> Václav Hřebec</span>
@@ -541,6 +572,47 @@ function renderPatterns() {
     window.scrollTo({top: 0, behavior: 'smooth'});
   });
 }
+
+// ---------- the library of canons (from the Josquin Research Project) ----------
+let LIB = null;
+const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function renderLib() {
+  const q = $('libSearch').value.trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
+  const body = $('libBody');
+  if (!LIB) { body.innerHTML = '<p class="note">Loading…</p>'; return; }
+  body.innerHTML = LIB.map((g, gi) => {
+    const items = g.items.map((it, ii) => [it, ii]).filter(([it]) => { const h = (it.t + ' ' + it.w + ' ' + it.f.join(' ') + ' ' + it.e).toLowerCase(); return words.every(w => h.includes(w)); });
+    if (!items.length) return '';
+    return `<details${q ? ' open' : ''}><summary>${escH(g.g)}<small>${items.length}</small></summary>` + items.map(([it, ii]) => {
+      const lines = it.f.length ? it.f : (it.e ? [it.e] : []);
+      const entry = it.d ? Math.min(8, Math.max(1, Math.round(it.d * 2))) : 0;
+      return `<div class="cn"><h4>${escH(it.t)}</h4><div class="w">${escH(it.w)}${it.v ? ' · ' + escH(it.v) : ''}</div>` +
+        (lines.length ? `<ul>${lines.map(l => `<li>${escH(l)}</li>`).join('')}</ul>` : '') +
+        `<div class="acts">${g.p ? `<button class="b" type="button" data-prac="${gi}:${ii}" title="Set this page to the interval${entry ? ' and the entry (the semibrevis as the beat)' : ''} of this canon">Practise</button>` : ''}` +
+        `<a href="../cantare/#jrp:${encodeURIComponent(it.id)}" target="_blank" rel="noopener">See the score</a></div></div>`;
+    }).join('') + '</details>';
+  }).join('') || '<p class="note">Nothing found.</p>';
+  body.querySelectorAll('[data-prac]').forEach(b => b.onclick = () => {
+    const [gi, ii] = b.dataset.prac.split(':').map(Number), g = LIB[gi], it = g.items[ii];
+    S.preset = g.p;
+    if (it.d) S.entry = Math.min(8, Math.max(1, Math.round(it.d * 2)));
+    save(); syncUI();
+    if (typeof sendConfig === 'function') try { sendConfig(); } catch (e) {}
+    $('lib').close(); window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+function openLib(e) {
+  if (e) e.preventDefault();
+  $('lib').showModal();
+  if (!LIB) fetch('library.json').then(r => r.json()).then(d => { LIB = d; renderLib(); }).catch(() => { $('libBody').innerHTML = '<p class="note">Could not load the library (offline?).</p>'; });
+  else renderLib();
+  $('libCredit').hidden = false;
+  $('libCredit').innerHTML = 'From the Josquin Research Project (<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>), CC BY-NC 4.0.';
+}
+$('openLib').onclick = openLib; $('openLib2').onclick = openLib;
+$('libClose').onclick = () => $('lib').close();
+$('lib').addEventListener('click', e => { if (e.target === $('lib')) $('lib').close(); });
+$('libSearch').addEventListener('input', renderLib);
 
 // ---------- settings ----------
 const DEF = { start: 'auto', bb: false, preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',

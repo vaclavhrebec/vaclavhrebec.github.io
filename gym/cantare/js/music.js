@@ -89,7 +89,11 @@ export function stamp(notes, tempus) {
 /* ---------- from library entry to piece ---------- */
 export function pieceFrom(item, trail) {
   const tempus = item.t === 'O' ? 'O' : 'C';
-  const base = { id: item.id, title: item.title, note: item.desc || '', trail, tempus, cut: !!item.cut, bflat: !!item.b,
+  /* a piece from the Josquin Research Project: its credit is kept apart from the description and shown under the music */
+  let note = item.desc || '', credit = '';
+  const jm = note.match(/\s*From the Josquin Research Project([\s\S]*?);\s*converted to Cantare notation \(tools\/kern2cantare\.py\)\./);
+  if (jm) { credit = 'From the Josquin Research Project' + jm[1] + '.'; note = note.replace(jm[0], '').trim(); }
+  const base = { id: item.id, title: item.title, note, credit, trail, tempus, cut: !!item.cut, bflat: !!item.b,
     /* a measured piece whose long and short notes run in threes although written without the O (cantus fractus), and its upbeat in minims */
     ternary: !!item.tern, beatOff: item.up || 0 };
   let kind, voices;
