@@ -16,9 +16,9 @@ const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 /* ---------- glyphs (Bravura outlines) ---------- */
 const U = .004; /* one font unit in staff spaces */
-/* chant is written with Bravura's solid mensural brevis (as in the first Cantare), not the modern chant punctum */
 const gw = c => BRAVURA[c].w * U;
-const CHANT_W = BRAVURA.E934.w * U;
+/* chant is written with Bravura's black mensural brevis */
+const CHANT_W = BRAVURA.E952.w * U;
 /* glyph with its font origin at (x, y) */
 const go = (c, x, y, sx = 1, cls = 'fill') => `<path d="${BRAVURA[c].d}" transform="translate(${f(x)} ${f(y)}) scale(${f(U * sx * 1e3) / 1e3} ${-f(U * sx * 1e3) / 1e3})" class="${cls}"/>`;
 /* glyph with its bounding box centred on (cx, cy) */
@@ -27,24 +27,22 @@ const gc = (c, cx, cy, sx = 1, cls = 'fill') => {
   return go(c, cx - (g.x + g.w / 2) * U * sx, cy + (g.y + g.h / 2) * U * sx, sx, cls);
 };
 
-/* Petrucci's clefs from Bravura, as in the first Cantare (Wednesday 11 Nov), for chant and mensural music alike */
-const CLEF_CODE = { mensural: { C: 'E907', F: 'E904', G: 'E901' }, chant: { C: 'E907', F: 'E904', G: 'E901' } };
-const clefCode = (clef, style) => CLEF_CODE[style === 'chant' ? 'chant' : 'mensural'][clef.kind];
+/* Bravura's Petrucci clefs, for chant and mensural music alike; the C clef has its own form for each line */
+const C_CLEF = ['E907', 'E908', 'E909', 'E90A', 'E90B'];
+const clefCode = clef => clef.kind === 'C' ? C_CLEF[Math.min(Math.max(clef.line, 1), 5) - 1] : clef.kind === 'F' ? 'E904' : 'E901';
 const msClef = (clef, style) => (ms(style) && (clef.kind === 'C' || clef.kind === 'F')) ? (clef.kind === 'C' ? 'clefC' : 'clefF') : null;
 const clefWidth = (clef, style) => { const k = msClef(clef, style); return k ? MS[k].w : gw(clefCode(clef, style)); };
 
 /* y: vertical position of the line the clef sits on */
 function clefGlyph(clef, y, style, lines = 5) {
   const k = msClef(clef, style);
-  const code = clefCode(clef, style);
-  /* the C clef's long strokes run towards the middle of the staff: up from a low line, down from a high one */
-  const flip = !k && code === 'E907' && y < (lines - 1) / 2;
-  let g = k ? mp(k, MS[k].w / 2, k === 'clefF' ? (lines - 1) / 2 : y) : flip ? go(code, 0, y).replace(/scale\(([\d.]+) (-[\d.]+)\)/, (m, a, b) => `scale(${a} ${-b})`) : go(code, 0, y);
+  let g = k ? mp(k, MS[k].w / 2, k === 'clefF' ? (lines - 1) / 2 : y) : go(clefCode(clef, style), 0, y);
   if (clef.shift) g += `<text x="${f(clefWidth(clef, style) / 2)}" y="${f(y + 2.55)}" class="clefnum" text-anchor="middle">8</text>`;
   return g;
 }
 
-const ACC_CODE = { b: 'E260', n: 'E261', '#': 'E262' };
+/* Bravura's Renaissance flat (b molle) and natural, and the sharp */
+const ACC_CODE = { b: 'E9E0', n: 'E9E2', '#': 'E262' };
 /* x is the right edge of the sign */
 const accidental = (acc, x, y, small, style = 'white') => {
   if (acc === 'b' && ms(style)) return mp('flat', x - MS.flat.w / 2 - (small ? .1 : 0), y, small ? .75 : 1);
@@ -53,33 +51,28 @@ const accidental = (acc, x, y, small, style = 'white') => {
   return go(ACC_CODE[acc], x - gw(ACC_CODE[acc]) * k, y, k);
 };
 
-/* a note head and stem; style: 'chant' | 'white' | 'black' */
+/* Bravura's mensural notes, each drawn whole (head, stem and flags in one glyph), as Bravura.otf has them.
+   White notation and black (coloured) notation; the longa and maxima have the stem down, the minima and smaller up,
+   and a note is mirrored top to bottom when its stem should go the other way. */
+const WHITE = { Mx: 'E95C', L: 'E95D', B: 'E95E', S: 'E962', M: 'E95F', Sm: 'E960', F: 'E961' };
+const BLACK = { Mx: 'E950', L: 'E951', B: 'E952', S: 'E953', M: 'E954', Sm: 'E955', F: 'E955' };
+const STEM_DOWN = { Mx: 1, L: 1 }, STEM_UP = { M: 1, Sm: 1, F: 1 };
+/* a whole glyph with its head centred on (x, y); flip mirrors it top to bottom about the head */
+const gn = (c, x, y, flip) => {
+  const u = f(U * 1e3) / 1e3;
+  return `<path d="${BRAVURA[c].d}" transform="translate(${f(x - (BRAVURA[c].x + (c === 'E95C' || c === 'E950' ? BRAVURA[c].w : headW(c)) / 2) * U)} ${f(y)}) scale(${u} ${flip ? u : -u})" class="fill"/>`;
+};
+/* the head's width: the glyph's width, except where a stem stands outside the head */
+const headW = c => BRAVURA[c].w;
+
+/* a note; style: 'chant' | 'white' | 'black' */
 function noteGlyph(n, x, y, up, style) {
-  if (style === 'chant') {
-    /* Bravura's solid brevis; a longa (final) gets Bravura's mensural tail on the right */
-    let g = gc('E934', x, y);
-    if (n.v === 'L') g += go('E93F', x + CHANT_W / 2 - .13, y);
-    return g;
-  }
+  if (style === 'chant') return gn(n.v === 'L' ? 'E951' : 'E952', x, y, false);
   const black = style === 'black' || n.col;
   if (ms(style)) return msNote(n, x, y, up, black);
-  let g = '', halfW, stem = null;
-  if (n.v === 'Mx' || n.v === 'L' || n.v === 'B') {
-    /* Bravura's mensural heads: maxima, and the longa/brevis head */
-    const head = n.v === 'Mx' ? (black ? 'E930' : 'E933') : (black ? 'E934' : 'E937');
-    g = gc(head, x, y);
-    halfW = BRAVURA[head].w * U / 2;
-    if (n.v !== 'B') stem = up ? 'E93E' : 'E93F';
-  } else {
-    const head = n.v === 'S' ? (black ? 'E938' : 'E939') : n.v === 'M' ? (black ? 'E938' : 'E93C') : (black || n.v === 'Sm' || n.v === 'F' ? (style === 'white' ? 'E93D' : 'E938') : 'E938');
-    g = gc(head, x, y);
-    halfW = BRAVURA[head].w * U / 2;
-    if (n.v === 'M') stem = up ? 'E93E' : 'E93F';
-    if (n.v === 'Sm') stem = up ? 'E949' : 'E94A';
-    if (n.v === 'F') stem = up ? 'E94B' : 'E94C';
-  }
-  if (stem) g += go(stem, up ? x + halfW - .13 : x - halfW, y);
-  return g;
+  const code = (black ? BLACK : WHITE)[n.v] || 'E95E';
+  const flip = (STEM_DOWN[n.v] && up) || (STEM_UP[n.v] && !up);
+  return gn(code, x, y, flip);
 }
 
 /* a note in the manuscript shapes */
@@ -199,7 +192,7 @@ function flatStep(bottom, lines) {
 }
 
 const hasSign = piece => piece.kind !== 'chant' && !piece.talea;
-const HEAD = (piece, clef) => clefWidth(clef, styleOf(piece)) + .5 + (piece.bflat ? 1.2 : 0) + (hasSign(piece) ? 2.1 : 0) + .6;
+const HEAD = (piece, clef) => clefWidth(clef, styleOf(piece)) + .5 + (piece.bflat ? 1.2 : 0) + (hasSign(piece) ? 2.1 : 0) + 1;
 export const headWidth = (piece, clef) => HEAD(piece, clef);
 
 /* Draw one staff for one voice over the given columns. Returns {svg, top, bottom} relative to the staff's top line. */
@@ -219,7 +212,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     svg += accidental('b', cw + .5 + .9, y, false, style);
   }
   if (hasSign(piece)) {
-    const sx = HEAD(piece, clef) - .6 - 1.6;
+    const sx = HEAD(piece, clef) - 1.2 - 1.6;
     const code = piece.tempus === 'O' ? (piece.cut ? 'E912' : 'E911') : 'E915';
     if (ms(style) && piece.tempus === 'O') svg += piece.cut ? mp('signCut', sx + .8, mid, .75) : mp('signO', sx + .8, mid, .78);
     else svg += gc(code, sx + .8, mid, .78);
@@ -256,8 +249,8 @@ function drawStaff(piece, vi, cols, xs, opts) {
     g += noteGlyph(n, nx, y, stemUp, style);
     if (n.dot) g += `<circle cx="${f(nx + .95)}" cy="${f(Number.isInteger(y) ? y - .5 : y)}" r=".16" class="fill"/>`;
     const stems = n.v !== 'B' && n.v !== 'S' && style !== 'chant';
-    top = Math.min(top, y - .7, stems && stemUp ? y - 3.4 : 99);
-    const low = Math.max(y + .7, stems && !stemUp ? y + 3.4 : -99, style === 'chant' && n.v === 'L' ? y + 1.8 : -99);
+    top = Math.min(top, y - .7, stems && stemUp ? y - 3.6 : 99);
+    const low = Math.max(y + .7, stems && !stemUp ? y + 3.6 : -99, style === 'chant' && n.v === 'L' ? y + 2.7 : -99);
     bottom = Math.max(bottom, low);
     lowest = Math.max(lowest, low);
     notesHere.push({ n, x, k, i });

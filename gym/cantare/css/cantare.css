@@ -321,3 +321,6 @@ html.focus .tactus-hand { z-index: 0; }
 .clefpop-head button { border: 0; background: none; font-size: 22px; color: var(--soft); cursor: pointer; }
 .clefpick .clefnum { font: 1.5px var(--serif); fill: currentColor; }
 .clefpick .fill { fill: currentColor; }
+
+.fontcredit { text-align: center; font-size: .72rem; color: var(--soft); margin: 0 0 1rem; }
+.fontcredit a { color: inherit; }
