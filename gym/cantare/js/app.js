@@ -7,6 +7,8 @@ import { createTake } from './take.js';
 import { tr, setLang, getLang, guessLang, LANGS, translatePage } from './i18n.js';
 
 const $ = s => document.querySelector(s);
+/* a voice's name with its number small and low: Cantus₁ */
+const vname = n => { const m = /^(.*?)\s*(\d+)$/.exec(n || ''); return m ? el('span', {}, m[1], el('sub', { class: 'vnum' }, m[2])) : (n || ''); };
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
   for (const [k, v] of Object.entries(attrs)) { if (k === 'class') e.className = v; else if (k.startsWith('on')) e.addEventListener(k.slice(2), v); else if (v !== false && v != null) e.setAttribute(k, v === true ? '' : v); }
@@ -430,7 +432,7 @@ function renderBook(p, opts, resetLeaf) {
     const pane = el('div', { class: 'pane' + (vi >= 0 && S.voice[vi] === 'hide' ? ' blank' : '') });
     if (vi >= 0 && vi < p.voices.length) {
       const v = p.voices[vi];
-      if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
+      if (v.name) pane.append(el('span', { class: 'tag' }, vname(v.name)));
       per[vi].filter(x => x.t0 >= L.t0 - 1e-6 && x.t0 < L.t1 - 1e-6).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
     }
     paper.append(pane);
@@ -494,7 +496,7 @@ function buildTransform() {
   const clefCard = card(tr('Clef and staff'));
   b.voices.forEach((v, i) => {
     const cur = S.clefs[i] || v.clef;
-    clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || tr('Voice') + ' ' + (i + 1)) : tr('Clef')),
+    clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name ? vname(v.name) : tr('Voice') + ' ' + (i + 1)) : tr('Clef')),
       el('select', { 'aria-label': tr('Clef'), onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_PALETTE.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
   });
   clefCard.append(chipRow(tr('Lines'), [[0, tr('Auto')], [4, '4'], [5, '5'], [6, '6']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));

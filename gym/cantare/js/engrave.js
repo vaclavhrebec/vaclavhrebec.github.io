@@ -336,7 +336,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
        so the eye can imagine them where they stood */
     return { top, bottom, svg };
   }
-  const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
+  const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name.replace(/\s*\d+$/, ''))}${/\d+$/.test(voice.name) ? `<tspan class="vinum" dy=".3">${voice.name.match(/\d+$/)[0]}</tspan>` : ''}</text>` : '';
   cap = label;
   if (xs.custos && xs.custos[vi] != null) {
     const cy = yOf(xs.custos[vi] + shift);

@@ -92,6 +92,67 @@ export function stamp(notes, tempus) {
 }
 
 /* ---------- from library entry to piece ---------- */
+/* ---------- the names of the voices ----------
+   Every part is called by one of the four names of the choirbook, Cantus, Altus, Tenor, Bassus, whatever the source calls it
+   (Superius, Discantus, Contratenor altus, Contra, Quintus, Vagans …), so that its initial (C A T B) says where it sings.
+   A contratenor is an Altus when it sings above the tenor or beside a bassus, else a Bassus; a part named only by its
+   place in the set of partbooks (Quintus, Sextus, Vagans, a number) takes the name of the voices it lies with.
+   Two or more parts of one kind are numbered from the top down, keeping the numbers of the source where it has them: Cantus 1, Cantus 2. */
+const ROLE = [
+  [/^(superius|superior( vox)?|discantus|discant|cantus|canon royal)$/, 'Cantus'],
+  [/^(altus|contraltus|contratenor altus|contra acutus)$/, 'Altus'],
+  [/^tenor$/, 'Tenor'],
+  [/^(bassus|contrabassus|contratenor bass(us|is)|contra grauis|contra gravis|bar[iy](ton(ans)?|psaltes|phonus|canor)|barriphanos)$/, 'Bassus'],
+  [/^(contra|contratenor)$/, 'contra'],
+];
+const ORD = { primus: 1, secundus: 2, tertius: 3, quartus: 4 }, ROMAN = { i: 1, ii: 2, iii: 3, iv: 4, v: 5, vi: 6 };
+function nameVoices(voices) {
+  const DEFAULT = { 2: ['Cantus', 'Tenor'], 3: ['Cantus', 'Tenor', 'Bassus'], 4: ['Cantus', 'Altus', 'Tenor', 'Bassus'] };
+  if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT[voices.length]) { voices.forEach((v, i) => { v.name = DEFAULT[voices.length][i]; }); }
+  if (voices.length < 2) {
+    voices.forEach(v => { const r = ROLE.find(([re]) => re.test((v.name || '').toLowerCase().trim())); if (r && r[1] !== 'contra') v.name = r[1]; });
+    return;
+  }
+  const mean = v => { const s = v.notes.filter(n => !n.rest).map(n => n.step); return s.length ? s.reduce((a, b) => a + b, 0) / s.length : 28; };
+  const info = voices.map(v => {
+    let raw = (v.name || '').replace(/[\[\]:]/g, '').replace(/\s+/g, ' ').trim().toLowerCase(), num = null;
+    const pre = raw.match(/^(primus|secundus|tertius|quartus) (.+)$/); if (pre) { num = ORD[pre[1]]; raw = pre[2]; }
+    const post = raw.match(/^(.*?)\s*\b(\d+|i{1,3}|iv|vi?|primus|secundus|tertius)$/);
+    if (post && post[1]) { raw = post[1]; num = /\d/.test(post[2]) ? +post[2] : ROMAN[post[2]] || ORD[post[2]]; }
+    const r = ROLE.find(([re]) => re.test(raw));
+    return { v, raw, num, role: r ? r[1] : null, m: mean(v), clef: v.clef };
+  });
+  const avg = role => { const a = info.filter(x => x.role === role); return a.length ? a.reduce((s, x) => s + x.m, 0) / a.length : null; };
+  const ten = avg('Tenor');
+  /* a contratenor: beside a bassus, or above the tenor, it is the Altus; otherwise it is the lowest voice, the Bassus */
+  const hasBass = info.some(x => x.role === 'Bassus');
+  info.filter(x => x.role === 'contra').forEach(x => {
+    const bass = avg('Bassus');
+    x.role = (hasBass && (bass == null || x.m > bass)) || ten == null || x.m >= ten ? 'Altus' : 'Bassus';
+  });
+  /* the others lie with the voices nearest to them (where a kind is missing, its usual place relative to the tenor) */
+  const al = avg('Altus'), t0 = ten ?? (al != null ? al - 2 : 26);
+  const ref = { Cantus: avg('Cantus') ?? t0 + 6, Altus: al ?? t0 + 2, Tenor: ten ?? t0, Bassus: avg('Bassus') ?? t0 - 4 };
+  /* a part written in the same clef as a named one counts as a step nearer to it: the clef says the range the part was written for */
+  const near = (x, k) => Math.abs(ref[k] - x.m) - (info.some(y => y.role === k && y.clef === x.clef) ? 1 : 0);
+  info.filter(x => !x.role).forEach(x => {
+    x.role = Object.keys(ref).reduce((best, k) => near(x, k) < near(x, best) ? k : best, 'Tenor');
+    x.num = null;
+  });
+  /* numbering: the numbers of the source where they are whole and distinct, the voice named plainly first, then by place */
+  ['Cantus', 'Altus', 'Tenor', 'Bassus'].forEach(role => {
+    const g = info.filter(x => x.role === role);
+    if (g.length < 2) { g.forEach(x => { x.v.name = role; }); return; }
+    const given = g.filter(x => x.num != null).map(x => x.num);
+    if (new Set(given).size !== given.length || given.some(n => n > g.length)) g.forEach(x => { x.num = null; });
+    const used = new Set(g.map(x => x.num).filter(n => n != null));
+    let k = 1;
+    const free = () => { while (used.has(k)) k++; used.add(k); return k; };
+    g.filter(x => x.num == null).forEach(x => { x.num = free(); });
+    g.forEach(x => { x.v.name = role + ' ' + x.num; });
+  });
+}
+
 export function pieceFrom(item, trail) {
   const tempus = item.t === 'O' ? 'O' : 'C';
   /* a piece from the Josquin Research Project: its credit is kept apart from the description and shown under the music */
@@ -131,14 +192,7 @@ export function pieceFrom(item, trail) {
       void sounding;
     });
   }
-  const DEFAULT_NAMES = { 2: ['Cantus', 'Tenor'], 3: ['Cantus', 'Tenor', 'Bassus'], 4: ['Cantus', 'Altus', 'Tenor', 'Bassus'] };
-  if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT_NAMES[voices.length]) voices.forEach((v, i) => { v.name = DEFAULT_NAMES[voices.length][i]; });
-  /* the top voice is called Cantus everywhere (C A T B), also where a source names it Superius */
-  voices.forEach(v => { if (v.name) v.name = v.name.replace(/^(Superius|Discantus)\b/i, 'Cantus'); });
-  /* two or more voices of one kind are numbered: Cantus 1, Cantus 2, Altus 1, Altus 2 … */
-  const baseOf = n => (n || '').replace(/\s*(\d+|I+|primus|secundus|tertius)$/i, '').trim();
-  const count = {}; voices.forEach(v => { const b = baseOf(v.name); if (b) count[b] = (count[b] || 0) + 1; });
-  const seen = {}; voices.forEach(v => { const b = baseOf(v.name); if (b && count[b] > 1) { seen[b] = (seen[b] || 0) + 1; v.name = b + ' ' + seen[b]; } });
+  nameVoices(voices);
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
