@@ -115,7 +115,7 @@ async function randomPick() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-const countIn = g => (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
+const countIn = g => g.lazy && g.count ? g.count : (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
 const openGroups = new Set();
 let jrpTitles = null;
 
