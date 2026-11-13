@@ -98,7 +98,7 @@ export function pieceFrom(item, trail) {
   let note = item.desc || '', credit = '';
   const jm = note.match(/\s*From the Josquin Research Project([\s\S]*?);\s*converted to Cantare notation \(tools\/kern2cantare\.py\)\./);
   if (jm) { credit = 'From the Josquin Research Project' + jm[1] + '.'; note = note.replace(jm[0], '').trim(); }
-  const base = { id: item.id, title: item.title, note, credit, trail, tempus, cut: !!item.cut, bflat: !!item.b,
+  const base = { id: item.id, title: item.title, note, credit: item.cr || credit, trail, tempus, cut: !!item.cut, bflat: !!item.b,
     /* a measured piece whose long and short notes run in threes although written without the O (cantus fractus), and its upbeat in minims */
     ternary: !!item.tern, beatOff: item.up || 0,
     /* the Josquin collection is converted with every value already at its full length (a perfect brevis written B.),

@@ -7,6 +7,9 @@ export const guessLang = () => { const n = (navigator.language || 'en').slice(0,
 
 const D = {
   de: {
+    'Gregorian chant scores from': 'Gregorianische Choräle aus',
+    ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', einer gemeinfreien Datenbank (CC0), übertragen von Andrew Hinkley und vielen anderen.',
+    'Gregorian chant from GregoBase': 'Gregorianischer Choral aus GregoBase',
     'Organ, Principal 8′': 'Orgel, Principal 8′', 'Regal': 'Regal',
     'Open in a full page': 'Als eigene Seite öffnen',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Auf „Abspielen“ drücken: Deine Stimme wird zusammen mit der Musik aufgenommen. Kopfhörer verwenden, damit die Orgel nicht in die Aufnahme gelangt.',
@@ -37,6 +40,9 @@ const D = {
     'The camera is not available here.': 'Die Kamera ist hier nicht verfügbar.', 'Loading the hand reader…': 'Handerkennung wird geladen …', 'Open the Guidonian hand': 'Guidonische Hand öffnen',
   },
   fr: {
+    'Gregorian chant scores from': 'Chants grégoriens tirés de',
+    ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', une base de données libre de droits (CC0), transcrite par Andrew Hinkley et bien d’autres.',
+    'Gregorian chant from GregoBase': 'Chant grégorien de GregoBase',
     'Organ, Principal 8′': 'Orgue, Principal 8′', 'Regal': 'Régale',
     'Open in a full page': 'Ouvrir en pleine page',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Appuyez sur Lecture : votre voix est enregistrée avec la musique. Utilisez un casque, pour que l’orgue ne passe pas dans l’enregistrement.',
@@ -67,6 +73,9 @@ const D = {
     'The camera is not available here.': 'La caméra n’est pas disponible ici.', 'Loading the hand reader…': 'Chargement du lecteur de main…', 'Open the Guidonian hand': 'Ouvrir la main guidonienne',
   },
   cs: {
+    'Gregorian chant scores from': 'Gregoriánské zpěvy z databáze',
+    ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', volného díla (CC0), přepsaného Andrewem Hinkleym a mnoha dalšími.',
+    'Gregorian chant from GregoBase': 'Gregoriánský chorál z GregoBase',
     'Organ, Principal 8′': 'Varhany, Principál 8′', 'Regal': 'Regál',
     'Open in a full page': 'Otevřít na celou stránku',
     'Press Play: your voice is recorded together with the music. Use headphones, so the organ does not leak into the recording.': 'Stiskni Přehrát: tvůj hlas se nahrává spolu s hudbou. Použij sluchátka, aby varhany neprosakovaly do nahrávky.',

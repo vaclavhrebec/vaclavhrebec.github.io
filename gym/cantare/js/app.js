@@ -84,7 +84,7 @@ function applyTheme() {
 /* ------------------------------------------------------------------ library */
 let uid = 100000;
 const jrpCache = {};
-const jrpGet = path => (jrpCache[path] ||= fetch('jrp/' + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(e => { delete jrpCache[path]; throw e; }));
+const jrpGet = path => (jrpCache[path] ||= fetch(path.startsWith('chant/') ? path : 'jrp/' + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).catch(e => { delete jrpCache[path]; throw e; }));
 const dispTitle = it => it.title;
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
@@ -96,6 +96,9 @@ async function loadLibrary() {
   (poly.subs ||= []).push(
     { group: 'Masses, motets and songs, 1420–1540', note: 'By Josquin, Ockeghem, La Rue, Busnoys, Du Fay and many more, in all their voices, sorted by composer.', lazy: 'index.json', count: 1379 },
     { group: 'Canons', note: 'Every piece here that contains a canon, sorted by the interval of the answer. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself.', lazy: 'canons.json', count: 216 });
+  /* Gregorian chant: about eleven hundred scores from GregoBase (CC0), fetched by kind of chant only when opened */
+  const planus = lib.find(g => g.group === 'Cantus planus');
+  (planus.subs ||= []).push({ group: 'Gregorian chant from GregoBase', note: 'Introits, graduals, alleluias, offertories, communions, tracts, sequences, hymns, the Mass Ordinary, antiphons and responsories, mostly in the Solesmes editions. Scores from GregoBase (gregobase.selapa.net), the open database of chant, CC0.', lazy: 'chant/index.json', count: 1103 });
   S.library = lib;
   (function walk(list, trail) { list.forEach(g => { const t = [...trail, g.group]; (g.items || []).forEach(it => { it.id ??= ++uid; S.flat.push({ item: it, trail: t }); }); if (g.subs) walk(g.subs, t); }); })(lib.filter(g => !g.lazy), []);
   $('#tagline').textContent = tags[Math.floor(Math.random() * tags.length)];
@@ -136,12 +139,25 @@ async function randomPick() {
       return pool[k];
     } catch (e) { /* offline: one of the models carried here */ }
   }
+  if (pool[0]?.trail[0] === 'Cantus planus') {
+    try {
+      const all = chantTitles || (chantTitles = await jrpGet('chant/search.json'));
+      const k = Math.floor(Math.random() * (pool.length + all.length));
+      if (k >= pool.length) {
+        const [u, i] = all[k - pool.length];
+        const data = await jrpGet('chant/' + u + '.json'), it = data.items[i]; it.id ??= ++uid;
+        return { item: it, trail: ['Cantus planus', 'Gregorian chant from GregoBase', CHANT_KINDS[u]] };
+      }
+      return pool[k];
+    } catch (e) { /* offline: one of the chants carried here */ }
+  }
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
 const countIn = g => g.lazy && g.count ? g.count : (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
 const openGroups = new Set();
-let jrpTitles = null;
+let jrpTitles = null, chantTitles = null;
+const CHANT_KINDS = { in: 'Introits', gr: 'Graduals', al: 'Alleluias', of: 'Offertories', co: 'Communions', tr: 'Tracts', se: 'Sequences', hy: 'Hymns', ky: 'Kyriale: Mass Ordinary', an: 'Antiphons', re: 'Responsories', ca: 'Canticles' };
 
 function renderTree(filter = '') {
   const q = filter.trim().toLowerCase();
@@ -174,6 +190,22 @@ function renderTree(filter = '') {
         hits.forEach(([id, t, c]) => d.append(el('button', { class: 'item', onclick: async () => {
           try { const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid; openItem(it, ['Polyphonic models', c]); if (innerWidth < 1100) closeDrawer('library'); } catch (e) { toast(tr('Could not load that piece (offline?).')); }
         } }, el('b', {}, t))));
+        tree.append(d);
+      }
+    }
+  }
+  /* and the Gregorian chants of GregoBase, by title */
+  if (q.length >= 3) {
+    if (!chantTitles) jrpGet('chant/search.json').then(d => { chantTitles = d; if ($('#search').value.trim().toLowerCase() === q) renderTree(filter); }).catch(() => {});
+    else {
+      const words = q.split(/\s+/);
+      const hits = chantTitles.filter(([u, , t]) => { const h = (t + ' ' + CHANT_KINDS[u]).toLowerCase(); return words.every(w => h.includes(w)); }).slice(0, 80);
+      if (hits.length) {
+        const d = el('details', {}, el('summary', {}, tr('Gregorian chant from GregoBase'), el('small', {}, String(hits.length) + (hits.length === 80 ? '+' : ''))));
+        d.open = true;
+        hits.forEach(([u, k, t]) => d.append(el('button', { class: 'item', onclick: async () => {
+          try { const it = (await jrpGet('chant/' + u + '.json')).items[k]; it.id ??= ++uid; openItem(it, ['Cantus planus', 'Gregorian chant from GregoBase', CHANT_KINDS[u]]); if (innerWidth < 1100) closeDrawer('library'); } catch (e) { toast(tr('Could not load that piece (offline?).')); }
+        } }, el('b', {}, t), el('small', { class: 'hitkind' }, CHANT_KINDS[u]))));
         tree.append(d);
       }
     }
@@ -251,7 +283,7 @@ function render(resetLeaf) {
   $('#note').hidden = !S.noteOpen;
   $('#noteToggle').setAttribute('aria-expanded', String(!!S.noteOpen));
   $('#credit').hidden = !p.credit;
-  $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>') : '';
+  $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>').replace('gregobase.selapa.net', '<a href="https://gregobase.selapa.net" target="_blank" rel="noopener">gregobase.selapa.net</a>') : '';
   const useBook = prefs.view === 'book' && p.voices.length > 1;
   syncLayoutSw(p);
   $('#pager').hidden = !useBook;

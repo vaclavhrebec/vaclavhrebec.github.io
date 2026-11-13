@@ -430,3 +430,4 @@ html.full .bar .ib { height: 30px; }
 .vc > span sub { font-size: .7em; margin-left: 1px; }
 .bookbtn { white-space: nowrap; flex: none; }
 #play.loading { opacity: .55; cursor: progress; }
+.tree .hitkind { display: block; color: var(--soft); font-weight: 400; }
