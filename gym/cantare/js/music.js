@@ -89,7 +89,9 @@ export function stamp(notes, tempus) {
 /* ---------- from library entry to piece ---------- */
 export function pieceFrom(item, trail) {
   const tempus = item.t === 'O' ? 'O' : 'C';
-  const base = { id: item.id, title: item.title, note: item.desc || '', trail, tempus, cut: !!item.cut, bflat: !!item.b };
+  const base = { id: item.id, title: item.title, note: item.desc || '', trail, tempus, cut: !!item.cut, bflat: !!item.b,
+    /* a measured piece whose long and short notes run in threes although written without the O (cantus fractus), and its upbeat in minims */
+    ternary: !!item.tern, beatOff: item.up || 0 };
   let kind, voices;
 
   if (item.poly) {

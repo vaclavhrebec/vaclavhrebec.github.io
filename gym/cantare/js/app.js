@@ -546,7 +546,9 @@ document.addEventListener('click', e => { const pop = $('#transformPop'); if (!p
 
 /* ------------------------------------------------------------------ playback */
 /* the beat in minimae: a brevis holds six of them in tempus perfectum, a longa twice the brevis */
-const beatMinims = () => { const O = S.piece.tempus === 'O' && !S.piece.talea; return { L: O ? 12 : 8, B: O ? 6 : 4, S: 2, M: 1 }[prefs.unit] || (O ? 6 : 4); };
+/* triple time: tempus perfectum, or a piece that moves in threes (cantus fractus) */
+const isTriple = () => !S.piece.talea && (S.piece.tempus === 'O' || (S.piece.ternary && S.piece.tempus === 'C'));
+const beatMinims = () => { const O = isTriple(); return { L: O ? 12 : 8, B: O ? 6 : 4, S: 2, M: 1 }[prefs.unit] || (O ? 6 : 4); };
 const spm = () => (60 / prefs.tempo) / beatMinims(); /* seconds per minim */
 
 let timer = 0, raf = 0, clock = null;
@@ -557,9 +559,17 @@ const thArm = document.getElementById('thArm');
 function poseHand(lift) {
   thArm.style.transform = `rotate(${(lift - .5) * 8}deg)`;
 }
+/* the tactus: equal in duple time (down on the beat, up halfway);
+   in tempus perfectum, when the brevis is counted, unequal (tactus inaequalis): down on 1, still on 2, up on 3 */
+const ease = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 function beatHand(pos) {
-  const ph = ((pos / beatMinims()) % 1 + 1) % 1;
-  poseHand((1 - Math.cos(2 * Math.PI * ph)) / 2);
+  const unit = beatMinims();
+  const ph = (((pos - (S.piece.beatOff || 0)) / unit) % 1 + 1) % 1;
+  const up = isTriple() && unit === 6 ? 2 / 3 : 1 / 2;
+  const fall = Math.min(.18, (1 - up) * .6), rise = Math.min(.18, up * .45);
+  /* the hand arrives up exactly on the upbeat and down exactly on the downbeat */
+  const lift = ph < up ? ease(up - rise, up, ph) : 1 - ease(1 - fall, 1, ph);
+  poseHand(lift);
 }
 function syncHand() {
   $('#tactusHand').hidden = !prefs.hand;
@@ -581,7 +591,8 @@ function startPlayback() {
   snd.setVolume(prefs.volume);
   const p = S.piece, from = S.startAt || 0, k = spm();
   const events = sounding().filter(e => e.n.t + e.n.len > from + 1e-6);
-  let ei = 0, bi = Math.ceil(from / (S.piece.tempus === 'O' ? 6 : 4));
+  const off = p.beatOff || 0;
+  let ei = 0, bi = Math.ceil((from - off) / beatMinims() - 1e-9);
   const t0 = ctx.currentTime + .15;
   clock = { t0, from, k, end: p.end, ended: false };
   recHook(ctx, t0, from);
@@ -595,7 +606,7 @@ function startPlayback() {
       const cut = Math.max(0, from - n.t);
       playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: n.text, dur: Math.max(.08, (n.len - cut) * k - .03), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
     }
-    while (prefs.click && bi * beat < p.end && t0 + (bi * beat - from) * k < horizon) { snd.click(t0 + (bi * beat - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
+    while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };
   pump();
   timer = setInterval(pump, 150);
