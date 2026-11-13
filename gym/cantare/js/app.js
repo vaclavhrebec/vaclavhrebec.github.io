@@ -16,7 +16,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'baton', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
+const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'palm', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -27,6 +27,8 @@ if (!prefs.fontBravura) { prefs.font = 'bravura'; prefs.fontBravura = true; try 
 setFont(prefs.font);
 /* 13 Nov 2026: the voice sung by Chimera became the default sound for everyone, once */
 if (!prefs.voiceDefault) { prefs.timbre = 'voice'; prefs.voiceDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
+/* 14 Nov 2026: the bare hand (flat palm, no baton) became the default for everyone, once */
+if (!prefs.palmDefault) { prefs.handStyle = 'palm'; prefs.palmDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 snd.setSound(prefs.sound || {});
 setLang(prefs.lang || guessLang());
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
@@ -596,7 +598,7 @@ function buildSection(which, c) {
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));
 
   if (which === 'tactus') card(tr('Tactus'),
-    chipRow(tr('Hand'), [['off', tr('Off')], ['baton', tr('With a baton')], ['palm', tr('Bare hand')]].map(([k, n]) => chip(n, k === 'off' ? !prefs.hand : prefs.hand && (prefs.handStyle || 'baton') === k, () => { if (k === 'off') prefs.hand = false; else { prefs.hand = true; prefs.handStyle = k; } savePrefs(); syncHand(); buildStudio(); }))),
+    chipRow(tr('Hand'), [['off', tr('Off')], ['palm', tr('Bare hand')], ['baton', tr('With a baton')]].map(([k, n]) => chip(n, k === 'off' ? !prefs.hand : prefs.hand && (prefs.handStyle || 'palm') === k, () => { if (k === 'off') prefs.hand = false; else { prefs.hand = true; prefs.handStyle = k; } savePrefs(); syncHand(); buildStudio(); }))),
     slider(tr('Size of the hand'), 50, 200, Math.round((prefs.handSize || 1) * 100), v => { prefs.handSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
     chipRow(tr('Pendulum'), [chip(tr('On'), prefs.pendulum, () => { prefs.pendulum = true; savePrefs(); syncHand(); buildStudio(); }), chip(tr('Off'), !prefs.pendulum, () => { prefs.pendulum = false; savePrefs(); syncHand(); buildStudio(); })]),
     slider(tr('Size of the pendulum'), 40, 200, Math.round((prefs.pendSize || 1) * 100), v => { prefs.pendSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
@@ -822,7 +824,7 @@ function syncHand() {
   $('#pendulum').hidden = !prefs.pendulum;
   $('#pendulum').style.setProperty('--ps', prefs.pendSize || 1);
   $('#tactusHand').style.setProperty('--hs', prefs.handSize || 1);
-  $('#tactusHand').dataset.style = prefs.handStyle || 'baton';
+  $('#tactusHand').dataset.style = prefs.handStyle || 'palm';
   if (!S.playing) { $('#pdArm').style.transform = ''; document.querySelectorAll('.pd-ghost').forEach(g => { g.style.opacity = 0; }); }
   $('#tactusHand').hidden = !prefs.hand;
   $('#tactusHand').classList.toggle('beating', !!S.playing);
