@@ -118,3 +118,6 @@ export function translatePage(root = document) {
 Object.assign(D.de, { 'Full screen': 'Vollbild' });
 Object.assign(D.fr, { 'Full screen': 'Plein écran' });
 Object.assign(D.cs, { 'Full screen': 'Celá obrazovka' });
+Object.assign(D.de, { 'Projects': 'Projekte' });
+Object.assign(D.fr, { 'Projects': 'Projets' });
+Object.assign(D.cs, { 'Projects': 'Projekty' });
