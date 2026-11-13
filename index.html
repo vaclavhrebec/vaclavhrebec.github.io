@@ -64,7 +64,12 @@
   .tagline { font-family: "EB Garamond", Georgia, serif; font-style: italic;
     font-size: 1.35rem; color: var(--muted); margin: 0 0 1.2rem; }
 
-  nav { display: flex; flex-wrap: wrap; gap: .4rem 1.3rem; margin: 0 0 2rem; }
+  /* two groups: this page's sections on the left, the other sites and the course on the right */
+  nav { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: start; gap: .6rem 2.5rem; margin: 0 0 2rem; }
+  nav .nav-site, nav .nav-proj { display: flex; flex-wrap: wrap; gap: .4rem 1.3rem; }
+  nav .nav-proj { justify-content: flex-end; }
+  nav .nav-proj { padding-left: 1.2rem; border-left: 1px solid var(--line); justify-content: flex-start; }
+  @media (max-width: 760px) { nav { grid-template-columns: minmax(0, 1fr); } nav .nav-proj { padding-left: 0; border-left: 0; } }
   nav a { color: var(--fg); text-decoration: none; border-bottom: 1px solid var(--line); }
   nav a:hover { color: var(--accent); border-color: var(--accent); }
 
@@ -232,16 +237,20 @@
 
 <div class="wrap">
   <nav>
-    <a href="#about" data-i18n>About</a>
-    <a href="#agenda" data-i18n>Agenda</a>
-    <a href="#projects" data-i18n>Projects</a>
-    <a href="#gallery" data-i18n>Gallery</a>
-    <a href="gym/">The Ultimate Counterpoint Gym</a>
-    <a href="ear/">The Ultimate Ear Trainer</a>
-    <a href="atlas/">Atlas of Musical Style</a>
-    <a href="rheinfelden2027/" data-i18n>Course Rheinfelden 2027</a>
-    <a href="#socials" data-i18n>Socials</a>
-    <a href="#contact" data-i18n>Contact</a>
+    <div class="nav-site" aria-label="This page">
+      <a href="#about" data-i18n>About</a>
+      <a href="#agenda" data-i18n>Agenda</a>
+      <a href="#projects" data-i18n>Projects</a>
+      <a href="#gallery" data-i18n>Gallery</a>
+      <a href="#socials" data-i18n>Socials</a>
+      <a href="#contact" data-i18n>Contact</a>
+    </div>
+    <div class="nav-proj" aria-label="Projects">
+      <a href="gym/">The Ultimate Counterpoint Gym</a>
+      <a href="ear/">The Ultimate Ear Trainer</a>
+      <a href="atlas/">Atlas of Musical Style</a>
+      <a href="rheinfelden2027/" data-i18n>Course Rheinfelden 2027</a>
+    </div>
   </nav>
 
   <div class="staff" aria-hidden="true"></div>
