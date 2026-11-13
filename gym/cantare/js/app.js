@@ -443,7 +443,7 @@ function renderBook(p, opts, resetLeaf) {
       const v = p.voices[vi];
 <<<<<<< Updated upstream
       if (v.name) pane.append(el('span', { class: 'tag' }, vname(v.name)));
-      per[vi].filter(x => x.t0 >= L.t0 - 1e-6 && x.t0 < L.t1 - 1e-6).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
+      linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
 =======
       if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
       linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
