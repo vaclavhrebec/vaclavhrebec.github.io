@@ -31,10 +31,13 @@ const gc = (c, cx, cy, sx = 1, cls = 'fill') => {
 const C_CLEF = ['E907', 'E908', 'E909', 'E90A', 'E90B'];
 const clefCode = clef => clef.kind === 'C' ? C_CLEF[Math.min(Math.max(clef.line, 1), 5) - 1] : clef.kind === 'F' ? 'E904' : 'E901';
 const msClef = (clef, style) => (ms(style) && (clef.kind === 'C' || clef.kind === 'F')) ? (clef.kind === 'C' ? 'clefC' : 'clefF') : null;
-const clefWidth = (clef, style) => { const k = msClef(clef, style); return k ? MS[k].w : gw(clefCode(clef, style)); };
+const GAMMA_W = 1.5;
+const clefWidth = (clef, style) => { if (clef.kind === 'Γ') return GAMMA_W; const k = msClef(clef, style); return k ? MS[k].w : gw(clefCode(clef, style)); };
 
 /* y: vertical position of the line the clef sits on */
 function clefGlyph(clef, y, style, lines = 5) {
+  /* the gamma ut clef: a Γ in Fondamento, as on the Guidonian hand page, standing on its line */
+  if (clef.kind === 'Γ') return `<text x="${f(GAMMA_W / 2)}" y="${f(y + .92)}" class="gammaclef" text-anchor="middle">Γ</text>`;
   const k = msClef(clef, style);
   let g = k ? mp(k, MS[k].w / 2, k === 'clefF' ? (lines - 1) / 2 : y) : go(clefCode(clef, style), 0, y);
   if (clef.shift) g += `<text x="${f(clefWidth(clef, style) / 2)}" y="${f(y + 2.55)}" class="clefnum" text-anchor="middle">8</text>`;

@@ -15,8 +15,10 @@ const CLEF_SPEC = {
   g1: ['G', 1], treble: ['G', 2], treble8: ['G', 2, -7],
   c1: ['C', 1], c2: ['C', 2], c3: ['C', 3], c4: ['C', 4], c5: ['C', 5],
   baritone: ['F', 3], bass: ['F', 4], f5: ['F', 5],
+  /* the gamma ut clef: Γ marks Γ ut, the low G (G2) */
+  gamma3: ['Γ', 3], gamma4: ['Γ', 4], gamma5: ['Γ', 5],
 };
-const KIND_STEP = { C: 28, F: 24, G: 32 };
+const KIND_STEP = { C: 28, F: 24, G: 32, 'Γ': 18 };
 
 export const CLEFS = Object.fromEntries(Object.entries(CLEF_SPEC).map(([id, [kind, line, shift = 0]]) => {
   const bottom = KIND_STEP[kind] + shift - 2 * (line - 1);
@@ -24,6 +26,8 @@ export const CLEFS = Object.fromEntries(Object.entries(CLEF_SPEC).map(([id, [kin
   return [id, { id, kind, line, shift, bottom, short }];
 }));
 export const CLEF_ORDER = ['c1', 'c2', 'c3', 'c4', 'c5', 'baritone', 'bass', 'f5', 'g1', 'treble', 'treble8'];
+/* the palette also offers the gamma ut clef; it is never chosen automatically */
+export const CLEF_PALETTE = [...CLEF_ORDER, 'gamma3', 'gamma4', 'gamma5'];
 const CHANT_CLEFS = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass'];
 
 export function clefFor(id) { return CLEFS[id] || CLEFS.c4; }

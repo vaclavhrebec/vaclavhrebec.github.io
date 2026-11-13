@@ -1,4 +1,4 @@
-import { pieceFrom, stamp, CLEFS, CLEF_ORDER, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
+import { pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth } from './engrave.js';
 import * as snd from './audio.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
@@ -343,7 +343,7 @@ function buildTransform() {
   b.voices.forEach((v, i) => {
     const cur = S.clefs[i] || v.clef;
     clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || tr('Voice') + ' ' + (i + 1)) : tr('Clef')),
-      el('select', { 'aria-label': tr('Clef'), onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_ORDER.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
+      el('select', { 'aria-label': tr('Clef'), onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_PALETTE.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
   });
   clefCard.append(chipRow(tr('Lines'), [[0, tr('Auto')], [4, '4'], [5, '5']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
   clefCard.append(el('p', { class: 'hint' }, tr('Plainchant stands on four lines, everything mensural on five; Auto follows that rule.')));
@@ -913,7 +913,7 @@ function openClefPop(vi) {
   const pick = k => { S.clefs[vi] = k === S.base.voices[vi]?.clef ? undefined : k; pop.hidden = true; render(true); buildStudio?.(); };
   pop.replaceChildren(
     el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Clef') + (S.piece.voices.length > 1 && v.name ? ' · ' + v.name : '')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
-    el('div', { class: 'clefgrid' }, ...CLEF_ORDER.map(k => {
+    el('div', { class: 'clefgrid' }, ...CLEF_PALETTE.map(k => {
       const b = el('button', { type: 'button', 'aria-pressed': String(k === cur), onclick: () => pick(k) }, parse(glyphIcon('clef', k, st)), el('span', {}, CLEFS[k].short));
       return b;
     })));
