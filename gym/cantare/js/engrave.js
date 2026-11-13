@@ -340,10 +340,11 @@ function drawStaff(piece, vi, cols, xs, opts) {
   cap = label;
   if (xs.custos && xs.custos[vi] != null) {
     const cy = yOf(xs.custos[vi] + shift);
-    body += go('EA02', xs.end - 1.5, cy, .55);
+    /* the zigzag is one space high and is centred on the pitch: it fills a space, or straddles a line */
+    body += go('EA02', xs.end - 2.65, cy + .5, 1);
     /* ledger lines for a custos above or below the staff */
-    for (let l = -1; l >= cy - .01 && l >= -6; l--) body += `<path d="M${f(xs.end - 1.7)} ${l}h1.3" class="staffline"/>`;
-    for (let l = lines; l <= cy + .01 && l <= lines + 6; l++) body += `<path d="M${f(xs.end - 1.7)} ${l}h1.3" class="staffline"/>`;
+    for (let l = -1; l >= cy - .01 && l >= -6; l--) body += `<path d="M${f(xs.end - 2.85)} ${l}h2.2" class="staffline"/>`;
+    for (let l = lines; l <= cy + .01 && l <= lines + 6; l++) body += `<path d="M${f(xs.end - 2.85)} ${l}h2.2" class="staffline"/>`;
   }
   return { top, bottom, svg: svg + `<g class="${state === 'mute' ? 'muted' : ''}">${body}${words}</g>` + cap };
 }
@@ -380,7 +381,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   /* two or more voices are joined at the left by a brace, as in keyboard music */
   const BR = vidx.length > 1 && opts.brace !== false ? 2.1 : 0;
   /* room at the end of each line for the custos */
-  const CUST = 2.3;
+  const CUST = 3.2;
   const ranges = breakLines(cols, width - BR - CUST, headW, INDENT);
   if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
