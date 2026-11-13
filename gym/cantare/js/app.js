@@ -393,13 +393,22 @@ function renderBook(p, opts, resetLeaf) {
   const per = p.voices.map((_, i) => engraveSystems(p, [i], paneW, { ...opts, names: false }));
   const sysH = Math.max(...per.map(s => Math.max(...s.map(x => x.h)))) * scale + 14;
   const rows = Math.max(R > 2 ? 1 : 2, Math.floor((availH / R - 30) / sysH));
-  /* leaves: every voice shows at most `rows` lines; the boundaries fall on starts of lines of any voice */
+  /* leaves: every voice shows at most `rows` lines; the boundaries fall on starts of lines of any voice.
+     A voice shows the lines that begin on the leaf. If none begins there (its line started on an earlier leaf:
+     long notes, long rests), it shows the line still running, so no voice ever disappears from the opening. */
+  per.forEach(s => s.forEach((x, i) => { x.tEnd = i + 1 < s.length ? s[i + 1].t0 : Infinity; }));
+  const linesOn = (s, t0, t1) => {
+    const begin = s.filter(x => x.t0 >= t0 - 1e-6 && x.t0 < t1 - 1e-6);
+    if (begin.length) return begin;
+    const run = s.find(x => x.t0 < t0 + 1e-6 && x.tEnd > t0 + 1e-6) || s[s.length - 1];
+    return run ? [run] : [];
+  };
   const cuts = [...new Set(per.flatMap(s => s.map(x => x.t0)))].sort((a, b) => a - b);
   const leaves = [];
   let a = 0;
   while (a < cuts.length) {
     let b = a + 1;
-    const fits = e => per.every(s => s.filter(x => x.t0 >= cuts[a] - 1e-6 && x.t0 < (e < cuts.length ? cuts[e] : Infinity) - 1e-6).length <= rows);
+    const fits = e => per.every(s => linesOn(s, cuts[a], e < cuts.length ? cuts[e] : Infinity).length <= rows);
     while (b < cuts.length && fits(b + 1)) b++;
     leaves.push({ t0: cuts[a], t1: b < cuts.length ? cuts[b] : Infinity });
     a = b;
@@ -432,8 +441,13 @@ function renderBook(p, opts, resetLeaf) {
     const pane = el('div', { class: 'pane' + (vi >= 0 && S.voice[vi] === 'hide' ? ' blank' : '') });
     if (vi >= 0 && vi < p.voices.length) {
       const v = p.voices[vi];
+<<<<<<< Updated upstream
       if (v.name) pane.append(el('span', { class: 'tag' }, vname(v.name)));
       per[vi].filter(x => x.t0 >= L.t0 - 1e-6 && x.t0 < L.t1 - 1e-6).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
+=======
+      if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
+      linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
+>>>>>>> Stashed changes
     }
     paper.append(pane);
   });
