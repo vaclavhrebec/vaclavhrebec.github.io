@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
+const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'baton', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -508,10 +508,10 @@ function buildTransform() {
 }
 
 /* a labelled slider with its value; `done` runs when the hand lets go */
-function slider(label, min, max, value, fn, step = 1, unit = '', done) {
+function slider(label, min, max, value, fn, step = 1, unit = '', done, quiet) {
   const out = el('output', {}, value + unit);
   return el('div', { class: 'row slider' }, el('label', {}, label),
-    el('input', { type: 'range', min, max, step, value, oninput: e => { const v = +e.target.value; out.textContent = v + unit; fn(v); }, onchange: () => { testTone(); if (done) done(); } }), out);
+    el('input', { type: 'range', min, max, step, value, oninput: e => { const v = +e.target.value; out.textContent = v + unit; fn(v); }, onchange: () => { if (!quiet) testTone(); if (done) done(); } }), out);
 }
 function setSound(o) { snd.setSound(o); prefs.sound = { ...snd.SOUND }; savePrefs(); }
 /* a short note to hear what a setting does */
@@ -554,6 +554,12 @@ function buildSection(which, c) {
     chipRow(tr('Screen'), [chip(tr('Focus'), document.documentElement.classList.contains('focus'), () => setFocus(true), { title: tr('Only the music: everything else is put away') }),
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));
 
+  if (which === 'tactus') card(tr('Tactus'),
+    chipRow(tr('Hand'), [['off', tr('Off')], ['baton', tr('With a baton')], ['palm', tr('Bare hand')]].map(([k, n]) => chip(n, k === 'off' ? !prefs.hand : prefs.hand && (prefs.handStyle || 'baton') === k, () => { if (k === 'off') prefs.hand = false; else { prefs.hand = true; prefs.handStyle = k; } savePrefs(); syncHand(); buildStudio(); }))),
+    slider(tr('Size of the hand'), 50, 200, Math.round((prefs.handSize || 1) * 100), v => { prefs.handSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
+    chipRow(tr('Pendulum'), [chip(tr('On'), prefs.pendulum, () => { prefs.pendulum = true; savePrefs(); syncHand(); buildStudio(); }), chip(tr('Off'), !prefs.pendulum, () => { prefs.pendulum = false; savePrefs(); syncHand(); buildStudio(); })]),
+    slider(tr('Size of the pendulum'), 40, 200, Math.round((prefs.pendSize || 1) * 100), v => { prefs.pendSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
+    chipRow(tr('Click'), [chip(tr('On'), prefs.click, () => { prefs.click = true; savePrefs(); buildStudio(); }), chip(tr('Off'), !prefs.click, () => { prefs.click = false; savePrefs(); buildStudio(); })]));
   if (which === 'share') card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
     const url = linkOf(b);
     try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
@@ -587,6 +593,7 @@ function buildStudio() {
     btn(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }),
     btn(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); }),
     btn(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); }),
+    btn(tr('Hand and pendulum') + ' ▾', null, more('tactus')),
     btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
     multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',
     btn(tr('One line'), !!prefs.roll, () => { prefs.roll = !prefs.roll; if (prefs.roll && prefs.view === 'book') prefs.view = 'score'; savePrefs(); render(true); buildStudio(); try { buildTransform(); } catch (e) {} }, tr('The whole piece on one long line that rolls by while it plays; the clefs stay at the left')),
@@ -742,7 +749,7 @@ let timer = 0, raf = 0, clock = null;
 const thArm = document.getElementById('thArm');
 /* lift 0: the hand down (the downbeat), 1: up (the upbeat) */
 function poseHand(lift) {
-  thArm.style.transform = `rotate(${(lift - .5) * 8}deg)`;
+  thArm.style.transform = `rotate(${(lift - .5) * (prefs.handStyle === 'palm' ? 9 : 8)}deg)`;
 }
 /* the tactus: equal in duple time (down on the beat, up halfway);
    in tempus perfectum, when the brevis is counted, unequal (tactus inaequalis): down on 1, still on 2, up on 3 */
@@ -761,11 +768,20 @@ function beatHand(pos) {
 function swingPendulum(pos) {
   const unit = beatMinims(), parts = isTriple() && unit === 6 ? 3 : 2;
   const x = (pos - (S.piece.beatOff || 0)) / (unit / parts);
-  $('#pdArm').style.transform = `rotate(${(14 * Math.cos(Math.PI * x)).toFixed(2)}deg)`;
+  const ang = t => (16 * Math.cos(Math.PI * t)).toFixed(2);
+  $('#pdArm').style.transform = `rotate(${ang(x)}deg)`;
+  /* a trail of fading bobs behind the moving one: faster swing, longer trail */
+  [['#pdG1', .045, .28], ['#pdG2', .09, .16], ['#pdG3', .135, .08]].forEach(([id, lag, op]) => {
+    const g = $(id), speed = Math.abs(Math.sin(Math.PI * x));
+    g.style.transform = `rotate(${ang(x - lag)}deg)`; g.style.opacity = (op * speed).toFixed(3);
+  });
 }
 function syncHand() {
   $('#pendulum').hidden = !prefs.pendulum;
-  if (!S.playing) $('#pdArm').style.transform = '';
+  $('#pendulum').style.setProperty('--ps', prefs.pendSize || 1);
+  $('#tactusHand').style.setProperty('--hs', prefs.handSize || 1);
+  $('#tactusHand').dataset.style = prefs.handStyle || 'baton';
+  if (!S.playing) { $('#pdArm').style.transform = ''; document.querySelectorAll('.pd-ghost').forEach(g => { g.style.opacity = 0; }); }
   $('#tactusHand').hidden = !prefs.hand;
   $('#tactusHand').classList.toggle('beating', !!S.playing);
   if (!S.playing) poseHand(.5);

@@ -300,24 +300,25 @@ html.focus .focusbar { display: flex; }
 
 /* the tactus hand: behind the music, on the right, beating the tactus while it plays */
 .stage { z-index: 1; }
-.tactus-hand { position: absolute; right: 0; top: clamp(230px, 32%, 380px); width: min(46%, 480px); aspect-ratio: 2 / 1; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
-:root[data-theme="dark"] .tactus-hand { opacity: .26; }
-.tactus-hand.beating { opacity: .42; }
-:root[data-theme="dark"] .tactus-hand.beating { opacity: .36; }
+.tactus-hand { --hs: 1; position: absolute; right: 0; top: clamp(230px, 32%, 380px); width: calc(min(52%, 560px) * var(--hs)); aspect-ratio: 620 / 260; pointer-events: none; z-index: 0; opacity: .34; transition: opacity .4s, right .22s ease; }
+:root[data-theme="dark"] .tactus-hand { opacity: .3; }
+.tactus-hand.beating { opacity: .48; }
+:root[data-theme="dark"] .tactus-hand.beating { opacity: .42; }
 .tactus-hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
-#thArm { transform-origin: 470px 111px; }
+#thArm { transform-origin: 760px 132px; }
+.tactus-hand[data-style="palm"] #thBaton, .tactus-hand:not([data-style="palm"]) #thPalm { display: none; }
 .tactus-hand[hidden] { display: none; }
 @media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .tactus-hand { right: 320px; } }
-@media (max-width: 640px) { .tactus-hand { width: 72%; top: clamp(200px, 40%, 340px); } }
+@media (max-width: 640px) { .tactus-hand { width: calc(80% * var(--hs)); top: clamp(200px, 40%, 340px); } }
 html.focus .tactus-hand { z-index: 0; }
 
 /* the pendulum (after Galileo, and Loulié's chronomètre of 1696): hangs from the top on the right, swings with the tactus */
-.pendulum { position: absolute; top: 0; right: clamp(24px, 9vw, 140px); height: min(48%, 380px); aspect-ratio: 160 / 330; pointer-events: none; z-index: 0; opacity: .5; color: var(--soft); transition: right .22s ease; }
+.pendulum { --ps: 1; position: absolute; top: 0; left: clamp(10px, 3vw, 50px); height: calc(min(78%, 620px) * var(--ps)); aspect-ratio: 300 / 520; pointer-events: none; z-index: 0; opacity: .55; color: var(--soft); transition: left .22s ease; }
 .pendulum[hidden] { display: none; }
 .pendulum svg { width: 100%; height: 100%; display: block; overflow: visible; }
-#pdArm { transform-origin: 80px 12px; }
-@media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .pendulum { right: calc(320px + clamp(24px, 9vw, 140px)); } }
-@media (max-width: 640px) { .pendulum { height: min(34%, 240px); right: 14px; } }
+#pdArm, .pd-ghost { transform-origin: 150px 34px; }
+@media (min-width: 1100px) { #library[data-open="true"] ~ .pendulum { left: calc(300px + clamp(10px, 3vw, 50px)); } }
+@media (max-width: 640px) { .pendulum { height: calc(min(52%, 380px) * var(--ps)); left: 4px; } }
 
 /* the clef palette */
 .system .clef-hit { cursor: pointer; }
