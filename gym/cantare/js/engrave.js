@@ -227,13 +227,44 @@ function drawStaff(piece, vi, cols, xs, opts) {
   const textY = lines - 1 + 2.3;
   let lowest = lines - 1;
   const notesHere = [];
+  /* long silences: a run of brevis and longa rests is gathered into longa rests (two spaces each)
+     and a brevis rest for an odd one, set close together at the start of the run */
+  const restGroup = new Map();
+  if (style !== 'chant') {
+    let run = [];
+    const flush = () => {
+      if (run.length >= 2) {
+        const unit = run[0].n.v === 'B' ? run[0].n.len : run[0].n.len / 2;
+        const total = run.reduce((a, r) => a + r.n.len, 0), N = Math.round(total / unit);
+        if (Math.abs(N * unit - total) < 1e-6 && N >= 2) {
+          const strokes = [...Array(Math.floor(N / 2)).fill('E9F2'), ...(N % 2 ? ['E9F3'] : [])];
+          restGroup.set(run[0].k, strokes);
+          run.slice(1).forEach(r => restGroup.set(r.k, null));
+        }
+      }
+      run = [];
+    };
+    cols.forEach((c, k) => {
+      const e = c.notes[vi];
+      if (!e) return;
+      const ok = e.n.rest && (e.n.v === 'B' || e.n.v === 'L') && !e.n.col;
+      if (ok && run.length && run[run.length - 1].i === e.i - 1 && (e.n.v === 'L' ? e.n.len / 2 : e.n.len) === (run[0].n.v === 'L' ? run[0].n.len / 2 : run[0].n.len)) run.push({ k, i: e.i, n: e.n });
+      else { flush(); if (ok) run.push({ k, i: e.i, n: e.n }); }
+    });
+    flush();
+  }
   cols.forEach((c, k) => {
     const e = c.notes[vi];
     if (!e) return;
     const { n, i } = e;
     const x = xs.at[k];
     if (n.rest) {
-      body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${restGlyph(n, x + .55, restLine, style)}</g>`;
+      let g;
+      if (restGroup.has(k)) {
+        const strokes = restGroup.get(k);
+        g = strokes ? strokes.map((code, j) => go(code, x + .45 + j * .5, restLine)).join('') : '';
+      } else g = restGlyph(n, x + .55, restLine, style);
+      body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}</g>`;
       return;
     }
     const step = n.step + shift;
