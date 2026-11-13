@@ -286,7 +286,10 @@ function renderScore(p0, opts) {
   let z = prefs.zoom, w = spaceW() * prefs.zoom / z;
   let systems = engraveSystems(p, order, w, opts);
   /* four, five or six voices: shrink so that a whole line of all the voices fits the height of the window */
-  if (order.filter(v => v < p0.voices.length && S.voice[v] !== 'hide').length >= 4) {
+  /* while editing the size stays as it was when Edit was tapped (the editing toolbar may take room; the music must not jump) */
+  const frozen = S.edit && S.fitFor === p0.id && S.scoreZoom;
+  if (frozen) { z = S.scoreZoom; w = spaceW() * prefs.zoom / z; systems = engraveSystems(p, order, w, opts); }
+  else if (order.filter(v => v < p0.voices.length && S.voice[v] !== 'hide').length >= 4) {
     const st = $('#stage'), avail = st.clientHeight - paper.offsetTop - 30;
     for (let k = 0; k < 2 && avail > 120; k++) {
       const h = Math.max(...systems.map(s => s.h));
@@ -296,7 +299,7 @@ function renderScore(p0, opts) {
       systems = engraveSystems(p, order, w, opts);
     }
   }
-  S.scoreZoom = z;
+  S.scoreZoom = z; S.fitFor = p0.id;
   systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, z)))));
   paper.classList.toggle('singing', p !== p0);
   if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
@@ -337,7 +340,8 @@ function renderBook(p, opts, resetLeaf) {
   const probe = p.voices.map((_, i) => engraveSystems(p, [i], Math.max(18, paneCss / scale), { ...opts, names: false }));
   const maxH = Math.max(...probe.map(s => Math.max(...s.map(x => x.h))));
   scale = Math.max(8, Math.min(scale, (availH / 2 - 34) / (2 * maxH + 1.2)));
-  S.bookScale = scale;
+  if (S.edit && S.bookFor === p.id && S.bookScale) scale = S.bookScale; /* editing keeps the size */
+  S.bookScale = scale; S.bookFor = p.id;
   const paneW = Math.max(18, paneCss / scale);
   const per = p.voices.map((_, i) => engraveSystems(p, [i], paneW, { ...opts, names: false }));
   const sysH = Math.max(...per.map(s => Math.max(...s.map(x => x.h)))) * scale + 14;
