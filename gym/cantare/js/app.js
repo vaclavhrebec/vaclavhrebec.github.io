@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
+const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -250,6 +250,7 @@ function render(resetLeaf) {
   $('#credit').hidden = !p.credit;
   $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>') : '';
   const useBook = prefs.view === 'book' && p.voices.length > 1;
+  syncLayoutSw(p);
   $('#pager').hidden = !useBook;
   paper.className = useBook ? 'book' : 'paper';
   paper.textContent = '';
@@ -260,6 +261,20 @@ function render(resetLeaf) {
   collectNotes();
   markSel();
 }
+
+/* score or choir book: the book button beside the title, the same choice in Transform and in the Studio */
+function setView(v) { prefs.view = v; savePrefs(); S.leaf = 0; render(true); buildTransform(); buildStudio(); }
+function setBookKind(v) { prefs.bookKind = v; savePrefs(); render(); buildTransform(); }
+function syncLayoutSw(p) {
+  const multi = p.voices.length > 1, book = prefs.view === 'book' && multi;
+  $('#layoutSw').hidden = !multi;
+  $('#bookBtn').setAttribute('aria-pressed', String(book));
+  $('#bookLbl').textContent = book ? tr('Choir book') : tr('Score');
+  $('#bookKind').hidden = !(book && p.voices.length >= 4);
+  $('#bookKind').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.bk === prefs.bookKind)));
+}
+$('#bookBtn').addEventListener('click', () => setView(prefs.view === 'book' ? 'score' : 'book'));
+$('#bookKind').addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (b) setBookKind(b.dataset.bk); });
 
 function renderScore(p0, opts) {
   const w = spaceW();
@@ -300,9 +315,11 @@ function renderBook(p, opts, resetLeaf) {
   S.leaf = Math.min(S.leaf, leaves.length - 1);
   const L = leaves[S.leaf];
   $('#leafNo').textContent = `Leaf ${S.leaf + 1} of ${leaves.length}`;
-  const order = p.voices.length === 3 ? [0, 1, 2, -1] : [0, 1, 2, 3];
+  /* the opening of the book: left page Cantus above, right page Altus above; below, the Italian book has the Tenor
+     on the left and the Bassus on the right, the German book the other way round */
+  const order = p.voices.length === 3 ? [0, 1, 2, -1] : prefs.bookKind === 'de' && p.voices.length >= 4 ? [0, 1, 3, 2] : [0, 1, 2, 3];
   order.forEach(vi => {
-    const pane = el('div', { class: 'pane' });
+    const pane = el('div', { class: 'pane' + (vi >= 0 && S.voice[vi] === 'hide' ? ' blank' : '') });
     if (vi >= 0 && vi < p.voices.length) {
       const v = p.voices[vi];
       if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
@@ -372,7 +389,11 @@ function buildTransform() {
     clefCard.append(el('div', { class: 'row' }, el('label', {}, multi ? (v.name || tr('Voice') + ' ' + (i + 1)) : tr('Clef')),
       el('select', { 'aria-label': tr('Clef'), onchange: e => { S.clefs[i] = e.target.value; render(); } }, ...CLEF_PALETTE.map(k => el('option', { value: k, selected: k === cur }, CLEFS[k].short)))));
   });
-  clefCard.append(chipRow(tr('Lines'), [[0, tr('Auto')], [4, '4'], [5, '5']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
+  clefCard.append(chipRow(tr('Lines'), [[0, tr('Auto')], [4, '4'], [5, '5'], [6, '6']].map(([n, t]) => chip(t, S.lines === n, () => { S.lines = n; redo(); }))));
+  if (S.base.voices.length > 1) card(tr('Layout'),
+    chipRow('', [['score', tr('Score')], ['book', tr('Choir book')]].map(([v, n]) => chip(n, prefs.view === v, () => setView(v)))),
+    prefs.view === 'book' && S.base.voices.length >= 4 ? chipRow(tr('Choir book'), [['it', tr('Italian')], ['de', tr('German')]].map(([v, n]) => chip(n, prefs.bookKind === v, () => setBookKind(v)))) : '',
+    el('p', { class: 'hint' }, tr('Italian choir book: Cantus and Tenor on the left page, Altus and Bassus on the right. German: Bassus on the left, Tenor on the right.')));
   clefCard.append(el('p', { class: 'hint' }, tr('Plainchant stands on four lines, everything mensural on five; Auto follows that rule.')));
 
   /* pitch */
@@ -439,7 +460,7 @@ function buildStudio() {
 
   /* sound */
   card(tr('Sound'),
-    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); testTone(); }))),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     chipRow(tr('Pitch'), [...[415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); showPitch(); buildStudio(); })),
       el('label', { class: 'hzin', title: tr('The pitch of a′ in Hz') }, 'a′ =', el('input', { type: 'number', min: 300, max: 600, step: 'any', inputmode: 'decimal', value: prefs.a4,
@@ -468,7 +489,7 @@ function buildStudio() {
 
   /* view */
   card(tr('View'),
-    chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
+    chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => setView(k), { disabled: k === 'book' && !multi }))),
     el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
     chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }, k === 'vellum' ? { title: tr('Vellum and a rastrum: the music on an old page') } : {}))),
     chipRow(tr('Screen'), [chip(tr('Focus'), document.documentElement.classList.contains('focus'), () => setFocus(true), { title: tr('Only the music: everything else is put away') }),
@@ -1275,6 +1296,7 @@ function exportPDF() {
   setTimeout(() => { window.print(); if (!('onafterprint' in window)) setTimeout(done, 1000); }, 60);
 }
 $('#footPdf').addEventListener('click', exportPDF);
+$('#saveBtn').addEventListener('click', exportPDF); /* the same export from the toolbar */
 
 $('#footShare').addEventListener('click', async () => {
   const url = location.href.split('#')[0] + location.hash, title = 'Cantare super librum';
@@ -1342,4 +1364,11 @@ new ResizeObserver(() => {
 })();
 
 if (prefs.timbre === 'voice') snd.prepare();
+/* the sound, chosen in the bar at the bottom (the same choice as Timbre in the Studio); Voice is sung by Chimera */
+function buildSoundSel() {
+  const sel = $('#soundSel'); sel.textContent = '';
+  Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(k === 'voice' ? 'Voice (sung by Chimera)' : v.label))));
+}
+$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; if (prefs.timbre === 'voice') snd.prepare(); savePrefs(); buildStudio(); });
+buildSoundSel();
 window.cantare = { S, prefs, openItem, jrpGet };

@@ -341,3 +341,16 @@ html.focus .tactus-hand { z-index: 0; }
 .crumbs .back { display: inline; margin-right: 0; }
 .crumbs .back:hover { color: var(--accent); }
 .gammaclef { font-family: var(--serif); font-size: 2.6px; fill: currentColor; }
+
+/* score / choir book switch beside the title */
+.layoutsw { display: inline-flex; align-items: center; gap: 6px; margin-left: 4px; }
+.layoutsw[hidden], .bookkind[hidden] { display: none; }
+.bookbtn { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: none; color: var(--soft); font: 13px var(--sans); cursor: pointer; }
+.bookbtn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+.bookbtn:hover { color: var(--accent); }
+.bookbtn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); }
+.bookkind { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.bookkind button { border: 0; background: none; color: var(--soft); font: 12px var(--sans); padding: 0 9px; height: 30px; cursor: pointer; }
+.bookkind button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.book .pane.blank > * { visibility: hidden; }
+.soundsel select { height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); color: var(--ink); font: 13px var(--sans); padding: 0 8px; max-width: 12rem; }

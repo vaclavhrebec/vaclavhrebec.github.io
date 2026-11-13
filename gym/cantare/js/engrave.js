@@ -299,7 +299,8 @@ function drawStaff(piece, vi, cols, xs, opts) {
   bottom = Math.max(bottom, hasWords ? base + .6 : bottom);
   let cap = '';
   if (state === 'hide') {
-    return { top: -.6, bottom: lines - 1 + 1.2, svg: svg.replace(/class="staffline"/g, 'class="staffline dim"') + `<text x="${f(total / 2)}" y="${f(mid + .35)}" class="hidden-note" text-anchor="middle">${opts.t?.hidden || 'improvise this voice'}</text>` };
+    /* a hidden voice leaves its place empty */
+    return { top: -.6, bottom: lines - 1 + 1.2, svg: '' };
   }
   const label = voice.name && opts.names ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
   cap = label;
