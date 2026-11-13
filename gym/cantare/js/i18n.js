@@ -130,3 +130,6 @@ Object.assign(D.cs, {"Choir book / score": "Sborová kniha / partitura", "Italia
 Object.assign(D.de, { 'Save': 'Speichern', 'Save as PDF: the whole piece on A4 pages': 'Als PDF speichern: das ganze Stück auf A4-Seiten' });
 Object.assign(D.fr, { 'Save': 'Enregistrer', 'Save as PDF: the whole piece on A4 pages': 'Enregistrer en PDF : toute la pièce sur des pages A4' });
 Object.assign(D.cs, { 'Save': 'Uložit', 'Save as PDF: the whole piece on A4 pages': 'Uložit jako PDF: celá skladba na stránkách A4' });
+Object.assign(D.de, { 'Inspired by an early stage of the': 'Angeregt von einer frühen Fassung der', 'app by Samuel Reid Navarro.': 'App von Samuel Reid Navarro.' });
+Object.assign(D.fr, { 'Inspired by an early stage of the': "Inspiré d'une première version de l'application", 'app by Samuel Reid Navarro.': 'de Samuel Reid Navarro.' });
+Object.assign(D.cs, { 'Inspired by an early stage of the': 'Inspirováno ranou verzí aplikace', 'app by Samuel Reid Navarro.': 'od Samuela Reida Navarra.' });
