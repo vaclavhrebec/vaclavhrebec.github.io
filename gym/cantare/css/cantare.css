@@ -282,7 +282,7 @@ html.focus .focusbar { display: flex; }
 
 /* the tactus hand: behind the music, on the right, beating the tactus while it plays */
 .stage { z-index: 1; }
-.tactus-hand { position: absolute; right: 0; bottom: 18%; width: min(46%, 480px); aspect-ratio: 2 / 1; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
+.tactus-hand { position: absolute; right: 0; top: clamp(230px, 32%, 380px); width: min(46%, 480px); aspect-ratio: 2 / 1; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
 :root[data-theme="dark"] .tactus-hand { opacity: .26; }
 .tactus-hand.beating { opacity: .42; }
 :root[data-theme="dark"] .tactus-hand.beating { opacity: .36; }
@@ -290,7 +290,7 @@ html.focus .focusbar { display: flex; }
 #thArm { transform-origin: 470px 111px; }
 .tactus-hand[hidden] { display: none; }
 @media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .tactus-hand { right: 320px; } }
-@media (max-width: 640px) { .tactus-hand { width: 72%; bottom: 12%; } }
+@media (max-width: 640px) { .tactus-hand { width: 72%; top: clamp(200px, 40%, 340px); } }
 html.focus .tactus-hand { z-index: 0; }
 
 /* the pendulum (after Galileo, and Loulié's chronomètre of 1696): hangs from the top on the right, swings with the tactus */
