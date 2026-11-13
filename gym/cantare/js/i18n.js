@@ -137,3 +137,6 @@ Object.assign(D.de, { 'Voice (sung by Chimera)': 'Stimme (gesungen von Chimera)'
 Object.assign(D.de, { 'Voice sung by': 'Stimme gesungen von', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', einem physikalischen Stimmsynthesizer von Jameson Hodge, MIT-Lizenz.' });
 Object.assign(D.fr, { 'Voice sung by': 'Voix chantée par', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', un synthétiseur vocal physique de Jameson Hodge, licence MIT.' });
 Object.assign(D.cs, { 'Voice sung by': 'Hlas zpívá', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', fyzikální syntezátor hlasu od Jamesona Hodge, licence MIT.' });
+Object.assign(D.de, { 'Share this piece': 'Dieses Stück teilen' });
+Object.assign(D.fr, { 'Share this piece': 'Partager cette pièce' });
+Object.assign(D.cs, { 'Share this piece': 'Sdílet tuto skladbu' });
