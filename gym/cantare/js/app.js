@@ -146,6 +146,8 @@ function openItem(item, trail, opts = {}) {
   S.base = pieceFrom(item, trail.length ? trail : S.flat.find(f => f.item === item)?.trail || []);
   S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.cut = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
   S.base.mine = !!item.mine;
+  /* chant (plainchant and cantus fractus) always opens at 60 */
+  if (S.base.kind === 'chant' || S.base.kind === 'fractus') setTempo(60);
   S.voice = S.base.voices.map(() => 'on');
   rebuildPiece();
   render(true);
@@ -550,10 +552,10 @@ const spm = () => (60 / prefs.tempo) / beatMinims(); /* seconds per minim */
 let timer = 0, raf = 0, clock = null;
 
 /* the tactus hand: down on the beat (positio), up halfway through it (elevatio) */
-const thArm = document.getElementById('thArm'), thHand = document.getElementById('thHand');
+const thArm = document.getElementById('thArm');
+/* lift 0: the hand down (the downbeat), 1: up (the upbeat) */
 function poseHand(lift) {
-  thArm.style.transform = `rotate(${(lift - .5) * 5}deg)`;
-  thHand.style.transform = `rotate(${(lift - .5) * 16}deg)`;
+  thArm.style.transform = `rotate(${(lift - .5) * 8}deg)`;
 }
 function beatHand(pos) {
   const ph = ((pos / beatMinims()) % 1 + 1) % 1;
@@ -1189,6 +1191,8 @@ new ResizeObserver(() => {
     const pick = hit || randomPick();
     openItem(pick.item, pick.trail);
   }
+  /* the lyrics are measured in their own font: draw again once it has arrived */
+  document.fonts?.ready.then(() => S.piece && !S.playing && render());
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 

@@ -77,6 +77,7 @@ svg { display: block; }
 .system .stroke { fill: none; stroke: currentColor; stroke-width: .14; stroke-linecap: butt; }
 .system .stroke.thick { stroke-width: .28; }
 .system .lyric { font: 1.12px var(--serif); fill: currentColor; }
+.system .lyric-line { stroke: currentColor; stroke-width: .075; fill: none; }
 .system .vname { font: italic 1.1px var(--serif); fill: var(--soft); }
 .system .clefnum { font: .9px var(--serif); fill: currentColor; }
 .system .hidden-note { font: italic 1.2px var(--serif); fill: var(--soft); }
@@ -276,14 +277,13 @@ html.focus .focusbar { display: flex; }
 
 /* the tactus hand: behind the music, on the right, beating the tactus while it plays */
 .stage { z-index: 1; }
-.tactus-hand { position: absolute; right: clamp(4px, 2vw, 28px); bottom: 0; height: min(62%, 440px); aspect-ratio: 240 / 340; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
+.tactus-hand { position: absolute; right: 0; bottom: 18%; width: min(46%, 480px); aspect-ratio: 2 / 1; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
 :root[data-theme="dark"] .tactus-hand { opacity: .26; }
 .tactus-hand.beating { opacity: .42; }
 :root[data-theme="dark"] .tactus-hand.beating { opacity: .36; }
 .tactus-hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
-#thArm { transform-origin: 236px 340px; }
-#thHand { transform-origin: 150px 228px; }
+#thArm { transform-origin: 470px 111px; }
 .tactus-hand[hidden] { display: none; }
-@media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .tactus-hand { right: 340px; } }
-@media (max-width: 640px) { .tactus-hand { height: min(42%, 280px); } }
+@media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .tactus-hand { right: 320px; } }
+@media (max-width: 640px) { .tactus-hand { width: 72%; bottom: 12%; } }
 html.focus .tactus-hand { z-index: 0; }

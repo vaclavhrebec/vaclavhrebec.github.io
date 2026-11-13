@@ -98,6 +98,22 @@ function restGlyph(n, x, midLine, style = 'white') {
   return go(code, x - gw(code) / 2, midLine);
 }
 
+/* the width of a sung syllable in staff spaces (lyrics are set at 1.12 staff spaces) */
+let measCtx = null;
+const measCache = new Map();
+function textWidth(t) {
+  if (!t) return 0;
+  const hit = measCache.get(t);
+  if (hit != null) return hit;
+  try {
+    measCtx ||= document.createElement('canvas').getContext('2d');
+    measCtx.font = '112px Fondamento, "Palatino Linotype", Palatino, Georgia, serif';
+    const w = measCtx.measureText(t).width / 100;
+    if (document.fonts?.status === 'loaded') measCache.set(t, w);
+    return w;
+  } catch (e) { return t.length * .62; }
+}
+
 /* ---------- column model ---------- */
 const spacing = d => 1.4 + 1.15 * Math.log2(1 + d);
 
@@ -129,7 +145,7 @@ export function buildColumns(piece, vidx) {
       const e = c.notes[v];
       if (!e) continue;
       need = Math.max(need, glyphNeed(e.n, style));
-      if (e.n.text) textW = Math.max(textW, e.n.text.length * .62 + (e.n.hyphen ? .6 : .3));
+      if (e.n.text) textW = Math.max(textW, textWidth(e.n.text) + (e.n.hyphen ? .8 : .3));
     }
     c.textW = textW;
     if (style === 'chant') {
@@ -234,20 +250,44 @@ function drawStaff(piece, vi, cols, xs, opts) {
     const low = Math.max(y + .7, stems && !stemUp ? y + 3.4 : -99, style === 'chant' && n.v === 'L' ? y + 1.8 : -99);
     bottom = Math.max(bottom, low);
     lowest = Math.max(lowest, low);
-    notesHere.push({ n, x, k });
+    notesHere.push({ n, x, k, i });
     body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}<rect x="${f(x - .8)}" y="${f(Math.min(y, 0) - 1)}" width="1.6" height="${f(Math.abs(Math.max(y, lines - 1) - Math.min(y, 0)) + 2)}" class="hit"/></g>`;
   });
   /* text underlay */
   const base = Math.max(textY, lowest + 1.3);
-  notesHere.forEach(({ n, x, k }, j) => {
+  /* between the syllables of one word a stroke (the hyphen, drawn across the whole gap);
+     after the last syllable of a word that carries more notes, a line along the baseline as long as the notes run */
+  const dash = (x1, x2) => {
+    if (x2 - x1 >= 1.1) words += `<path d="M${f(x1 + .3)} ${f(base - .3)}H${f(x2 - .3)}" class="lyric-line"/>`;
+    else if (x2 - x1 >= .45) words += `<path d="M${f((x1 + x2) / 2 - .2)} ${f(base - .3)}h.4" class="lyric-line"/>`;
+  };
+  const extender = (x1, j) => {
+    let last = -1;
+    for (let m = j + 1; m < notesHere.length && !notesHere[m].n.text && (m === 0 || notesHere[m].i === notesHere[m - 1].i + 1); m++) last = m;
+    if (last < 0) return;
+    const x2 = notesHere[last].x + .5;
+    if (x2 - x1 > .5) words += `<path d="M${f(x1 + .15)} ${f(base + .2)}H${f(x2)}" class="lyric-line"/>`;
+  };
+  /* a melisma carried over from the previous line */
+  if (notesHere.length && !notesHere[0].n.text) {
+    const notes = voice.notes;
+    let i0 = notes.indexOf(notesHere[0].n), prev = null;
+    for (let m = i0 - 1; m >= 0; m--) { if (notes[m].rest) break; if (notes[m].text) { prev = notes[m]; break; } }
+    if (prev) {
+      const nextText = notesHere.findIndex(e => e.n.text);
+      if (prev.hyphen) dash(notesHere[0].x - 1.2, nextText >= 0 ? notesHere[nextText].x - .5 : xs.end);
+      else extender(notesHere[0].x - .65, -1);
+    }
+  }
+  notesHere.forEach(({ n, x }, j) => {
     if (!n.text) return;
     words += `<text x="${f(x - .5)}" y="${f(base)}" class="lyric">${esc(n.text)}</text>`;
+    const end = x - .5 + textWidth(n.text);
     if (n.hyphen) {
-      const nxt = notesHere[j + 1];
-      const x2 = nxt ? nxt.x - .5 : xs.end;
-      const hx = (x - .5 + n.text.length * .62 + x2) / 2;
-      if (x2 - (x - .5) > n.text.length * .62 + .7) words += `<text x="${f(hx)}" y="${f(base)}" class="lyric" text-anchor="middle">-</text>`;
-    }
+      let m = j + 1;
+      while (m < notesHere.length && !notesHere[m].n.text) m++;
+      dash(end, m < notesHere.length ? notesHere[m].x - .5 : xs.end);
+    } else extender(end, j);
   });
   const hasWords = piece.voices[vi].lyrics && notesHere.some(e => e.n.text);
   bottom = Math.max(bottom, hasWords ? base + .6 : bottom);
