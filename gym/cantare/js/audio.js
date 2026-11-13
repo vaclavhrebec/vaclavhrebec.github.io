@@ -4,9 +4,10 @@ import { midiOf, hz } from './music.js';
 export const TIMBRES = {
   voice: { label: 'Voice (sung by Chimera)' },
   sackbut: { label: 'Sackbut' },
+  lute: { label: 'Lute' },
+  organ: { label: 'Organ, Principal 8′' },
   regal: { label: 'Regal' },
   chalumeau: { label: 'Chalumeau' },
-  organ: { label: 'Organ, Principal 8′' },
   flute: { label: 'Open flute 8′' },
   gedackt: { label: 'Gedackt 8′ (stopped flute)' },
   sine: { label: 'Sine' },
@@ -60,6 +61,44 @@ function bankNote(midi, f0, vowel, at, env, sources, tied) {
 }
 
 let ctx = null, master = null, dry = null, wet = null, shelf = null;
+
+/* Lute: a plucked gut string (Karplus–Strong with a tuned all-pass), strung in double courses: two strings a few cents
+   apart, and in the bass an octave string beside the fundamental, as on a Renaissance lute. A thumb-and-finger pluck a
+   little away from the bridge; a slur (a tied note) is only a soft left-hand sound. Rendered once per pitch and kept. */
+const LUTE = new Map();
+function luteString(f, secs, bright, seed) {
+  const sr = ctx.sampleRate, n = Math.floor(sr * secs), out = new Float32Array(n);
+  const P = sr / f, N = Math.max(2, Math.floor(P - .5)), frac = P - N - .5, a = (1 - frac) / (1 + frac);
+  const buf = new Float32Array(N); let r = seed;
+  const rnd = () => { r = (r * 16807) % 2147483647; return r / 2147483647 * 2 - 1; };
+  for (let i = 0; i < N; i++) buf[i] = rnd();
+  /* pluck position about a seventh of the string: a comb, then a softening for gut and flesh */
+  const pp = Math.max(1, Math.round(N / 7)); const tmp = buf.slice(); for (let i = 0; i < N; i++) buf[i] = tmp[i] - .85 * tmp[(i + pp) % N];
+  for (let pass = 0; pass < (bright ? 1 : 3); pass++) for (let i = 1; i < N; i++) buf[i] = .5 * (buf[i] + buf[i - 1]);
+  /* the loop: an averaging filter and a loss tuned so low strings ring longer (about 3 s) than high ones */
+  const t60 = Math.max(1.8, 6.5 - (Math.log2(f / 98)) * 1.3), loss = Math.pow(10, -3 / (t60 * f));
+  let idx = 0, prev = 0, apx = 0, apy = 0;
+  for (let i = 0; i < n; i++) {
+    const x = buf[idx], nxt = buf[(idx + 1) % N];
+    const lp = loss * (.5 * x + .5 * nxt) * (bright ? 1 : .998);
+    const y = a * lp + apx - a * apy; apx = lp; apy = y;   /* tuning all-pass */
+    buf[idx] = y; out[i] = x; idx = (idx + 1) % N; prev = y;
+  }
+  void prev;
+  return out;
+}
+function luteBuffer(f0, soft) {
+  const key = Math.round(f0 * 10) + (soft ? 's' : '');
+  if (LUTE.has(key)) return LUTE.get(key);
+  const secs = Math.min(6, Math.max(2.5, 3.6 - Math.log2(f0 / 98) * .6)), sr = ctx.sampleRate, n = Math.floor(sr * secs);
+  const b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0);
+  const c1 = luteString(f0, secs, !soft, 12345), c2 = luteString(f0 * Math.pow(2, 3 / 1200), secs, !soft, 777);
+  const oct = f0 < 196 ? luteString(f0 * 2 * Math.pow(2, -2 / 1200), secs, !soft, 4242) : null;
+  for (let i = 0; i < n; i++) d[i] = .5 * c1[i] + .45 * c2[i] + (oct ? .3 * oct[i] : 0);
+  let m = 0; for (let i = 0; i < n; i++) m = Math.max(m, Math.abs(d[i])); if (m) for (let i = 0; i < n; i++) d[i] /= m;
+  LUTE.set(key, b);
+  return b;
+}
 
 export function ensure() {
   if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
@@ -143,7 +182,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   env.gain.linearRampToValueAtTime(0, Math.max(at + .02, fall1));
   const stop = legato ? end + .02 : end + rel;
   const sources = [];
-  const sink = out(env, timbre === 'voice' ? level * 2.6 : level);
+  const sink = out(env, timbre === 'voice' ? level * 2.6 : timbre === 'lute' ? level * 1.9 : level);
 
   const noise = (dur, hp, q, g0) => {
     if (tied) return;
@@ -211,6 +250,19 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
       const g = ctx.createGain(); g.gain.value = SOUND.wind / 100 * .04;
       src.connect(bp); bp.connect(g); g.connect(env); src.start(at); src.stop(stop + .05);
     }
+  } else if (timbre === 'lute') {
+    /* the string rings and dies away by itself; the hand damps it when the note ends. A tied note is a slur, softer. */
+    const src = ctx.createBufferSource(); src.buffer = luteBuffer(f0, tied);
+    const body1 = ctx.createBiquadFilter(); body1.type = 'peaking'; body1.frequency.value = 115; body1.Q.value = 1.2; body1.gain.value = 5;
+    const body2 = ctx.createBiquadFilter(); body2.type = 'peaking'; body2.frequency.value = 270; body2.Q.value = 1.4; body2.gain.value = 3.5;
+    const rose = ctx.createBiquadFilter(); rose.type = 'peaking'; rose.frequency.value = 2600; rose.Q.value = 1; rose.gain.value = -3;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
+    src.connect(body1); body1.connect(body2); body2.connect(rose); rose.connect(lp); lp.connect(env);
+    const t1 = at + (tied ? XF / 2 : 0), lvl = tied ? .55 : 1;
+    env.gain.cancelScheduledValues(at); env.gain.setValueAtTime(0, at); env.gain.linearRampToValueAtTime(lvl, t1 + .004);
+    const damp = Math.max(t1 + .03, end);
+    env.gain.setValueAtTime(lvl, damp); env.gain.linearRampToValueAtTime(0, damp + .12);
+    src.start(t1); src.stop(Math.min(damp + .15, t1 + src.buffer.duration)); src.own = true; sources.push(src);
   } else if (bankNote(midi, f0, vowel, at, env, sources, tied)) {
     /* sung by Chimera */
   } else {
@@ -224,7 +276,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     });
     sources.push(o);
   }
-  sources.forEach(s => { if (!s.buffer) s.start(at); s.stop(stop + .05); });
+  sources.forEach(s => { if (s.own) return; if (!s.buffer) s.start(at); s.stop(stop + .05); });
   return sink;
 }
 

@@ -143,3 +143,6 @@ Object.assign(D.cs, { 'Share this piece': 'Sdílet tuto skladbu' });
 Object.assign(D.de, { 'New': 'Neu' });
 Object.assign(D.fr, { 'New': 'Nouveau' });
 Object.assign(D.cs, { 'New': 'Nový' });
+Object.assign(D.de, { 'Lute': 'Laute' });
+Object.assign(D.fr, { 'Lute': 'Luth' });
+Object.assign(D.cs, { 'Lute': 'Loutna' });
