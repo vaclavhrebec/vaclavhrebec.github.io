@@ -40,7 +40,12 @@ function clefGlyph(clef, y, style, lines = 5) {
 
 const ACC_CODE = { b: 'E260', n: 'E261', '#': 'E262' };
 /* x is the right edge of the sign */
-const accidental = (acc, x, y, small, style = 'white') => (acc === 'b' && ms(style)) ? mp('flat', x - MS.flat.w / 2 - (small ? .1 : 0), y, small ? .75 : 1) : go(ACC_CODE[acc], x - gw(ACC_CODE[acc]) * (small ? .7 : 1), y, small ? .7 : 1);
+const accidental = (acc, x, y, small, style = 'white') => {
+  if (acc === 'b' && ms(style)) return mp('flat', x - MS.flat.w / 2 - (small ? .1 : 0), y, small ? .75 : 1);
+  /* in chant the signs are smaller, in proportion to the square notes */
+  const k = style === 'chant' ? (small ? .5 : .66) : (small ? .7 : 1);
+  return go(ACC_CODE[acc], x - gw(ACC_CODE[acc]) * k, y, k);
+};
 
 /* a note head and stem; style: 'chant' | 'white' | 'black' */
 function noteGlyph(n, x, y, up, style) {

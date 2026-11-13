@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, volume: .8, names: true, font: 'manuscript', lang: '',
+const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -88,6 +88,14 @@ async function fillLazy(g, trail) {
   } catch (e) { g.failed = true; }
   g.loading = false;
   renderTree($('#search').value);
+}
+
+/* a random piece: first a category at random (each equally likely), then a piece within it */
+const RANDOM_GROUPS = ['Cantus planus', 'Cantus fractus', 'Cantus mensurabilis', 'Polyphonic models'];
+function randomPick() {
+  const pools = RANDOM_GROUPS.map(g => S.flat.filter(f => f.trail[0] === g)).filter(p => p.length);
+  const pool = pools.length ? pools[Math.floor(Math.random() * pools.length)] : S.flat;
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 const countIn = g => (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
@@ -382,7 +390,7 @@ function buildStudio() {
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
     chipRow('', [chip(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); })]),
-    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); })]));
+    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); })]));
 
   /* the organ registers speak with the pipe settings; Your own takes the drawbars */
   if (snd.REG[prefs.timbre] || prefs.timbre === 'custom') {
@@ -415,7 +423,7 @@ function buildStudio() {
     try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
   }, { title: tr('Copy a link that opens this exact melody') }), chip(tr('Print'), false, () => window.print())),
     el('div', { class: 'row' }, b.mine
-      ? chip(tr('Delete this melody'), false, () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = S.flat[Math.floor(Math.random() * S.flat.length)]; openItem(pick.item, pick.trail); })
+      ? chip(tr('Delete this melody'), false, () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = randomPick(); openItem(pick.item, pick.trail); })
       : chip(tr('Keep as my melody'), false, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, { title: tr('Keep this melody, as it is now, among your own, to change and send') })));
 }
 
@@ -541,6 +549,22 @@ const spm = () => (60 / prefs.tempo) / beatMinims(); /* seconds per minim */
 
 let timer = 0, raf = 0, clock = null;
 
+/* the tactus hand: down on the beat (positio), up halfway through it (elevatio) */
+const thArm = document.getElementById('thArm'), thHand = document.getElementById('thHand');
+function poseHand(lift) {
+  thArm.style.transform = `rotate(${(lift - .5) * 5}deg)`;
+  thHand.style.transform = `rotate(${(lift - .5) * 16}deg)`;
+}
+function beatHand(pos) {
+  const ph = ((pos / beatMinims()) % 1 + 1) % 1;
+  poseHand((1 - Math.cos(2 * Math.PI * ph)) / 2);
+}
+function syncHand() {
+  $('#tactusHand').hidden = !prefs.hand;
+  $('#tactusHand').classList.toggle('beating', !!S.playing);
+  if (!S.playing) poseHand(.5);
+}
+
 function sounding() {
   const out = [];
   S.piece.voices.forEach((v, vi) => {
@@ -588,14 +612,16 @@ function stopPlayback(keep) {
 
 function setPlaying(on) {
   S.playing = on;
-  $('#playIcon').innerHTML = on ? '<path d="M6 5h4.5v14H6zM13.500 5H18v14h-4.500z"/>' : '<path d="M7 4.500v15l12-7.500z"/>';
+  $('#playIcon').innerHTML = on ? '<path d="M7 6h3v12H7zM14 6h3v12h-3z"/>' : '<path d="M8 5.500v13l10.500-6.500z"/>';
   $('#play').setAttribute('aria-label', on ? tr('Stop') : tr('Play'));
+  syncHand();
 }
 
 let lastSys = -1, lastLeaf = -1;
 function frame() {
   if (!clock) return;
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
+  if (prefs.hand) beatHand(Math.max(0, pos));
   if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
@@ -648,7 +674,7 @@ paper.addEventListener('click', e => {
 
 $('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
 $('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; $('#bpm').textContent = prefs.tempo; savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
-/* the beat: which value the tactus counts, tapping it, the heartbeat, and looping */
+/* the beat: which value the tactus counts, tapping it, and looping */
 const UNITS = [['L', 'Longa'], ['B', 'Brevis'], ['S', 'Semibrevis'], ['M', 'Minima']];
 function setTempo(v) {
   prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo; savePrefs();
@@ -666,7 +692,6 @@ $('#tap').addEventListener('click', () => {
   taps.push(t); if (taps.length > 6) taps.shift();
   if (taps.length >= 2) setTempo(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)));
 });
-$('#heart').addEventListener('click', () => { prefs.unit = 'S'; buildUnits(); setTempo(60); toast(tr('Semibrevis = 60')); });
 const syncLoop = () => $('#loopBtn').setAttribute('aria-pressed', String(prefs.loop));
 $('#loopBtn').addEventListener('click', () => { prefs.loop = !prefs.loop; savePrefs(); syncLoop(); });
 $('#prevLeaf').addEventListener('click', () => { S.leaf = Math.max(0, S.leaf - 1); render(); });
@@ -846,8 +871,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && document.d
 
 /* ------------------------------------------------------------------ drawers, theme, search */
 const relayout = () => {};
-function openDrawer(id) { $('#' + id).dataset.open = 'true'; if (innerWidth >= 1100) relayout(); }
-function closeDrawer(id) { $('#' + id).dataset.open = 'false'; if (innerWidth >= 1100) relayout(); }
+const syncLibBtn = () => $('#openLib').setAttribute('aria-pressed', String($('#library').dataset.open === 'true'));
+function openDrawer(id) { $('#' + id).dataset.open = 'true'; syncLibBtn(); if (innerWidth >= 1100) relayout(); }
+function closeDrawer(id) { $('#' + id).dataset.open = 'false'; syncLibBtn(); if (innerWidth >= 1100) relayout(); }
 const toggleDrawer = id => ($('#' + id).dataset.open === 'true' ? closeDrawer : openDrawer)(id);
 $('#openLib').addEventListener('click', () => toggleDrawer('library'));
 $('#openStudio').addEventListener('click', () => toggleDrawer('studio'));
@@ -1115,12 +1141,14 @@ new ResizeObserver(() => {
   applyTheme();
   translatePage();
   $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
-  buildUnits(); syncLoop();
+  buildUnits(); syncLoop(); syncHand();
   const wide = innerWidth >= 1100;
-  $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false';
+  $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false'; syncLibBtn();
   await loadLibrary();
   mineGroup(); renderTree();
-  const want = decodeURIComponent(location.hash.slice(1));
+  /* a refresh always brings a new random piece; a link someone opens (with #piece) still opens that piece */
+  const reload = performance.getEntriesByType?.('navigation')[0]?.type === 'reload';
+  const want = reload ? '' : decodeURIComponent(location.hash.slice(1));
   let opened = false;
   if (want.startsWith('w=')) {
     const it = itemFromLink(want.slice(2));
@@ -1133,7 +1161,7 @@ new ResizeObserver(() => {
   }
   if (!opened) {
     const hit = want && S.flat.find(f => slug(f.item.title) === want);
-    const pick = hit || S.flat[Math.floor(Math.random() * S.flat.length)];
+    const pick = hit || randomPick();
     openItem(pick.item, pick.trail);
   }
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});

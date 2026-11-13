@@ -24,8 +24,8 @@ svg { display: block; }
 
 /* top bar */
 .bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; padding-top: max(8px, env(safe-area-inset-top)); border-bottom: 1px solid var(--line); background: var(--surface); z-index: 5; }
-.brand { min-width: 0; }
-.brand h1 { margin: 0; font: 400 22px/1.1 var(--serif); letter-spacing: .01em; white-space: nowrap; }
+.brand { min-width: 0; margin-right: 10px; }
+.brand h1 { margin: 0; font: 400 32px/1.1 var(--serif); letter-spacing: .01em; white-space: nowrap; }
 .brand h1 em { font-style: normal; color: var(--accent); }
 .brand p { margin: 2px 0 0; font-size: 12px; color: var(--soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .back { display: none; font-size: 12px; color: var(--soft); text-decoration: none; margin-right: 6px; }
@@ -115,7 +115,7 @@ svg { display: block; }
 /* dock */
 .dock { display: flex; align-items: center; gap: 14px; padding: 8px 14px; padding-bottom: max(8px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); z-index: 5; }
 .play { width: 52px; height: 52px; border-radius: 50%; border: 0; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; flex: none; box-shadow: 0 3px 12px rgba(0, 0, 0, .25); }
-.play svg { width: 24px; height: 24px; fill: currentColor; }
+.play svg { width: 24px; height: 24px; fill: currentColor; stroke: currentColor; stroke-width: 2.6; stroke-linejoin: round; stroke-linecap: round; }
 .tempo { display: flex; flex-direction: column; font-size: 12px; color: var(--soft); min-width: 120px; flex: 0 1 200px; }
 .tempo input { accent-color: var(--accent); width: 100%; }
 .tempo b { color: var(--ink); font-weight: 600; }
@@ -146,7 +146,7 @@ svg { display: block; }
 @media (max-width: 640px) {
   .ib span { display: none; }
   .brand p { display: none; }
-  .brand h1 { font-size: 17px; }
+  .brand h1 { font-size: 20px; }
   .drawer, .drawer.right { width: min(92vw, 360px); }
   .dock { gap: 8px; flex-wrap: wrap; }
   .voices { margin-left: 0; width: 100%; justify-content: flex-start; }
@@ -189,6 +189,8 @@ svg.glyph .fill { fill: currentColor; } svg.glyph .hollow { fill: none; stroke: 
 .stagefoot { display: flex; flex-wrap: wrap; gap: .4rem 1.4rem; align-items: center; justify-content: center; margin: 2.5rem 0 1rem; font-size: .82rem; color: var(--soft); }
 .stagefoot button, .stagefoot a { display: inline-flex; gap: .4rem; align-items: center; background: none; border: 0; padding: .3rem .2rem; font: inherit; color: inherit; cursor: pointer; text-decoration: none; }
 .stagefoot button:hover, .stagefoot a:hover { color: var(--accent); }
+.stagefoot .fb-open { all: unset; display: inline-flex; align-items: center; padding: .3rem .2rem; cursor: pointer; color: inherit; font: inherit; }
+.stagefoot .fb-open:hover { color: var(--accent); }
 .stagefoot svg { width: 1.05rem; height: 1.05rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 
 /* microphone */
@@ -240,7 +242,7 @@ g.sung .note.on .fill { fill: var(--accent); }
 #title.editable { outline: 1px dashed var(--line); outline-offset: 4px; border-radius: 4px; cursor: text; }
 #title.editable:focus { outline-color: var(--accent); }
 /* while editing, the buttons on the right keep only their icons, so everything fits */
-.toolbar.editing #clearBtn span, .toolbar.editing #handBtn span, .toolbar.editing #micBtn span, .toolbar.editing #transformBtn span { display: none; }
+.toolbar.editing #openLib span, .toolbar.editing #clearBtn span, .toolbar.editing #handBtn span, .toolbar.editing #micBtn span, .toolbar.editing #transformBtn span { display: none; }
 
 /* Vellum: the music on an old page, brown ink and a red rastrum */
 :root[data-theme="vellum"] {
@@ -248,7 +250,7 @@ g.sung .note.on .fill { fill: var(--accent); }
   --accent: #8e2a1e; --accent-ink: #fbf4e8; --note: #2a2218; --staff: #b9392a; --hl: #b8620e; --sel: #1f5aa8; --shadow: 0 6px 24px rgba(60, 40, 10, .16);
   color-scheme: light;
 }
-:root[data-theme="vellum"] .stage { background: radial-gradient(120% 90% at 50% 40%, #efe2c2 0%, #e6d5ad 60%, #d9c597 100%); }
+:root[data-theme="vellum"] .shell { background: radial-gradient(120% 90% at 50% 40%, #efe2c2 0%, #e6d5ad 60%, #d9c597 100%); }
 :root[data-theme="vellum"] .paper { background: radial-gradient(140% 100% at 40% 30%, rgba(255, 250, 235, .5), rgba(150, 108, 40, .08)); border-radius: 3px; box-shadow: inset 0 0 70px rgba(150, 108, 40, .16), 0 1px 1px rgba(60, 40, 10, .14); }
 
 /* Focus: only the music */
@@ -259,3 +261,17 @@ html.focus .focusbar { display: flex; }
 .focusbar:hover, .focusbar:focus-within { opacity: 1; }
 .focusbar button { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-size: 18px; line-height: 1; }
 @media (max-width: 700px) { #clearBtn span, #handBtn span, #micBtn span, #transformBtn span { display: none; } }
+
+/* the tactus hand: behind the music, on the right, beating the tactus while it plays */
+.stage { z-index: 1; }
+.tactus-hand { position: absolute; right: clamp(4px, 2vw, 28px); bottom: 0; height: min(62%, 440px); aspect-ratio: 240 / 340; pointer-events: none; z-index: 0; opacity: .3; transition: opacity .4s, right .22s ease; }
+:root[data-theme="dark"] .tactus-hand { opacity: .26; }
+.tactus-hand.beating { opacity: .42; }
+:root[data-theme="dark"] .tactus-hand.beating { opacity: .36; }
+.tactus-hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
+#thArm { transform-origin: 236px 340px; }
+#thHand { transform-origin: 150px 228px; }
+.tactus-hand[hidden] { display: none; }
+@media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .tactus-hand { right: 340px; } }
+@media (max-width: 640px) { .tactus-hand { height: min(42%, 280px); } }
+html.focus .tactus-hand { z-index: 0; }

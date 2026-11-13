@@ -13,7 +13,6 @@
 </head>
 <body>
 <header class="bar">
-  <button class="ib" id="openLib" aria-label="Library" title="Library" data-i18n-title="Library"><svg viewBox="0 0 24 24"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z" /></svg><span data-i18n="Library">Library</span></button>
   <div class="brand"><a href="../" class="back" title="The Ultimate Counterpoint Gym">&larr; Gym</a><h1>Cantare <em>super librum</em></h1><p id="tagline"></p></div>
   <div class="grow"></div>
   <label class="ib lang" title="Language" data-i18n-title="Language"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.500 0 18M12 3c-3 3.500-3 14.500 0 18"/></svg><select id="lang" aria-label="Language"></select></label>
@@ -22,6 +21,7 @@
 </header>
 
 <div class="toolbar" id="toolbar">
+  <div class="tb-group"><button class="tbtn" id="openLib" aria-pressed="false" aria-label="Library" title="Library" data-i18n-title="Library"><svg class="ico" viewBox="0 0 24 24"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z" /></svg><span data-i18n="Library">Library</span></button></div>
   <div class="tb-group"><button class="tbtn" id="editBtn" aria-pressed="false" title="Edit the melody" data-i18n-title="Edit the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M4 20l1-4L16.500 4.500a2.100 2.100 0 0 1 3 3L8 19z"/><path d="M14.500 6.500l3 3"/></svg><span data-i18n="Edit">Edit</span></button></div>
   <div id="editTools" class="edit-tools" hidden></div>
   <div class="tb-group"><button class="tbtn" id="clearBtn" title="Start a new melody on an empty staff" data-i18n-title="Start a new melody on an empty staff"><svg class="ico" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M12 11v6M9 14h6"/></svg><span data-i18n="Clear">Clear</span></button></div>
@@ -45,7 +45,7 @@
       <p class="note" id="note"></p>
     </section>
     <div class="paper" id="paper" aria-live="polite"></div>
-    <footer class="stagefoot" id="stagefoot"><button type="button" id="footFeedback" data-feedback-open data-topic="Cantare super librum"><span data-i18n="Feedback">Feedback</span></button><button type="button" id="footShare"><span data-i18n="Share">Share</span></button><a id="footCoffee" href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2.500 2.500 0 0 1 0 5h-2M7 3v3M10 3v3M13 3v3"/></svg><span data-i18n="Buy me a coffee">Buy me a coffee</span></a></footer>
+    <footer class="stagefoot" id="stagefoot"><span data-feedback-slot></span><button type="button" id="footShare"><span data-i18n="Share">Share</span></button><a id="footCoffee" href="https://ko-fi.com/vaclavhrebec" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM16 10h2a2.500 2.500 0 0 1 0 5h-2M7 3v3M10 3v3M13 3v3"/></svg><span data-i18n="Buy me a coffee">Buy me a coffee</span></a></footer>
     <div data-foot-slot hidden></div>
     <nav class="pager" id="pager" hidden><button id="prevLeaf" aria-label="Previous leaf" data-i18n-title="Previous leaf">&lsaquo;</button><span id="leafNo"></span><button id="nextLeaf" aria-label="Next leaf" data-i18n-title="Next leaf">&rsaquo;</button></nav>
   </main>
@@ -54,15 +54,18 @@
     <div class="drawer-head"><strong data-i18n="Studio">Studio</strong><button class="x" data-close="studio" aria-label="Close" data-i18n-title="Close">&times;</button></div>
     <div class="cards" id="cards"></div>
   </aside>
+  <div class="tactus-hand" id="tactusHand" aria-hidden="true"><svg viewBox="0 0 240 340" preserveAspectRatio="xMaxYMax meet"><defs> <linearGradient id="th-sk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f1cfae"/><stop offset=".55" stop-color="#e0ad86"/><stop offset="1" stop-color="#b97c58"/></linearGradient> <linearGradient id="th-skf" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3d4b5"/><stop offset="1" stop-color="#d49b74"/></linearGradient> <linearGradient id="th-bat" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6b4226"/><stop offset=".45" stop-color="#a8754a"/><stop offset="1" stop-color="#4a2c18"/></linearGradient> <linearGradient id="th-sl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2b2f3a"/><stop offset="1" stop-color="#14161c"/></linearGradient> <linearGradient id="th-fg" gradientUnits="userSpaceOnUse" x1="78" y1="0" x2="156" y2="0"><stop offset="0" stop-color="#f3d4b5"/><stop offset=".6" stop-color="#e6b791"/><stop offset="1" stop-color="#e0ad86" stop-opacity="0"/></linearGradient> <linearGradient id="th-tg" gradientUnits="userSpaceOnUse" x1="68" y1="0" x2="168" y2="0"><stop offset="0" stop-color="#f4d6b8"/><stop offset=".7" stop-color="#e3b18b"/><stop offset="1" stop-color="#d9a37c" stop-opacity="0"/></linearGradient>
+</defs><g id="thArm" stroke="#7d4d33" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"> <path d="M120 238 C140 270 160 300 178 340 L240 340 L240 300 C215 270 195 245 176 220 Z" fill="url(#th-sk)"/> <path d="M150 340 C160 318 178 300 205 292 L240 288 L240 340 Z" fill="url(#th-sl)" stroke="#0c0d11"/> <path d="M146 334 C156 312 176 296 204 287 C210 293 214 297 222 296 C228 290 233 288 240 288 L240 300 C226 304 210 306 196 312 C176 320 162 330 156 342 Z" fill="#efe9dc" stroke="#b8ae98"/>
+<g id="thHand">  <!-- baton, behind the hand --> <path d="M44 18 L48 17 L127 236 L119 239 Z" fill="url(#th-bat)" stroke="#3a2213" stroke-width=".8"/> <path d="M176 220 C178 196 170 172 156 156 C140 146 118 148 104 156 L92 200 C96 222 108 238 120 240 C140 244 162 236 176 220 Z" fill="url(#th-sk)"/> <g stroke="none" fill="url(#th-fg)"> <path d="M150 226 C124 232 100 230 92 222 C86 214 92 206 102 206 L150 206 Z"/> <path d="M152 210 C124 216 94 216 86 206 C80 196 88 188 100 188 L152 188 Z"/> <path d="M154 192 C124 198 92 198 82 188 C75 178 84 170 98 169 L154 168 Z"/> <path d="M156 172 C126 178 94 178 82 168 C74 158 84 150 100 150 C120 150 140 152 156 156 Z"/> </g> <g fill="none"> <path d="M128 228 C110 231 96 228 92 222 C86 214 92 207 100 206"/> <path d="M132 213 C112 216 92 214 86 206 C80 197 87 189 98 188"/> <path d="M134 195 C112 198 90 196 82 188 C75 179 82 171 96 169"/> <path d="M136 175 C114 178 92 176 82 168 C74 159 84 150 100 150"/> </g> <g fill="none" stroke="#a46b4b" stroke-width=".9" opacity=".8"> <path d="M88 160 c3 4 3 7 0 10"/><path d="M88 179 c3 3 3 6 0 9"/><path d="M93 197 c3 3 3 6 0 8"/><path d="M98 214 c2 3 2 5 0 7"/> <path d="M140 174 C146 180 150 186 152 190" opacity=".5"/> </g> <path d="M172 204 C164 180 152 160 130 150 C112 142 92 140 78 142 C68 144 66 152 72 156 C84 160 104 158 120 164 C136 172 148 186 158 212 Z" fill="url(#th-tg)" stroke="none"/> <path d="M164 186 C156 168 146 156 130 150 C112 142 92 140 78 142 C68 144 66 152 72 156 C84 160 104 158 120 164 C134 170 144 180 150 192" fill="none"/> <path d="M74 144 c-5 2 -6 7 -2 10 c5 1 9 -1 10 -4 c-1 -4 -4 -6 -8 -6z" fill="#f6dccb" stroke="#b07a5c" stroke-width=".7"/> <path d="M110 147 c4 3 6 7 6 11" fill="none" stroke="#a46b4b" stroke-width=".9"/> <path d="M170 214 C166 196 162 182 154 170" fill="none" stroke="#f5d7bb" stroke-width="2" opacity=".6"/>
+</g></g></svg></div>
 </div>
 
 <footer class="dock" id="dock">
-  <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M7 4.5v15l12-7.5z"/></svg></button>
+  <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
   <label class="tempo"><span><span data-i18n="Tactus">Tactus</span> <b id="bpm">52</b></span><input type="range" id="tempo" min="20" max="200" value="52"></label>
   <div class="beatctl">
     <label class="unitsel" title="Which note value the tactus counts" data-i18n-title="Which note value the tactus counts"><span class="sr" data-i18n="Beat">Beat</span><select id="unit"></select></label>
     <button class="chip" id="tap" title="Tap the beat twice or more: the tempo follows your taps" data-i18n-title="Tap the beat twice or more: the tempo follows your taps"><span data-i18n="Tap">Tap</span></button>
-    <button class="chip" id="heart" aria-label="Semibrevis at the pulse: 60 per minute" title="Semibrevis = 60 per minute, a resting pulse (Gaffurius takes the semibrevis as one heartbeat)" data-i18n-title="Semibrevis = 60 per minute, a resting pulse (Gaffurius takes the semibrevis as one heartbeat)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2s-7.6-4.7-9.7-9.4C.8 8.4 2.9 4.8 6.5 4.8c2.2 0 3.7 1.3 5.5 3.3 1.8-2 3.3-3.3 5.5-3.3 3.6 0 5.7 3.6 4.2 7-2.1 4.7-9.7 9.4-9.7 9.4Z"/></svg></button>
     <button class="chip" id="loopBtn" aria-pressed="false" title="Repeat until stopped" data-i18n-title="Repeat until stopped"><span data-i18n="Loop">Loop</span></button>
   </div>
   <div class="voices" id="voiceChips"></div>
