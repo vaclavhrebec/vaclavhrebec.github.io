@@ -421,7 +421,7 @@ function buildStudio() {
   card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
     const url = linkOf(b);
     try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
-  }, { title: tr('Copy a link that opens this exact melody') }), chip(tr('Print'), false, () => window.print())),
+  }, { title: tr('Copy a link that opens this exact melody') }), chip(tr('Save as PDF'), false, () => exportPDF())),
     el('div', { class: 'row' }, b.mine
       ? chip(tr('Delete this melody'), false, () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = randomPick(); openItem(pick.item, pick.trail); })
       : chip(tr('Keep as my melody'), false, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, { title: tr('Keep this melody, as it is now, among your own, to change and send') })));
@@ -1111,6 +1111,31 @@ $('#handBtn').addEventListener('click', () => {
 $('#handClose').addEventListener('click', () => { $('#handView').hidden = true; });
 
 /* share */
+/* Save as PDF: the whole piece in score layout on white A4 pages, through the browser's print dialog ("Save as PDF") */
+function exportPDF() {
+  const p = S.piece;
+  if (!p) return;
+  if (S.playing) stopPlayback();
+  const zoom = 12, pageW = 690; /* A4 with margins, in CSS pixels */
+  const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T };
+  const systems = engraveSystems(p, p.voices.map((_, i) => i), pageW / zoom, opts);
+  const sheet = el('div', { id: 'printSheet' },
+    el('p', { class: 'ps-trail' }, (p.trail || []).join('  ›  ')),
+    el('h1', {}, p.title),
+    p.note ? el('p', { class: 'ps-note' }, p.note) : '',
+    ...systems.map(s => el('div', { class: 'ps-sys' }, parse(systemSVG(s, zoom)))),
+    el('p', { class: 'ps-foot' }, 'Cantare super librum · vaclavhrebec.github.io/gym/cantare'));
+  $('#printSheet')?.remove();
+  document.body.append(sheet);
+  const root = document.documentElement, theme = root.dataset.theme, title = document.title;
+  root.dataset.theme = 'light'; root.classList.add('printing');
+  document.title = p.title.replace(/[\\/:*?"<>|]/g, '');
+  const done = () => { root.dataset.theme = theme; root.classList.remove('printing'); document.title = title; sheet.remove(); removeEventListener('afterprint', done); };
+  addEventListener('afterprint', done);
+  setTimeout(() => { window.print(); if (!('onafterprint' in window)) setTimeout(done, 1000); }, 60);
+}
+$('#footPdf').addEventListener('click', exportPDF);
+
 $('#footShare').addEventListener('click', async () => {
   const url = location.href.split('#')[0] + location.hash, title = 'Cantare super librum';
   try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
