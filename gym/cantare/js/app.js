@@ -258,14 +258,17 @@ function render(resetLeaf) {
   paper.textContent = '';
   S.index = [];
   const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T, fullLast: S.edit };
+  const roll = prefs.roll && !useBook;
+  paper.classList.toggle('rolling', roll);
   if (useBook) renderBook(p, opts, resetLeaf);
+  else if (roll) renderRoll(p, opts);
   else renderScore(p, opts);
   collectNotes();
   markSel();
 }
 
 /* score or choir book: the book button beside the title, the same choice in Transform and in the Studio */
-function setView(v) { prefs.view = v; savePrefs(); S.leaf = 0; render(true); buildTransform(); buildStudio(); }
+function setView(v) { prefs.view = v; if (v === 'book') prefs.roll = false; savePrefs(); S.leaf = 0; render(true); buildTransform(); buildStudio(); }
 function setBookKind(v) { prefs.bookKind = v; savePrefs(); render(); buildTransform(); }
 function syncLayoutSw(p) {
   const multi = p.voices.length > 1, book = prefs.view === 'book' && multi;
@@ -286,6 +289,32 @@ function renderScore(p0, opts) {
   paper.classList.toggle('singing', p !== p0);
   if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
   S.systems = systems;
+}
+
+/* one long line that rolls from right to left while it plays; the clefs stay at the left edge */
+function renderRoll(p0, opts) {
+  const { p, order } = withTake(p0);
+  const [sys] = engraveSystems(p, order, 1e7, { ...opts, justify: false });
+  const z = prefs.zoom, hw = sys.ind + sys.head;
+  const head = el('div', { class: 'rollhead', style: `width:${(hw * z).toFixed(1)}px` },
+    parse(`<svg class="system" viewBox="0 0 ${hw.toFixed(2)} ${sys.h.toFixed(2)}" width="${(hw * z).toFixed(1)}" height="${(sys.h * z).toFixed(1)}" xmlns="http://www.w3.org/2000/svg">${sys.svg}</svg>`));
+  head.querySelectorAll('.note').forEach(n => n.remove());
+  const roll = el('div', { class: 'roll' }, el('div', { class: 'rollin' }, el('div', { class: 'sys', 'data-sys': 0, 'data-t0': sys.t0, 'data-t1': sys.t1 }, parse(systemSVG(sys, z))), head));
+  paper.append(roll);
+  paper.classList.toggle('singing', p !== p0);
+  if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
+  S.systems = [sys];
+}
+/* the place of a moment on the long line, in pixels */
+function rollX(pos) {
+  const sys = S.systems && S.systems[0];
+  if (!sys || !sys.xt.length) return 0;
+  const xt = sys.xt;
+  let i = 0;
+  while (i + 1 < xt.length && xt[i + 1][0] <= pos) i++;
+  const [t0, x0] = xt[i], [t1, x1] = i + 1 < xt.length ? xt[i + 1] : [S.piece.end, sys.w - sys.ind];
+  const x = t1 > t0 ? x0 + (x1 - x0) * Math.min(1, Math.max(0, (pos - t0) / (t1 - t0))) : x0;
+  return (sys.ind + x) * prefs.zoom;
 }
 
 function renderBook(p, opts, resetLeaf) {
@@ -526,6 +555,7 @@ function buildStudio() {
     btn(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); }),
     btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
     multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',
+    btn(tr('One line'), !!prefs.roll, () => { prefs.roll = !prefs.roll; if (prefs.roll && prefs.view === 'book') prefs.view = 'score'; savePrefs(); render(true); buildStudio(); try { buildTransform(); } catch (e) {} }, tr('The whole piece on one long line that rolls by while it plays; the clefs stay at the left')),
     btn(tr('View') + ' ▾', null, more('view')),
     btn(tr(themeName), null, () => { const i = THEMES.findIndex(t => t[0] === prefs.theme); prefs.theme = THEMES[(i + 1) % THEMES.length][0]; savePrefs(); applyTheme(); buildStudio(); }, tr('Theme')),
     btn(tr('Focus'), false, () => setFocus(true), tr('Only the music: everything else is put away')),
@@ -784,6 +814,10 @@ function frame() {
   if (paper.classList.contains('book')) {
     const li = S.leaves.findIndex(l => pos >= l.t0 - 1e-6 && pos < l.t1);
     if (li >= 0 && li !== S.leaf) { S.leaf = li; render(); if (S.playing) { /* keep the highlight on */ } }
+  } else if (paper.classList.contains('rolling')) {
+    /* the music moves, the eye stays in the middle */
+    const r = paper.querySelector('.roll');
+    if (r) r.scrollLeft = rollX(pos) - r.clientWidth / 2;
   } else if (S.systems) {
     const si = S.systems.findIndex(s => pos >= s.t0 && pos < s.t1);
     if (si >= 0 && si !== lastSys) {

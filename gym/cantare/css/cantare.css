@@ -366,3 +366,12 @@ html.focus .tactus-hand { z-index: 0; }
 .optpop { width: min(440px, calc(100vw - 24px)); }
 .optpop .cards { display: grid; gap: 10px; }
 #studio[hidden] { display: none !important; }
+
+/* one long rolling line */
+.paper.rolling { max-width: none; padding-left: 0; padding-right: 0; }
+.roll { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; padding-bottom: 6px; }
+.rollin { display: grid; width: max-content; padding-right: 50vw; }
+.rollin > * { grid-area: 1 / 1; }
+.rollhead { position: sticky; left: 0; z-index: 2; background: var(--bg); overflow: hidden; align-self: start; box-shadow: 8px 0 10px -6px var(--bg); }
+:root[data-theme="vellum"] .rollhead { background: #efe4cc; }
+.paper.rolling .sys { margin: 0; }

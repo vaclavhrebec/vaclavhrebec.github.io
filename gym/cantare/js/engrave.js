@@ -207,6 +207,8 @@ function drawStaff(piece, vi, cols, xs, opts) {
   const total = xs.end;
   let svg = '';
   for (let k = 0; k < lines; k++) svg += `<path d="M0 ${k}H${f(total)}" class="staffline"/>`;
+  /* the end of the piece: a double bar, thin and thick */
+  if (xs.final) svg += `<rect x="${f(total - .78)}" y="0" width=".13" height="${lines - 1}" class="fill"/><rect x="${f(total - .36)}" y="0" width=".36" height="${lines - 1}" class="fill"/>`;
   const cw = clefWidth(clef, style);
   /* the clef can be clicked: a palette of all the clefs opens */
   svg += `<g class="clef-hit" data-clef-vi="${vi}"><rect x="-.4" y="-1.2" width="${f(cw + .8)}" height="${f(lines + 1.4)}" fill="transparent"/>${clefGlyph(clef, lines - clef.line, style, lines)}</g>`;
@@ -377,7 +379,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const at = [];
     let x = headW;
     slice.forEach(c => { at.push(x + .35); x += c.need * (c.tight ? 1 : stretch); });
-    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x, headW + 2), width - ind) : width - ind };
+    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x + (last ? .9 : 0), headW + 2), width - ind) : width - ind, final: last && slice.length > 0 };
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
       const s = drawStaff(piece, vi, slice, xs, opts);
@@ -391,7 +393,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     });
     const h = y - gap;
     const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
-    return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind };
+    return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind, head: headW, xt: slice.map((c, i) => [c.t, at[i]]) };
   });
 }
 
