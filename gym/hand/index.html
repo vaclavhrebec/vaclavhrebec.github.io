@@ -128,6 +128,31 @@
   .seg button, .btn { font: 500 .92rem/1 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; color: var(--fg); background: transparent; border: 0; border-radius: 8px; height: 36px; padding: 0 12px; cursor: pointer; }
   .seg button[aria-pressed="true"] { background: var(--card); box-shadow: 0 1px 2px rgba(0,0,0,.12); color: var(--accent); }
   .btn { background: var(--soft); }
+  /* the notation of what the hands have shown */
+  .notated { margin-top: 12px; }
+  .notated .nhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+  .notated h2 { margin: 0; }
+  .notated .nbtns { display: flex; flex-wrap: wrap; gap: 6px; }
+  .notated .nnote { color: var(--muted); font-size: 14px; margin: 6px 0 0; }
+  .nstaves { display: grid; gap: 4px; margin-top: 6px; overflow-x: auto; }
+  .nstaff { display: flex; align-items: center; gap: 8px; }
+  .nstaff .who { flex: none; width: 3.2em; font-size: 12px; color: var(--c); font-weight: 600; }
+  .nstaff .sys { overflow-x: auto; }
+  .notated .system { color: var(--fg); --staff: var(--c); }
+  .notated .system .staffline { stroke: var(--staff); stroke-width: .085; fill: none; opacity: .75; }
+  .notated .system .fill { fill: currentColor; }
+  .notated .system .hollow { fill: none; stroke: currentColor; stroke-width: .17; }
+  .notated .system .stroke { fill: none; stroke: currentColor; stroke-width: .14; }
+  .notated .system .stroke.thick { stroke-width: .28; }
+  .notated .system .clefnum { font: .9px serif; fill: currentColor; }
+  .notated .system .clef-hit rect, .notated .system .hit { fill: transparent; }
+  @media print {
+    html.nprint body * { visibility: hidden !important; }
+    html.nprint #notated, html.nprint #notated * { visibility: visible !important; }
+    html.nprint #notated { position: absolute; left: 0; top: 0; width: 100%; border: 0; }
+    html.nprint #notated .nbtns, html.nprint #notated .nnote { display: none !important; }
+    html.nprint .notated .system { color: #000; }
+  }
   .btn:hover, .seg button:hover { color: var(--accent); }
   button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
   input[type=range] { accent-color: var(--accent); width: 110px; }
@@ -223,6 +248,21 @@
     </div>
   </section>
 
+  <section class="panel notated" id="notated" aria-label="What you have shown, written down">
+    <div class="nhead"><h2>What you have shown</h2>
+      <div class="nbtns">
+        <button class="btn" id="nClear" type="button">Clear</button>
+        <button class="btn" id="nPdf" type="button" title="Print it, or choose “Save as PDF” in the dialog">PDF</button>
+        <button class="btn" id="nXml" type="button" title="MusicXML: opens in Dorico, MuseScore, Sibelius and Finale">MusicXML</button>
+        <button class="btn" id="nMid" type="button" title="MIDI: opens in every notation and recording program">MIDI</button>
+        <button class="btn" id="nMei" type="button" title="MEI: the encoding used in musicology, opens in Verovio and MuseScore 4">MEI</button>
+        <button class="btn" id="nAbc" type="button" title="ABC: plain-text notation, opens in EasyABC and many web tools">ABC</button>
+      </div>
+    </div>
+    <p class="nnote" id="nEmpty">Every note you show, on either hand, is written here, one staff for each hand. The clef changes by itself so that no note needs a ledger line.</p>
+    <div class="nstaves" id="nStaves"></div>
+  </section>
+
   <section class="panel texts" id="texts" aria-label="The text to sing">
     <h2>Sing a text</h2>
     <p class="lead">Choose a sentence and sing it while your hands show two more voices: the voice sings each new note on the next syllable. Without a sentence it sings the solmisation syllable of each place.</p>
@@ -309,6 +349,8 @@
 import * as chimera from "../cantare/js/audio.js";
 import { word as latinWord } from "../cantare/js/latin.js";
 import { MASS, prepareLine, sound as soundOf, similarity } from "./mass.js";
+import { pieceFrom } from "../cantare/js/music.js";
+import { engraveSystems, systemSVG, clefPlan } from "../cantare/js/engrave.js";
 /* ------------------------------------------------------------------ */
 /* The Guidonian hand: twenty places, from Γ ut on the thumb tip       */
 /* spiralling round the hand to ee la on the back of the middle finger */
@@ -818,7 +860,7 @@ function show(side){
   // a single painted hand shows whichever hand is playing
   if (figs.length === 1 && side === 1) figs[0].items.forEach((el, k) => el.classList.toggle('on', k === i));
 }
-function tapOn(i, side){ if (fixing) learnTap(i, side); tapping[side] = i; noteOn(2, midiOf(i), i); show(side); }
+function tapOn(i, side){ if (fixing) learnTap(i, side); tapping[side] = i; noteOn(2, midiOf(i), i); if (!fixing) notate(side, i, 0, false); show(side); }
 function tapOff(side){ if (tapping[side] < 0) return; tapping[side] = -1; noteOff(2); show(side); }
 function setPos(side, pos){
   const h = hands[side], alt = altOf(pos, h.zone || 0);
@@ -827,6 +869,7 @@ function setPos(side, pos){
   h.pos = pos; h.alt = alt;
   if (pos >= 0 && !same) { h.last = pos; h.lastT = performance.now(); }   // the melody so far, for telling look-alikes apart
   if (pos >= 0) noteOn(side, midiOf(pos) + alt, pos, same); else noteOff(side);
+  if (pos >= 0) notate(side, pos, alt, same);
   show(side);
 }
 /* a place has to hold for a few frames before it sounds, so passing over a joint does not */
@@ -841,6 +884,169 @@ function feed(side, P){
   if (h.cand !== h.pos && h.n >= need) setPos(side, h.cand);
   else if (h.pos >= 0 && h.cand === h.pos && altOf(h.pos, h.zone) !== (h.alt || 0)) setPos(side, h.pos);
 }
+
+/* ---------- what the hands show, written down ----------
+   Every note shown is written as a black brevis, one staff for each hand. The staves are drawn by the engraver of
+   Cantare super librum: five lines, and wherever the melody would need a ledger line the clef changes for a while. */
+const SHOWN = [[], []];
+const DEG = 'CDEFGAB';
+function stepOf(i){
+  const p = POS[i], letter = p.k === 'Γ' ? 'G' : p.k[0].toUpperCase();
+  return 7 * (Math.floor(p.midi / 12) - 1) + DEG.indexOf(letter) + Math.round(prefs.oct / 12) * 7;
+}
+function notate(side, i, alt, same){
+  const list = SHOWN[side === 1 ? 1 : 0];
+  const acc = alt > 0 ? '#' : alt < 0 ? 'b' : (POS[i].bfa && prefs.bfa ? 'b' : '');
+  const n = { step: stepOf(i), acc };
+  if (same && list.length) list[list.length - 1] = n; else list.push(n);
+  drawShown();
+}
+const tok = n => n.step + (n.acc || '') + 'B';
+function shownPiece(side){
+  const list = SHOWN[side];
+  if (!list.length) return null;
+  const p = pieceFrom({ title: '', fr: 1, c: 'c4', n: list.map(tok).join(' ') }, []);
+  p.talea = true;   /* no mensuration sign: what the hand shows has no measure */
+  return p;
+}
+function drawShown(){
+  const box = $('#nStaves'); if (!box) return;
+  box.textContent = '';
+  const sides = SHOWN.map((l, k) => k).filter(k => SHOWN[k].length);
+  $('#nEmpty').hidden = sides.length > 0;
+  const w = Math.max(240, box.clientWidth - 70), z = 12;
+  sides.forEach(k => {
+    const p = shownPiece(k), plan = clefPlan(p, 0);
+    if (plan) p.voices[0].clef = plan[0].id;
+    const row = document.createElement('div'); row.className = 'nstaff'; row.style.setProperty('--c', k ? 'var(--v2)' : 'var(--v1)');
+    const who = document.createElement('div'); who.className = 'who'; who.textContent = k ? 'Right' : (prefs.hands === 2 ? 'Left' : 'Hand');
+    const sys = document.createElement('div'); sys.className = 'sys';
+    engraveSystems(p, [0], w / z, { names: false, fullLast: false }).forEach(s => { sys.insertAdjacentHTML('beforeend', systemSVG(s, z)); });
+    row.append(who, sys); box.append(row);
+  });
+}
+addEventListener('resize', () => drawShown());
+
+/* ---------- exporting it ---------- */
+const CLEF_XML = { c1: ['C', 1], c2: ['C', 2], c3: ['C', 3], c4: ['C', 4], c5: ['C', 5], baritone: ['F', 3], bass: ['F', 4], f5: ['F', 5], g1: ['G', 1], treble: ['G', 2], treble8: ['G', 2, -1] };
+const ABC_CLEF = { c1: 'soprano', c2: 'mezzosoprano', c3: 'alto', c4: 'tenor', c5: 'baritone', baritone: 'baritone', bass: 'bass', f5: 'subbass', g1: 'treble', treble: 'treble', treble8: 'treble-8' };
+function parts(){
+  return [0, 1].filter(k => SHOWN[k].length).map(k => {
+    const p = shownPiece(k), plan = clefPlan(p, 0) || p.voices[0].notes.map(() => ({ id: p.voices[0].clef }));
+    return { name: k ? 'Right hand' : (prefs.hands === 2 ? 'Left hand' : 'Hand'), notes: SHOWN[k], clefs: plan.map(c => c.id) };
+  });
+}
+const pnameOf = s => DEG[((s % 7) + 7) % 7], octOf = s => Math.floor(s / 7);
+const alterOf = n => n.acc === '#' ? 1 : n.acc === 'b' ? -1 : 0;
+const midiOfStep = n => 12 * (octOf(n.step) + 1) + [0, 2, 4, 5, 7, 9, 11][((n.step % 7) + 7) % 7] + alterOf(n);
+function download(name, data, type){
+  const url = URL.createObjectURL(new Blob([data], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+const stamp = () => 'manus-guidonis-' + new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+function needNotes(){ if (parts().length) return true; status('Nothing shown yet: show some notes first.'); return false; }
+
+function toMusicXML(){
+  const P = parts(), esc = t => t.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  let x = '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">\n<score-partwise version="4.0">\n<work><work-title>Manus Guidonis</work-title></work>\n<part-list>\n';
+  P.forEach((p, i) => { x += `<score-part id="P${i + 1}"><part-name>${esc(p.name)}</part-name></score-part>\n`; });
+  x += '</part-list>\n';
+  P.forEach((p, i) => {
+    x += `<part id="P${i + 1}">\n`;
+    let cur = null;
+    p.notes.forEach((n, j) => {
+      x += `<measure number="${j + 1}"${j ? ' implicit="no"' : ''}>`;
+      const c = p.clefs[j];
+      if (j === 0 || c !== cur) {
+        const [sign, line, oc] = CLEF_XML[c] || ['C', 4];
+        x += '<attributes>' + (j === 0 ? '<divisions>1</divisions><key><fifths>0</fifths></key><time print-object="no"><beats>4</beats><beat-type>4</beat-type></time>' : '') +
+             `<clef><sign>${sign}</sign><line>${line}</line>${oc ? `<clef-octave-change>${oc}</clef-octave-change>` : ''}</clef></attributes>`;
+        cur = c;
+      }
+      const al = alterOf(n);
+      x += `<note><pitch><step>${pnameOf(n.step)}</step>${al ? `<alter>${al}</alter>` : ''}<octave>${octOf(n.step)}</octave></pitch><duration>4</duration><type>whole</type>${n.acc ? `<accidental>${al > 0 ? 'sharp' : 'flat'}</accidental>` : ''}</note>`;
+      x += '<barline location="right"><bar-style>none</bar-style></barline></measure>\n';
+    });
+    x += '</part>\n';
+  });
+  return x + '</score-partwise>\n';
+}
+
+function toMIDI(){
+  const P = parts(), TPQ = 480, LEN = TPQ * 2;   /* each note half a second at 120 to the quarter: one second each */
+  const vlq = v => { const b = [v & 127]; while ((v >>= 7)) b.unshift((v & 127) | 128); return b; };
+  const u32 = v => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
+  const track = ev => [...[77, 84, 114, 107], ...u32(ev.length), ...ev];
+  const tempo = [0, 255, 81, 3, 0x07, 0xA1, 0x20, 0, 255, 47, 0];   /* 500000 µs per quarter */
+  const tracks = [track(tempo)];
+  P.forEach((p, i) => {
+    const ch = i & 15, ev = [0, 0xC0 | ch, 52];   /* choir aahs */
+    const name = [...new TextEncoder().encode(p.name)]; ev.push(0, 255, 3, ...vlq(name.length), ...name);
+    p.notes.forEach(n => { const m = midiOfStep(n); ev.push(0, 0x90 | ch, m, 80, ...vlq(LEN), 0x80 | ch, m, 0); });
+    ev.push(0, 255, 47, 0); tracks.push(track(ev));
+  });
+  return new Uint8Array([77, 84, 104, 100, 0, 0, 0, 6, 0, 1, 0, tracks.length, TPQ >> 8, TPQ & 255, ...tracks.flat()]);
+}
+
+function toMEI(){
+  const P = parts(), meiClef = c => { const [sign, line, oc] = CLEF_XML[c] || ['C', 4]; return `shape="${sign}" line="${line}"${oc ? ' dis="8" dis.place="below"' : ''}`; };
+  let x = '<?xml version="1.0" encoding="UTF-8"?>\n<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.0">\n<meiHead><fileDesc><titleStmt><title>Manus Guidonis</title></titleStmt><pubStmt/></fileDesc></meiHead>\n<music><body><mdiv><score>\n<scoreDef meter.count="4" meter.unit="4" meter.form="invis"><staffGrp>\n';
+  P.forEach((p, i) => { x += `<staffDef n="${i + 1}" lines="5" ${meiClef(p.clefs[0]).replace('shape=', 'clef.shape=').replace(' line=', ' clef.line=').replace(' dis=', ' clef.dis=').replace(' dis.place=', ' clef.dis.place=')}><label>${p.name}</label></staffDef>\n`; });
+  x += '</staffGrp></scoreDef>\n<section>\n';
+  const most = Math.max(...P.map(p => p.notes.length)), cur = P.map(p => p.clefs[0]);
+  for (let j = 0; j < most; j++) {
+    x += `<measure n="${j + 1}" right="invis">`;
+    P.forEach((p, i) => {
+      x += `<staff n="${i + 1}"><layer n="1">`;
+      const n = p.notes[j];
+      if (n) {
+        if (p.clefs[j] !== cur[i]) { cur[i] = p.clefs[j]; x += `<clef ${meiClef(cur[i])}/>`; }
+        x += `<note pname="${pnameOf(n.step).toLowerCase()}" oct="${octOf(n.step)}" dur="1"${n.acc ? ` accid="${n.acc === '#' ? 's' : 'f'}"` : ''}/>`;
+      } else x += '<mRest/>';
+      x += '</layer></staff>';
+    });
+    x += '</measure>\n';
+  }
+  return x + '</section>\n</score></mdiv></body></music>\n</mei>\n';
+}
+
+function toABC(){
+  const P = parts();
+  const pitch = n => {
+    const L = pnameOf(n.step), o = octOf(n.step);
+    const a = n.acc === '#' ? '^' : n.acc === 'b' ? '_' : '';
+    return a + (o >= 5 ? L.toLowerCase() + "'".repeat(o - 5) : L + ','.repeat(Math.max(0, 4 - o)));
+  };
+  let x = 'X:1\nT:Manus Guidonis\nM:none\nL:1/1\nK:C\n';
+  P.forEach((p, i) => { x += `V:${i + 1} name="${p.name}" clef=${ABC_CLEF[p.clefs[0]] || 'alto'}\n`; });
+  P.forEach((p, i) => {
+    x += `[V:${i + 1}] `;
+    let cur = p.clefs[0];
+    p.notes.forEach((n, j) => {
+      if (p.clefs[j] !== cur) { cur = p.clefs[j]; x += `[K:clef=${ABC_CLEF[cur] || 'alto'}] `; }
+      x += pitch(n) + ' ';
+      if (j % 12 === 11) x += '\n';
+    });
+    x += '|]\n';
+  });
+  return x;
+}
+
+$('#nClear').addEventListener('click', () => { SHOWN[0] = []; SHOWN[1] = []; drawShown(); });
+$('#nXml').addEventListener('click', () => { if (needNotes()) download(stamp() + '.musicxml', toMusicXML(), 'application/vnd.recordare.musicxml+xml'); });
+$('#nMid').addEventListener('click', () => { if (needNotes()) download(stamp() + '.mid', toMIDI(), 'audio/midi'); });
+$('#nMei').addEventListener('click', () => { if (needNotes()) download(stamp() + '.mei', toMEI(), 'application/mei+xml'); });
+$('#nAbc').addEventListener('click', () => { if (needNotes()) download(stamp() + '.abc', toABC(), 'text/vnd.abc'); });
+$('#nPdf').addEventListener('click', () => {
+  if (!needNotes()) return;
+  const root = document.documentElement, title = document.title;
+  root.classList.add('nprint'); document.title = stamp();
+  const done = () => { root.classList.remove('nprint'); document.title = title; removeEventListener('afterprint', done); };
+  addEventListener('afterprint', done);
+  setTimeout(() => window.print(), 50);
+});
+drawShown();
 
 /* ---------- camera and hand tracking ---------- */
 const video = $('#video'), canvas = $('#overlay'), g2 = canvas.getContext('2d');
