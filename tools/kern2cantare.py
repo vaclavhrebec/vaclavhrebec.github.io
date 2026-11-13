@@ -95,7 +95,9 @@ def parse(path):
     nexts = 0
     data = []          # (label, line tokens with spine ids)
     for ln in lines:
-        if not ln or ln.startswith('!!'):
+        if not ln or ln.startswith('!'):
+            # '!!' global and '!' local comments (e.g. "!LO:TX:...t=[Canon at the lower fifth]")
+            # are not music; a local comment read as data became a stray fusa (Jos1201e.a)
             continue
         toks = ln.split('\t')
         if spines is None:
