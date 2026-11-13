@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 52, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '',
+const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, volume: .8, names: true, font: 'manuscript', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -183,6 +183,7 @@ function rebuildPiece() {
   if (S.lines) p.lines = S.lines;
   else if (S.talea >= 0 && S.taleaLook === 'mensural') p.lines = 5;
   S.piece = p;
+  if ($('#tactusRate')) showTempo();
 }
 
 /* ------------------------------------------------------------------ drawing the page */
@@ -539,7 +540,7 @@ $('#editBtn').addEventListener('click', () => {
 $('#transformBtn').addEventListener('click', e => {
   e.stopPropagation();
   const pop = $('#transformPop'); pop.hidden = !pop.hidden;
-  if (!pop.hidden) { const r = $('#toolbar').getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; }
+  /* the window opens in the middle of the screen (see .pop) */
   $('#transformBtn').setAttribute('aria-expanded', String(!pop.hidden));
 });
 document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && e.target.isConnected && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
@@ -547,9 +548,12 @@ document.addEventListener('click', e => { const pop = $('#transformPop'); if (!p
 /* ------------------------------------------------------------------ playback */
 /* the beat in minimae: a brevis holds six of them in tempus perfectum, a longa twice the brevis */
 /* triple time: tempus perfectum, or a piece that moves in threes (cantus fractus) */
-const isTriple = () => !S.piece.talea && (S.piece.tempus === 'O' || (S.piece.ternary && S.piece.tempus === 'C'));
+const isTriple = () => !!S.piece && !S.piece.talea && (S.piece.tempus === 'O' || (S.piece.ternary && S.piece.tempus === 'C'));
 const beatMinims = () => { const O = isTriple(); return { L: O ? 12 : 8, B: O ? 6 : 4, S: 2, M: 1 }[prefs.unit] || (O ? 6 : 4); };
-const spm = () => (60 / prefs.tempo) / beatMinims(); /* seconds per minim */
+/* the tempo always counts semibreves: 60 means the semibrevis at 60, so a brevis tactus beats at 30 */
+const spm = () => (60 / prefs.tempo) / 2; /* seconds per minim */
+const tactusPerMin = () => Math.round(prefs.tempo * 2 / beatMinims() * 10) / 10;
+const showTempo = () => { $('#bpm').textContent = prefs.tempo; $('#tactusRate').textContent = tactusPerMin(); };
 
 let timer = 0, raf = 0, clock = null;
 
@@ -686,11 +690,11 @@ paper.addEventListener('click', e => {
 });
 
 $('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
-$('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; $('#bpm').textContent = prefs.tempo; savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
+$('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; showTempo(); savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
 /* the beat: which value the tactus counts, tapping it, and looping */
 const UNITS = [['L', 'Longa'], ['B', 'Brevis'], ['S', 'Semibrevis'], ['M', 'Minima']];
 function setTempo(v) {
-  prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo; savePrefs();
+  prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); $('#tempo').value = prefs.tempo; showTempo(); savePrefs();
   if (S.playing && clock) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); }
 }
 function buildUnits() {
@@ -703,7 +707,7 @@ $('#tap').addEventListener('click', () => {
   const t = performance.now();
   if (taps.length && t - taps[taps.length - 1] > 2500) taps.length = 0;
   taps.push(t); if (taps.length > 6) taps.shift();
-  if (taps.length >= 2) setTempo(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)));
+  if (taps.length >= 2) setTempo(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)) * beatMinims() / 2);
 });
 const syncLoop = () => $('#loopBtn').setAttribute('aria-pressed', String(prefs.loop));
 $('#loopBtn').addEventListener('click', () => { prefs.loop = !prefs.loop; savePrefs(); syncLoop(); });
@@ -1110,7 +1114,7 @@ function recStop() {
 $('#micBtn').addEventListener('click', e => {
   e.stopPropagation();
   const pop = $('#micPop'); pop.hidden = !pop.hidden;
-  if (!pop.hidden) { buildMic(); const r = $('#toolbar').getBoundingClientRect(); pop.style.top = (r.bottom + 6) + 'px'; }
+  if (!pop.hidden) buildMic();
   $('#micBtn').setAttribute('aria-expanded', String(!pop.hidden));
 });
 document.addEventListener('click', e => { const pop = $('#micPop'); if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.chip')) { pop.hidden = true; $('#micBtn').setAttribute('aria-expanded', 'false'); } });
@@ -1178,7 +1182,7 @@ new ResizeObserver(() => {
 (async function start() {
   applyTheme();
   translatePage();
-  $('#tempo').value = prefs.tempo; $('#bpm').textContent = prefs.tempo;
+  $('#tempo').value = prefs.tempo; showTempo();
   buildUnits(); syncLoop(); syncHand();
   const wide = innerWidth >= 1100;
   $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false'; syncLibBtn();

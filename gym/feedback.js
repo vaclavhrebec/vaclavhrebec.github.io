@@ -43,7 +43,7 @@
     color:var(--accent,#c8102e);border-radius:999px;padding:.3rem .85rem;line-height:1.2;white-space:nowrap}
   .fb-open:hover{background:var(--accent,#c8102e);color:var(--accent-ink,#fff);border-color:var(--accent,#c8102e)}
   .fb-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.5rem 1rem}
-  dialog.fb{border:1px solid var(--line,#e4ddd1);border-radius:14px;padding:0;width:min(520px,calc(100vw - 32px));
+  dialog.fb{position:fixed;inset:0;margin:auto;height:fit-content;border:1px solid var(--line,#e4ddd1);border-radius:14px;padding:0;width:min(520px,calc(100vw - 32px));
     max-height:calc(100vh - 32px);background:var(--card,var(--surface,#fff));color:var(--fg,var(--text,#1c1a17));
     box-shadow:0 20px 60px rgba(0,0,0,.35);font-family:"EB Garamond",Georgia,serif;font-size:17px}
   dialog.fb::backdrop{background:rgba(20,16,12,.55)}

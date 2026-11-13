@@ -59,7 +59,7 @@
 
 <footer class="dock" id="dock">
   <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
-  <label class="tempo"><span><span data-i18n="Tactus">Tactus</span> <b id="bpm">52</b></span><input type="range" id="tempo" min="20" max="200" value="52"></label>
+  <label class="tempo"><span title="Semibreves per minute; the tactus beats at the second number" data-i18n-title="Semibreves per minute; the tactus beats at the second number"><span data-i18n="Semibrevis">Semibrevis</span> <b id="bpm">60</b> <span class="tac-rate">· <span data-i18n="tactus">tactus</span> <span id="tactusRate">30</span></span></span><input type="range" id="tempo" min="20" max="200" value="60"></label>
   <div class="beatctl">
     <label class="unitsel" title="Which note value the tactus counts" data-i18n-title="Which note value the tactus counts"><span class="sr" data-i18n="Beat">Beat</span><select id="unit"></select></label>
     <button class="chip" id="tap" title="Tap the beat twice or more: the tempo follows your taps" data-i18n-title="Tap the beat twice or more: the tempo follows your taps"><span data-i18n="Tap">Tap</span></button>
