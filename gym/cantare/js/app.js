@@ -441,13 +441,8 @@ function renderBook(p, opts, resetLeaf) {
     const pane = el('div', { class: 'pane' + (vi >= 0 && S.voice[vi] === 'hide' ? ' blank' : '') });
     if (vi >= 0 && vi < p.voices.length) {
       const v = p.voices[vi];
-<<<<<<< Updated upstream
       if (v.name) pane.append(el('span', { class: 'tag' }, vname(v.name)));
       linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
-=======
-      if (v.name) pane.append(el('span', { class: 'tag' }, v.name));
-      linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
->>>>>>> Stashed changes
     }
     paper.append(pane);
   });
@@ -640,6 +635,28 @@ function openOpt(k) {
   pop.hidden = false;
 }
 function closeOpt() { optOpen = null; $('#optPop').hidden = true; }
+/* the beat is shown by one button that turns through its forms on each tap: bare hand, hand with a baton, pendulum, none */
+const BEATS = [
+  ['palm', 'Hand', '<path d="M8 20c-2.2-1.7-3.6-4-4.2-6.6-.3-1 .9-1.6 1.5-.8L7 14.5V6.5a1.2 1.2 0 0 1 2.4 0V11M9.4 11V4.6a1.2 1.2 0 0 1 2.4 0V11M11.8 11V5.4a1.2 1.2 0 0 1 2.4 0V11.4M14.2 11.4V7.4a1.2 1.2 0 0 1 2.4 0v6.2c0 3.400-2 6.400-5.400 6.400H8z"/>'],
+  ['baton', 'Hand with baton', '<path d="M7 20c-1.800-1.400-2.900-3.300-3.400-5.400-.2-.8.7-1.300 1.200-.7L6.400 15.600V9.200a1 1 0 0 1 2 0v3.300M8.400 12.500V8.400a1 1 0 0 1 2 0v4.300M10.400 12.700V9.200a1 1 0 0 1 2 0v4c0 3.500-1.900 6.800-5.400 6.800"/><path d="M11.500 11.500 21 3"/>'],
+  ['pendulum', 'Pendulum', '<path d="M12 3v.5M12 3.500 16.500 15"/><circle cx="17.200" cy="17" r="2.600"/><path d="M6 21h12"/><path d="M5.500 9.500a8 8 0 0 0 1.300 4" stroke-dasharray="1.400 1.600"/>'],
+  ['off', 'No tactus', '<circle cx="12" cy="12" r="8"/><path d="M6.500 17.500 17.500 6.500"/>'],
+];
+const beatNow = () => prefs.hand ? (prefs.handStyle === 'baton' ? 'baton' : 'palm') : prefs.pendulum ? 'pendulum' : 'off';
+function beatButton() {
+  const k = BEATS.findIndex(b => b[0] === beatNow()), [id, label, icon] = BEATS[k];
+  const next = BEATS[(k + 1) % BEATS.length];
+  const b = el('button', { type: 'button', class: 'chip opt beatcycle', 'aria-pressed': String(id !== 'off'),
+    title: tr('Tap to change') + ': ' + BEATS.map(x => tr(x[1])).join(' → '), 'aria-label': tr(label) + ' – ' + tr('Tap to change') + ': ' + tr(next[1]),
+    onclick: () => {
+      const n = next[0];
+      prefs.hand = n === 'palm' || n === 'baton'; if (prefs.hand) prefs.handStyle = n;
+      prefs.pendulum = n === 'pendulum';
+      savePrefs(); syncHand(); buildStudio();
+    } });
+  b.append(parse(`<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`), el('span', {}, tr(label)));
+  return b;
+}
 function buildStudio() {
   const bar = $('#optbar'), b = S.base, multi = b.voices.length > 1;
   const btn = (label, pressed, fn, title) => el('button', { type: 'button', class: 'chip opt', ...(pressed == null ? {} : { 'aria-pressed': String(!!pressed) }), onclick: fn, title: title || '' }, label);
@@ -650,8 +667,7 @@ function buildStudio() {
     btn(tr('Sound') + ' ▾', null, more('sound')),
     (snd.REG[prefs.timbre] || prefs.timbre === 'custom') ? btn(tr('Pipes') + ' ▾', null, more('pipes')) : '',
     btn(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }),
-    btn(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); }),
-    btn(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); }),
+    beatButton(),
     btn(tr('Hand and pendulum') + ' ▾', null, more('tactus')),
     btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
     multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',

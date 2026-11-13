@@ -7,6 +7,7 @@ export const guessLang = () => { const n = (navigator.language || 'en').slice(0,
 
 const D = {
   de: {
+    'Back to the Contrapunto Gym': 'Zurück ins Contrapunto Gym', 'Hand with baton': 'Hand mit Taktstock', 'Pendulum': 'Pendel', 'No tactus': 'Kein Tactus', 'Tap to change': 'Tippen zum Wechseln',
     'Gregorian chant scores from': 'Gregorianische Choräle aus',
     ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', einer gemeinfreien Datenbank (CC0), übertragen von Andrew Hinkley und vielen anderen.',
     'Gregorian chant from GregoBase': 'Gregorianischer Choral aus GregoBase',
@@ -40,6 +41,7 @@ const D = {
     'The camera is not available here.': 'Die Kamera ist hier nicht verfügbar.', 'Loading the hand reader…': 'Handerkennung wird geladen …', 'Open the Guidonian hand': 'Guidonische Hand öffnen',
   },
   fr: {
+    'Back to the Contrapunto Gym': 'Retour au Contrapunto Gym', 'Hand with baton': 'Main avec bâton', 'Pendulum': 'Pendule', 'No tactus': 'Sans tactus', 'Tap to change': 'Toucher pour changer',
     'Gregorian chant scores from': 'Chants grégoriens tirés de',
     ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', une base de données libre de droits (CC0), transcrite par Andrew Hinkley et bien d’autres.',
     'Gregorian chant from GregoBase': 'Chant grégorien de GregoBase',
@@ -73,6 +75,7 @@ const D = {
     'The camera is not available here.': 'La caméra n’est pas disponible ici.', 'Loading the hand reader…': 'Chargement du lecteur de main…', 'Open the Guidonian hand': 'Ouvrir la main guidonienne',
   },
   cs: {
+    'Back to the Contrapunto Gym': 'Zpět do Contrapunto Gym', 'Hand with baton': 'Ruka s taktovkou', 'Pendulum': 'Kyvadlo', 'No tactus': 'Bez taktu', 'Tap to change': 'Klepnutím změníte',
     'Gregorian chant scores from': 'Gregoriánské zpěvy z databáze',
     ', a public-domain (CC0) database, transcribed by Andrew Hinkley and many others.': ', volného díla (CC0), přepsaného Andrewem Hinkleym a mnoha dalšími.',
     'Gregorian chant from GregoBase': 'Gregoriánský chorál z GregoBase',

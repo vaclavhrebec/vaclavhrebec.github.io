@@ -472,3 +472,14 @@ html.full .brand .crumbs, html.full .brand p { display: none; }
 @media (max-width: 640px) { .brand .crumbs { display: none; } .brand h1 { font-size: 21px; } }
 .piece-head .trail { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .piece-head .titlerow { flex: 0 1 auto; min-width: 0; }
+
+/* the way back to the Contrapunto Gym: small, before the title, on every screen and in full screen too */
+.brand .gymlink { order: 0; align-self: center; flex: none; display: inline-flex; align-items: center; gap: 2px; height: 26px; padding: 0 9px 0 4px;
+  border: 1px solid var(--line); border-radius: 999px; color: var(--soft); text-decoration: none; font: 500 12.5px/1 var(--sans, inherit); white-space: nowrap; }
+.brand .gymlink svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.brand .gymlink:hover, .brand .gymlink:focus-visible { color: var(--accent); border-color: var(--accent); }
+html.full .brand .gymlink { height: 24px; }
+/* one button for the beat: hand, hand with baton, pendulum, none */
+.chip.beatcycle { display: inline-flex; align-items: center; gap: 6px; }
+.chip.beatcycle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+@media (max-width: 480px) { .brand { gap: 7px; margin-right: 6px; } .brand h1 { font-size: 15.5px; } .brand .gymlink { padding: 0 7px 0 2px; } }
