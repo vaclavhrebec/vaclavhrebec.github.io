@@ -797,8 +797,10 @@ const ease = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))
 function beatHand(pos) {
   const unit = beatMinims();
   const ph = (((pos - (S.piece.beatOff || 0)) / unit) % 1 + 1) % 1;
-  const up = isTriple() && unit === 6 ? 2 / 3 : 1 / 2;
-  const fall = Math.min(.18, (1 - up) * .6), rise = Math.min(.18, up * .45);
+  const tri = isTriple() && unit === 6, up = tri ? 2 / 3 : 1 / 2;
+  /* in tempus perfectum the hand stays down through the first two semibreves and up through the third,
+     moving only briefly into each position, so that the 2 + 1 is plain to see */
+  const fall = tri ? .07 : Math.min(.18, (1 - up) * .6), rise = tri ? .07 : Math.min(.18, up * .45);
   /* the hand arrives up exactly on the upbeat and down exactly on the downbeat */
   const lift = ph < up ? ease(up - rise, up, ph) : 1 - ease(1 - fall, 1, ph);
   poseHand(lift);
