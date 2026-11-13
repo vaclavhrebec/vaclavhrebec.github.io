@@ -17,7 +17,12 @@
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
-body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); display: flex; flex-direction: column; overflow: hidden; -webkit-tap-highlight-color: transparent; }
+/* The app fills the window; the page footer (feedback, coffee, credits) lies below the dock and is reached by scrolling the page. */
+.app { height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.pagefoot { padding: .4rem 16px max(1rem, env(safe-area-inset-bottom)); background: var(--bg); border-top: 1px solid var(--line); }
+.pagefoot .stagefoot { margin: 1.4rem 0 1rem; }
+html.focus .pagefoot { display: none; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.45 var(--sans); overflow-x: hidden; overflow-y: auto; -webkit-tap-highlight-color: transparent; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 svg { display: block; }

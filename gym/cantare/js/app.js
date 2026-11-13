@@ -1472,7 +1472,6 @@ function exportPDF() {
   addEventListener('afterprint', done);
   setTimeout(() => { window.print(); if (!('onafterprint' in window)) setTimeout(done, 1000); }, 60);
 }
-$('#footPdf').addEventListener('click', exportPDF);
 $('#saveBtn').addEventListener('click', exportPDF); /* the same export from the toolbar */
 
 $('#footShare').addEventListener('click', async () => {
