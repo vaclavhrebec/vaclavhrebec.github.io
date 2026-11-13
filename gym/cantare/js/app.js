@@ -952,11 +952,18 @@ function setFocus(on) {
   if (on) closeDrawer('studio');
   if (S.piece) setTimeout(() => render(), 60);
 }
+const fullEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+const canFull = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
 function toggleFull() {
-  if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
-  else document.documentElement.requestFullscreen().catch(() => {});
+  const r = document.documentElement;
+  if (fullEl()) (document.exitFullscreen || document.webkitExitFullscreen).call(document)?.catch?.(() => {});
+  else (r.requestFullscreen || r.webkitRequestFullscreen).call(r)?.catch?.(() => {});
 }
-document.addEventListener('fullscreenchange', () => { if (S.base) buildStudio(); });
+/* the full-screen button at the top right */
+const syncFullBtn = () => { const b = $('#fullBtn'); if (!b) return; b.hidden = !canFull; b.setAttribute('aria-pressed', String(!!fullEl())); };
+$('#fullBtn')?.addEventListener('click', toggleFull);
+syncFullBtn();
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { syncFullBtn(); if (S.base) buildStudio(); }));
 document.body.append(el('div', { class: 'focusbar' },
   document.fullscreenEnabled ? el('button', { title: tr('Full screen'), 'aria-label': tr('Full screen'), onclick: toggleFull }, '⛶') : '',
   el('button', { title: tr('Leave focus'), 'aria-label': tr('Leave focus'), onclick: () => setFocus(false) }, '×')));
@@ -1195,13 +1202,25 @@ $('#micBtn').addEventListener('click', e => {
 });
 document.addEventListener('click', e => { const pop = $('#micPop'); if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.chip')) { pop.hidden = true; $('#micBtn').setAttribute('aria-expanded', 'false'); } });
 
-/* Guidonian hand: the Gym's hand room, opened over the page so the camera works with the music still in view */
+/* Guidonian hand: a small camera window on this page. What the hand shows sounds at once, together with the
+   playback and with whoever sings into the microphone; nothing stops and nobody is sent elsewhere. */
+const closeHand = () => { $('#handView').hidden = true; $('#handFrame').removeAttribute('src'); $('#handBtn').setAttribute('aria-pressed', 'false'); };
+$('#handBtn').setAttribute('aria-pressed', 'false');
 $('#handBtn').addEventListener('click', () => {
   const v = $('#handView'), f = $('#handFrame');
-  if (!f.getAttribute('src')) f.setAttribute('src', '../hand/');
-  v.hidden = false; stopPlayback();
+  if (!v.hidden) { closeHand(); return; }
+  const dark = document.documentElement.dataset.theme === 'dark';
+  f.setAttribute('src', `../hand/?embed=1&theme=${dark ? 'dark' : 'light'}&ref=${encodeURIComponent(prefs.a4 || 440)}`);
+  v.hidden = false; $('#handBtn').setAttribute('aria-pressed', 'true');
 });
-$('#handClose').addEventListener('click', () => { $('#handView').hidden = true; });
+$('#handClose').addEventListener('click', closeHand);
+/* the window can be dragged by its title */
+(() => {
+  const w = $('#handView'), h = $('#handDrag'); let d = null;
+  h.addEventListener('pointerdown', e => { if (e.target.closest('button')) return; const r = w.getBoundingClientRect(); d = { x: e.clientX - r.left, y: e.clientY - r.top }; h.setPointerCapture(e.pointerId); });
+  h.addEventListener('pointermove', e => { if (!d) return; const x = Math.max(0, Math.min(innerWidth - w.offsetWidth, e.clientX - d.x)), y = Math.max(0, Math.min(innerHeight - 40, e.clientY - d.y)); Object.assign(w.style, { left: x + 'px', top: y + 'px', right: 'auto', bottom: 'auto' }); });
+  h.addEventListener('pointerup', () => { d = null; });
+})();
 
 /* share */
 /* Save as PDF: the whole piece in score layout on white A4 pages, through the browser's print dialog ("Save as PDF") */
@@ -1261,8 +1280,8 @@ new ResizeObserver(() => {
   translatePage();
   $('#tempo').value = prefs.tempo; showTempo();
   buildUnits(); syncLoop(); syncHand();
-  const wide = innerWidth >= 1100;
-  $('#library').dataset.open = String(wide); $('#studio').dataset.open = 'false'; syncLibBtn();
+  /* the library starts closed; the Library button opens it */
+  $('#library').dataset.open = 'false'; $('#studio').dataset.open = 'false'; syncLibBtn();
   await loadLibrary();
   mineGroup(); renderTree();
   /* a refresh always brings a new random piece; a link someone opens (with #piece) still opens that piece */

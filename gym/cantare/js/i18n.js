@@ -114,3 +114,7 @@ export function translatePage(root = document) {
   root.querySelectorAll('[data-i18n-title]').forEach(e => { const v = tr(e.dataset.i18nTitle); e.title = v; if (e.hasAttribute('aria-label')) e.setAttribute('aria-label', v); });
   root.querySelectorAll('[data-i18n-ph]').forEach(e => { e.placeholder = tr(e.dataset.i18nPh); });
 }
+/* 13 Nov 2026: full screen button */
+Object.assign(D.de, { 'Full screen': 'Vollbild' });
+Object.assign(D.fr, { 'Full screen': 'Plein écran' });
+Object.assign(D.cs, { 'Full screen': 'Celá obrazovka' });

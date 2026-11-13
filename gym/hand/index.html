@@ -16,6 +16,10 @@
 <meta property="og:image:alt" content="Manus Guidonis">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3Cpath d='M16 9.5 21.4 16 16 22.5 10.6 16Z' fill='%23faf7f2'/%3E%3C/svg%3E">
+<script>
+/* Embedded in Cantare (?embed=1): only the camera, what the hand shows, and Start/Stop; the music goes on beside it */
+(function(){ try { var q = new URLSearchParams(location.search); if (q.get('embed') === '1') { document.documentElement.dataset.embed = '1'; var t = q.get('theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } } catch (e) {} })();
+</script>
 <style>
 /* Fondamento, the chancery hand of Cantare super librum (SIL Open Font License 1.1) */
 @font-face { font-family: "Fondamento"; font-style: normal; font-weight: 400; font-display: swap; src: url(../cantare/fonts/fondamento-latin-400-normal.woff2) format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
@@ -148,6 +152,25 @@
   .sitenav a:hover,.sitenav a:focus-visible{color:var(--fg);border-bottom-color:currentColor}
   .ft-row, dialog.fb, dialog.fb h2 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif !important; }
   .ft-btns button, .ft-btns a, .fb-open, .sh-grid a, .sh-grid button { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif !important; }
+  [data-embed] body { background: var(--bg); }
+  [data-embed] body > *:not(#app):not(script) { display: none !important; }
+  [data-embed] .wrap { padding: 8px 8px 10px; max-width: none; }
+  [data-embed] .sitenav, [data-embed] header, [data-embed] .staff, [data-embed] .how, [data-embed] .teach,
+  [data-embed] .stage > .panel:nth-child(2), [data-embed] .controls > :not(#start):not(.group:nth-child(2)) { display: none !important; }
+  [data-embed] .stage { grid-template-columns: minmax(0, 1fr) !important; gap: 0; }
+  [data-embed] .panel { border: 0; padding: 0; background: none; }
+  [data-embed] .cam { max-height: none; }
+  [data-embed] .readouts { margin-top: 6px; gap: 6px; }
+  [data-embed] .readout { padding: 4px 10px; }
+  [data-embed] .readout .note { font-size: 1.6rem; min-height: 1.8rem; }
+  [data-embed] .readout .where { display: none; }
+  [data-embed] .status { margin-top: 4px; font-size: .8rem; }
+  [data-embed] .controls { margin-top: 6px; gap: 8px; }
+  [data-embed] #start { height: 38px; padding: 0 16px; font-size: .92rem; }
+  [data-embed] .seg button { height: 30px; padding: 0 9px; font-size: .85rem; }
+  [data-embed] .group > .lbl { display: none; }
+  [data-embed] .cam { aspect-ratio: 4 / 3 !important; }
+  [data-embed] .controls { flex-wrap: nowrap; }
 </style>
 </head>
 <body>
@@ -434,7 +457,9 @@ let ctx = null, master = null;
 const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L'};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
-if (!prefs.camPicked) prefs.cam = 'environment';  // the back camera, unless the person chose the front one themselves
+const EMBED = document.documentElement.dataset.embed === '1';
+if (!prefs.camPicked) prefs.cam = EMBED ? 'user' : 'environment';  // the back camera (in Cantare the front one, facing the singer), unless the person chose themselves
+if (EMBED) { try { const r = Number(new URLSearchParams(location.search).get('ref')); if (r >= 100 && r <= 1000) prefs.ref = r; } catch (e) {} }
 let mirrored = false;
 const savePrefs = () => { try { localStorage.setItem('manus:v1', JSON.stringify(prefs)); } catch (e) {} };
 const volGain = () => Math.pow(prefs.vol / 100, 1.3) * 0.9;
@@ -1006,6 +1031,11 @@ function gamut(){
 }
 if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { $('#start').disabled = true; status('This browser offers no camera here. You can still tap the notes on the painted hand.'); }
 applyHands(); gamut();
+/* in Cantare the camera starts at once; a browser may still want one tap inside the window before it plays sound */
+if (EMBED && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  startCam().then(() => setTimeout(() => { if (running && (!ctx || ctx.state !== 'running')) status('Tap here once to hear the hand.'); }, 400));
+  document.addEventListener('pointerdown', () => setTimeout(() => { if (ctx && ctx.state === 'running' && /Tap here/.test($('#status').textContent)) status(''); }, 150), {passive: true});
+}
 window.__manus = {assignHands, track, setMirrored: m => { mirrored = m; }, classify, places, POS, TPL, setPos, feed, hands, normalize, gammaOrE, features, setTemplates};
 </script>
 <script src="../feedback.js" data-topic="Guidonian hand" defer></script>
