@@ -290,7 +290,7 @@ function render(resetLeaf) {
   paper.className = useBook ? 'book' : 'paper';
   paper.textContent = '';
   S.index = [];
-  const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T, fullLast: S.edit };
+  const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T, fullLast: S.edit, voiceCtl: true };
   const roll = prefs.roll && !useBook;
   paper.classList.toggle('rolling', roll);
   if (useBook) renderBook(p, opts, resetLeaf);
@@ -635,7 +635,6 @@ function buildStudio() {
     btn(tr('View') + ' ▾', null, more('view')),
     btn(tr(themeName), null, () => { const i = THEMES.findIndex(t => t[0] === prefs.theme); prefs.theme = THEMES[(i + 1) % THEMES.length][0]; savePrefs(); applyTheme(); buildStudio(); }, tr('Theme')),
     btn(tr('Focus'), false, () => setFocus(true), tr('Only the music: everything else is put away')),
-    document.fullscreenEnabled ? btn(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : '',
     btn(tr('Copy link'), null, async () => { const url = linkOf(b); try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); } }, tr('Copy a link that opens this exact melody')),
     b.mine
       ? btn(tr('Delete this melody'), null, async () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = await randomPick(); openItem(pick.item, pick.trail); })
@@ -999,9 +998,11 @@ function buildUnits() {
   ['M', 'S', 'B', 'L'].forEach(k => {
     const n = (UNITS.find(u => u[0] === k) || [k, k])[1];
     seg.append(el('button', { type: 'button', 'aria-pressed': String(prefs.unit === k), title: tr(n) + ' = ' + tr('tactus'), 'aria-label': tr(n) + ' = ' + tr('tactus'),
-      onclick: () => { prefs.unit = k; setTempo(prefs.tempo); buildUnits(); } }, parse(glyphIcon('note', k))));
+      onclick: () => { const tac = seg.closest('.tactus'); if (!tac.classList.contains('open')) { tac.classList.add('open'); return; } prefs.unit = k; setTempo(prefs.tempo); tac.classList.remove('open'); buildUnits(); } }, parse(glyphIcon('note', k))));
   });
 }
+document.querySelector('.tactus .tlab')?.addEventListener('click', () => document.querySelector('.tactus').classList.toggle('open'));
+document.addEventListener('pointerdown', e => { const t = document.querySelector('.tactus.open'); if (t && !t.contains(e.target)) t.classList.remove('open'); });
 const taps = [];
 $('#tap').addEventListener('click', () => {
   const t = performance.now();
@@ -1235,7 +1236,15 @@ paper.addEventListener('click', e => {
   e.stopPropagation(); e.preventDefault();
   openClefPop(+h.dataset.clefVi);
 }, true);
-paper.addEventListener('pointerdown', e => { if (e.target.closest('.clef-hit')) e.stopPropagation(); }, true);
+paper.addEventListener('pointerdown', e => { if (e.target.closest('.clef-hit, .vctl')) e.stopPropagation(); }, true);
+/* Mute (seen, not heard) and Hide (neither seen nor heard) beside each voice */
+paper.addEventListener('click', e => {
+  const c = e.target.closest('.vctl');
+  if (!c) return;
+  e.stopPropagation(); e.preventDefault();
+  const i = +c.dataset.vi, st = c.dataset.act;
+  S.voice[i] = S.voice[i] === st ? 'on' : st; render(); buildVoiceChips();
+}, true);
 document.addEventListener('pointerdown', e => { const pop = $('#clefPop'); if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.clef-hit')) pop.hidden = true; });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#clefPop').hidden = true; });
 
@@ -1270,7 +1279,16 @@ function toggleFull() {
   else (r.requestFullscreen || r.webkitRequestFullscreen).call(r)?.catch?.(() => {});
 }
 /* the full-screen button at the top right */
-const syncFullBtn = () => { document.documentElement.classList.toggle('full', !!fullEl()); const b = $('#fullBtn'); if (!b) return; b.hidden = !canFull; b.setAttribute('aria-pressed', String(!!fullEl())); };
+const FULL_IN = '<svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg>';
+const FULL_OUT = '<svg viewBox="0 0 24 24"><path d="M9 4v5H4M20 9h-5V4M15 20v-5h5M4 15h5v5"/></svg>';
+const syncFullBtn = () => {
+  const on = !!fullEl();
+  document.documentElement.classList.toggle('full', on);
+  const b = $('#fullBtn'); if (!b) return;
+  b.hidden = !canFull; b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = on ? FULL_OUT : FULL_IN;
+  const t = tr(on ? 'Leave full screen' : 'Full screen'); b.title = t; b.setAttribute('aria-label', t);
+};
 $('#fullBtn')?.addEventListener('click', toggleFull);
 syncFullBtn();
 ['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { syncFullBtn(); if (S.base) { buildStudio(); setTimeout(() => render(), 80); } }));

@@ -365,7 +365,9 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const headW = Math.max(...vidx.map(v => HEAD(piece, clefOf(v))));
   /* the voices are named by an initial, as in a choirbook: S, A, T, B before the first staff of each voice */
   const initials = opts.names !== false && vidx.some(v => piece.voices[v].name);
-  const INDENT = initials ? 3.4 : 0;
+  /* Mute and Hide for each voice sit in the margin, before its initial */
+  const CTL = initials && opts.voiceCtl && vidx.length > 1 ? 1.9 : 0;
+  const INDENT = initials ? 3.4 + CTL : 0;
   opts = { ...opts, initials };
   /* two or more voices are joined at the left by a brace, as in keyboard music */
   const BR = vidx.length > 1 && opts.brace !== false ? 2.1 : 0;
@@ -388,7 +390,13 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       const place = { vi, y: y - s.top };
       let init = '';
       const nm = piece.voices[vi].name;
-      if (ind - BR && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f((ind - BR) / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
+      if (si === 0 && CTL) {
+        const cy = place.y + (piece.lines - 1) / 2, st = opts.state?.[vi] || 'on', k = 1.35 / 24;
+        const icon = (act, dy, d) => `<g class="vctl${st === act ? ' on' : ''}" data-vi="${vi}" data-act="${act}"><rect x="0" y="${f(cy + dy - .85)}" width="1.7" height="1.7" rx=".35" class="vctl-bg"/><g transform="translate(.17 ${f(cy + dy - .68)}) scale(${k})">${d}</g></g>`;
+        init += icon('mute', -1, '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>') +
+                icon('hide', 1, '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><path d="M4 20L20 4"/>');
+      }
+      if (ind - BR && nm && opts.state?.[vi] !== 'hide') init += `<text x="${f(CTL + (ind - BR - CTL) / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
       svg += init + `<g transform="translate(${f(ind)} ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
       y += (s.bottom - s.top) + gap;
       return place;
@@ -399,13 +407,20 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       /* the staff lines reach back to a thin line that joins the staves; the brace stands just before it */
       const xl = ind - .45;
       const ext = staves.map(st => Array.from({ length: piece.lines }, (_, k) => `M${f(xl)} ${f(st.y + k)}H${f(ind + .05)}`).join('')).join('');
-      svg = braceSVG(xl - .4, y0, y1, Math.min(1.75, .95 + (y1 - y0) * .02)) +
+      svg = bracketSVG(xl - .55, y0, y1) +
         `<path d="${ext}" class="staffline"/>` +
         `<path d="M${f(xl)} ${f(y0)}V${f(y1)}" class="sysline" stroke="currentColor" stroke-width=".16" fill="none"/>` + svg;
     }
     const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
     return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind, head: headW, xt: slice.map((c, i) => [c.t, at[i]]) };
   });
+}
+
+/* the old bracket of a score: one tall line before the staves, turning to the right at the top and with a small foot at the bottom,
+   like a great C */
+function bracketSVG(x, y0, y1) {
+  const r = 1.1;
+  return `<path d="M${f(x + 1.25)} ${f(y0 - 1.15)}Q${f(x)} ${f(y0 - 1.15)} ${f(x)} ${f(y0 - 1.15 + r)}V${f(y1 + 1.15 - r)}Q${f(x)} ${f(y1 + 1.15)} ${f(x + 1.25)} ${f(y1 + 1.15)}" class="bracket" fill="none" stroke="currentColor" stroke-width=".42" stroke-linecap="round"/>`;
 }
 
 /* a curly brace whose right edge stands at xR, from y0 to y1, `a` wide */
