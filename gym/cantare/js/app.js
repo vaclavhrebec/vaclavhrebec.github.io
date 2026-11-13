@@ -216,6 +216,10 @@ function render(resetLeaf) {
   $('#trail').textContent = (p.trail || []).join('  ›  ');
   $('#title').textContent = p.title;
   $('#note').textContent = p.note + (p.talea ? ' Talea: ' + TALEAE[S.talea][0] + '.' : '');
+  /* the description waits behind the háček next to the title */
+  $('#noteToggle').hidden = !$('#note').textContent.trim();
+  $('#note').hidden = !S.noteOpen;
+  $('#noteToggle').setAttribute('aria-expanded', String(!!S.noteOpen));
   $('#credit').hidden = !p.credit;
   $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>') : '';
   const useBook = prefs.view === 'book' && p.voices.length > 1;
@@ -437,7 +441,6 @@ function buildStudio() {
 
   /* view */
   card(tr('View'),
-    chipRow(tr('Notation'), [['bravura', tr('Engraved')], ['manuscript', tr('Manuscript')]].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
     el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
     chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }, k === 'vellum' ? { title: tr('Vellum and a rastrum: the music on an old page') } : {}))),
@@ -887,6 +890,33 @@ paper.addEventListener('contextmenu', e => {
   if (!g || +g.dataset.v >= S.piece.voices.length) return;
   e.preventDefault(); noteToRest(+g.dataset.v, +g.dataset.i);
 });
+$('#noteToggle').addEventListener('click', () => {
+  S.noteOpen = !S.noteOpen;
+  $('#note').hidden = !S.noteOpen; $('#noteToggle').setAttribute('aria-expanded', String(S.noteOpen));
+});
+
+/* a click on a clef (with or without Edit) opens the palette of all the clefs for that voice */
+function openClefPop(vi) {
+  const pop = $('#clefPop'), v = S.piece.voices[vi], cur = S.clefs[vi] || v.clef, st = styleOf(S.piece);
+  const pick = k => { S.clefs[vi] = k === S.base.voices[vi]?.clef ? undefined : k; pop.hidden = true; render(true); buildStudio?.(); };
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Clef') + (S.piece.voices.length > 1 && v.name ? ' · ' + v.name : '')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'clefgrid' }, ...CLEF_ORDER.map(k => {
+      const b = el('button', { type: 'button', 'aria-pressed': String(k === cur), onclick: () => pick(k) }, parse(glyphIcon('clef', k, st)), el('span', {}, CLEFS[k].short));
+      return b;
+    })));
+  pop.hidden = false;
+}
+paper.addEventListener('click', e => {
+  const h = e.target.closest('.clef-hit');
+  if (!h) return;
+  e.stopPropagation(); e.preventDefault();
+  openClefPop(+h.dataset.clefVi);
+}, true);
+paper.addEventListener('pointerdown', e => { if (e.target.closest('.clef-hit')) e.stopPropagation(); }, true);
+document.addEventListener('pointerdown', e => { const pop = $('#clefPop'); if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.clef-hit')) pop.hidden = true; });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#clefPop').hidden = true; });
+
 let holdT = 0, held = false;
 paper.addEventListener('pointerdown', e => {
   held = false;

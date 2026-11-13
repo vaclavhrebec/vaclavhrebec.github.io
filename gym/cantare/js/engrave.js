@@ -5,7 +5,7 @@ import { MS } from './manuscript.js';
 
 /* notation font: 'manuscript' (shapes cut from a c.1500 choirbook) or 'bravura' (SMuFL). Chant always uses the plain forms. */
 let FONT = 'bravura';
-export const setFont = k => { FONT = k === 'manuscript' ? 'manuscript' : 'bravura'; };
+export const setFont = () => { FONT = 'bravura'; }; /* Bravura for everything */
 const ms = style => FONT === 'manuscript' && style !== 'chant';
 const mp = (k, x, y, sx = 1, sy = sx) => `<path d="${MS[k].d}" transform="translate(${f(x)} ${f(y)})${sx === 1 && sy === 1 ? '' : ` scale(${sx} ${sy})`}" class="fill" fill-rule="evenodd"/>`;
 const stemPath = (x, y0, y1) => `<path d="M${f(x - .035)} ${f(y0)}L${f(x - .028)} ${f(y1)}H${f(x + .028)}L${f(x + .035)} ${f(y0)}Z" class="fill"/>`;
@@ -16,7 +16,9 @@ const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 /* ---------- glyphs (Bravura outlines) ---------- */
 const U = .004; /* one font unit in staff spaces */
+const CHANT_K = 1.3; /* the chant punctum, a little larger than Bravura draws it */
 const gw = c => BRAVURA[c].w * U;
+const CHANT_W = BRAVURA.E990.w * U * CHANT_K;
 /* glyph with its font origin at (x, y) */
 const go = (c, x, y, sx = 1, cls = 'fill') => `<path d="${BRAVURA[c].d}" transform="translate(${f(x)} ${f(y)}) scale(${f(U * sx * 1e3) / 1e3} ${-f(U * sx * 1e3) / 1e3})" class="${cls}"/>`;
 /* glyph with its bounding box centred on (cx, cy) */
@@ -50,16 +52,19 @@ const accidental = (acc, x, y, small, style = 'white') => {
 /* a note head and stem; style: 'chant' | 'white' | 'black' */
 function noteGlyph(n, x, y, up, style) {
   if (style === 'chant') {
-    let g = `<rect x="${f(x - .5)}" y="${f(y - .44)}" width="1" height=".88" class="fill"/>`;
-    if (n.v === 'L') g += `<path d="M${f(x + .43)} ${f(y)}v1.7" class="stroke thick"/>`;
+    /* Bravura's chant punctum; a longa is the punctum with a tail on the right */
+    let g = gc('E990', x, y, CHANT_K);
+    if (n.v === 'L') g += `<path d="M${f(x + CHANT_W / 2 - .06)} ${f(y)}v1.7" class="stroke thick"/>`;
     return g;
   }
   const black = style === 'black' || n.col;
   if (ms(style)) return msNote(n, x, y, up, black);
   let g = '', halfW, stem = null;
   if (n.v === 'Mx' || n.v === 'L' || n.v === 'B') {
-    halfW = n.v === 'Mx' ? 1.05 : .6;
-    g = `<rect x="${f(x - halfW)}" y="${f(y - .46)}" width="${f(halfW * 2)}" height=".92" class="${black ? 'fill' : 'hollow'}"/>`;
+    /* Bravura's mensural heads: maxima, and the longa/brevis head */
+    const head = n.v === 'Mx' ? (black ? 'E930' : 'E933') : (black ? 'E934' : 'E937');
+    g = gc(head, x, y);
+    halfW = BRAVURA[head].w * U / 2;
     if (n.v !== 'B') stem = up ? 'E93E' : 'E93F';
   } else {
     const head = n.v === 'S' ? (black ? 'E938' : 'E939') : n.v === 'M' ? (black ? 'E938' : 'E93C') : (black || n.v === 'Sm' || n.v === 'F' ? (style === 'white' ? 'E93D' : 'E938') : 'E938');
@@ -168,7 +173,7 @@ export function buildColumns(piece, vidx) {
       if (nx && nx.ligature) {
         const a = c.notes[vidx[0]]?.n, b = nx.notes[vidx[0]]?.n;
         c.tight = true;
-        c.need = 1 + (a && b && a.step === b.step ? .3 : 0) + (b && b.acc && !b.ficta ? .9 : 0);
+        c.need = CHANT_W + (a && b && a.step === b.step ? .3 : 0) + (b && b.acc && !b.ficta ? .9 : 0);
       } else {
         c.tight = false;
         let inner = 0;
@@ -202,8 +207,9 @@ function drawStaff(piece, vi, cols, xs, opts) {
   const total = xs.end;
   let svg = '';
   for (let k = 0; k < lines; k++) svg += `<path d="M0 ${k}H${f(total)}" class="staffline"/>`;
-  svg += clefGlyph(clef, lines - clef.line, style, lines);
   const cw = clefWidth(clef, style);
+  /* the clef can be clicked: a palette of all the clefs opens */
+  svg += `<g class="clef-hit" data-clef-vi="${vi}"><rect x="-.4" y="-1.2" width="${f(cw + .8)}" height="${f(lines + 1.4)}" fill="transparent"/>${clefGlyph(clef, lines - clef.line, style, lines)}</g>`;
   if (piece.bflat) {
     const y = yOf(flatStep(clef.bottom, lines) ?? clef.bottom + 2);
     svg += accidental('b', cw + .5 + .9, y, false, style);
@@ -356,8 +362,13 @@ export function systemSVG(sys, scale, extraClass = '') {
 export { CLEFS };
 
 /* small icons for the editing toolbar, drawn with the same glyphs */
-export function glyphIcon(kind, arg) {
+export function glyphIcon(kind, arg, arg2) {
   if (kind === 'note') return `<svg class="glyph" viewBox="-1.4 -2.6 2.8 4.6" aria-hidden="true">${noteGlyph({ v: arg, col: false }, 0, .9, true, 'white')}</svg>`;
+  if (kind === 'clef') {
+    const c = CLEFS[arg], st = arg2 || 'white', w = clefWidth(c, st);
+    const lines = [0, 1, 2, 3, 4].map(k => `<path d="M-.3 ${k}H${f(w + 1.4)}" class="staffline"/>`).join('');
+    return `<svg class="glyph clefpick" viewBox="-.5 -2.4 ${f(w + 2)} 8.8" aria-hidden="true">${lines}${clefGlyph(c, 5 - c.line, st, 5)}</svg>`;
+  }
   if (kind === 'rest') return `<svg class="glyph" viewBox="-1 -1.6 2 3.2" aria-hidden="true">${restGlyph({ v: 'B' }, 0, .6)}</svg>`;
   if (kind === 'acc') return `<svg class="glyph" viewBox="-.9 -1.7 1.8 3.4" aria-hidden="true">${accidental(arg, .45, 0, false)}</svg>`;
   return '';

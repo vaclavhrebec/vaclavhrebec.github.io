@@ -14,7 +14,7 @@ export const VALUE_NAME = { Mx: 'Maxima', L: 'Longa', B: 'Brevis', S: 'Semibrevi
 const CLEF_SPEC = {
   g1: ['G', 1], treble: ['G', 2], treble8: ['G', 2, -7],
   c1: ['C', 1], c2: ['C', 2], c3: ['C', 3], c4: ['C', 4], c5: ['C', 5],
-  baritone: ['F', 3], bass: ['F', 4],
+  baritone: ['F', 3], bass: ['F', 4], f5: ['F', 5],
 };
 const KIND_STEP = { C: 28, F: 24, G: 32 };
 
@@ -23,7 +23,7 @@ export const CLEFS = Object.fromEntries(Object.entries(CLEF_SPEC).map(([id, [kin
   const short = kind === 'F' ? 'F' + line : kind + line + (shift ? '₈' : '');
   return [id, { id, kind, line, shift, bottom, short }];
 }));
-export const CLEF_ORDER = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass', 'c5', 'g1', 'treble', 'treble8'];
+export const CLEF_ORDER = ['c1', 'c2', 'c3', 'c4', 'c5', 'baritone', 'bass', 'f5', 'g1', 'treble', 'treble8'];
 const CHANT_CLEFS = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass'];
 
 export function clefFor(id) { return CLEFS[id] || CLEFS.c4; }

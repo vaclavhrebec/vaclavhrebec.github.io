@@ -66,6 +66,12 @@ svg { display: block; }
 .piece-head { max-width: 62rem; margin: 0 auto 10px; }
 .trail { margin: 0; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--soft); }
 .piece-head h2 { margin: 2px 0 4px; font: 400 clamp(22px, 3vw, 32px)/1.2 var(--serif); }
+.titlerow { display: flex; align-items: center; gap: 6px; }
+.hacek { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 0; border-radius: 50%; background: none; color: var(--soft); cursor: pointer; }
+.hacek:hover { color: var(--accent); background: var(--raised); }
+.hacek svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s; }
+.hacek[aria-expanded="true"] svg { transform: rotate(180deg); }
+.piece-head .note[hidden] { display: none; }
 .piece-head .note { margin: 0; color: var(--soft); font: 15px/1.5 var(--serif); max-width: 46rem; }
 .paper { max-width: 62rem; margin: 0 auto; padding: 8px clamp(4px, 1vw, 12px) 22px; color: var(--note); }
 .sys { margin: 0 0 14px; }
@@ -300,3 +306,18 @@ html.focus .tactus-hand { z-index: 0; }
 #pdArm { transform-origin: 80px 12px; }
 @media (min-width: 1100px) { .drawer.right[data-open="true"] ~ .pendulum { right: calc(320px + clamp(24px, 9vw, 140px)); } }
 @media (max-width: 640px) { .pendulum { height: min(34%, 240px); right: 14px; } }
+
+/* the clef palette */
+.system .clef-hit { cursor: pointer; }
+.system .clef-hit:hover .fill { fill: var(--accent); }
+.clefgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+.clefgrid button { display: grid; justify-items: center; gap: 2px; padding: 6px 4px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); color: var(--ink); cursor: pointer; font: 12px var(--sans); }
+.clefgrid button[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.clefgrid button:hover { border-color: var(--accent); }
+.clefgrid .clefpick { width: 52px; height: 64px; }
+.clefgrid .clefpick .staffline { stroke: var(--staff); stroke-width: .085; fill: none; }
+.clefpop-head { display: flex; justify-content: space-between; align-items: center; padding: 2px 4px; }
+.clefpop-head h3 { margin: 0; font: 400 20px var(--serif); }
+.clefpop-head button { border: 0; background: none; font-size: 22px; color: var(--soft); cursor: pointer; }
+.clefpick .clefnum { font: 1.5px var(--serif); fill: currentColor; }
+.clefpick .fill { fill: currentColor; }

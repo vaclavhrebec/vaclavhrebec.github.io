@@ -31,6 +31,7 @@
   <div class="tb-group"><button class="tbtn" id="transformBtn" aria-expanded="false" title="Transform the melody" data-i18n-title="Transform the melody"><svg class="ico" viewBox="0 0 24 24"><path d="M5 11a7 7 0 0 1 12-4.500l2 2"/><path d="M19 4v4.500h-4.500"/><path d="M19 13a7 7 0 0 1-12 4.500l-2-2"/><path d="M5 20v-4.500h4.500"/><path d="M12 10l2 2-2 2-2-2z"/></svg><span data-i18n="Transform">Transform</span></button></div>
   <div class="pop" id="micPop" hidden></div>
   <div class="pop" id="transformPop" hidden></div>
+  <div class="pop" id="clefPop" hidden></div>
 </div>
 <div class="shell">
   <aside class="drawer left" id="library" aria-label="Library">
@@ -41,8 +42,8 @@
   <main class="stage" id="stage">
     <section class="piece-head">
       <p class="trail" id="trail"></p>
-      <h2 id="title"></h2>
-      <p class="note" id="note"></p>
+      <div class="titlerow"><h2 id="title"></h2><button type="button" class="hacek" id="noteToggle" aria-expanded="false" aria-controls="note" title="Description" data-i18n-title="Description" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>
+      <p class="note" id="note" hidden></p>
     </section>
     <div class="paper" id="paper" aria-live="polite"></div>
     <p class="credit" id="credit" hidden></p>
