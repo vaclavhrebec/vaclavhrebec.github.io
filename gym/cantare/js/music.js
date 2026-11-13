@@ -79,6 +79,7 @@ export function lengthOf(n, tempus) {
   let v = VALUE[n.v];
   if (tempus === 'O' && (n.v === 'B' || n.v === 'L' || n.v === 'Mx')) v = v * 1.5; /* perfect tempus: three semibreves to the brevis */
   if (n.dot) v *= 1.5;
+  if (n.alt) v *= 2; /* brevis altera: written as a brevis, lasting two */
   if (n.col) v *= 2 / 3;
   return v;
 }

@@ -42,12 +42,31 @@ const S = {
   playing: false, startAt: 0, sel: null, index: [], systems: null, edit: false,
 };
 
-/* talea patterns, in breves; a three is a perfect longa, six a perfect maxima */
+/* Taleae: a repeating rhythm laid over the chant, one value for each chant note; rests (r…) take no note.
+   B brevis, L longa, L. perfect longa, Ba brevis altera (written as a brevis, lasting two), Mx duplex longa (maxima), Mx. perfect maxima.
+   The first seven are Václav's own; then the six rhythmic modes of Notre-Dame polyphony (Johannes de Garlandia,
+   De mensurabili musica, c. 1250) and tenor patterns with rests (ordines) as in the clausulae and motets built on them. */
 const TALEAE = [
-  ['Longa, brevis', [2, 1]], ['Brevis, longa', [1, 2]],
-  ['Three breves, perfect longa', [1, 1, 1, 3]], ['Three breves, longa, brevis, perfect longa', [1, 1, 1, 2, 1, 3]],
-  ['Three longas, perfect maxima', [2, 2, 2, 6]], ['Perfect longa, longa, brevis', [3, 2, 1]],
+  ['Longa, brevis (1st rhythmic mode, trochaic)', 'L B'],
+  ['Brevis, longa (2nd rhythmic mode, iambic)', 'B L'],
+  ['Longa, brevis, brevis', 'L B B'],
+  ['Three breves, perfect longa', 'B B B L.'],
+  ['Three breves, longa, brevis, perfect longa', 'B B B L B L.'],
+  ['Three longas, perfect maxima', 'L L L Mx.'],
+  ['Perfect longa, longa, brevis', 'L. L B'],
+  ['3rd rhythmic mode (dactylic): perfect longa, brevis, brevis altera', 'L. B Ba', 'Garlandia'],
+  ['4th rhythmic mode (anapaestic): brevis, brevis altera, perfect longa', 'B Ba L.', 'Garlandia'],
+  ['5th rhythmic mode (spondaic): perfect longas', 'L.', 'Garlandia'],
+  ['6th rhythmic mode (tribrachic): breves', 'B', 'Garlandia'],
+  ['1st mode, first ordo: longa, brevis, longa, brevis rest', 'L B L rB', 'ordo'],
+  ['1st mode, second ordo: longa, brevis, longa, brevis, longa, brevis rest', 'L B L B L rB', 'ordo'],
+  ['2nd mode, first ordo: brevis, longa, brevis, longa, longa rest', 'B L B L rL', 'ordo'],
+  ['5th mode, two perfect longas and a perfect longa rest', 'L. L. rL.', 'ordo'],
+  ['5th mode, three perfect longas and a perfect longa rest', 'L. L. L. rL.', 'ordo'],
+  ['3rd mode tenor: perfect longa, brevis, brevis altera, perfect longa, perfect longa rest', 'L. B Ba L. rL.', 'ordo'],
+  ['Maxima, longa, brevis, longa rest', 'Mx L B rL'],
 ];
+const TALEA_VAL = { B: ['B', false], Ba: ['B', false, true], L: ['L', false], 'L.': ['L', true], Mx: ['Mx', false], 'Mx.': ['Mx', true] };
 
 const T = { get hidden() { return tr('improvise this voice'); } };
 
@@ -189,12 +208,20 @@ function rebuildPiece() {
   if (S.tempus) p.tempus = S.tempus;
   if (S.cut != null) p.cut = S.cut;
   if (S.talea >= 0 && b.kind === 'chant') {
-    const pat = TALEAE[S.talea][1], v = p.voices[0];
-    v.notes.forEach((n, i) => {
-      const br = pat[i % pat.length];
-      const [val, dot] = br === 1 ? ['B', false] : br === 2 ? ['L', false] : br === 3 ? ['L', true] : br === 6 ? ['Mx', true] : ['B', false];
-      n.v = val; n.dot = dot;
+    const pat = TALEAE[S.talea][1].split(' '), v = p.voices[0], out = [];
+    let k = 0;
+    const src = v.notes.filter(n => !n.rest);
+    src.forEach((n, i) => {
+      /* rests in the pattern come before the next sounding value (never after the last note) */
+      while (pat[k % pat.length].startsWith('r')) {
+        const [val, dot] = TALEA_VAL[pat[k % pat.length].slice(1)];
+        if (i > 0) out.push({ v: val, dot, rest: true, step: n.step, acc: '', col: false, ficta: false });
+        k++;
+      }
+      const [val, dot, alt] = TALEA_VAL[pat[k % pat.length]];
+      n.v = val; n.dot = dot; n.alt = !!alt; out.push(n); k++;
     });
+    v.notes = out;
     p.talea = true;
     if (S.taleaLook === 'mensural') { p.kind = 'mensural'; p.lines = 5; }
   }
@@ -389,7 +416,7 @@ function buildTransform() {
       el('div', { class: 'row' }, chip(tr('None'), S.talea < 0, () => { S.talea = -1; redo(); })),
       ...TALEAE.map(([name], i) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }))),
       S.talea >= 0 ? chipRow(tr('Shown as'), looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
-      el('p', { class: 'hint' }, 'A talea lays a repeating rhythmic pattern over the chant. Dotted values are perfect.'));
+      el('p', { class: 'hint' }, tr('A talea lays a repeating rhythmic pattern over the chant. Perfect values last three; a brevis altera is written as a brevis and lasts two. The rhythmic modes follow Johannes de Garlandia (c. 1250); the ordines are tenor patterns with rests, as in Notre-Dame clausulae and motets.')));
   }
 
 }

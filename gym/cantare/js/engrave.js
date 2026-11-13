@@ -99,7 +99,7 @@ function msNote(n, x, y, up, black) {
 /* mensural rests hang from, or stand on, the middle line */
 function restGlyph(n, x, midLine, style = 'white') {
   if (ms(style) && (n.v === 'B' || n.v === 'L')) return n.v === 'B' ? mp('restBrevis', x, midLine + .5) : mp('restLonga', x, midLine + 1);
-  const code = { Mx: 'E9F0', L: 'E9F2', B: 'E9F3', S: 'E9F4', M: 'E9F5', Sm: 'E9F6', F: 'E9F7' }[n.v];
+  const code = n.v === 'L' && n.dot ? 'E9F1' : { Mx: 'E9F0', L: 'E9F2', B: 'E9F3', S: 'E9F4', M: 'E9F5', Sm: 'E9F6', F: 'E9F7' }[n.v];
   return go(code, x - gw(code) / 2, midLine);
 }
 
