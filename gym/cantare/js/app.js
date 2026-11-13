@@ -670,7 +670,17 @@ function sounding() {
   const out = [];
   S.piece.voices.forEach((v, vi) => {
     if (S.voice[vi] !== 'on') return;
-    v.notes.forEach(n => { if (!n.rest) out.push({ vi, n }); });
+    /* a note without its own syllable continues the syllable before it (a ligature in chant, a melisma in mensural
+       music): it is sung on that syllable's vowel and tied to the note before, with no new accent */
+    const texted = !!v.lyrics && v.notes.some(n => n.text);
+    let syl = '', prev = null;
+    v.notes.forEach(n => {
+      if (n.rest) { prev = null; return; }
+      if (n.text) syl = n.text;
+      const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev };
+      if (e.tied && prev) prev.legato = true;
+      out.push(e); prev = e;
+    });
   });
   return out.sort((a, b) => a.n.t - b.n.t);
 }
@@ -690,10 +700,11 @@ function startPlayback() {
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
     while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
-      const { vi, n } = events[ei++];
+      const { vi, n, syl, tied, legato } = events[ei++];
       const at = t0 + Math.max(0, n.t - from) * k;
       const cut = Math.max(0, from - n.t);
-      playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: n.text, dur: Math.max(.08, (n.len - cut) * k - .03), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+      const tie = tied && n.t >= from - 1e-6;
+      playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, dur: Math.max(.08, (n.len - cut) * k - (legato ? 0 : .03)), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };

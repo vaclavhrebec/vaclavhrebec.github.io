@@ -134,3 +134,6 @@ Object.assign(D.de, { 'Inspired by an early stage of the': 'Angeregt von einer f
 Object.assign(D.fr, { 'Inspired by an early stage of the': "Inspiré d'une première version de l'application", 'app by Samuel Reid Navarro.': 'de Samuel Reid Navarro.' });
 Object.assign(D.cs, { 'Inspired by an early stage of the': 'Inspirováno ranou verzí aplikace', 'app by Samuel Reid Navarro.': 'od Samuela Reida Navarra.' });
 Object.assign(D.de, { 'Voice (sung by Chimera)': 'Stimme (gesungen von Chimera)' });
+Object.assign(D.de, { 'Voice sung by': 'Stimme gesungen von', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', einem physikalischen Stimmsynthesizer von Jameson Hodge, MIT-Lizenz.' });
+Object.assign(D.fr, { 'Voice sung by': 'Voix chantée par', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', un synthétiseur vocal physique de Jameson Hodge, licence MIT.' });
+Object.assign(D.cs, { 'Voice sung by': 'Hlas zpívá', ', a physical voice synthesiser by Jameson Hodge, MIT License.': ', fyzikální syntezátor hlasu od Jamesona Hodge, licence MIT.' });

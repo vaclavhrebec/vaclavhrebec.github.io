@@ -43,7 +43,7 @@ export function prepare(base = 'audio/voice/') {
     await Promise.all(['male', 'female'].flatMap(b => 'aeiou'.split('').map(v => get(b + v, `${b}_${v}.mp3`))));
   })();
 }
-function bankNote(midi, f0, vowel, at, env, sources) {
+function bankNote(midi, f0, vowel, at, env, sources, tied) {
   const m = BANK.map; if (!m) return false;
   const body = midi < 57 ? 'male' : 'female', buf = BANK.buf[body + vowel]; if (!buf) return false;
   const ps = m[body]; let k = 0; ps.forEach((p, i) => { if (Math.abs(p - midi) < Math.abs(ps[k] - midi)) k = i; });
@@ -52,9 +52,10 @@ function bankNote(midi, f0, vowel, at, env, sources) {
   const n = Math.max(1, Math.round((m.loop[1] - m.loop[0]) * fp));
   src.loop = true; src.loopStart = slot + m.loop[0]; src.loopEnd = slot + m.loop[0] + n / fp;
   const v = ctx.createOscillator(); v.frequency.value = 5.2;
-  const vg = ctx.createGain(); vg.gain.setValueAtTime(0, at); vg.gain.linearRampToValueAtTime(14, at + .5);
+  const vg = ctx.createGain(); vg.gain.setValueAtTime(tied ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied ? .01 : .5));
   v.connect(vg); vg.connect(src.detune); sources.push(v);
-  src.connect(env); src.start(at, slot + m.lead - .03); sources.push(src);
+  /* a note tied into a ligature starts inside the sustained vowel, with no new onset */
+  src.connect(env); src.start(at, tied ? slot + m.loop[0] : slot + m.lead - .03); sources.push(src);
   return true;
 }
 
@@ -116,21 +117,36 @@ function out(node, gain) {
 
 
 /* One note. `bars` are the organ's drawbar levels; other timbres ignore them. */
-export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text }) {
+/* tied: the note continues a syllable (a ligature, a melisma), so it glides in from the note before without a new attack;
+   legato: the next note is tied to this one, so this one fades into it. A note that is not tied carries a gentle accent. */
+export const XF = .09;
+export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false }) {
   ensure();
-  const f0 = hz(midi, a4), end = at + dur, vowel = vowelOf(text);
+  const f0 = hz(midi, a4), vowel = vowelOf(text);
+  if (tied) { at -= XF / 2; dur += XF / 2; }
+  if (legato) dur += XF / 2;
+  const end = at + dur;
   const env = ctx.createGain();
   const reg = REG[timbre];
   const atk = reg ? Math.max(.005, SOUND.atk / 1000) : timbre === 'organ' ? .045 : timbre === 'voice' ? .1 : timbre === 'sackbut' ? .08 : .055, rel = reg ? Math.max(.01, SOUND.rel / 1000) : timbre === 'organ' ? .09 : .15;
+  /* every point of the envelope later than the one before, also for very short notes */
+  const fall0 = legato ? end - XF : end - rel, fall1 = legato ? end : end + rel * .5;
+  const rise = Math.min(tied ? at + XF : at + atk, fall0 - .005);
   env.gain.setValueAtTime(0, at);
-  env.gain.linearRampToValueAtTime(1, at + atk);
-  env.gain.setValueAtTime(1, Math.max(at + atk, end - rel));
-  env.gain.linearRampToValueAtTime(0, end + rel * .5);
-  const stop = end + rel;
+  if (tied) env.gain.linearRampToValueAtTime(1, Math.max(at + .005, rise));
+  else {
+    env.gain.linearRampToValueAtTime(1.3, Math.max(at + .005, rise));
+    const settle = Math.min(rise + .18, fall0 - .002);
+    if (settle > rise) env.gain.linearRampToValueAtTime(1, settle);
+  }
+  env.gain.setValueAtTime(1, Math.max(at + .01, fall0));
+  env.gain.linearRampToValueAtTime(0, Math.max(at + .02, fall1));
+  const stop = legato ? end + .02 : end + rel;
   const sources = [];
   const sink = out(env, timbre === 'voice' ? level * 2.6 : level);
 
   const noise = (dur, hp, q, g0) => {
+    if (tied) return;
     const nb = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate), d = nb.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     const src = ctx.createBufferSource(); src.buffer = nb;
@@ -141,7 +157,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   const wave = amps => { const re = new Float32Array(amps.length + 1), im = new Float32Array(amps.length + 1); amps.forEach((v, i) => { im[i + 1] = v; }); return ctx.createPeriodicWave(re, im); };
   const vibrato = (o, rate, depth, delay) => {
     const v = ctx.createOscillator(); v.frequency.value = rate;
-    const vg = ctx.createGain(); vg.gain.setValueAtTime(0, at); vg.gain.linearRampToValueAtTime(f0 * depth, at + delay + .25);
+    const vg = ctx.createGain(); vg.gain.setValueAtTime(tied ? f0 * depth : 0, at); vg.gain.linearRampToValueAtTime(f0 * depth, at + (tied ? .01 : delay + .25));
     v.connect(vg); vg.connect(o.frequency); sources.push(v);
   };
 
@@ -162,9 +178,9 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   } else if (timbre === 'sackbut') {
     /* Sackbut: a soft, round brass tone that opens as the lips settle. */
     const amps = Array.from({ length: 16 }, (_, i) => Math.pow(.78, i));
-    const o = ctx.createOscillator(); o.setPeriodicWave(wave(amps)); o.frequency.setValueAtTime(f0 * .985, at); o.frequency.linearRampToValueAtTime(f0, at + .07);
+    const o = ctx.createOscillator(); o.setPeriodicWave(wave(amps)); o.frequency.setValueAtTime(tied ? f0 : f0 * .985, at); o.frequency.linearRampToValueAtTime(f0, at + .07);
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.4;
-    lp.frequency.setValueAtTime(f0 * 2.2, at); lp.frequency.linearRampToValueAtTime(Math.min(f0 * 6, 2600), at + .16);
+    lp.frequency.setValueAtTime(tied ? Math.min(f0 * 6, 2600) : f0 * 2.2, at); lp.frequency.linearRampToValueAtTime(Math.min(f0 * 6, 2600), at + .16);
     o.connect(lp); lp.connect(env); sources.push(o); vibrato(o, 4.6, .0025, .3);
     noise(.05, Math.min(f0 * 3, 3000), 1.5, .04);
   } else if (timbre === 'chalumeau') {
@@ -183,7 +199,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     pair.forEach(c => {
       const o = ctx.createOscillator(); o.setPeriodicWave(w); o.detune.value = c;
       const sc = SOUND.scoop;
-      o.frequency.setValueAtTime(f0 * Math.pow(2, -sc / 1200), at); o.frequency.linearRampToValueAtTime(f0, at + Math.min(.12, atk + .03));
+      o.frequency.setValueAtTime(tied ? f0 : f0 * Math.pow(2, -sc / 1200), at); o.frequency.linearRampToValueAtTime(f0, at + Math.min(.12, atk + .03));
       const g = ctx.createGain(); g.gain.value = 1 / pair.length; o.connect(g); g.connect(env); sources.push(o);
     });
     if (SOUND.chiff > 0) noise(.06 + SOUND.chiff / 2000, Math.min(f0 * 4, 5000), 1.2, SOUND.chiff / 100 * .5);
@@ -195,7 +211,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
       const g = ctx.createGain(); g.gain.value = SOUND.wind / 100 * .04;
       src.connect(bp); bp.connect(g); g.connect(env); src.start(at); src.stop(stop + .05);
     }
-  } else if (bankNote(midi, f0, vowel, at, env, sources)) {
+  } else if (bankNote(midi, f0, vowel, at, env, sources, tied)) {
     /* sung by Chimera */
   } else {
     /* Voice (until the bank has loaded): a glottal buzz shaped by the formants of the syllable's vowel, with a gentle vibrato. */
