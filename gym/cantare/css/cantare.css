@@ -457,3 +457,18 @@ html.full .bar .ib { height: 30px; }
 .toolbar .tbtn svg { width: 19px; height: 19px; }
 /* full screen: the header is one thin line */
 html.full .brand .crumbs, html.full .brand p { display: none; }
+/* three rows above the music: the title with its links and tagline side by side; the toolbar; the piece's category beside its name */
+.bar { padding-top: 6px; padding-bottom: 6px; }
+.brand { display: flex; align-items: baseline; gap: 14px; min-width: 0; flex: 1 1 auto; }
+.brand h1 { order: 1; font-size: 26px; }
+.brand p { order: 2; margin: 0; min-width: 0; flex: 0 1 auto; }
+.brand .crumbs { order: 3; flex-wrap: nowrap; white-space: nowrap; }
+.bar .grow { flex: 0 0 0; }
+.piece-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; }
+.piece-head .trail { margin: 0; order: 2; }
+.piece-head .titlerow { order: 1; }
+.piece-head .note { flex-basis: 100%; order: 3; }
+@media (max-width: 900px) { .brand p { display: none; } }
+@media (max-width: 640px) { .brand .crumbs { display: none; } .brand h1 { font-size: 21px; } }
+.piece-head .trail { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.piece-head .titlerow { flex: 0 1 auto; min-width: 0; }

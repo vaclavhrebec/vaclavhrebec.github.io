@@ -338,6 +338,13 @@ function drawStaff(piece, vi, cols, xs, opts) {
   }
   const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
   cap = label;
+  if (xs.custos && xs.custos[vi] != null) {
+    const cy = yOf(xs.custos[vi] + shift);
+    body += go('EA02', xs.end - 1.5, cy, .55);
+    /* ledger lines for a custos above or below the staff */
+    for (let l = -1; l >= cy - .01 && l >= -6; l--) body += `<path d="M${f(xs.end - 1.7)} ${l}h1.3" class="staffline"/>`;
+    for (let l = lines; l <= cy + .01 && l <= lines + 6; l++) body += `<path d="M${f(xs.end - 1.7)} ${l}h1.3" class="staffline"/>`;
+  }
   return { top, bottom, svg: svg + `<g class="${state === 'mute' ? 'muted' : ''}">${body}${words}</g>` + cap };
 }
 
@@ -372,7 +379,9 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   opts = { ...opts, initials };
   /* two or more voices are joined at the left by a brace, as in keyboard music */
   const BR = vidx.length > 1 && opts.brace !== false ? 2.1 : 0;
-  const ranges = breakLines(cols, width - BR, headW, INDENT);
+  /* room at the end of each line for the custos */
+  const CUST = 2.3;
+  const ranges = breakLines(cols, width - BR - CUST, headW, INDENT);
   if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
@@ -380,11 +389,16 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const natural = slice.reduce((a, c) => a + c.need, 0);
     const last = b >= cols.length;
     const ind = (si === 0 ? INDENT : 0) + BR;
-    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
+    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW - CUST) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
     const at = [];
     let x = headW;
     slice.forEach(c => { at.push(x + .35); x += c.need * (c.tight ? 1 : stretch); });
-    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x + (last ? .9 : 0), headW + 2), width - ind) : width - ind, final: last && slice.length > 0 };
+    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x + (last ? .9 : CUST - .2), headW + 2), width - ind) : width - ind, final: last && slice.length > 0 };
+    /* the custos: at the end of every line but the last, the pitch of each voice's next note */
+    if (!last) {
+      xs.custos = {};
+      vidx.forEach(vi => { for (let k = b; k < cols.length; k++) { const e = cols[k].notes[vi]; if (e && !e.n.rest) { xs.custos[vi] = e.n.step; break; } } });
+    }
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
       const s = drawStaff(piece, vi, slice, xs, opts);
