@@ -438,6 +438,9 @@ export function breakLines(cols, width, headW, firstIndent = 0) {
   return out;
 }
 
+/* the length of one brevis in minims: perfect (three semibreves) in tempus perfectum and in cantus fractus that runs in threes */
+export const breveUnit = piece => (piece.tempus === 'O' || piece.ternary ? 6 : 4);
+
 /* Engrave the systems for the voices `vidx` of a piece. */
 export function engraveSystems(piece, vidx, width, opts = {}) {
   const cols = buildColumns(piece, vidx);
@@ -517,7 +520,30 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
         `<path d="M${f(xl)} ${f(y0)}V${f(y1)}" class="sysline" stroke="currentColor" stroke-width=".16" fill="none"/>` + svg;
     }
     const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
-    return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind, head: headW, xt: slice.map((c, i) => [c.t, at[i]]) };
+    /* the breves are counted (perfect breves in tempus perfectum): the number of the breve each new line begins with,
+       above its first staff; on the one long line, every fifth breve where it begins */
+    let hh = h;
+    if (opts.count !== false && slice.length) {
+      const bu = breveUnit(piece), off = piece.beatOff || 0, marks = [];
+      const xOf = t => { /* the place of a moment on this line */
+        for (let i = 0; i < slice.length; i++) {
+          if (Math.abs(slice[i].t - t) < 1e-6) return at[i] - .35;
+          if (slice[i].t > t) { if (!i) return null; const [ta, xa] = [slice[i - 1].t, at[i - 1]]; return xa + (at[i] - xa) * (t - ta) / (slice[i].t - ta) - .35; }
+        }
+        return null;
+      };
+      if (opts.count > 0) {
+        for (let k = opts.count; off + (k - 1) * bu < t1 - 1e-6; k += opts.count) { const x = xOf(off + (k - 1) * bu); if (x != null) marks.push([k, x + ind, 'start']); }
+      } else if (si > 0 && t0 >= off - 1e-6) marks.push([Math.floor((t0 - off) / bu + 1e-6) + 1, BR && staves.length > 1 ? ind - 1.6 : ind + .1, 'start']);
+      if (marks.length) {
+        /* above the bracket of a score, else just above the staff */
+        const lift = BR && staves.length > 1 && !(opts.count > 0) ? 1.75 : .75;
+        const top = staves[0].y, pad = Math.max(0, lift + 1.15 - top);
+        if (pad) { svg = `<g transform="translate(0 ${f(pad)})">${svg}</g>`; hh += pad; staves.forEach(st => { st.y += pad; }); }
+        svg += marks.map(([k, x, a]) => `<text x="${f(x)}" y="${f(top + pad - lift)}" class="brevenum" text-anchor="${a}">${k}</text>`).join('');
+      }
+    }
+    return { svg, w: xs.end + ind, h: hh, t0, t1, from: a, to: b, staves, ind, head: headW, xt: slice.map((c, i) => [c.t, at[i]]) };
   });
 }
 

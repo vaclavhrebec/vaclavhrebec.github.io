@@ -4,6 +4,7 @@ import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
 import { createTake } from './take.js';
+import { openSingIn, gabcOf } from './singin.js';
 import { tr, setLang, getLang, guessLang, LANGS, translatePage } from './i18n.js';
 
 const $ = s => document.querySelector(s);
@@ -228,7 +229,7 @@ function openItem(item, trail, opts = {}) {
   stopPlayback();
   S.base = pieceFrom(item, trail.length ? trail : S.flat.find(f => f.item === item)?.trail || []);
   S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.cut = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
-  S.base.mine = !!item.mine;
+  S.base.mine = !!item.mine; S.base.sung = !!item.sung;
   /* chant (plainchant and cantus fractus) always opens at 60 */
   if (S.base.kind === 'chant' || S.base.kind === 'fractus') setTempo(60);
   S.voice = S.base.voices.map(() => 'on');
@@ -354,11 +355,11 @@ function renderScore(p0, opts) {
 /* one long line that rolls from right to left while it plays; the clefs stay at the left edge */
 function renderRoll(p0, opts) {
   const { p, order } = withTake(p0);
-  const [sys] = engraveSystems(p, order, 1e7, { ...opts, justify: false });
+  const [sys] = engraveSystems(p, order, 1e7, { ...opts, justify: false, count: 5 });
   const z = prefs.zoom, hw = sys.ind + sys.head;
   const head = el('div', { class: 'rollhead', style: `width:${(hw * z).toFixed(1)}px` },
     parse(`<svg class="system" viewBox="0 0 ${hw.toFixed(2)} ${sys.h.toFixed(2)}" width="${(hw * z).toFixed(1)}" height="${(sys.h * z).toFixed(1)}" xmlns="http://www.w3.org/2000/svg">${sys.svg}</svg>`));
-  head.querySelectorAll('.note').forEach(n => n.remove());
+  head.querySelectorAll('.note, .brevenum').forEach(n => n.remove());
   const roll = el('div', { class: 'roll' }, el('div', { class: 'rollin' }, el('div', { class: 'sys', 'data-sys': 0, 'data-t0': sys.t0, 'data-t1': sys.t1 }, parse(systemSVG(sys, z))), head));
   paper.append(roll);
   paper.classList.toggle('singing', p !== p0);
@@ -1103,7 +1104,14 @@ const tokOf = n => n.rest ? 'r' + n.v + (n.dot ? '.' : '') : n.step + (n.ficta &
 function itemOf(b) {
   const it = { title: b.title, t: b.tempus, b: b.bflat || undefined, cut: b.cut || undefined, mine: true };
   if (b.voices.length > 1) it.poly = b.voices.map(v => ({ c: v.clef, nm: v.name, n: v.notes.map(tokOf).join(' '), lyr: v.lyrics || undefined }));
-  else { it.c = b.voices[0].clef; it.n = b.voices[0].notes.map(tokOf).join(' '); if (b.voices[0].lyrics) it.lyr = b.voices[0].lyrics; }
+  else if (b.kind === 'chant') {
+    /* plainchant (also a chant sung in) stays plainchant: square notes on four lines */
+    const ns = b.voices[0].notes.filter(n => !n.rest);
+    it.c = b.voices[0].clef; it.s = ns.map(n => n.step); delete it.t;
+    if (ns.some(n => n.acc)) it.a = ns.map(n => n.acc || '');
+    if (b.voices[0].lyrics) it.lyr = b.voices[0].lyrics;
+    if (b.sung) it.sung = true;
+  } else { it.c = b.voices[0].clef; it.n = b.voices[0].notes.map(tokOf).join(' '); if (b.voices[0].lyrics) it.lyr = b.voices[0].lyrics; }
   return it;
 }
 function mineGroup() {
@@ -1155,9 +1163,40 @@ function askNewMelody() {
       el('label', {}, tr('Your name (optional)'), who),
       el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the melodies people write here (title, notes and your name if given).'))),
       el('p', { class: 'hint' }, tr('Your melody is saved in this browser under Your melodies in the library.')),
-      el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')), el('button', { type: 'button', class: 'chip primary', onclick: go }, tr('Start writing')))));
+      el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),
+        el('button', { type: 'button', class: 'chip', onclick: () => singIn(name.value.trim()) }, tr('Sing a chant instead')),
+        el('button', { type: 'button', class: 'chip primary', onclick: go }, tr('Start writing')))));
   pop.hidden = false; setTimeout(() => name.focus(), 30);
 }
+/* Sing a chant: the microphone writes it down as plainchant (singin.js); it is kept among your melodies */
+function singIn(title = '') {
+  if (S.playing) stopPlayback();
+  if (mic.on) micToggle();
+  openSingIn({
+    el, tr, pop: $('#clefPop'), getCtx: () => snd.ensure(), a4: () => prefs.a4,
+    draw: it => {
+      const p = pieceFrom(it, []), w = Math.max(20, ($('#clefPop').clientWidth - 40) / 12);
+      return engraveSystems(p, [0], w, { names: false, count: false }).map(s => systemSVG(s, 12)).join('');
+    },
+    play: it => {
+      const p = pieceFrom(it, []), ctx = snd.ensure(); let at = ctx.currentTime + .1;
+      let syl = '';
+      p.voices[0].notes.forEach(n => {
+        if (n.rest) return;
+        const tied = !n.text && !!syl; if (n.text) syl = n.text;
+        playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, 0), a4: prefs.a4, at, dur: .5, text: syl || 'a', tied, value: 4 });
+        at += .55;
+      });
+    },
+    save: it => {
+      adoptMine(it); S.base.sung = true; sendMine();
+      toast(tr('Saved under Your melodies. Edit corrects a note; the PDF button saves the score.'));
+    },
+  });
+  const t = document.querySelector('.singin .nm-in'); if (t && title) t.value = title;
+}
+$('#singBtn')?.addEventListener('click', () => singIn());
+
 /* a copy of each written melody goes to Václav (if the writer agreed): when it rests for a minute, when another one is
    started, and when the page is left; only melodies with a few notes, and only when something changed since the last copy */
 const sentAt = new Map();
@@ -1173,7 +1212,15 @@ function sendMine(b = S.base) {
   sentAt.set(b.id, key);
   let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
   const body = { _subject: 'Cantare – a new melody: ' + b.title, _template: 'table', _captcha: 'false', About: 'Cantare super librum – melody written by a visitor',
-    Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | '), Link: linkOf(b), Data: key };
+    Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | ') || (it.s || []).join(' '), Link: linkOf(b), Data: key };
+  if (b.kind === 'chant') {
+    /* a chant also goes as GABC, the plain-text chant notation that Gregorio and GregoBase read */
+    body._subject = 'Cantare – a new chant' + (b.sung ? ' (sung in)' : '') + ': ' + b.title;
+    body.About = 'Cantare super librum – chant ' + (b.sung ? 'sung in' : 'written') + ' by a visitor';
+    body.Text = (b.voices[0].lyrics || '').replace(/\s\.(?=\s|$)/g, '').replace(/-\s+/g, '').trim() || '—';
+    body.Notes = b.voices[0].notes.filter(n => !n.rest).map(n => 'CDEFGAB'[((n.step % 7) + 7) % 7] + (n.acc === 'b' ? '♭' : n.acc === '#' ? '♯' : '')).join(' ');
+    body.GABC = gabcOf(b.title, clefFor(b.voices[0].clef), b.voices[0].notes);
+  }
   try { fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).catch(() => {}); } catch (e) { /* offline: it goes with the next change */ sentAt.delete(b.id); }
 }
 const sendLater = () => { clearTimeout(sendT); sendT = setTimeout(() => sendMine(), 60000); };
@@ -1190,7 +1237,7 @@ function itemFromLink(h) {
   try {
     const b64 = h.replace(/-/g, '+').replace(/_/g, '/'), bin = atob(b64);
     const it = JSON.parse(new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0))));
-    return it && (it.n != null || it.poly) ? it : null;
+    return it && (it.n != null || it.poly || Array.isArray(it.s)) ? it : null;
   } catch (e) { return null; }
 }
 

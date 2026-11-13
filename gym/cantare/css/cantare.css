@@ -92,6 +92,7 @@ svg { display: block; }
 .system .vname { font: italic 1.1px var(--serif); fill: var(--soft); }
 .system .vinit { font: 4.2px var(--serif); fill: var(--accent); }
 .system .clefnum { font: .9px var(--serif); fill: currentColor; }
+.system .brevenum { font: italic 1.05px var(--serif); fill: currentColor; opacity: .7; }
 .system .hidden-note { font: italic 1.2px var(--serif); fill: var(--soft); }
 .system .hit { fill: transparent; stroke: none; cursor: pointer; }
 .system .muted { opacity: .45; }
@@ -483,3 +484,17 @@ html.full .brand .gymlink { height: 24px; }
 .chip.beatcycle { display: inline-flex; align-items: center; gap: 6px; }
 .chip.beatcycle svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 @media (max-width: 480px) { .brand { gap: 7px; margin-right: 6px; } .brand h1 { font-size: 15.5px; } .brand .gymlink { padding: 0 7px 0 2px; } }
+/* Sing in a chant */
+.pop.singin { width: min(620px, calc(100vw - 24px)); max-height: min(90vh, 820px); }
+.si-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.si-rec.on { background: var(--accent); color: var(--accent-ink); }
+.si-live { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--soft); }
+.si-live .si-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.si-live.on .si-dot { background: var(--accent); }
+.si-live .si-note { min-width: 3em; color: var(--ink); font: 400 18px var(--serif); }
+.si-view { min-height: 70px; border: 1px solid var(--line); border-radius: 10px; padding: 8px; overflow-x: auto; background: var(--raised); }
+.si-view svg { display: block; max-width: 100%; height: auto; }
+.nm .si-text { height: auto; min-height: 64px; padding: 8px 10px; resize: vertical; font: 15px var(--serif); }
+.nm .hint.warn, .si-view .warn { color: var(--accent); }
+.si-syl { font-family: var(--serif); }
+.nm-go[hidden] { display: none; }
