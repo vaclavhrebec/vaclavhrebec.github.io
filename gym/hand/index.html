@@ -438,6 +438,7 @@ function gammaOrE(P, prevMidi){
 }
 setTemplates(loadTemplates());
 function classify(P, wasOn, side){
+  classify.clear = false;
   const s = scaleOf(P), Q = places(P), lim = (wasOn ? LEAVE : ENTER) * s;
   // thumb tip on a finger
   let best = -1, bd = Infinity;
@@ -449,6 +450,7 @@ function classify(P, wasOn, side){
   const indexCurled = r5 < 0.6;   // curled right down onto the thumb, not just bent for a pinch
   let pos = -1;
   const thumbOn = bd < lim, indexOn = id < lim;
+  classify.clear = (thumbOn && bd < lim * .6) || (indexOn && id < lim * .6);
   // 1. A re and B mi: the index tip on the middle or the base of the thumb
   if (indexOn && ib > 0 && id <= bd) pos = ib;
   else {
@@ -465,7 +467,7 @@ function classify(P, wasOn, side){
       const tipSide = dt < dj || d3(P[4], P[t]) < d3(P[4], P[j]) || (bent && (dt < dj * 1.6 || dist(P[t], P[j]) < 0.06 * s));
       if (dt < tipLim && tipSide && dt < td) { td = dt; tp = at; }
     }
-    if (tp >= 0) pos = tp;   // index tip on thumb tip: Γ ut or e, by which presses which
+    if (tp >= 0) { pos = tp; classify.clear = td < tipLim * .6; }   // index tip on thumb tip: Γ ut or e, by which presses which
     // the curled index finger hides the thumb tip near its own base: Γ ut, not C fa ut (C is shown with a straight index finger)
     else if (indexCurled && thumbOn && best <= 4 && dist(P[8], P[4]) < 0.35 * s) pos = 0;
     // 3. any other joint
@@ -835,7 +837,8 @@ function feed(side, P){
   h.zone = zoneOf(P, video.videoHeight || 1, h.zone || 0);
   const pos = P ? classify(P, h.pos >= 0, side) : -1;
   if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
-  if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
+  const need = h.cand < 0 ? 2 : (classify.clear && !teach.on ? 1 : 2);
+  if (h.cand !== h.pos && h.n >= need) setPos(side, h.cand);
   else if (h.pos >= 0 && h.cand === h.pos && altOf(h.pos, h.zone) !== (h.alt || 0)) setPos(side, h.pos);
 }
 
@@ -858,7 +861,8 @@ async function startCam(){
   try {
     $('#start').disabled = true;
     const lm = loadTracker(); lm.catch(() => {});
-    stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: prefs.cam, width: {ideal: 1280}, height: {ideal: 720}}});
+    /* a small picture at a high frame rate: the tracker scales every frame down anyway, and more frames mean less delay */
+    stream = await navigator.mediaDevices.getUserMedia({audio: false, video: {facingMode: prefs.cam, width: {ideal: 640}, height: {ideal: 480}, frameRate: {ideal: 60}}});
     video.srcObject = stream; await video.play();
     // mirror the picture only for a camera that faces the person (front camera, laptop webcam)
     const fm = (stream.getVideoTracks()[0].getSettings() || {}).facingMode;
@@ -868,7 +872,7 @@ async function startCam(){
     running = true; $('#hint').hidden = true; status('');
     audio();
     $('#start').classList.add('on'); $('#start span').textContent = 'Stop the camera';
-    requestAnimationFrame(loop);
+    setHandsWanted(); nextFrame();
   } catch (e) {
     stopCam();
     const msg = String(e && (e.name || e.message) || e);
@@ -916,6 +920,11 @@ function assignHands(list, W){
   got.forEach((P, k) => { if (P) { const c = centreOf(P); track[k] = {x: c.x, y: c.y, s: scaleOf(P), t: now}; } });
   return got;
 }
+/* run the tracker on each new camera frame as it arrives (requestVideoFrameCallback), not on the next screen refresh */
+const RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
+const nextFrame = () => { if (!running) return; if (RVFC) video.requestVideoFrameCallback(loop); else requestAnimationFrame(loop); };
+/* with one hand played, the tracker looks for one hand only, which is quicker */
+function setHandsWanted(){ if (landmarker) { try { landmarker.setOptions({numHands: prefs.hands === 2 ? 2 : 1}); } catch (e) {} } }
 function loop(){
   if (!running) return;
   if (video.readyState >= 2 && video.currentTime !== lastT) {
@@ -932,7 +941,7 @@ function loop(){
     feed(0, got[0]); feed(1, prefs.hands === 2 ? got[1] : null);
     draw(got, W, H);
   }
-  requestAnimationFrame(loop);
+  nextFrame();
 }
 const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 function draw(got, W, H){
@@ -1130,6 +1139,7 @@ document.querySelectorAll('[data-hmode]').forEach(b => {
   b.addEventListener('click', () => {
     const m = b.dataset.hmode;
     if (m === '2') prefs.hands = 2; else { prefs.hands = 1; prefs.side = m; }
+    setHandsWanted();
     savePrefs();
     document.querySelectorAll('[data-hmode]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     applyHands(); silenceAll();

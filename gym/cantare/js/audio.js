@@ -409,7 +409,8 @@ export function hold({ a4 = 440, level = .2 } = {}) {
     const v = ctx.createOscillator(); v.frequency.value = 5.2;
     const vg = ctx.createGain(); vg.gain.setValueAtTime(onset ? 0 : 14, t); vg.gain.linearRampToValueAtTime(14, t + (onset ? .5 : .02));
     v.connect(vg); vg.connect(src.detune); src.connect(g); g.connect(env);
-    const lead = onset ? cvE[body === 'male' ? 1 : 2] + .02 : 0;
+    /* played live, the onset consonant is shortened so the new pitch arrives at once */
+    const lead = onset ? Math.min(cvE[body === 'male' ? 1 : 2], .05) + .01 : 0;
     src.start(t, onset ? beat - lead : beat + m.cv.loop[0]); v.start(t);
     return { src, g, v, u, midi, body, k, rate, fp };
   }
@@ -419,15 +420,16 @@ export function hold({ a4 = 440, level = .2 } = {}) {
     try { x.src.stop(t + d + .05); x.v.stop(t + d + .05); } catch (e) { /* stopped */ }
   }
   /* the end of the syllable being held: its coda at the held pitch; returns how long it takes (0 for an open syllable) */
-  function coda(x, t) {
+  function coda(x, t, max = Infinity) {
     const vcE = x && x.u.vc && m.vc.units[x.u.vc], vbuf = vcE && BANK.buf[`${x.body[0]}_vc${vcE[0]}`];
     if (!vbuf) { fade(x, t); return 0; }
     const tc = vcE[x.body === 'male' ? 1 : 3], te = vcE[x.body === 'male' ? 2 : 4];
     const c = ctx.createBufferSource(); c.buffer = vbuf; c.playbackRate.value = x.src.playbackRate.value;
     const cg = ctx.createGain(); cg.gain.setValueAtTime(0, t); cg.gain.linearRampToValueAtTime(1, t + .05);
     c.connect(cg); cg.connect(env);
-    const from = x.k * m.vc.slot + Math.max(0, tc - .09), len = (te - Math.max(0, tc - .09)) / c.playbackRate.value;
-    c.start(t, from); c.stop(t + len + .04);
+    const from = x.k * m.vc.slot + Math.max(0, tc - .09), len = Math.min(max, (te - Math.max(0, tc - .09)) / c.playbackRate.value);
+    if (len < max) { c.start(t, from); c.stop(t + len + .04); }
+    else { c.start(t, from); cg.gain.setValueAtTime(1, t + len * .6); cg.gain.linearRampToValueAtTime(0, t + len); c.stop(t + len + .02); }   /* only touched */
     fade(x, t, .05);
     return len;
   }
@@ -437,7 +439,7 @@ export function hold({ a4 = 440, level = .2 } = {}) {
     /* begin (or begin again) a syllable on a pitch, with its onset consonants */
     sing(u, midi) {
       if (dead) return false;
-      const t = ctx.currentTime + .01, x = vowelSrc(u, midi, t, true); if (!x) return false;
+      const t = ctx.currentTime + .005, x = vowelSrc(u, midi, t, true); if (!x) return false;
       if (cur) fade(cur, t, .04);
       cur = x; return true;
     },
@@ -448,7 +450,7 @@ export function hold({ a4 = 440, level = .2 } = {}) {
       if (body === cur.body && Math.abs(m[body][cur.k] - midi) <= 2) {
         const r = hz(midi, a4) / cur.fp;
         cur.src.playbackRate.cancelScheduledValues(t); cur.src.playbackRate.setValueAtTime(cur.src.playbackRate.value, t);
-        cur.src.playbackRate.exponentialRampToValueAtTime(r, t + .04); cur.midi = midi; return true;
+        cur.src.playbackRate.exponentialRampToValueAtTime(r, t + .025); cur.midi = midi; return true;
       }
       const x = vowelSrc(cur.u, midi, t, false); if (!x) return false;
       fade(cur, t, .06); cur = x; return true;
@@ -457,8 +459,9 @@ export function hold({ a4 = 440, level = .2 } = {}) {
     say(u, midi) {
       if (dead) return false;
       midi = midi == null ? cur && cur.midi : midi; if (midi == null) return false;
-      const t = ctx.currentTime + .01, d = cur ? coda(cur, t) : 0;
-      const x = vowelSrc(u, midi, t + Math.max(0, d - .02), true); if (!x) { cur = null; return false; }
+      /* the end of the old syllable is only touched (60 ms), overlapping the new one, so the new pitch is not late */
+      const t = ctx.currentTime + .005, d = cur ? coda(cur, t, .06) : 0;
+      const x = vowelSrc(u, midi, t + Math.min(d, .03), true); if (!x) { cur = null; return false; }
       cur = x; return true;
     },
     /* let go: the syllable ends with its coda, then silence */
