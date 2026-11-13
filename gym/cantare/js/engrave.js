@@ -186,6 +186,53 @@ export function buildColumns(piece, vidx) {
   return cols;
 }
 
+/* ---------- clef changes in chant and cantus fractus ----------
+   Chant is written without ledger lines: a note may sit on the lines or in the space just above or below the staff, never further.
+   Where the melody goes beyond, the clef changes for a while and comes back; as few changes as possible, never inside a ligature
+   if it can be helped, and always preferring the voice's own clef. Returns the clef for every note of the voice, or null. */
+const CHANT_POOL = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass'];
+export function clefPlan(piece, vi, opts = {}) {
+  const style = styleOf(piece);
+  if (style === 'white') return null;
+  const voice = piece.voices[vi], notes = voice.notes, lines = piece.lines, shift = opts.shift || 0, top = 2 * (lines - 1);
+  const main = clefFor(opts.clefs?.[vi] || voice.clef);
+  const pool = [main, ...[...CHANT_POOL, ...(lines >= 5 ? ['c5', 'f5'] : [])].map(clefFor).filter(c => c.id !== main.id && c.line <= lines)];
+  const idx = notes.map((n, i) => (n.rest ? -1 : i)).filter(i => i >= 0);
+  if (!idx.length) return null;
+  const fits = (c, st) => st - c.bottom >= -1 && st - c.bottom <= top + 1;
+  if (idx.every(i => fits(main, notes[i].step + shift))) return null;
+  const N = pool.length, INF = 1e9;
+  const miss = (c, i) => (fits(c, notes[i].step + shift) ? 0 : 60 + Math.abs(notes[i].step + shift - c.bottom - top / 2));
+  let cost = pool.map((c, k) => miss(c, idx[0]) + (k ? .8 : 0));
+  const back = [];
+  for (let j = 1; j < idx.length; j++) {
+    const i = idx[j], n = notes[i];
+    /* a change between two notes of one syllable breaks a ligature */
+    const inSyl = voice.lyrics && !n.text && i === idx[j - 1] + 1;
+    const pen = 1 + (inSyl ? (style === 'chant' ? 3 : .4) : 0);
+    const nc = new Array(N).fill(INF), bk = new Array(N).fill(0);
+    for (let k = 0; k < N; k++) {
+      const here = miss(pool[k], i) + (k ? .01 : 0);
+      for (let q = 0; q < N; q++) {
+        const v = cost[q] + (q === k ? 0 : pen) + here;
+        if (v < nc[k]) { nc[k] = v; bk[k] = q; }
+      }
+    }
+    back.push(bk); cost = nc;
+  }
+  let k = cost.indexOf(Math.min(...cost));
+  const pick = new Array(idx.length);
+  for (let j = idx.length - 1; j >= 0; j--) { pick[j] = pool[k]; if (j) k = back[j - 1][k]; }
+  const plan = new Array(notes.length);
+  let j = 0, cur = pick[0];
+  for (let i = 0; i < notes.length; i++) { if (j < idx.length && idx[j] === i) cur = pick[j++]; plan[i] = cur; }
+  return plan;
+}
+/* room for a clef written inside a line (with the b molle after it, when the piece has one) */
+const clefRoom = (piece, clef) => clefWidth(clef, styleOf(piece)) + .7 + (piece.bflat ? 1.3 : 0);
+/* the clef in force at x (staff coordinates) on a staff of an engraved system */
+export const clefAt = (st, x) => { let c = null; for (const g of st?.segs || []) if (g.x <= x) c = g.clef; return c; };
+
 /* ---------- a system (one line of music for one or more voices) ---------- */
 function flatStep(bottom, lines) {
   const mid = bottom + lines - 1;
@@ -200,9 +247,19 @@ export const headWidth = (piece, clef) => HEAD(piece, clef);
 
 /* Draw one staff for one voice over the given columns. Returns {svg, top, bottom} relative to the staff's top line. */
 function drawStaff(piece, vi, cols, xs, opts) {
-  const voice = piece.voices[vi], clef = clefFor(opts.clefs?.[vi] || voice.clef), lines = piece.lines, style = styleOf(piece);
+  const voice = piece.voices[vi], lines = piece.lines, style = styleOf(piece);
+  const plan = opts.plans?.[vi];
+  /* the line begins with the clef of its first note */
+  let clef = clefFor(opts.clefs?.[vi] || voice.clef);
+  if (plan) { const e = cols.map(c => c.notes[vi]).find(e => e && !e.n.rest) || cols.map(c => c.notes[vi]).find(Boolean); if (e) clef = plan[e.i]; }
+  const segs = [{ x: -99, clef }];
   const state = opts.state?.[vi] || 'on'; /* on | mute | hide */
   const yOf = step => (lines - 1) - (step - clef.bottom) / 2;
+  const clefHere = (c, xc) => {
+    let g = `<g transform="translate(${f(xc)} 0)">${clefGlyph(c, lines - c.line, style, lines)}</g>`;
+    if (piece.bflat) g += accidental('b', xc + clefWidth(c, style) + .5 + .9, (lines - 1) - ((flatStep(c.bottom, lines) ?? c.bottom + 2) - c.bottom) / 2, false, style);
+    return `<g class="clefchange">${g}</g>`;
+  };
   const mid = (lines - 1) / 2, restLine = lines > 4 ? 2 : 1;
   const total = xs.end;
   let svg = '';
@@ -270,6 +327,13 @@ function drawStaff(piece, vi, cols, xs, opts) {
       return;
     }
     const step = n.step + shift;
+    /* a change of clef inside the line, just before this note */
+    let pre = '';
+    if (plan && plan[i] !== clef) {
+      const xc = x - .6 - clefRoom(piece, plan[i]) + .2;
+      clef = plan[i]; segs.push({ x: xc, clef });
+      pre = clefHere(clef, xc);
+    }
     const y = yOf(step);
     const up = step <= clef.bottom + lines - 1 - (n.v === 'L' || n.v === 'Mx' ? 0 : 0) ? true : false; /* stem up on or below the middle line */
     const stemUp = n.v === 'L' || n.v === 'Mx' ? step <= clef.bottom + lines - 1 : step < clef.bottom + lines - 1;
@@ -290,7 +354,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     bottom = Math.max(bottom, low);
     lowest = Math.max(lowest, low);
     notesHere.push({ n, x, k, i });
-    body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}<rect x="${f(x - .8)}" y="${f(Math.min(y, 0) - 1)}" width="1.6" height="${f(Math.abs(Math.max(y, lines - 1) - Math.min(y, 0)) + 2)}" class="hit"/></g>`;
+    body += pre + `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}<rect x="${f(x - .8)}" y="${f(Math.min(y, 0) - 1)}" width="1.6" height="${f(Math.abs(Math.max(y, lines - 1) - Math.min(y, 0)) + 2)}" class="hit"/></g>`;
   });
   /* text underlay */
   const base = Math.max(textY, lowest + 1.3);
@@ -334,11 +398,18 @@ function drawStaff(piece, vi, cols, xs, opts) {
   if (state === 'hide') {
     /* a hidden voice keeps its staff, clef and place exactly as they were: only its notes and words are gone,
        so the eye can imagine them where they stood */
-    return { top, bottom, svg };
+    return { top, bottom, svg, segs };
   }
   const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name.replace(/\s*\d+$/, ''))}${/\d+$/.test(voice.name) ? `<tspan class="vinum" dy=".3">${voice.name.match(/\d+$/)[0]}</tspan>` : ''}</text>` : '';
   cap = label;
   if (xs.custos && xs.custos[vi] != null) {
+    /* the next line begins with another clef: it is announced here, before the custos, which then reads in it */
+    const nc = plan && xs.custosI ? plan[xs.custosI[vi]] : null;
+    if (nc && nc !== clef) {
+      const xc = xs.end - 2.85 - clefRoom(piece, nc) + .1;
+      clef = nc; segs.push({ x: xc, clef });
+      body += clefHere(clef, xc);
+    }
     const cy = yOf(xs.custos[vi] + shift);
     /* the zigzag is one space high and is centred on the pitch: it fills a space, or straddles a line */
     body += go('EA02', xs.end - 2.65, cy + .5, 1);
@@ -346,7 +417,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     for (let l = -1; l >= cy - .01 && l >= -6; l--) body += `<path d="M${f(xs.end - 2.85)} ${l}h2.2" class="staffline"/>`;
     for (let l = lines; l <= cy + .01 && l <= lines + 6; l++) body += `<path d="M${f(xs.end - 2.85)} ${l}h2.2" class="staffline"/>`;
   }
-  return { top, bottom, svg: svg + `<g class="${state === 'mute' ? 'muted' : ''}">${body}${words}</g>` + cap };
+  return { top, bottom, segs, svg: svg + `<g class="${state === 'mute' ? 'muted' : ''}">${body}${words}</g>` + cap };
 }
 
 /* Place the columns on lines of the given width (in staff spaces). Returns arrays of column ranges. */
@@ -371,7 +442,25 @@ export function breakLines(cols, width, headW, firstIndent = 0) {
 export function engraveSystems(piece, vidx, width, opts = {}) {
   const cols = buildColumns(piece, vidx);
   const clefOf = vi => clefFor(opts.clefs?.[vi] || piece.voices[vi].clef);
-  const headW = Math.max(...vidx.map(v => HEAD(piece, clefOf(v))));
+  /* chant and cantus fractus: the clef changes that keep every note off ledger lines */
+  const plans = {};
+  vidx.forEach(v => { const pl = clefPlan(piece, v, opts); if (pl) plans[v] = pl; });
+  if (Object.keys(plans).length) {
+    opts = { ...opts, plans };
+    cols.forEach((c, k) => {
+      if (!k) return;
+      let room = 0;
+      for (const v in plans) {
+        const e = c.notes[v];
+        if (!e || e.n.rest) continue;
+        const pl = plans[v], ns = piece.voices[v].notes;
+        let p = e.i - 1; while (p >= 0 && ns[p].rest) p--;
+        if (p >= 0 && pl[p] !== pl[e.i]) room = Math.max(room, clefRoom(piece, pl[e.i]));
+      }
+      cols[k - 1].need += room;
+    });
+  }
+  const headW = Math.max(...vidx.map(v => Math.max(HEAD(piece, clefOf(v)), ...(plans[v] ? [...new Set(plans[v])].map(c => HEAD(piece, c)) : []))));
   /* the voices are named by an initial, as in a choirbook: S, A, T, B before the first staff of each voice */
   const initials = opts.names !== false && vidx.some(v => piece.voices[v].name);
   /* Mute and Hide for each voice sit in the margin, before its initial */
@@ -397,13 +486,13 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x + (last ? .9 : CUST - .2), headW + 2), width - ind) : width - ind, final: last && slice.length > 0 };
     /* the custos: at the end of every line but the last, the pitch of each voice's next note */
     if (!last) {
-      xs.custos = {};
-      vidx.forEach(vi => { for (let k = b; k < cols.length; k++) { const e = cols[k].notes[vi]; if (e && !e.n.rest) { xs.custos[vi] = e.n.step; break; } } });
+      xs.custos = {}; xs.custosI = {};
+      vidx.forEach(vi => { for (let k = b; k < cols.length; k++) { const e = cols[k].notes[vi]; if (e && !e.n.rest) { xs.custos[vi] = e.n.step; xs.custosI[vi] = e.i; break; } } });
     }
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
       const s = drawStaff(piece, vi, slice, xs, opts);
-      const place = { vi, y: y - s.top };
+      const place = { vi, y: y - s.top, segs: s.segs };
       let init = '';
       const nm = piece.voices[vi].name;
       if (si === 0 && CTL) {

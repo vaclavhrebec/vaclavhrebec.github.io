@@ -1,5 +1,5 @@
 import { pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
-import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth } from './engrave.js';
+import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt } from './engrave.js';
 import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
@@ -1179,7 +1179,8 @@ function staffHit(e) {
   if (!real.length) return null;
   const dist = st => { const y = q.y - st.y; return y < -1.5 ? -1.5 - y : y > lines + .5 ? y - lines - .5 : 0; };
   const st = real.reduce((a, b) => (dist(b) < dist(a) ? b : a));
-  const vi = st.vi, clef = clefFor(S.clefs[vi] || S.piece.voices[vi].clef);
+  /* in chant the clef may change inside the line: the pitch is read in the clef in force where the pointer is */
+  const vi = st.vi, clef = clefAt(st, q.x) || clefFor(S.clefs[vi] || S.piece.voices[vi].clef);
   const step = Math.round(clef.bottom + 2 * ((lines - 1) - (q.y - st.y))) - S.shift;
   const head = headWidth(S.piece, clef);
   /* the notes of this voice on this line, by their place */
@@ -1428,7 +1429,8 @@ function drawDot(hit) {
   const g = tg.svg.querySelector(`g[data-voice="${tg.vi}"]`);
   const sung = tg.vi >= S.piece.voices.length;
   const clefId = sung ? withTake(S.piece).p.voices[tg.vi]?.clef : (S.clefs[tg.vi] || S.piece.voices[tg.vi].clef);
-  const clef = clefFor(clefId), lines = S.piece.lines;
+  const sysObj = S.systems?.[+tg.svg.closest('.sys')?.dataset.sys];
+  const clef = clefAt(sysObj?.staves?.find(x => x.vi === tg.vi), tg.x) || clefFor(clefId), lines = S.piece.lines;
   const sp = spellMidi(hit.snap), sig = S.piece.bflat && sp.L === 6 ? -1 : 0;
   const acc = sp.alt === sig ? '' : sp.alt < 0 ? '♭' : sp.alt > 0 ? '♯' : '♮';
   const y0 = (lines - 1) - (sp.s - clef.bottom) / 2;
