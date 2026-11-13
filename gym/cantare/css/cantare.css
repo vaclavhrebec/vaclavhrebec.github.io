@@ -85,6 +85,7 @@ svg { display: block; }
 .system .lyric { font: 1.12px var(--serif); fill: currentColor; }
 .system .lyric-line { stroke: currentColor; stroke-width: .075; fill: none; }
 .system .vname { font: italic 1.1px var(--serif); fill: var(--soft); }
+.system .vinit { font: 4.2px var(--serif); fill: var(--accent); }
 .system .clefnum { font: .9px var(--serif); fill: currentColor; }
 .system .hidden-note { font: italic 1.2px var(--serif); fill: var(--soft); }
 .system .hit { fill: transparent; stroke: none; cursor: pointer; }

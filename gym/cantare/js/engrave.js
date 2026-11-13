@@ -333,19 +333,19 @@ function drawStaff(piece, vi, cols, xs, opts) {
     /* a hidden voice leaves its place empty */
     return { top: -.6, bottom: lines - 1 + 1.2, svg: '' };
   }
-  const label = voice.name && opts.names ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
+  const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
   cap = label;
   return { top, bottom, svg: svg + `<g class="${state === 'mute' ? 'muted' : ''}">${body}${words}</g>` + cap };
 }
 
 /* Place the columns on lines of the given width (in staff spaces). Returns arrays of column ranges. */
-export function breakLines(cols, width, headW) {
+export function breakLines(cols, width, headW, firstIndent = 0) {
   const out = [];
   let start = 0, used = 0, head = 0;
   for (let k = 0; k < cols.length; k++) {
     if (!cols[k].ligature) head = k;
     const w = cols[k].need;
-    if (k > start && used + w > width - headW) {
+    if (k > start && used + w > width - headW - (out.length ? 0 : firstIndent)) {
       /* never break inside a ligature: the whole syllable moves to the next line */
       const at = cols[k].ligature ? head : k;
       if (at > start) { out.push([start, at]); start = at; used = 0; for (let j = at; j < k; j++) used += cols[j].need; }
@@ -361,29 +361,37 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const cols = buildColumns(piece, vidx);
   const clefOf = vi => clefFor(opts.clefs?.[vi] || piece.voices[vi].clef);
   const headW = Math.max(...vidx.map(v => HEAD(piece, clefOf(v))));
-  const ranges = breakLines(cols, width, headW);
+  /* the voices are named by an initial, as in a choirbook: S, A, T, B before the first staff of each voice */
+  const initials = opts.names !== false && vidx.some(v => piece.voices[v].name);
+  const INDENT = initials ? 3.4 : 0;
+  opts = { ...opts, initials };
+  const ranges = breakLines(cols, width, headW, INDENT);
   if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
     const slice = cols.slice(a, b);
     const natural = slice.reduce((a, c) => a + c.need, 0);
     const last = b >= cols.length;
-    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
+    const ind = si === 0 ? INDENT : 0;
+    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
     const at = [];
     let x = headW;
     slice.forEach(c => { at.push(x + .35); x += c.need * (c.tight ? 1 : stretch); });
-    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x, headW + 2), width) : width };
+    const xs = { at, end: slice.length && !(last && opts.fullLast) ? Math.min(Math.max(x, headW + 2), width - ind) : width - ind };
     let y = 0, svg = '';
     const staves = vidx.map(vi => {
       const s = drawStaff(piece, vi, slice, xs, opts);
       const place = { vi, y: y - s.top };
-      svg += `<g transform="translate(0 ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
+      let init = '';
+      const nm = piece.voices[vi].name;
+      if (ind && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f(ind / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}</text>`;
+      svg += init + `<g transform="translate(${f(ind)} ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
       y += (s.bottom - s.top) + gap;
       return place;
     });
     const h = y - gap;
     const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
-    return { svg, w: xs.end, h, t0, t1, from: a, to: b, staves };
+    return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind };
   });
 }
 

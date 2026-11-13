@@ -959,6 +959,7 @@ function staffHit(e) {
   if (!sys) return null;
   const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
   const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+  q.x -= sys.ind || 0; /* the first line starts after the voices' initials */
   const lines = S.piece.lines;
   const real = sys.staves.filter(st => st.vi < S.piece.voices.length && S.voice[st.vi] !== 'hide');
   if (!real.length) return null;
