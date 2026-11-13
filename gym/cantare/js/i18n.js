@@ -161,3 +161,6 @@ Object.assign(D.cs, {"e.g. My cantus firmus in the first mode": "např. Můj can
 Object.assign(D.de, { 'Loop: repeat the whole piece until stopped': 'Schleife: das ganze Stück wiederholen, bis es gestoppt wird', 'Tactus': 'Tactus' });
 Object.assign(D.fr, { 'Loop: repeat the whole piece until stopped': "Boucle : répéter toute la pièce jusqu'à l'arrêt", 'Tactus': 'Tactus' });
 Object.assign(D.cs, { 'Loop: repeat the whole piece until stopped': 'Smyčka: opakovat celou skladbu až do zastavení', 'Tactus': 'Taktus' });
+Object.assign(D.de, { 'Inspired by the': 'Angeregt von der Website', 'website and by an early stage of the': 'und von einer frühen Fassung der' });
+Object.assign(D.fr, { 'Inspired by the': 'Inspiré du site', 'website and by an early stage of the': "et d'une première version de l'application" });
+Object.assign(D.cs, { 'Inspired by the': 'Inspirováno webem', 'website and by an early stage of the': 'a ranou verzí aplikace' });
