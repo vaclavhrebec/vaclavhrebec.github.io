@@ -228,7 +228,7 @@ function rebuildPiece() {
     if (S.taleaLook === 'mensural') { p.kind = 'mensural'; p.lines = 5; }
   }
   /* durations: in the talea every value is read in tempus imperfectum */
-  p.voices.forEach(v => { stamp(v.notes, p.talea ? 'C' : p.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  p.voices.forEach(v => { stamp(v.notes, p.talea || p.abs ? 'C' : p.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
   p.end = Math.max(...p.voices.map(v => v.end));
   if (S.lines) p.lines = S.lines;
   else if (S.talea >= 0 && S.taleaLook === 'mensural') p.lines = 5;
@@ -560,7 +560,7 @@ function buildVoiceChips() {
 const hist = { undo: [], redo: [] };
 const snap = () => JSON.stringify(S.base.voices.map(v => v.notes));
 function afterEdit() {
-  S.base.voices.forEach(v => { stamp(v.notes, S.base.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  S.base.voices.forEach(v => { stamp(v.notes, S.base.abs ? 'C' : S.base.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
   S.base.end = Math.max(...S.base.voices.map(v => v.end));
   stopPlayback();
   rebuildPiece(); render(); buildEditTools(); buildTransform();
@@ -765,7 +765,7 @@ function stopPlayback(keep, natural) {
 function setPlaying(on) {
   S.playing = on;
   $('#playIcon').innerHTML = on ? '<path d="M7 6h3v12H7zM14 6h3v12h-3z"/>' : '<path d="M8 5.500v13l10.500-6.500z"/>';
-  $('#play').setAttribute('aria-label', on ? tr('Stop') : tr('Play'));
+  $('#play').setAttribute('aria-label', on ? tr('Pause') : tr('Play'));
   syncHand();
 }
 
@@ -825,7 +825,17 @@ paper.addEventListener('click', e => {
   if (S.playing) { stopPlayback(true); startPlayback(); }
 });
 
-$('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
+/* play / pause: pausing keeps the place, play goes on from there; the button left of it goes back to the beginning */
+$('#play').addEventListener('click', () => {
+  if (S.playing) { const pos = clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0; stopPlayback(); S.startAt = Math.max(0, Math.min(pos, S.piece.end - 1e-6)); }
+  else startPlayback();
+});
+$('#rewind').addEventListener('click', () => {
+  const was = S.playing;
+  if (was) stopPlayback(true);
+  S.startAt = 0; S.leaf = 0;
+  if (was) startPlayback(); else { render(); $('#stage').scrollTo?.({ top: 0, behavior: 'smooth' }); }
+});
 /* the pitch: a′ in Hz, typed beside Tap */
 const showPitch = () => { const i = $('#pitchHz'); if (i && document.activeElement !== i) i.value = prefs.a4; };
 $('#pitchHz').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
@@ -1358,7 +1368,7 @@ $('#footShare').addEventListener('click', async () => {
 function applyLang() {
   translatePage(); buildUnits();
   if (S.base) { renderTree($('#search').value); buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips(); render(); }
-  $('#play').setAttribute('aria-label', tr(S.playing ? 'Stop' : 'Play'));
+  $('#play').setAttribute('aria-label', tr(S.playing ? 'Pause' : 'Play'));
 }
 (function langPicker() {
   const sel = $('#lang');

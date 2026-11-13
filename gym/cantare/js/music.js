@@ -100,7 +100,10 @@ export function pieceFrom(item, trail) {
   if (jm) { credit = 'From the Josquin Research Project' + jm[1] + '.'; note = note.replace(jm[0], '').trim(); }
   const base = { id: item.id, title: item.title, note, credit, trail, tempus, cut: !!item.cut, bflat: !!item.b,
     /* a measured piece whose long and short notes run in threes although written without the O (cantus fractus), and its upbeat in minims */
-    ternary: !!item.tern, beatOff: item.up || 0 };
+    ternary: !!item.tern, beatOff: item.up || 0,
+    /* the Josquin collection is converted with every value already at its full length (a perfect brevis written B.),
+       so its O must not lengthen breves, longs and maximas a second time */
+    abs: !!(jm || item.jrp) };
   let kind, voices;
 
   if (item.poly) {
@@ -130,7 +133,7 @@ export function pieceFrom(item, trail) {
   }
   const DEFAULT_NAMES = { 2: ['Superius', 'Tenor'], 3: ['Superius', 'Tenor', 'Bassus'], 4: ['Superius', 'Altus', 'Tenor', 'Bassus'] };
   if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT_NAMES[voices.length]) voices.forEach((v, i) => { v.name = DEFAULT_NAMES[voices.length][i]; });
-  voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
   const lines = kind === 'chant' ? 4 : 5;
