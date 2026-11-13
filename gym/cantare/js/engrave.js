@@ -332,8 +332,9 @@ function drawStaff(piece, vi, cols, xs, opts) {
   bottom = Math.max(bottom, hasWords ? base + .6 : bottom);
   let cap = '';
   if (state === 'hide') {
-    /* a hidden voice leaves its place empty */
-    return { top: -.6, bottom: lines - 1 + 1.2, svg: '' };
+    /* a hidden voice keeps its staff, clef and place exactly as they were: only its notes and words are gone,
+       so the eye can imagine them where they stood */
+    return { top, bottom, svg };
   }
   const label = voice.name && opts.names && !opts.initials ? `<text x="${f(HEAD(piece, clef))}" y="${f(top - .1)}" class="vname">${esc(voice.name)}</text>` : '';
   cap = label;
@@ -396,7 +397,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
         init += icon('mute', -1, '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/>') +
                 icon('hide', 1, '<path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><path d="M4 20L20 4"/>');
       }
-      if (ind - BR && nm && opts.state?.[vi] !== 'hide') init += `<text x="${f(CTL + (ind - BR - CTL) / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
+      if (ind - BR && nm) init += `<text x="${f(CTL + (ind - BR - CTL) / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
       svg += init + `<g transform="translate(${f(ind)} ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
       y += (s.bottom - s.top) + gap;
       return place;

@@ -76,8 +76,14 @@ const T = { get hidden() { return tr('improvise this voice'); } };
 /* ------------------------------------------------------------------ utilities */
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), 2600); }
 
+const SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7L7 17M17 7l1.7-1.7"/></svg>';
+const MOON = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg>';
 function applyTheme() {
+  if (prefs.theme !== 'dark' && prefs.theme !== 'light') prefs.theme = 'light';
   document.documentElement.dataset.theme = prefs.theme;
+  /* the button shows where it leads: the sun in the dark, the moon in the light */
+  const b = document.getElementById('toggleTheme');
+  if (b) { const dark = prefs.theme === 'dark'; b.innerHTML = dark ? SUN : MOON; const t = tr(dark ? 'Light mode' : 'Dark mode'); b.title = t; b.setAttribute('aria-label', t); }
   document.querySelector('meta[name=theme-color]').content = prefs.theme === 'dark' ? '#0f1218' : prefs.theme === 'vellum' ? '#e6d7b3' : '#f1eadb';
 }
 
@@ -322,7 +328,7 @@ function renderScore(p0, opts) {
   /* while editing the size stays as it was when Edit was tapped (the editing toolbar may take room; the music must not jump) */
   const frozen = S.edit && S.fitFor === p0.id && S.scoreZoom;
   if (frozen) { z = S.scoreZoom; w = spaceW() * prefs.zoom / z; systems = engraveSystems(p, order, w, opts); }
-  else if (order.filter(v => v < p0.voices.length && S.voice[v] !== 'hide').length >= 4) {
+  else if (order.filter(v => v < p0.voices.length).length >= 4) {
     const st = $('#stage'), avail = st.clientHeight - paper.offsetTop - 30;
     for (let k = 0; k < 2 && avail > 120; k++) {
       const h = Math.max(...systems.map(s => s.h));
@@ -585,7 +591,7 @@ function buildSection(which, c) {
   if (which === 'view') card(tr('View'),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => setView(k), { disabled: k === 'book' && !multi }))),
     el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
-    chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }, k === 'vellum' ? { title: tr('Vellum and a rastrum: the music on an old page') } : {}))),
+    chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }))),
     chipRow(tr('Screen'), [chip(tr('Focus'), document.documentElement.classList.contains('focus'), () => setFocus(true), { title: tr('Only the music: everything else is put away') }),
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));
 
@@ -620,7 +626,7 @@ function buildStudio() {
   const bar = $('#optbar'), b = S.base, multi = b.voices.length > 1;
   const btn = (label, pressed, fn, title) => el('button', { type: 'button', class: 'chip opt', ...(pressed == null ? {} : { 'aria-pressed': String(!!pressed) }), onclick: fn, title: title || '' }, label);
   const more = k => () => (optOpen === k ? closeOpt() : openOpt(k));
-  const THEMES = [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']];
+  const THEMES = [['dark', 'Dark'], ['light', 'Light']];
   const themeName = (THEMES.find(t => t[0] === prefs.theme) || THEMES[0])[1];
   bar.replaceChildren(...[
     btn(tr('Sound') + ' ▾', null, more('sound')),
@@ -1585,7 +1591,7 @@ $('#footShare').addEventListener('click', async () => {
 
 /* interface language */
 function applyLang() {
-  translatePage(); buildUnits();
+  translatePage(); buildUnits(); applyTheme();
   if (S.base) { renderTree($('#search').value); buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips(); render(); }
   $('#play').setAttribute('aria-label', tr(S.playing ? 'Pause' : 'Play'));
 }

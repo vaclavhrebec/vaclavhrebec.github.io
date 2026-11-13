@@ -3,7 +3,7 @@ import { midiOf, hz } from './music.js';
 import { word } from './latin.js';
 
 export const TIMBRES = {
-  voice: { label: 'Voice (sung by Chimera)' },
+  voice: { label: 'Voice' },
   sackbut: { label: 'Sackbut' },
   lute: { label: 'Lute' },
   organ: { label: 'Organ, Principal 8′' },
