@@ -69,12 +69,12 @@
 <footer class="dock" id="dock">
   <button class="rewind" id="rewind" aria-label="Back to the beginning" title="Back to the beginning" data-i18n-title="Back to the beginning"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14"/><path d="M19 6v12l-9.5-6z"/></svg></button>
   <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+  <button class="rewind loop" id="loopBtn" aria-pressed="false" aria-label="Loop" title="Loop: repeat the whole piece until stopped" data-i18n-title="Loop: repeat the whole piece until stopped"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9a3 3 0 0 1 3-3h11"/><path d="M15 3l3 3-3 3"/><path d="M20 13v2a3 3 0 0 1-3 3H6"/><path d="M9 21l-3-3 3-3"/></svg></button>
   <label class="tempo" title="Semibreves per minute: type the tempo" data-i18n-title="Semibreves per minute: type the tempo"><span data-i18n="Semibrevis">Semibrevis</span><input type="number" id="tempo" min="10" max="300" step="1" inputmode="numeric" value="60" aria-label="Semibreves per minute"></label>
   <button class="chip" id="tap" title="Tap the beat twice or more: the tempo follows your taps" data-i18n-title="Tap the beat twice or more: the tempo follows your taps"><span data-i18n="Tap">Tap</span></button>
+  <div class="tactus" role="group" aria-label="Tactus"><span class="tlab" data-i18n="Tactus">Tactus</span><div class="tseg" id="unitSeg"></div></div>
   <label class="tempo pitch" title="The pitch of a′ in Hz" data-i18n-title="The pitch of a′ in Hz"><span data-i18n="Pitch">Pitch</span><span class="pitchrow">a′ =<input type="text" id="pitchHz" inputmode="decimal" value="440" aria-label="a′ in Hz"></span></label>
   <div class="beatctl">
-    <label class="unitsel" title="Which note value the tactus counts" data-i18n-title="Which note value the tactus counts"><span class="sr" data-i18n="Beat">Beat</span><select id="unit"></select></label>
-    <button class="chip" id="loopBtn" aria-pressed="false" title="Repeat until stopped" data-i18n-title="Repeat until stopped"><span data-i18n="Loop">Loop</span></button>
   </div>
   <label class="soundsel" title="Sound" data-i18n-title="Sound"><span class="sr" data-i18n="Sound">Sound</span><select id="soundSel"></select></label>
   <div class="voices" id="voiceChips"></div>

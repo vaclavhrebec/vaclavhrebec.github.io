@@ -282,10 +282,22 @@ $('#bookBtn').addEventListener('click', () => setView(prefs.view === 'book' ? 's
 $('#bookKind').addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (b) setBookKind(b.dataset.bk); });
 
 function renderScore(p0, opts) {
-  const w = spaceW();
   const { p, order } = withTake(p0);
-  const systems = engraveSystems(p, order, w, opts);
-  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, prefs.zoom)))));
+  let z = prefs.zoom, w = spaceW() * prefs.zoom / z;
+  let systems = engraveSystems(p, order, w, opts);
+  /* four, five or six voices: shrink so that a whole line of all the voices fits the height of the window */
+  if (order.filter(v => v < p0.voices.length && S.voice[v] !== 'hide').length >= 4) {
+    const st = $('#stage'), avail = st.clientHeight - paper.offsetTop - 30;
+    for (let k = 0; k < 2 && avail > 120; k++) {
+      const h = Math.max(...systems.map(s => s.h));
+      if (h * z <= avail) break;
+      z = Math.max(4, avail / h * .99);
+      w = spaceW() * prefs.zoom / z;
+      systems = engraveSystems(p, order, w, opts);
+    }
+  }
+  S.scoreZoom = z;
+  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, z)))));
   paper.classList.toggle('singing', p !== p0);
   if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
   S.systems = systems;
@@ -579,9 +591,13 @@ function buildVoiceChips() {
   if (S.base.voices.length < 2) return;
   S.base.voices.forEach((v, i) => {
     const set = st => () => { S.voice[i] = S.voice[i] === st ? 'on' : st; render(); buildVoiceChips(); if (S.playing) { /* sound follows at once */ } };
-    box.append(el('div', { class: 'vc' }, el('span', {}, v.name || tr('Voice') + ' ' + (i + 1)),
-      el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: tr('Seen, not heard: sing it from the notation'), onclick: set('mute') }, tr('Mute')),
-      el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: tr('Neither seen nor heard: improvise it'), onclick: set('hide') }, tr('Hide'))));
+    /* compact: the voice's initial, then Mute (a silenced speaker) and Hide (a closed eye); the full words are in the tooltips */
+    const name = v.name || tr('Voice') + ' ' + (i + 1);
+    const MUTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
+    const HIDE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><path d="M4 20L20 4"/></svg>';
+    box.append(el('div', { class: 'vc', title: name }, el('span', {}, name.charAt(0).toUpperCase()),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: name + ' – ' + tr('Mute') + ': ' + tr('Seen, not heard: sing it from the notation'), 'aria-label': name + ' ' + tr('Mute'), onclick: set('mute') }, parse(MUTE)),
+      el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: name + ' – ' + tr('Hide') + ': ' + tr('Neither seen nor heard: improvise it'), 'aria-label': name + ' ' + tr('Hide'), onclick: set('hide') }, parse(HIDE))));
   });
 }
 
@@ -888,11 +904,15 @@ function setTempo(v) {
   prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); $('#tempo').value = prefs.tempo; showTempo(); savePrefs();
   if (S.playing && clock) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); }
 }
+/* Tactus: which note value the beat counts, chosen by its shape (minima, semibrevis, brevis, longa) */
 function buildUnits() {
-  const sel = $('#unit'); sel.textContent = '';
-  UNITS.forEach(([k, n]) => sel.append(el('option', { value: k, selected: prefs.unit === k }, tr(n) + ' = ' + tr('tactus'))));
+  const seg = $('#unitSeg'); seg.textContent = '';
+  ['M', 'S', 'B', 'L'].forEach(k => {
+    const n = (UNITS.find(u => u[0] === k) || [k, k])[1];
+    seg.append(el('button', { type: 'button', 'aria-pressed': String(prefs.unit === k), title: tr(n) + ' = ' + tr('tactus'), 'aria-label': tr(n) + ' = ' + tr('tactus'),
+      onclick: () => { prefs.unit = k; setTempo(prefs.tempo); buildUnits(); } }, parse(glyphIcon('note', k))));
+  });
 }
-$('#unit').addEventListener('change', e => { prefs.unit = e.target.value; setTempo(prefs.tempo); });
 const taps = [];
 $('#tap').addEventListener('click', () => {
   const t = performance.now();
@@ -1161,10 +1181,10 @@ function toggleFull() {
   else (r.requestFullscreen || r.webkitRequestFullscreen).call(r)?.catch?.(() => {});
 }
 /* the full-screen button at the top right */
-const syncFullBtn = () => { const b = $('#fullBtn'); if (!b) return; b.hidden = !canFull; b.setAttribute('aria-pressed', String(!!fullEl())); };
+const syncFullBtn = () => { document.documentElement.classList.toggle('full', !!fullEl()); const b = $('#fullBtn'); if (!b) return; b.hidden = !canFull; b.setAttribute('aria-pressed', String(!!fullEl())); };
 $('#fullBtn')?.addEventListener('click', toggleFull);
 syncFullBtn();
-['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { syncFullBtn(); if (S.base) buildStudio(); }));
+['fullscreenchange', 'webkitfullscreenchange'].forEach(ev => document.addEventListener(ev, () => { syncFullBtn(); if (S.base) { buildStudio(); setTimeout(() => render(), 80); } }));
 document.body.append(el('div', { class: 'focusbar' },
   document.fullscreenEnabled ? el('button', { title: tr('Full screen'), 'aria-label': tr('Full screen'), onclick: toggleFull }, '⛶') : '',
   el('button', { title: tr('Leave focus'), 'aria-label': tr('Leave focus'), onclick: () => setFocus(false) }, '×')));
