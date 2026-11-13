@@ -301,7 +301,9 @@ function renderScore(p0, opts) {
     }
   }
   S.scoreZoom = z; S.fitFor = p0.id;
-  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1 }, parse(systemSVG(s, z)))));
+  /* several voices: the space between two systems is about twice the space between two voices of one system */
+  const between = systems[0] && systems[0].staves.length > 1 ? `margin-bottom:${Math.max(18, Math.round(4.8 * z))}px` : '';
+  systems.forEach((s, i) => paper.append(el('div', { class: 'sys', 'data-sys': i, 'data-t0': s.t0, 'data-t1': s.t1, style: between }, parse(systemSVG(s, z)))));
   paper.classList.toggle('singing', p !== p0);
   if (p !== p0) paper.querySelectorAll(`g[data-voice="${p.voices.length - 1}"]`).forEach(g => g.classList.add('sung'));
   S.systems = systems;
@@ -1511,7 +1513,7 @@ function exportPDF() {
     el('p', { class: 'ps-trail' }, (p.trail || []).join('  ›  ')),
     el('h1', {}, p.title),
     p.note ? el('p', { class: 'ps-note' }, p.note) : '',
-    ...systems.map(s => el('div', { class: 'ps-sys' }, parse(systemSVG(s, zoom)))),
+    ...systems.map(s => el('div', { class: 'ps-sys', style: s.staves.length > 1 ? `margin-bottom:${Math.max(14, Math.round(4.8 * zoom))}px` : '' }, parse(systemSVG(s, zoom)))),
     p.credit ? el('p', { class: 'ps-credit' }, p.credit) : '',
     el('p', { class: 'ps-foot' }, 'Cantare super librum · vaclavhrebec.github.io/gym/cantare'));
   $('#printSheet')?.remove();

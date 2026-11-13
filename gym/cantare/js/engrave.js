@@ -367,14 +367,16 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const initials = opts.names !== false && vidx.some(v => piece.voices[v].name);
   const INDENT = initials ? 3.4 : 0;
   opts = { ...opts, initials };
-  const ranges = breakLines(cols, width, headW, INDENT);
+  /* two or more voices are joined at the left by a brace, as in keyboard music */
+  const BR = vidx.length > 1 && opts.brace !== false ? 2.1 : 0;
+  const ranges = breakLines(cols, width - BR, headW, INDENT);
   if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
     const slice = cols.slice(a, b);
     const natural = slice.reduce((a, c) => a + c.need, 0);
     const last = b >= cols.length;
-    const ind = si === 0 ? INDENT : 0;
+    const ind = (si === 0 ? INDENT : 0) + BR;
     const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
     const at = [];
     let x = headW;
@@ -386,15 +388,40 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       const place = { vi, y: y - s.top };
       let init = '';
       const nm = piece.voices[vi].name;
-      if (ind && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f(ind / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
+      if (ind - BR && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f((ind - BR) / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
       svg += init + `<g transform="translate(${f(ind)} ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
       y += (s.bottom - s.top) + gap;
       return place;
     });
     const h = y - gap;
+    if (BR && staves.length > 1) {
+      const y0 = staves[0].y, y1 = staves[staves.length - 1].y + (piece.lines - 1);
+      /* the staff lines reach back to a thin line that joins the staves; the brace stands just before it */
+      const xl = ind - .45;
+      const ext = staves.map(st => Array.from({ length: piece.lines }, (_, k) => `M${f(xl)} ${f(st.y + k)}H${f(ind + .05)}`).join('')).join('');
+      svg = braceSVG(xl - .4, y0, y1, Math.min(1.75, .95 + (y1 - y0) * .02)) +
+        `<path d="${ext}" class="staffline"/>` +
+        `<path d="M${f(xl)} ${f(y0)}V${f(y1)}" class="sysline" stroke="currentColor" stroke-width=".16" fill="none"/>` + svg;
+    }
     const t0 = slice.length ? slice[0].t : 0, t1 = b < cols.length ? cols[b].t : piece.end;
     return { svg, w: xs.end + ind, h, t0, t1, from: a, to: b, staves, ind, head: headW, xt: slice.map((c, i) => [c.t, at[i]]) };
   });
+}
+
+/* a curly brace whose right edge stands at xR, from y0 to y1, `a` wide */
+function braceSVG(xR, y0, y1, a) {
+  const H = y1 - y0, m = (y0 + y1) / 2, xL = xR - a;
+  const P = (x, y) => `${f(x)} ${f(y)}`;
+  const d = `M${P(xR, y0)}` +
+    `C${P(xR - .78 * a, y0 + .02 * H)} ${P(xR - .30 * a, y0 + .22 * H)} ${P(xR - .52 * a, y0 + .39 * H)}` +
+    `C${P(xR - .60 * a, y0 + .45 * H)} ${P(xL + .20 * a, m - .025 * H)} ${P(xL, m)}` +
+    `C${P(xL + .20 * a, m + .025 * H)} ${P(xR - .60 * a, y1 - .45 * H)} ${P(xR - .52 * a, y1 - .39 * H)}` +
+    `C${P(xR - .30 * a, y1 - .22 * H)} ${P(xR - .78 * a, y1 - .02 * H)} ${P(xR, y1)}` +
+    `C${P(xR - .55 * a, y1 - .035 * H)} ${P(xR - .08 * a, y1 - .22 * H)} ${P(xR - .30 * a, y1 - .40 * H)}` +
+    `C${P(xR - .40 * a, y1 - .46 * H)} ${P(xL + .55 * a, m + .012 * H)} ${P(xL, m)}` +
+    `C${P(xL + .55 * a, m - .012 * H)} ${P(xR - .40 * a, y0 + .46 * H)} ${P(xR - .30 * a, y0 + .40 * H)}` +
+    `C${P(xR - .08 * a, y0 + .22 * H)} ${P(xR - .55 * a, y0 + .035 * H)} ${P(xR, y0)}Z`;
+  return `<path d="${d}" class="brace" fill="currentColor"/>`;
 }
 
 export function systemSVG(sys, scale, extraClass = '') {
