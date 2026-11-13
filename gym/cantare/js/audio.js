@@ -40,7 +40,7 @@ export const vowelOf = t => { const m = /[aeiouyáéíóúæœ]/i.exec((t || '')
    VC, the held vowel closing into its final consonants or a diphthong's glide ("u.s", "a.ŋk", "aʊ.").
    The files are fetched as a piece needs them. */
 const BANK = { map: null, buf: {}, pending: {} };
-const BASE = 'audio/voice/';
+const BASE = new URL('../audio/voice/', import.meta.url).href;   /* next to this file, from any page that uses it */
 export function prepare() {
   ensure();
   if (!BANK.ready) BANK.ready = fetch(BASE + 'map.json').then(r => r.json()).then(m => { BANK.map = m; }).catch(() => {});
@@ -383,6 +383,94 @@ function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc 
   else { g.setValueAtTime(1, Math.max(at + .01, end - .12)); g.linearRampToValueAtTime(0, Math.max(at + .02, end + .06)); }
   return out(env, level * 2.6);
 }
+
+/* ---------- a held voice, for live playing (the Guidonian hand) ----------
+   An open-ended sung note: it starts on a syllable with its onset consonants, holds the vowel as long as the hand
+   holds the place, glides when the hand moves to another note on the same syllable (a melisma), closes the syllable
+   with its coda and sings the next one with its onset when the text moves on, and ends with the coda when released.
+   Returns null until the voice bank's map has loaded; say() and sing() return false when a syllable's files are
+   not in yet (load() them first). */
+export function hold({ a4 = 440, level = .2 } = {}) {
+  ensure();
+  if (!BANK.map) { prepare(); return null; }
+  const m = BANK.map;
+  const env = ctx.createGain(); env.gain.value = 1;
+  const sink = out(env, level * 2.6);
+  let cur = null, dead = false;
+  const fpOf = (body, k) => 440 * Math.pow(2, (m[body][k] - 69) / 12);
+  function vowelSrc(u, midi, t, onset) {
+    const body = bodyOf(midi), k = nearest(m[body], midi), b = body[0];
+    const cvE = m.cv.units[u.cv], buf = cvE && BANK.buf[`${b}_cv${cvE[0]}`]; if (!buf) return null;
+    const fp = fpOf(body, k), f0 = hz(midi, a4), rate = f0 / fp;
+    const beat = k * m.cv.slot + m.cv.pre, n = Math.max(1, Math.round((m.cv.loop[1] - m.cv.loop[0]) * fp));
+    const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+    src.loop = true; src.loopStart = beat + m.cv.loop[0]; src.loopEnd = beat + m.cv.loop[0] + n / fp;
+    const g = ctx.createGain(); g.gain.setValueAtTime(onset ? 1 : 0, t); if (!onset) g.gain.linearRampToValueAtTime(1, t + .06);
+    const v = ctx.createOscillator(); v.frequency.value = 5.2;
+    const vg = ctx.createGain(); vg.gain.setValueAtTime(onset ? 0 : 14, t); vg.gain.linearRampToValueAtTime(14, t + (onset ? .5 : .02));
+    v.connect(vg); vg.connect(src.detune); src.connect(g); g.connect(env);
+    const lead = onset ? cvE[body === 'male' ? 1 : 2] + .02 : 0;
+    src.start(t, onset ? beat - lead : beat + m.cv.loop[0]); v.start(t);
+    return { src, g, v, u, midi, body, k, rate, fp };
+  }
+  function fade(x, t, d = .06) {
+    if (!x) return;
+    x.g.gain.cancelScheduledValues(t); x.g.gain.setValueAtTime(x.g.gain.value, t); x.g.gain.linearRampToValueAtTime(0, t + d);
+    try { x.src.stop(t + d + .05); x.v.stop(t + d + .05); } catch (e) { /* stopped */ }
+  }
+  /* the end of the syllable being held: its coda at the held pitch; returns how long it takes (0 for an open syllable) */
+  function coda(x, t) {
+    const vcE = x && x.u.vc && m.vc.units[x.u.vc], vbuf = vcE && BANK.buf[`${x.body[0]}_vc${vcE[0]}`];
+    if (!vbuf) { fade(x, t); return 0; }
+    const tc = vcE[x.body === 'male' ? 1 : 3], te = vcE[x.body === 'male' ? 2 : 4];
+    const c = ctx.createBufferSource(); c.buffer = vbuf; c.playbackRate.value = x.src.playbackRate.value;
+    const cg = ctx.createGain(); cg.gain.setValueAtTime(0, t); cg.gain.linearRampToValueAtTime(1, t + .05);
+    c.connect(cg); cg.connect(env);
+    const from = x.k * m.vc.slot + Math.max(0, tc - .09), len = (te - Math.max(0, tc - .09)) / c.playbackRate.value;
+    c.start(t, from); c.stop(t + len + .04);
+    fade(x, t, .05);
+    return len;
+  }
+  return {
+    get alive() { return !dead; },
+    get midi() { return cur && cur.midi; },
+    /* begin (or begin again) a syllable on a pitch, with its onset consonants */
+    sing(u, midi) {
+      if (dead) return false;
+      const t = ctx.currentTime + .01, x = vowelSrc(u, midi, t, true); if (!x) return false;
+      if (cur) fade(cur, t, .04);
+      cur = x; return true;
+    },
+    /* move to another pitch on the same vowel: a glide within the bank's pitch, otherwise a new pitch slot faded in */
+    glide(midi) {
+      if (dead || !cur || midi === cur.midi) return true;
+      const t = ctx.currentTime, body = bodyOf(midi);
+      if (body === cur.body && Math.abs(m[body][cur.k] - midi) <= 2) {
+        const r = hz(midi, a4) / cur.fp;
+        cur.src.playbackRate.cancelScheduledValues(t); cur.src.playbackRate.setValueAtTime(cur.src.playbackRate.value, t);
+        cur.src.playbackRate.exponentialRampToValueAtTime(r, t + .04); cur.midi = midi; return true;
+      }
+      const x = vowelSrc(cur.u, midi, t, false); if (!x) return false;
+      fade(cur, t, .06); cur = x; return true;
+    },
+    /* the text moves on: close the syllable held now and sing the next one on this pitch */
+    say(u, midi) {
+      if (dead) return false;
+      midi = midi == null ? cur && cur.midi : midi; if (midi == null) return false;
+      const t = ctx.currentTime + .01, d = cur ? coda(cur, t) : 0;
+      const x = vowelSrc(u, midi, t + Math.max(0, d - .02), true); if (!x) { cur = null; return false; }
+      cur = x; return true;
+    },
+    /* let go: the syllable ends with its coda, then silence */
+    release() {
+      if (dead) return; dead = true;
+      const t = ctx.currentTime, d = cur ? coda(cur, t) : 0;
+      setTimeout(() => { try { sink.disconnect(); } catch (e) { /* gone */ } }, (d + .4) * 1000);
+      cur = null;
+    },
+  };
+}
+export const bankReady = () => !!BANK.map;
 
 export function click(at, strong) {
   ensure();

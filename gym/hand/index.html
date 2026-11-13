@@ -72,6 +72,28 @@
   .cam .hint p { margin: 0; max-width: 34ch; }
 
   .readouts { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .readout .sylnow { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-size: 1.15rem; color: var(--fg); min-height: 1.4em; }
+  /* the text to sing */
+  .texts { margin-top: 14px; }
+  .texts h2 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 400; font-size: 1.35rem; margin: 0 0 4px; }
+  .texts .lead { margin: 0 0 10px; color: var(--muted); font-size: .92rem; }
+  .texts .parts { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .texts .parts button, .texts .lines button { font: inherit; border: 1px solid var(--line); background: var(--soft); color: var(--fg); border-radius: 999px; padding: 4px 12px; cursor: pointer; }
+  .texts .parts button[aria-pressed="true"] { background: var(--v1); border-color: var(--v1); color: #fff; }
+  .texts .lines { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; max-height: 220px; overflow: auto; padding-right: 4px; }
+  .texts .lines button { border-radius: 8px; text-align: left; font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-size: 1.02rem; padding: 4px 10px; }
+  .texts .lines button[aria-pressed="true"] { border-color: var(--v1); box-shadow: inset 3px 0 0 var(--v1); }
+  .texts .sung { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-size: 1.5rem; line-height: 1.9; margin: 12px 0 4px; min-height: 1.9em; }
+  .texts .sung .w { white-space: nowrap; margin-right: .45em; border-bottom: 2px solid transparent; padding-bottom: 1px; }
+  .texts .sung .w.heard { border-bottom-color: var(--fg); }
+  .texts .sung .s { padding: 0 1px; border-radius: 4px; }
+  .texts .sung .s.v0 { background: color-mix(in srgb, var(--v1) 28%, transparent); }
+  .texts .sung .s.v1 { background: color-mix(in srgb, var(--v2) 28%, transparent); }
+  .texts .sung .s.v0.v1 { background: linear-gradient(color-mix(in srgb, var(--v1) 32%, transparent) 50%, color-mix(in srgb, var(--v2) 32%, transparent) 50%); }
+  .texts .sung .sep { color: var(--muted); }
+  .texts .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .texts .follow { font-size: .9rem; color: var(--muted); }
+  .texts .none { color: var(--muted); font-style: italic; font-size: 1rem; }
   .readout { flex: 1 1 160px; min-width: 0; border-radius: 10px; padding: 8px 12px; background: var(--soft); border-left: 4px solid var(--c); }
   .readout .who { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
   .readout .note { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-size: 2.1rem; line-height: 1.1; min-height: 2.3rem; color: var(--c); }
@@ -191,13 +213,26 @@
         <div class="hint" id="hint"><p>Press <b>Start the camera</b> and hold your hand up, palm towards the camera.<br>Or tap the notes on the painted hand.</p></div>
       </div>
       <div class="readouts">
-        <div class="readout" id="ro0" style="--c:var(--v1)"><div class="who">Left hand</div><div class="note">&nbsp;</div><div class="where">&nbsp;</div></div>
-        <div class="readout" id="ro1" style="--c:var(--v2)" hidden><div class="who">Right hand</div><div class="note">&nbsp;</div><div class="where">&nbsp;</div></div>
+        <div class="readout" id="ro0" style="--c:var(--v1)"><div class="who">Left hand</div><div class="note">&nbsp;</div><div class="sylnow" aria-live="off">&nbsp;</div><div class="where">&nbsp;</div></div>
+        <div class="readout" id="ro1" style="--c:var(--v2)" hidden><div class="who">Right hand</div><div class="note">&nbsp;</div><div class="sylnow" aria-live="off">&nbsp;</div><div class="where">&nbsp;</div></div>
       </div>
       <div class="status" id="status" role="status"></div>
     </div>
     <div class="panel">
       <div class="hands" id="hands"></div>
+    </div>
+  </section>
+
+  <section class="panel texts" id="texts" aria-label="The text to sing">
+    <h2>Sing a text</h2>
+    <p class="lead">Choose a sentence and sing it while your hands show two more voices: the voice sings each new note on the next syllable. Without a sentence it sings the solmisation syllable of each place.</p>
+    <div class="parts" id="parts" role="group" aria-label="Part of the Mass"></div>
+    <div class="lines" id="lines" role="group" aria-label="Sentences"></div>
+    <p class="sung" id="sung" aria-live="polite"><span class="none">No sentence chosen: ut, re, mi, fa, sol, la.</span></p>
+    <div class="row">
+      <button class="btn" id="followBtn" aria-pressed="false" title="Listens to you through the microphone and keeps the voices on the word you are singing">Follow my singing</button>
+      <button class="btn" id="clearText" title="Back to the solmisation syllables">No text</button>
+      <span class="follow" id="followStatus" role="status"></span>
     </div>
   </section>
 
@@ -231,7 +266,8 @@
         <option value="12">an octave</option>
       </select>
     </div>
-    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false">Voice</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
+    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false" title="Sung by Chimera, a physical model of the human voice">Voice (Chimera)</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
+    <div class="group" title="Raise the palm into the top third of the picture for C♯, F♯, G♯; lower it into the bottom third for E♭, B♭, A♭. D never changes."><span class="lbl">Musica ficta</span><div class="seg" role="group" aria-label="Musica ficta by height"><button data-ficta="1" aria-pressed="true">By height</button><button data-ficta="0" aria-pressed="false">Off</button></div></div>
     <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
     <div class="group handtools">
       <button class="btn" id="teachBtn" title="Show each of the twenty places once, so the app learns your hand">Teach my hand</button>
@@ -258,6 +294,9 @@
       <h2>Two hands</h2>
       <p>Turn the phone sideways, choose <i>Both</i>, and show both palms. Each hand is a voice of its own. The right hand carries the same gamut as a mirror image: the left-hand spiral turns anticlockwise, the right-hand spiral clockwise.</p>
       <p>If the app mixes up two places, press <i>Teach my hand</i> and show each position once, or <i>Tricky places</i> to practise the look-alikes. When a single note is read wrongly while you play, turn on <i>Correct a note</i>, keep your hand where it is and tap the right place on the painted hand. The app then knows your hand instead of an average one and remembers it on this device.</p>
+      <h2>Musica ficta and the text</h2>
+      <p>With <i>Musica ficta: By height</i>, the camera picture is cut into three bands. Raise your palm into the top band and C, F and G sound as C♯, F♯ and G♯; lower it into the bottom band and E, B and A sound as E♭, B♭ and A♭. D never changes: the twelve keys of a meantone keyboard allow one alteration per note.</p>
+      <p>Under <i>Sing a text</i>, choose a sentence of the Mass: the voice, sung by Chimera, takes the next syllable with each new note of each hand. Press <i>Follow my singing</i> and sing the sentence yourself: the app listens and keeps both voices on the word you have reached, finishing a word and moving on to yours as soon as it can – three voices on one text.</p>
     </div>
     <div>
       <h2>The gamut</h2>
@@ -267,6 +306,9 @@
 </div>
 
 <script type="module">
+import * as chimera from "../cantare/js/audio.js";
+import { word as latinWord } from "../cantare/js/latin.js";
+import { MASS, prepareLine, sound as soundOf, similarity } from "./mass.js";
 /* ------------------------------------------------------------------ */
 /* The Guidonian hand: twenty places, from Γ ut on the thumb tip       */
 /* spiralling round the hand to ee la on the back of the middle finger */
@@ -454,7 +496,7 @@ function classify(P, wasOn, side){
 
 /* ---------- sound: one voice per hand, gliding from note to note while the contact holds ---------- */
 let ctx = null, master = null;
-const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L'};
+const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L', ficta: 1};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
 const EMBED = document.documentElement.dataset.embed === '1';
@@ -487,6 +529,7 @@ function unlockSound(){
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   if (!keepAlive) { keepAlive = new Audio(silentWav()); keepAlive.loop = true; keepAlive.setAttribute('playsinline', ''); }
   if (keepAlive.paused) keepAlive.play().catch(() => {});
+  if (prefs.snd === 'voice') { try { chimera.ensure(); } catch (e) {} }
   const c = audio(); if (!c) return;
   // a tiny silent sound, played inside the tap, opens the audio on every browser
   const src = c.createBufferSource(); src.buffer = c.createBuffer(1, 1, 22050); src.connect(c.destination); src.start(0);
@@ -518,8 +561,10 @@ function makeVoice(){
 const shiftOf = () => prefs.oct + prefs.tdir * prefs.tint;   // octave switch plus the transposition, in semitones
 const hzOf = midi => prefs.ref * Math.pow(2, (midi + shiftOf() - 69) / 12);
 const voices = [null, null, null];  // left hand, right hand, tapping
-function noteOn(slot, midi){
+function noteOn(slot, midi, pos = -1, same = false){
   if (prefs.snd === 'off') return;
+  if (prefs.snd === 'voice' && chimOn(slot, midi, pos, same)) { oldOff(slot); return; }
+  chimOff(slot);
   const c = audio(); if (!c) return;
   let v = voices[slot];
   const hz = hzOf(midi), t = c.currentTime;
@@ -534,14 +579,103 @@ function noteOn(slot, midi){
   }
   v.hz = hz;
 }
-function noteOff(slot){
+function noteOff(slot){ chimOff(slot); oldOff(slot); quietSince(); }
+function oldOff(slot){
   const v = voices[slot]; if (!v || !ctx) return;
   const t = ctx.currentTime; v.dying = true; voices[slot] = null;
   v.out.gain.cancelScheduledValues(t); v.out.gain.setValueAtTime(v.out.gain.value, t); v.out.gain.linearRampToValueAtTime(0, t + 0.12);
   setTimeout(() => { v.nodes.forEach(n => { try { n.stop(); } catch (e) {} }); v.out.disconnect(); }, 300);
 }
 const midiOf = i => POS[i].midi - (POS[i].bfa && prefs.bfa ? 1 : 0);
-const nameOf = i => POS[i].bfa ? POS[i].k + (prefs.bfa ? '♭' : '♮') : POS[i].k;
+const nameOf = (i, alt = 0) => {
+  if (POS[i].bfa) return POS[i].k + (prefs.bfa || alt < 0 ? '♭' : '♮');
+  return POS[i].k + (alt > 0 ? '♯' : alt < 0 ? '♭' : '');
+};
+
+/* ---------- musica ficta by the height of the hand ----------
+   The picture is cut into three bands. With the centre of the palm in the top band a note is raised, in the bottom
+   band lowered, as far as the twelve keys of a meantone keyboard allow: one alteration per note, C♯ F♯ G♯ above,
+   E♭ B♭ A♭ below, and D never. */
+const RAISE = {0: 1, 5: 1, 7: 1}, LOWER = {4: -1, 11: -1, 9: -1};
+function altOf(i, zone){
+  if (!prefs.ficta || i < 0 || !zone) return 0;
+  const pc = ((midiOf(i) % 12) + 12) % 12;
+  return zone > 0 ? (RAISE[pc] || 0) : (LOWER[pc] || 0);
+}
+/* which band the palm is in, with a little stickiness at the lines so a hand resting on one does not flicker */
+function zoneOf(P, H, was){
+  if (!P) return 0;
+  const y = centreOf(P).y / H, m = 0.025;
+  if (was > 0 && y < 1 / 3 + m) return 1;
+  if (was < 0 && y > 2 / 3 - m) return -1;
+  return y < 1 / 3 - m ? 1 : y > 2 / 3 + m ? -1 : 0;
+}
+
+/* ---------- the voice: Chimera sings, one voice for each hand ----------
+   With a sentence chosen, each new note takes the next syllable; when the singer is followed and the voice is ahead
+   of them it holds its syllable (a melisma); when the singer is ahead it finishes its word and jumps to theirs.
+   Without a sentence each note is sung on the solmisation syllable of its place. */
+const TXT = {line: null, units: [], follow: false, heard: -1, k: [-1, -1, -1], sol: {}};
+const CH = [null, null, null];
+const unitOf = text => { const sy = latinWord([text])[0]; return chimera.units(sy); };
+['ut', 're', 'mi', 'fa', 'sol', 'la'].forEach(x => { TXT.sol[x] = null; });
+let bankAsked = false;
+function preloadVoice(){
+  if (prefs.snd !== 'voice') return;
+  chimera.prepare().then(() => {
+    Object.keys(TXT.sol).forEach(x => { TXT.sol[x] = unitOf(x); });
+    if (TXT.line) TXT.units = TXT.line.syl.map((x, k) => unitOfWord(k));
+    const list = [];
+    const us = Object.values(TXT.sol).concat(TXT.units);
+    us.forEach(u => { [48, 64].forEach(midi => list.push({u, midi})); });
+    chimera.load(list);
+  });
+  bankAsked = true;
+}
+/* a syllable sung as part of its word (c, g, sc and gn depend on the neighbouring syllables) */
+function unitOfWord(k){
+  const S = TXT.line.syl[k], W = TXT.line.words[S.word];
+  const sy = latinWord(W.syls)[k - W.first];
+  return chimera.units(sy);
+}
+function nextSyl(slot){
+  const L = TXT.line, cur = TXT.k[slot], N = L.syl.length;
+  if (cur < 0) return TXT.follow && TXT.heard >= 0 ? L.words[TXT.heard].first : 0;
+  const w = L.syl[cur].word, lastOfWord = cur === L.words[w].last;
+  if (TXT.follow && TXT.heard >= 0) {
+    if (TXT.heard > w) return lastOfWord ? L.words[TXT.heard].first : cur + 1;   // finish the word, then jump to theirs
+    if (TXT.heard < w) return cur;                                                 // they are behind: hold the syllable
+    return lastOfWord ? cur : cur + 1;
+  }
+  return Math.min(N - 1, cur + 1);
+}
+function chimOn(slot, midi, pos, same){
+  if (!bankAsked) preloadVoice();
+  const m = midi + shiftOf();
+  let k = -1, u;
+  if (TXT.line) { k = same && TXT.k[slot] >= 0 ? TXT.k[slot] : nextSyl(slot); u = TXT.units[k]; }
+  else u = TXT.sol[pos >= 0 ? sylOf(pos) : 'la'] || null;
+  if (!u) return false;
+  try { chimera.ensure(); chimera.setVolume(volGain() * 1.25); } catch (e) { return false; }
+  let h = CH[slot];
+  const glide = h && h.alive && (same || (TXT.line && k === TXT.k[slot]));
+  let ok;
+  if (!h || !h.alive) { h = CH[slot] = chimera.hold({a4: prefs.ref, level: .2}); ok = !!h && h.sing(u, m); }
+  else ok = glide ? h.glide(m) : h.say(u, m);
+  if (!ok) { if (h) h.release(); CH[slot] = null; preloadVoice(); return false; }
+  if (TXT.line) TXT.k[slot] = k;
+  sylShow(slot, TXT.line ? TXT.line.syl[k].text : (pos >= 0 ? sylOf(pos) : ''));
+  paintText();
+  return true;
+}
+function chimOff(slot){ const h = CH[slot]; if (h) { h.release(); CH[slot] = null; } }
+/* when all the hands have been still for a while, the next note starts the sentence again (or where the singer is) */
+let quietT = 0;
+function quietSince(){
+  clearTimeout(quietT);
+  quietT = setTimeout(() => { if (CH.every(h => !h) && voices.every(v => !v)) { TXT.k = [-1, -1, -1]; paintText(); [0, 1].forEach(s => sylShow(s, '')); } }, 2500);
+}
+const sylShow = (slot, t) => { const e = document.querySelector('#ro' + (slot === 2 ? 0 : slot) + ' .sylnow'); if (e) e.textContent = t || '\u00a0'; };
 const sylOf = i => POS[i].bfa ? (prefs.bfa ? 'fa' : 'mi') : POS[i].syl;
 
 /* ---------- the painted hand ---------- */
@@ -675,19 +809,22 @@ let tapping = [-1, -1];
 function show(side){
   const i = tapping[side] >= 0 ? tapping[side] : hands[side].pos;
   const ro = $('#ro' + side);
-  ro.querySelector('.note').innerHTML = i >= 0 ? nameOf(i) + '<small>' + sylOf(i) + '</small>' : '&nbsp;';
+  const alt = tapping[side] >= 0 ? 0 : hands[side].alt || 0;
+  ro.querySelector('.note').innerHTML = i >= 0 ? nameOf(i, alt) + '<small>' + sylOf(i) + '</small>' : '&nbsp;';
   ro.querySelector('.where').textContent = i >= 0 ? POS[i].where : ' ';
   figs.forEach((f, s) => f.items.forEach((el, k) => el.classList.toggle('on', s === side && k === i)));
   // a single painted hand shows whichever hand is playing
   if (figs.length === 1 && side === 1) figs[0].items.forEach((el, k) => el.classList.toggle('on', k === i));
 }
-function tapOn(i, side){ if (fixing) learnTap(i, side); tapping[side] = i; noteOn(2, midiOf(i)); show(side); }
+function tapOn(i, side){ if (fixing) learnTap(i, side); tapping[side] = i; noteOn(2, midiOf(i), i); show(side); }
 function tapOff(side){ if (tapping[side] < 0) return; tapping[side] = -1; noteOff(2); show(side); }
 function setPos(side, pos){
-  const h = hands[side]; if (h.pos === pos) return;
-  h.pos = pos;
-  if (pos >= 0) { h.last = pos; h.lastT = performance.now(); }   // the melody so far, for telling look-alikes apart
-  if (pos >= 0) noteOn(side, midiOf(pos)); else noteOff(side);
+  const h = hands[side], alt = altOf(pos, h.zone || 0);
+  if (h.pos === pos && (h.alt || 0) === alt) return;
+  const same = h.pos === pos && pos >= 0;          // the same place, only raised or lowered: the same syllable
+  h.pos = pos; h.alt = alt;
+  if (pos >= 0 && !same) { h.last = pos; h.lastT = performance.now(); }   // the melody so far, for telling look-alikes apart
+  if (pos >= 0) noteOn(side, midiOf(pos) + alt, pos, same); else noteOff(side);
   show(side);
 }
 /* a place has to hold for a few frames before it sounds, so passing over a joint does not */
@@ -695,9 +832,11 @@ function feed(side, P){
   const h = hands[side];
   if (teach.on) { if (P && side === 0) teachFrame(P); if (h.pos >= 0) setPos(side, -1); h.cand = -1; h.n = 0; return; }
   if (P) lastSeen[side] = {P, t: performance.now()};
+  h.zone = zoneOf(P, video.videoHeight || 1, h.zone || 0);
   const pos = P ? classify(P, h.pos >= 0, side) : -1;
   if (pos === h.cand) h.n++; else { h.cand = pos; h.n = 1; }
   if (h.cand !== h.pos && h.n >= (h.cand < 0 ? 3 : 2)) setPos(side, h.cand);
+  else if (h.pos >= 0 && h.cand === h.pos && altOf(h.pos, h.zone) !== (h.alt || 0)) setPos(side, h.pos);
 }
 
 /* ---------- camera and hand tracking ---------- */
@@ -798,6 +937,13 @@ function loop(){
 const BONES = [[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
 function draw(got, W, H){
   g2.clearRect(0, 0, W, H);
+  if (prefs.ficta) {
+    g2.save(); g2.setLineDash([W * 0.012, W * 0.012]); g2.lineWidth = Math.max(1.5, H * 0.004); g2.strokeStyle = 'rgba(255,255,255,.55)';
+    [H / 3, 2 * H / 3].forEach(y => { g2.beginPath(); g2.moveTo(0, y); g2.lineTo(W, y); g2.stroke(); });
+    const fs = Math.round(H * 0.05); g2.font = fs + 'px "Fondamento", Georgia, serif'; g2.fillStyle = 'rgba(255,255,255,.8)'; g2.textBaseline = 'middle';
+    g2.fillText('♯', W * 0.02, H / 6); g2.fillText('♭', W * 0.02, H * 5 / 6);
+    g2.restore();
+  }
   const mir = mirrored, X = x => mir ? W - x : x;
   const css = getComputedStyle(document.documentElement);
   got.forEach((P, side) => {
@@ -810,8 +956,9 @@ function draw(got, W, H){
     if (on >= 0) {
       const q = Q[on], fs = Math.round(s * 0.2);
       g2.font = '600 ' + fs + 'px "Fondamento", "Palatino Linotype", Palatino, Georgia, serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle';
-      g2.lineWidth = fs * 0.18; g2.strokeStyle = 'rgba(0,0,0,.55)'; g2.strokeText(nameOf(on), X(q.x), q.y - s * 0.2);
-      g2.fillStyle = '#fff'; g2.fillText(nameOf(on), X(q.x), q.y - s * 0.2);
+      const nm = nameOf(on, hands[side].alt || 0);
+      g2.lineWidth = fs * 0.18; g2.strokeStyle = 'rgba(0,0,0,.55)'; g2.strokeText(nm, X(q.x), q.y - s * 0.2);
+      g2.fillStyle = '#fff'; g2.fillText(nm, X(q.x), q.y - s * 0.2);
     }
   });
 }
@@ -973,8 +1120,8 @@ function seg(attr, key, conv, after){
 }
 /* a change of pitch moves the notes that are sounding now, too */
 function retune(){
-  [0, 1].forEach(s => { const i = tapping[s] >= 0 ? tapping[s] : hands[s].pos; if (i >= 0 && voices[s]) noteOn(s, midiOf(i)); });
-  if (voices[2]) { const i = tapping.find(x => x >= 0); if (i !== undefined && i >= 0) noteOn(2, midiOf(i)); }
+  [0, 1].forEach(s => { const i = tapping[s] >= 0 ? tapping[s] : hands[s].pos; if (i >= 0 && (voices[s] || CH[s])) noteOn(s, midiOf(i) + (tapping[s] >= 0 ? 0 : hands[s].alt || 0), i, true); });
+  if (voices[2] || CH[2]) { const i = tapping.find(x => x >= 0); if (i !== undefined && i >= 0) noteOn(2, midiOf(i), i, true); }
 }
 const silenceAll = () => { [0, 1, 2].forEach(noteOff); hands.forEach(h => { h.pos = -1; h.cand = -1; }); [0, 1].forEach(show); };
 const hmode = () => prefs.hands === 2 ? '2' : (prefs.side === 'R' ? 'R' : 'L');
@@ -999,9 +1146,10 @@ $('#ref').addEventListener('change', e => {
   const v = parseFloat(String(e.target.value).replace(',', '.'));
   prefs.ref = v >= 100 && v <= 1000 ? Math.round(v * 100) / 100 : 440; e.target.value = prefs.ref; savePrefs(); retune();
 });
-seg('snd', 'snd', String, silenceAll);
+seg('snd', 'snd', String, () => { silenceAll(); if (prefs.snd === 'voice') { try { chimera.ensure(); } catch (e) {} preloadVoice(); } });
+seg('ficta', 'ficta', Number, () => [0, 1].forEach(s => { if (hands[s].pos >= 0) setPos(s, hands[s].pos); }));
 $('#vol').value = prefs.vol;
-$('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = volGain(); });
+$('#vol').addEventListener('input', e => { prefs.vol = Number(e.target.value); savePrefs(); if (master) master.gain.value = volGain(); try { chimera.setVolume(volGain() * 1.25); } catch (x) {} });
 $('#start').addEventListener('click', () => { audio(); running ? stopCam() : startCam(); });
 $('#teachBtn').addEventListener('click', () => teachStart(false));
 $('#drillBtn').addEventListener('click', () => teachStart(true));
@@ -1037,6 +1185,81 @@ if (EMBED && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
   document.addEventListener('pointerdown', () => setTimeout(() => { if (ctx && ctx.state === 'running' && /Tap here/.test($('#status').textContent)) status(''); }, 150), {passive: true});
 }
 window.__manus = {assignHands, track, setMirrored: m => { mirrored = m; }, classify, places, POS, TPL, setPos, feed, hands, normalize, gammaOrE, features, setTemplates};
+
+/* ---------- the text panel ---------- */
+let partNow = 0;
+function buildParts(){
+  $('#parts').innerHTML = MASS.map((p, i) => `<button type="button" data-part="${i}" aria-pressed="${i === partNow}">${p.part}</button>`).join('');
+  $('#parts').querySelectorAll('[data-part]').forEach(b => b.onclick = () => { partNow = +b.dataset.part; buildParts(); });
+  const cur = TXT.line && TXT.line.line;
+  $('#lines').innerHTML = MASS[partNow].lines.map((l, i) => `<button type="button" data-line="${i}" aria-pressed="${TXT.part === partNow && TXT.idx === i}">${l}</button>`).join('');
+  $('#lines').querySelectorAll('[data-line]').forEach(b => b.onclick = () => chooseLine(partNow, +b.dataset.line));
+}
+function chooseLine(part, idx){
+  TXT.line = prepareLine(MASS[part].lines[idx]); TXT.part = part; TXT.idx = idx;
+  TXT.k = [-1, -1, -1]; TXT.heard = -1; TXT.units = [];
+  [0, 1, 2].forEach(chimOff);
+  if (prefs.snd !== 'voice') { prefs.snd = 'voice'; savePrefs(); document.querySelectorAll('[data-snd]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.snd === 'voice'))); silenceAll(); }
+  try { chimera.ensure(); } catch (e) {}
+  preloadVoice();
+  buildParts(); paintText();
+}
+$('#clearText').onclick = () => { TXT.line = null; TXT.part = TXT.idx = -1; [0, 1, 2].forEach(chimOff); buildParts(); paintText(); };
+function paintText(){
+  const el = $('#sung');
+  if (!TXT.line) { el.innerHTML = '<span class="none">No sentence chosen: ut, re, mi, fa, sol, la.</span>'; return; }
+  const L = TXT.line;
+  el.innerHTML = L.words.map((w, wi) => '<span class="w' + (TXT.follow && wi === TXT.heard ? ' heard' : '') + '">' +
+    w.syls.map((t, j) => { const k = w.first + j, c = [0, 1].filter(v => TXT.k[v] === k || (v === 0 && TXT.k[2] === k)).map(v => ' v' + v).join('');
+      return '<span class="s' + c + '">' + t + '</span>'; }).join('<span class="sep">-</span>') + '</span>').join(' ');
+}
+
+/* ---------- following the singer ----------
+   Speech recognition (in Chrome, Edge and Safari) listens through the microphone. Latin is heard as Italian, the
+   nearest language it knows; each word it hears is compared with the words of the sentence by sound, preferring
+   the words just after the last one found, and the voices move to the word the singer has reached. */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null;
+const fstat = t => { $('#followStatus').textContent = t; };
+function heardWords(text){
+  if (!TXT.line) return;
+  const got = text.split(/\s+/).map(soundOf).filter(Boolean).slice(-3);
+  const W = TXT.line.words.map(w => soundOf(w.core));
+  let best = -1, score = 0;
+  got.forEach((g, gi) => {
+    W.forEach((w, i) => {
+      /* a word heard only in part while it is still being sung ("elei…") counts by its beginning */
+      const sim = Math.max(similarity(g, w), g.length >= 3 && g.length < w.length ? similarity(g, w.slice(0, g.length)) * .95 : 0);
+      if (sim < .6) return;
+      const expect = TXT.heard + 1, sc = sim - .05 * Math.abs(i - expect) + gi * .02;   // later words heard count a little more
+      if (sc > score) { score = sc; best = i; }
+    });
+  });
+  if (best >= 0 && best !== TXT.heard) { TXT.heard = best; paintText(); fstat('Following: ' + TXT.line.words[best].core); }
+}
+function startFollow(){
+  if (!SR) { fstat('This browser cannot listen to speech. Use Chrome, Edge or Safari.'); return false; }
+  try {
+    rec = new SR(); rec.lang = 'it-IT'; rec.continuous = true; rec.interimResults = true; rec.maxAlternatives = 1;
+    rec.onresult = e => { let t = ''; for (let i = e.resultIndex; i < e.results.length; i++) t += e.results[i][0].transcript + ' '; heardWords(t); };
+    rec.onerror = e => { if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { stopFollow(); fstat('The microphone is not allowed.'); } };
+    rec.onend = () => { if (TXT.follow) { try { rec.start(); } catch (e) {} } };
+    rec.start();
+  } catch (e) { fstat('Could not start listening.'); return false; }
+  fstat(TXT.line ? 'Listening… sing the sentence.' : 'Listening… choose a sentence.');
+  return true;
+}
+function stopFollow(){ TXT.follow = false; $('#followBtn').setAttribute('aria-pressed', 'false'); if (rec) { try { rec.onend = null; rec.stop(); } catch (e) {} rec = null; } paintText(); }
+$('#followBtn').onclick = () => {
+  if (TXT.follow) { stopFollow(); fstat(''); return; }
+  TXT.follow = startFollow(); $('#followBtn').setAttribute('aria-pressed', String(TXT.follow)); paintText();
+};
+if (!SR) { $('#followBtn').disabled = true; $('#followBtn').title = 'Speech recognition is available in Chrome, Edge and Safari'; }
+if (EMBED) $('#texts').hidden = true;
+TXT.part = TXT.idx = -1;
+buildParts();
+if (prefs.snd === 'voice') preloadVoice();
+window.__hand = { TXT, chooseLine, heardWords, noteOn, noteOff, setPos, hands, altOf, nameOf, POS };
 </script>
 <script src="../feedback.js" data-topic="Guidonian hand" defer></script>
 </body>
