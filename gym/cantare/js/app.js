@@ -414,9 +414,9 @@ function buildStudio() {
   card(tr('Sound'),
     chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
-    chipRow(tr('Pitch'), [...[415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); buildStudio(); })),
+    chipRow(tr('Pitch'), [...[415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); showPitch(); buildStudio(); })),
       el('label', { class: 'hzin', title: tr('The pitch of a′ in Hz') }, 'a′ =', el('input', { type: 'number', min: 300, max: 600, step: 'any', inputmode: 'decimal', value: prefs.a4,
-        onchange: e => { const v = +e.target.value; if (v >= 300 && v <= 600) { prefs.a4 = v; savePrefs(); syncMicOpt(); buildStudio(); } } }), 'Hz')]),
+        onchange: e => { const v = +e.target.value; if (v >= 300 && v <= 600) { prefs.a4 = v; savePrefs(); syncMicOpt(); showPitch(); buildStudio(); } } }), 'Hz')]),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
     chipRow('', [chip(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); })]),
@@ -653,8 +653,10 @@ function startPlayback() {
   frame();
 }
 
-function stopPlayback(keep) {
+function stopPlayback(keep, natural) {
   clearInterval(timer); cancelAnimationFrame(raf);
+  /* Stop means stop: the sounding notes are cut at once, not finished */
+  if (!natural) snd.silence();
   recStop();
   singStop();
   clock = null;
@@ -675,7 +677,7 @@ function frame() {
   const pos = clock.from + (snd.now() - clock.t0) / clock.k;
   if (prefs.hand) beatHand(Math.max(0, pos));
   if (prefs.pendulum) swingPendulum(Math.max(0, pos));
-  if (pos >= clock.end + 0.5) { stopPlayback(); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
+  if (pos >= clock.end + 0.5) { stopPlayback(false, true); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
   for (const x of S.index) {
     const on = x.t <= pos && pos < x.end;
     if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
@@ -726,6 +728,16 @@ paper.addEventListener('click', e => {
 });
 
 $('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
+/* the pitch: a′ in Hz, typed beside Tap */
+const showPitch = () => { const i = $('#pitchHz'); if (i && document.activeElement !== i) i.value = prefs.a4; };
+$('#pitchHz').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#pitchHz').addEventListener('change', e => {
+  const v = +String(e.target.value).replace(',', '.');
+  if (!(v >= 200 && v <= 1000)) { e.target.value = prefs.a4; return; }
+  prefs.a4 = Math.round(v * 10) / 10; e.target.value = prefs.a4; savePrefs(); syncMicOpt(); buildStudio();
+  if (S.playing && clock) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); }
+});
+showPitch();
 $('#tempo').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
 $('#tempo').addEventListener('change', e => { const v = +e.target.value; if (!v) { e.target.value = prefs.tempo; return; } prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); e.target.value = prefs.tempo; showTempo(); savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
 /* the beat: which value the tactus counts, tapping it, and looping */

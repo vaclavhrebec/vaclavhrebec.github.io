@@ -93,9 +93,24 @@ export function setSound(o) {
 }
 export const setVolume = v => { if (master) master.gain.value = v; };
 
+/* every note of a playback passes through one gate, so that Stop silences at once
+   even the notes already scheduled ahead; a new gate opens for what follows */
+let gate = null;
+function openGate() {
+  gate = ctx.createGain(); gate.gain.value = 1; gate.connect(dry); gate.connect(wet);
+  gate.click = ctx.createGain(); gate.click.connect(master);
+}
+export function silence() {
+  if (!ctx || !gate) return;
+  const g = gate, t = ctx.currentTime;
+  [g.gain, g.click.gain].forEach(p => { p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(0, t + .012); });
+  setTimeout(() => { try { g.disconnect(); g.click.disconnect(); } catch (e) { /* gone */ } }, 120);
+  openGate();
+}
 function out(node, gain) {
+  if (!gate) openGate();
   const g = ctx.createGain(); g.gain.value = gain;
-  node.connect(g); g.connect(dry); g.connect(wet);
+  node.connect(g); g.connect(gate);
   return g;
 }
 
@@ -202,7 +217,8 @@ export function click(at, strong) {
   const o = ctx.createOscillator(), g = ctx.createGain();
   o.frequency.value = strong ? 1500 : 1000; o.type = 'square';
   g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(strong ? .18 : .1, at + .002); g.gain.exponentialRampToValueAtTime(.0001, at + .05);
-  o.connect(g); g.connect(master); o.start(at); o.stop(at + .08);
+  if (!gate) openGate();
+  o.connect(g); g.connect(gate.click); o.start(at); o.stop(at + .08);
 }
 
 export function pitchOf(n, bflat, shift) { return midiOf(n, bflat, shift); }
