@@ -386,7 +386,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       const place = { vi, y: y - s.top };
       let init = '';
       const nm = piece.voices[vi].name;
-      if (ind && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f(ind / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}</text>`;
+      if (ind && nm && opts.state?.[vi] !== 'hide') init = `<text x="${f(ind / 2 - .2)}" y="${f(place.y + (piece.lines - 1) / 2 + 1.45)}" class="vinit" text-anchor="middle">${esc(nm.trim()[0].toUpperCase())}${/\d+$/.test(nm.trim()) ? `<tspan class="vinum" dy=".35">${nm.trim().match(/\d+$/)[0]}</tspan>` : ''}</text>`;
       svg += init + `<g transform="translate(${f(ind)} ${f(place.y)})" data-voice="${vi}">${s.svg}</g>`;
       y += (s.bottom - s.top) + gap;
       return place;

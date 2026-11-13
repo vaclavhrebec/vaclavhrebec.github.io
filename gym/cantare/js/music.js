@@ -134,7 +134,11 @@ export function pieceFrom(item, trail) {
   const DEFAULT_NAMES = { 2: ['Cantus', 'Tenor'], 3: ['Cantus', 'Tenor', 'Bassus'], 4: ['Cantus', 'Altus', 'Tenor', 'Bassus'] };
   if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT_NAMES[voices.length]) voices.forEach((v, i) => { v.name = DEFAULT_NAMES[voices.length][i]; });
   /* the top voice is called Cantus everywhere (C A T B), also where a source names it Superius */
-  voices.forEach(v => { if (v.name) v.name = v.name.replace(/^Superius\b/i, 'Cantus'); });
+  voices.forEach(v => { if (v.name) v.name = v.name.replace(/^(Superius|Discantus)\b/i, 'Cantus'); });
+  /* two or more voices of one kind are numbered: Cantus 1, Cantus 2, Altus 1, Altus 2 … */
+  const baseOf = n => (n || '').replace(/\s*(\d+|I+|primus|secundus|tertius)$/i, '').trim();
+  const count = {}; voices.forEach(v => { const b = baseOf(v.name); if (b) count[b] = (count[b] || 0) + 1; });
+  const seen = {}; voices.forEach(v => { const b = baseOf(v.name); if (b && count[b] > 1) { seen[b] = (seen[b] || 0) + 1; v.name = b + ' ' + seen[b]; } });
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */

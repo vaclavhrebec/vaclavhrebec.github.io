@@ -335,17 +335,19 @@ function rollX(pos) {
 function renderBook(p, opts, resetLeaf) {
   const paneCss = (paper.clientWidth || $('#stage').clientWidth) / 2 - 36;
   const availH = Math.max(300, $('#stage').clientHeight - 130);
+  /* rows of the opening: two voices side by side in each; four voices make two rows, five or six three, and so on */
+  const R = Math.max(2, Math.ceil(p.voices.length / 2));
   /* first pass at the chosen size to learn how tall a line is, then shrink so that two lines per pane fit one screen */
   let scale = prefs.zoom;
   const probe = p.voices.map((_, i) => engraveSystems(p, [i], Math.max(18, paneCss / scale), { ...opts, names: false }));
   const maxH = Math.max(...probe.map(s => Math.max(...s.map(x => x.h))));
-  scale = Math.max(8, Math.min(scale, (availH / 2 - 34) / (2 * maxH + 1.2)));
+  scale = Math.max(R > 2 ? 5 : 8, Math.min(scale, (availH / R - 34) / ((R > 2 ? 1 : 2) * maxH + 1.2)));
   if (S.edit && S.bookFor === p.id && S.bookScale) scale = S.bookScale; /* editing keeps the size */
   S.bookScale = scale; S.bookFor = p.id;
   const paneW = Math.max(18, paneCss / scale);
   const per = p.voices.map((_, i) => engraveSystems(p, [i], paneW, { ...opts, names: false }));
   const sysH = Math.max(...per.map(s => Math.max(...s.map(x => x.h)))) * scale + 14;
-  const rows = Math.max(2, Math.floor((availH / 2 - 30) / sysH));
+  const rows = Math.max(R > 2 ? 1 : 2, Math.floor((availH / R - 30) / sysH));
   /* leaves: every voice shows at most `rows` lines; the boundaries fall on starts of lines of any voice */
   const cuts = [...new Set(per.flatMap(s => s.map(x => x.t0)))].sort((a, b) => a - b);
   const leaves = [];
@@ -364,7 +366,23 @@ function renderBook(p, opts, resetLeaf) {
   $('#leafNo').textContent = `Leaf ${S.leaf + 1} of ${leaves.length}`;
   /* the opening of the book: left page Cantus above, right page Altus above; below, the Italian book has the Tenor
      on the left and the Bassus on the right, the German book the other way round */
-  const order = p.voices.length === 3 ? [0, 1, 2, -1] : prefs.bookKind === 'de' && p.voices.length >= 4 ? [0, 1, 3, 2] : [0, 1, 2, 3];
+  let order = p.voices.length === 3 ? [0, 1, 2, -1] : prefs.bookKind === 'de' && p.voices.length === 4 ? [0, 1, 3, 2] : [0, 1, 2, 3];
+  /* more than four voices: the highest voices at the top of the opening, then the alti, the tenors and the bassi,
+     two side by side in each row (left page, right page) */
+  if (p.voices.length > 4) {
+    const GROUP = [[/^(cantus|superius|discantus|soprano)/i, 0], [/^(altus|contratenor altus|alto)/i, 1], [/^contratenor bassus/i, 3], [/^tenor/i, 2], [/^(bassus|bass|contratenor bassus)/i, 3]];
+    const mean = v => { const ns = v.notes.filter(n => !n.rest); return ns.length ? ns.reduce((a, n) => a + n.step, 0) / ns.length : 0; };
+    const known = p.voices.map(v => { const g = GROUP.find(([re]) => re.test((v.name || '').trim())); return g ? g[1] : null; });
+    const rank = p.voices.map((v, i) => {
+      if (known[i] != null && !/^(quintus|sextus|vagans|contratenor$)/i.test((v.name || '').trim())) return known[i];
+      /* a voice without a telling name goes with the known voice nearest in range */
+      let best = 2, d = 1e9; p.voices.forEach((w, j) => { if (j !== i && known[j] != null && !/^(quintus|sextus|vagans|contratenor$)/i.test((w.name || '').trim())) { const e = Math.abs(mean(w) - mean(v)); if (e < d) { d = e; best = known[j]; } } });
+      return best;
+    });
+    order = p.voices.map((_, i) => i).sort((a, b) => rank[a] - rank[b] || mean(p.voices[b]) - mean(p.voices[a]) || a - b);
+    if (order.length % 2) order.push(-1);
+  }
+  paper.style.setProperty('--rows', String(order.length / 2));
   order.forEach(vi => {
     const pane = el('div', { class: 'pane' + (vi >= 0 && S.voice[vi] === 'hide' ? ' blank' : '') });
     if (vi >= 0 && vi < p.voices.length) {
@@ -599,7 +617,7 @@ function buildVoiceChips() {
     const name = v.name || tr('Voice') + ' ' + (i + 1);
     const MUTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
     const HIDE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><path d="M4 20L20 4"/></svg>';
-    box.append(el('div', { class: 'vc', title: name }, el('span', {}, name.charAt(0).toUpperCase()),
+    box.append(el('div', { class: 'vc', title: name }, el('span', {}, name.charAt(0).toUpperCase(), /\d+$/.test(name) ? el('sub', {}, name.match(/\d+$/)[0]) : ''),
       el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: name + ' – ' + tr('Mute') + ': ' + tr('Seen, not heard: sing it from the notation'), 'aria-label': name + ' ' + tr('Mute'), onclick: set('mute') }, parse(MUTE)),
       el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: name + ' – ' + tr('Hide') + ': ' + tr('Neither seen nor heard: improvise it'), 'aria-label': name + ' ' + tr('Hide'), onclick: set('hide') }, parse(HIDE))));
   });
