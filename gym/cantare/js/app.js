@@ -183,7 +183,7 @@ function rebuildPiece() {
   if (S.lines) p.lines = S.lines;
   else if (S.talea >= 0 && S.taleaLook === 'mensural') p.lines = 5;
   S.piece = p;
-  if ($('#tactusRate')) showTempo();
+  if ($('#tempo')) showTempo();
 }
 
 /* ------------------------------------------------------------------ drawing the page */
@@ -553,7 +553,7 @@ const beatMinims = () => { const O = isTriple(); return { L: O ? 12 : 8, B: O ? 
 /* the tempo always counts semibreves: 60 means the semibrevis at 60, so a brevis tactus beats at 30 */
 const spm = () => (60 / prefs.tempo) / 2; /* seconds per minim */
 const tactusPerMin = () => Math.round(prefs.tempo * 2 / beatMinims() * 10) / 10;
-const showTempo = () => { $('#bpm').textContent = prefs.tempo; $('#tactusRate').textContent = tactusPerMin(); };
+const showTempo = () => { const i = $('#tempo'); if (document.activeElement !== i) i.value = prefs.tempo; i.title = `${tr('Semibrevis')} ${prefs.tempo} · ${tr('tactus')} ${tactusPerMin()}`; };
 
 let timer = 0, raf = 0, clock = null;
 
@@ -690,7 +690,8 @@ paper.addEventListener('click', e => {
 });
 
 $('#play').addEventListener('click', () => { if (S.playing) { stopPlayback(); } else startPlayback(); });
-$('#tempo').addEventListener('input', e => { prefs.tempo = +e.target.value; showTempo(); savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
+$('#tempo').addEventListener('keydown', e => { if (e.key === 'Enter') e.target.blur(); });
+$('#tempo').addEventListener('change', e => { const v = +e.target.value; if (!v) { e.target.value = prefs.tempo; return; } prefs.tempo = Math.max(10, Math.min(300, Math.round(v))); e.target.value = prefs.tempo; showTempo(); savePrefs(); if (S.playing) { const pos = clock.from + (snd.now() - clock.t0) / clock.k; stopPlayback(true); S.startAt = pos; startPlayback(); } });
 /* the beat: which value the tactus counts, tapping it, and looping */
 const UNITS = [['L', 'Longa'], ['B', 'Brevis'], ['S', 'Semibrevis'], ['M', 'Minima']];
 function setTempo(v) {
