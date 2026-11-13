@@ -1,5 +1,5 @@
 /* Offline support: the app's own files are cached on first use and refreshed in the background. */
-const CACHE = 'cantare-next-36';
+const CACHE = 'cantare-next-37';
 self.addEventListener('install', e => { self.skipWaiting(); });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim()));

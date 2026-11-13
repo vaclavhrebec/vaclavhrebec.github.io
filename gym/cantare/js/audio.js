@@ -2,13 +2,13 @@
 import { midiOf, hz } from './music.js';
 
 export const TIMBRES = {
-  organ: { label: 'Organ, Principal 8′' },
+  voice: { label: 'Voice (sung by Chimera)' },
+  sackbut: { label: 'Sackbut' },
   regal: { label: 'Regal' },
   chalumeau: { label: 'Chalumeau' },
-  sackbut: { label: 'Sackbut' },
-  voice: { label: 'Voice' },
-  gedackt: { label: 'Gedackt 8′ (stopped flute)' },
+  organ: { label: 'Organ, Principal 8′' },
   flute: { label: 'Open flute 8′' },
+  gedackt: { label: 'Gedackt 8′ (stopped flute)' },
   sine: { label: 'Sine' },
   custom: { label: 'Your own (drawbars)' },
 };

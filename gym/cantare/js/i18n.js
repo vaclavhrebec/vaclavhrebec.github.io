@@ -133,3 +133,4 @@ Object.assign(D.cs, { 'Save': 'Uložit', 'Save as PDF: the whole piece on A4 pag
 Object.assign(D.de, { 'Inspired by an early stage of the': 'Angeregt von einer frühen Fassung der', 'app by Samuel Reid Navarro.': 'App von Samuel Reid Navarro.' });
 Object.assign(D.fr, { 'Inspired by an early stage of the': "Inspiré d'une première version de l'application", 'app by Samuel Reid Navarro.': 'de Samuel Reid Navarro.' });
 Object.assign(D.cs, { 'Inspired by an early stage of the': 'Inspirováno ranou verzí aplikace', 'app by Samuel Reid Navarro.': 'od Samuela Reida Navarra.' });
+Object.assign(D.de, { 'Voice (sung by Chimera)': 'Stimme (gesungen von Chimera)' });

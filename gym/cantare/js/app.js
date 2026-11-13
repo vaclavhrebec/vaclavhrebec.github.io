@@ -15,7 +15,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
+const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -24,6 +24,8 @@ try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } c
 /* 13 Nov 2026: the engraved Bravura shapes became the default for everyone, once */
 if (!prefs.fontBravura) { prefs.font = 'bravura'; prefs.fontBravura = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 setFont(prefs.font);
+/* 13 Nov 2026: the voice sung by Chimera became the default sound for everyone, once */
+if (!prefs.voiceDefault) { prefs.timbre = 'voice'; prefs.voiceDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 snd.setSound(prefs.sound || {});
 setLang(prefs.lang || guessLang());
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
@@ -1367,7 +1369,7 @@ if (prefs.timbre === 'voice') snd.prepare();
 /* the sound, chosen in the bar at the bottom (the same choice as Timbre in the Studio); Voice is sung by Chimera */
 function buildSoundSel() {
   const sel = $('#soundSel'); sel.textContent = '';
-  Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(k === 'voice' ? 'Voice (sung by Chimera)' : v.label))));
+  Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(v.label))));
 }
 $('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; if (prefs.timbre === 'voice') snd.prepare(); savePrefs(); buildStudio(); });
 buildSoundSel();
