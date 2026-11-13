@@ -17,7 +17,6 @@
   <div class="grow"></div>
   <label class="ib lang" title="Language" data-i18n-title="Language"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.500 0 18M12 3c-3 3.500-3 14.500 0 18"/></svg><select id="lang" aria-label="Language"></select></label>
   <button class="ib" id="toggleTheme" aria-label="Light / dark" title="Light / dark" data-i18n-title="Light / dark"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
-  <button class="ib" id="openStudio" aria-label="Studio" title="Studio" data-i18n-title="Studio"><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6"/></svg><span data-i18n="Studio">Studio</span></button>
   <button class="ib" id="fullBtn" aria-pressed="false" aria-label="Full screen" title="Full screen" data-i18n-title="Full screen" hidden><svg viewBox="0 0 24 24"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/></svg></button>
 </header>
 
@@ -34,6 +33,7 @@
   <div class="pop" id="micPop" hidden></div>
   <div class="pop" id="transformPop" hidden></div>
   <div class="pop" id="clefPop" hidden></div>
+  <div class="pop optpop" id="optPop" hidden></div>
 </div>
 <div class="shell">
   <aside class="drawer left" id="library" aria-label="Library">
@@ -57,7 +57,7 @@
     <nav class="pager" id="pager" hidden><button id="prevLeaf" aria-label="Previous leaf" data-i18n-title="Previous leaf">&lsaquo;</button><span id="leafNo"></span><button id="nextLeaf" aria-label="Next leaf" data-i18n-title="Next leaf">&rsaquo;</button></nav>
   </main>
 
-  <aside class="drawer right" id="studio" aria-label="Studio">
+  <aside class="drawer right" id="studio" aria-label="Studio" hidden>
     <div class="drawer-head"><strong data-i18n="Studio">Studio</strong><button class="x" data-close="studio" aria-label="Close" data-i18n-title="Close">&times;</button></div>
     <div class="cards" id="cards"></div>
   </aside>
@@ -76,6 +76,7 @@
   </div>
   <label class="soundsel" title="Sound" data-i18n-title="Sound"><span class="sr" data-i18n="Sound">Sound</span><select id="soundSel"></select></label>
   <div class="voices" id="voiceChips"></div>
+  <div class="optbar" id="optbar"></div>
 </footer>
 
 <div class="handwin" id="handView" hidden role="dialog" aria-label="Guidonian hand"><div class="hw-head" id="handDrag"><strong data-i18n="Guidonian hand">Guidonian hand</strong><span class="grow"></span><button class="x" id="handClose" aria-label="Close" data-i18n-title="Close">&times;</button></div><iframe id="handFrame" title="Guidonian hand" allow="camera; autoplay"></iframe></div>

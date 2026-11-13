@@ -454,26 +454,20 @@ function setSound(o) { snd.setSound(o); prefs.sound = { ...snd.SOUND }; savePref
 /* a short note to hear what a setting does */
 function testTone() { if (S.playing) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: 57, a4: prefs.a4, at: ctx.currentTime + .02, dur: .7, text: 'a' }); }
 
-function buildStudio() {
-  const b = S.base, c = $('#cards');
-  c.textContent = '';
+function buildSection(which, c) {
+  const b = S.base;
   const multi = b.voices.length > 1;
   const card = (title, ...kids) => { const d = el('section', { class: 'card' }, el('h3', {}, title), ...kids); c.append(d); return d; };
 
   /* sound */
-  card(tr('Sound'),
+  if (which === 'sound') card(tr('Sound'),
     chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
-    chipRow(tr('Pitch'), [...[415, 440, 466].map(h => chip('a′ = ' + h, prefs.a4 === h, () => { prefs.a4 = h; savePrefs(); syncMicOpt(); showPitch(); buildStudio(); })),
-      el('label', { class: 'hzin', title: tr('The pitch of a′ in Hz') }, 'a′ =', el('input', { type: 'number', min: 300, max: 600, step: 'any', inputmode: 'decimal', value: prefs.a4,
-        onchange: e => { const v = +e.target.value; if (v >= 300 && v <= 600) { prefs.a4 = v; savePrefs(); syncMicOpt(); showPitch(); buildStudio(); } } }), 'Hz')]),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
-    slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
-    chipRow('', [chip(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); })]),
-    chipRow(tr('Tactus'), [chip(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }), chip(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); }), chip(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); })]));
+    slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })));
 
   /* the organ registers speak with the pipe settings; Your own takes the drawbars */
-  if (snd.REG[prefs.timbre] || prefs.timbre === 'custom') {
+  if (which === 'pipes' && (snd.REG[prefs.timbre] || prefs.timbre === 'custom')) {
     const pipe = card(tr('Pipes'));
     [['atk', 'Attack', 0, 300, 1, ' ms'], ['rel', 'Release', 10, 600, 5, ' ms'], ['chiff', 'Chiff', 0, 100, 1, ''], ['ens', 'Ensemble', 0, 12, .1, ' ct'], ['wind', 'Wind', 0, 100, 1, ''], ['scoop', 'Scoop', 0, 30, 1, ' ct']]
       .forEach(([k, label, a, b, st, u]) => pipe.append(slider(tr(label), a, b, snd.SOUND[k], v => setSound({ [k]: v }), st, u)));
@@ -490,14 +484,14 @@ function buildStudio() {
   }
 
   /* view */
-  card(tr('View'),
+  if (which === 'view') card(tr('View'),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => setView(k), { disabled: k === 'book' && !multi }))),
     el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
     chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }, k === 'vellum' ? { title: tr('Vellum and a rastrum: the music on an old page') } : {}))),
     chipRow(tr('Screen'), [chip(tr('Focus'), document.documentElement.classList.contains('focus'), () => setFocus(true), { title: tr('Only the music: everything else is put away') }),
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));
 
-  card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
+  if (which === 'share') card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
     const url = linkOf(b);
     try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
   }, { title: tr('Copy a link that opens this exact melody') }), chip(tr('Save as PDF'), false, () => exportPDF())),
@@ -505,6 +499,49 @@ function buildStudio() {
       ? chip(tr('Delete this melody'), false, async () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = await randomPick(); openItem(pick.item, pick.trail); })
       : chip(tr('Keep as my melody'), false, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, { title: tr('Keep this melody, as it is now, among your own, to change and send') })));
 }
+
+/* everything that was in the Studio now sits as single buttons in the bar under the music;
+   a button with ▾ opens its settings in a window in the middle of the screen */
+let optOpen = null;
+function openOpt(k) {
+  const pop = $('#optPop');
+  optOpen = k; pop.textContent = '';
+  pop.append(el('div', { class: 'clefpop-head' }, el('span'), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: closeOpt }, '×')));
+  const box = el('div', { class: 'cards' }); pop.append(box);
+  buildSection(k, box);
+  pop.hidden = false;
+}
+function closeOpt() { optOpen = null; $('#optPop').hidden = true; }
+function buildStudio() {
+  const bar = $('#optbar'), b = S.base, multi = b.voices.length > 1;
+  const btn = (label, pressed, fn, title) => el('button', { type: 'button', class: 'chip opt', ...(pressed == null ? {} : { 'aria-pressed': String(!!pressed) }), onclick: fn, title: title || '' }, label);
+  const more = k => () => (optOpen === k ? closeOpt() : openOpt(k));
+  const THEMES = [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']];
+  const themeName = (THEMES.find(t => t[0] === prefs.theme) || THEMES[0])[1];
+  bar.replaceChildren(...[
+    btn(tr('Sound') + ' ▾', null, more('sound')),
+    (snd.REG[prefs.timbre] || prefs.timbre === 'custom') ? btn(tr('Pipes') + ' ▾', null, more('pipes')) : '',
+    btn(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }),
+    btn(tr('Hand'), prefs.hand, () => { prefs.hand = !prefs.hand; savePrefs(); syncHand(); buildStudio(); }),
+    btn(tr('Pendulum'), prefs.pendulum, () => { prefs.pendulum = !prefs.pendulum; savePrefs(); syncHand(); buildStudio(); }),
+    btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
+    multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',
+    btn(tr('View') + ' ▾', null, more('view')),
+    btn(tr(themeName), null, () => { const i = THEMES.findIndex(t => t[0] === prefs.theme); prefs.theme = THEMES[(i + 1) % THEMES.length][0]; savePrefs(); applyTheme(); buildStudio(); }, tr('Theme')),
+    btn(tr('Focus'), false, () => setFocus(true), tr('Only the music: everything else is put away')),
+    document.fullscreenEnabled ? btn(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : '',
+    btn(tr('Copy link'), null, async () => { const url = linkOf(b); try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); } }, tr('Copy a link that opens this exact melody')),
+    b.mine
+      ? btn(tr('Delete this melody'), null, async () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = await randomPick(); openItem(pick.item, pick.trail); })
+      : btn(tr('Keep as my melody'), null, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, tr('Keep this melody, as it is now, among your own, to change and send')),
+  ].filter(Boolean));
+  if (optOpen) {
+    if (optOpen === 'pipes' && !(snd.REG[prefs.timbre] || prefs.timbre === 'custom')) closeOpt();
+    else { const box = $('#optPop .cards'); if (box) { box.textContent = ''; buildSection(optOpen, box); } }
+  }
+}
+document.addEventListener('pointerdown', e => { const pop = $('#optPop'); if (pop && !pop.hidden && !pop.contains(e.target) && !e.target.closest('#optbar')) closeOpt(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && optOpen) closeOpt(); });
 
 function buildVoiceChips() {
   const box = $('#voiceChips');
@@ -1037,7 +1074,7 @@ function openDrawer(id) { $('#' + id).dataset.open = 'true'; syncLibBtn(); if (i
 function closeDrawer(id) { $('#' + id).dataset.open = 'false'; syncLibBtn(); if (innerWidth >= 1100) relayout(); }
 const toggleDrawer = id => ($('#' + id).dataset.open === 'true' ? closeDrawer : openDrawer)(id);
 $('#openLib').addEventListener('click', () => toggleDrawer('library'));
-$('#openStudio').addEventListener('click', () => toggleDrawer('studio'));
+
 document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeDrawer(b.dataset.close)));
 $('#toggleTheme').addEventListener('click', () => { prefs.theme = prefs.theme === 'dark' ? 'light' : 'dark'; savePrefs(); applyTheme(); if (S.base) buildStudio(); });
 $('#search').addEventListener('input', e => renderTree(e.target.value));
