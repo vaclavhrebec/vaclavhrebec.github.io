@@ -16,9 +16,9 @@ const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
 
 /* ---------- glyphs (Bravura outlines) ---------- */
 const U = .004; /* one font unit in staff spaces */
-const CHANT_K = 1.3; /* the chant punctum, a little larger than Bravura draws it */
+/* chant is written with Bravura's solid mensural brevis (as in the first Cantare), not the modern chant punctum */
 const gw = c => BRAVURA[c].w * U;
-const CHANT_W = BRAVURA.E990.w * U * CHANT_K;
+const CHANT_W = BRAVURA.E934.w * U;
 /* glyph with its font origin at (x, y) */
 const go = (c, x, y, sx = 1, cls = 'fill') => `<path d="${BRAVURA[c].d}" transform="translate(${f(x)} ${f(y)}) scale(${f(U * sx * 1e3) / 1e3} ${-f(U * sx * 1e3) / 1e3})" class="${cls}"/>`;
 /* glyph with its bounding box centred on (cx, cy) */
@@ -27,7 +27,8 @@ const gc = (c, cx, cy, sx = 1, cls = 'fill') => {
   return go(c, cx - (g.x + g.w / 2) * U * sx, cy + (g.y + g.h / 2) * U * sx, sx, cls);
 };
 
-const CLEF_CODE = { mensural: { C: 'E905', F: 'E903', G: 'E900' }, chant: { C: 'E906', F: 'E902', G: 'E906' } };
+/* Petrucci's clefs from Bravura, as in the first Cantare (Wednesday 11 Nov), for chant and mensural music alike */
+const CLEF_CODE = { mensural: { C: 'E907', F: 'E904', G: 'E901' }, chant: { C: 'E907', F: 'E904', G: 'E901' } };
 const clefCode = (clef, style) => CLEF_CODE[style === 'chant' ? 'chant' : 'mensural'][clef.kind];
 const msClef = (clef, style) => (ms(style) && (clef.kind === 'C' || clef.kind === 'F')) ? (clef.kind === 'C' ? 'clefC' : 'clefF') : null;
 const clefWidth = (clef, style) => { const k = msClef(clef, style); return k ? MS[k].w : gw(clefCode(clef, style)); };
@@ -35,7 +36,10 @@ const clefWidth = (clef, style) => { const k = msClef(clef, style); return k ? M
 /* y: vertical position of the line the clef sits on */
 function clefGlyph(clef, y, style, lines = 5) {
   const k = msClef(clef, style);
-  let g = k ? mp(k, MS[k].w / 2, k === 'clefF' ? (lines - 1) / 2 : y) : go(clefCode(clef, style), 0, y);
+  const code = clefCode(clef, style);
+  /* the C clef's long strokes run towards the middle of the staff: up from a low line, down from a high one */
+  const flip = !k && code === 'E907' && y < (lines - 1) / 2;
+  let g = k ? mp(k, MS[k].w / 2, k === 'clefF' ? (lines - 1) / 2 : y) : flip ? go(code, 0, y).replace(/scale\(([\d.]+) (-[\d.]+)\)/, (m, a, b) => `scale(${a} ${-b})`) : go(code, 0, y);
   if (clef.shift) g += `<text x="${f(clefWidth(clef, style) / 2)}" y="${f(y + 2.55)}" class="clefnum" text-anchor="middle">8</text>`;
   return g;
 }
@@ -52,9 +56,9 @@ const accidental = (acc, x, y, small, style = 'white') => {
 /* a note head and stem; style: 'chant' | 'white' | 'black' */
 function noteGlyph(n, x, y, up, style) {
   if (style === 'chant') {
-    /* Bravura's chant punctum; a longa is the punctum with a tail on the right */
-    let g = gc('E990', x, y, CHANT_K);
-    if (n.v === 'L') g += `<path d="M${f(x + CHANT_W / 2 - .06)} ${f(y)}v1.7" class="stroke thick"/>`;
+    /* Bravura's solid brevis; a longa (final) gets Bravura's mensural tail on the right */
+    let g = gc('E934', x, y);
+    if (n.v === 'L') g += go('E93F', x + CHANT_W / 2 - .13, y);
     return g;
   }
   const black = style === 'black' || n.col;
