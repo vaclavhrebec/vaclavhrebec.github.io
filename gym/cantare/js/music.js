@@ -131,8 +131,10 @@ export function pieceFrom(item, trail) {
       void sounding;
     });
   }
-  const DEFAULT_NAMES = { 2: ['Superius', 'Tenor'], 3: ['Superius', 'Tenor', 'Bassus'], 4: ['Superius', 'Altus', 'Tenor', 'Bassus'] };
+  const DEFAULT_NAMES = { 2: ['Cantus', 'Tenor'], 3: ['Cantus', 'Tenor', 'Bassus'], 4: ['Cantus', 'Altus', 'Tenor', 'Bassus'] };
   if (voices.length > 1 && voices.every(v => !v.name) && DEFAULT_NAMES[voices.length]) voices.forEach((v, i) => { v.name = DEFAULT_NAMES[voices.length][i]; });
+  /* the top voice is called Cantus everywhere (C A T B), also where a source names it Superius */
+  voices.forEach(v => { if (v.name) v.name = v.name.replace(/^Superius\b/i, 'Cantus'); });
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
