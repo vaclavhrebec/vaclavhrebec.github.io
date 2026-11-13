@@ -674,7 +674,7 @@ function buildEditTools() {
   syncTitleEdit();
 }
 
-$('#clearBtn').addEventListener('click', () => newMelody());
+$('#clearBtn').addEventListener('click', () => askNewMelody());
 $('#editBtn').addEventListener('click', () => {
   S.edit = !S.edit;
   if (!S.edit) S.sel = null;
@@ -908,8 +908,16 @@ document.addEventListener('keydown', e => {
   if (e.target.matches('input, select, textarea')) return;
   if (e.target.isContentEditable) return;
   if (e.code === 'Space') { e.preventDefault(); $('#play').click(); return; }
-  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redoEdit(); else undo(); return; }
-  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) {
+    if (S.edit && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redoEdit(); else undo(); }
+    return;
+  }
+  /* the keyboard writes music only after the pencil (Edit) is tapped; until then only the page keys work */
+  if (!S.edit) {
+    if (e.key === 'ArrowRight' && !$('#pager').hidden) $('#nextLeaf').click();
+    if (e.key === 'ArrowLeft' && !$('#pager').hidden) $('#prevLeaf').click();
+    return;
+  }
   const VK = ['Mx', 'L', 'B', 'S', 'M', 'Sm', 'F'];
   if (/^[a-gA-G]$/.test(e.key)) { e.preventDefault(); typeNote(e.key.toUpperCase()); return; }
   if (e.key === 'r' || e.key === 'R') { e.preventDefault(); typeRest(); return; }
@@ -958,18 +966,68 @@ function keepMine() {
   if (!it) return;
   Object.assign(it, itemOf(S.base), { id: it.id });
   saveMineList();
+  sendLater();
 }
 function adoptMine(item, open = true) {
   item.id ??= ++uid; item.mine = true;
   mine.unshift(item); saveMineList(); mineGroup(); renderTree($('#search').value);
   if (open) { openItem(item, [tr('Your melodies')]); S.base.mine = true; }
 }
-function newMelody() {
+function newMelody(title) {
   const cur = S.base;
-  adoptMine({ title: tr('Your own melody'), n: '', c: cur && cur.kind !== 'chant' ? cur.voices[0].clef : 'c4', t: 'C', mine: true });
+  sendMine();
+  adoptMine({ title: title || tr('Your own melody'), n: '', c: cur && cur.kind !== 'chant' ? cur.voices[0].clef : 'c4', t: 'C', mine: true });
   S.edit = true; S.sel = null; S.inDur = 'S'; S.inRest = false; buildEditTools(); render(); markSel();
   toast(tr('Tap the staff to put a note there, or type A to G.'));
 }
+/* New: first the melody gets its name; then an empty staff opens in Edit. */
+const SENDPREF = 'cantare-next:send';
+function askNewMelody() {
+  const pop = $('#clefPop');
+  let send = true; try { send = localStorage.getItem(SENDPREF) !== 'no'; } catch (e) { /* ignore */ }
+  const name = el('input', { type: 'text', class: 'nm-in', maxlength: 120, placeholder: tr('e.g. My cantus firmus in the first mode'), 'aria-label': tr('Name of the melody') });
+  const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, placeholder: tr('Your name (optional)'), 'aria-label': tr('Your name (optional)') });
+  const box = el('input', { type: 'checkbox', checked: send });
+  const go = () => {
+    const t = name.value.trim();
+    if (!t) { name.focus(); name.classList.add('need'); return; }
+    try { localStorage.setItem(SENDPREF, box.checked ? 'yes' : 'no'); if (who.value.trim()) localStorage.setItem('cantare-next:who', who.value.trim()); } catch (e) { /* ignore */ }
+    pop.hidden = true; newMelody(t);
+  };
+  try { who.value = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('New melody')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('label', {}, tr('Name of the melody'), name),
+      el('label', {}, tr('Your name (optional)'), who),
+      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the melodies people write here (title, notes and your name if given).'))),
+      el('p', { class: 'hint' }, tr('Your melody is saved in this browser under Your melodies in the library.')),
+      el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')), el('button', { type: 'button', class: 'chip primary', onclick: go }, tr('Start writing')))));
+  pop.hidden = false; setTimeout(() => name.focus(), 30);
+}
+/* a copy of each written melody goes to Václav (if the writer agreed): when it rests for a minute, when another one is
+   started, and when the page is left; only melodies with a few notes, and only when something changed since the last copy */
+const sentAt = new Map();
+let sendT = null;
+function sendMine(b = S.base) {
+  clearTimeout(sendT);
+  if (!b || !b.mine) return;
+  try { if (localStorage.getItem(SENDPREF) === 'no') return; } catch (e) { /* ignore */ }
+  const notes = b.voices.reduce((a, v) => a + v.notes.filter(n => !n.rest).length, 0);
+  if (notes < 3) return;
+  const it = itemOf(b), key = JSON.stringify(it);
+  if (sentAt.get(b.id) === key) return;
+  sentAt.set(b.id, key);
+  let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  const body = { _subject: 'Cantare – a new melody: ' + b.title, _template: 'table', _captcha: 'false', About: 'Cantare super librum – melody written by a visitor',
+    Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | '), Link: linkOf(b), Data: key };
+  try { fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).catch(() => {}); } catch (e) { /* offline: it goes with the next change */ sentAt.delete(b.id); }
+}
+const sendLater = () => { clearTimeout(sendT); sendT = setTimeout(() => sendMine(), 60000); };
+addEventListener('pagehide', () => sendMine());
+document.addEventListener('visibilitychange', () => { if (document.hidden) sendMine(); });
+
 function linkOf(b) {
   if (!b.mine) return location.origin + location.pathname + '#' + slug(b.title);
   const json = JSON.stringify(itemOf(b)), bytes = new TextEncoder().encode(json);

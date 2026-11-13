@@ -375,3 +375,13 @@ html.focus .tactus-hand { z-index: 0; }
 .rollhead { position: sticky; left: 0; z-index: 2; background: var(--bg); overflow: hidden; align-self: start; box-shadow: 8px 0 10px -6px var(--bg); }
 :root[data-theme="vellum"] .rollhead { background: #efe4cc; }
 .paper.rolling .sys { margin: 0; }
+/* the New melody dialog */
+.nm { display: grid; gap: 12px; padding: 6px 4px 4px; }
+.nm label { display: grid; gap: 4px; font-size: 13px; color: var(--soft); }
+.nm .nm-in { height: 38px; border: 1px solid var(--line); border-radius: 9px; background: var(--raised); color: var(--ink); font: 15px var(--sans); padding: 0 10px; }
+.nm .nm-in.need { border-color: var(--accent); }
+.nm .nm-send { grid-template-columns: auto 1fr; align-items: start; gap: 8px; color: var(--ink); }
+.nm .nm-send input { margin-top: 3px; accent-color: var(--accent); }
+.nm .hint { margin: 0; font-size: 12px; color: var(--soft); }
+.nm-go { display: flex; justify-content: flex-end; gap: 8px; }
+.chip.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
