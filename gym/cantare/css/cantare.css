@@ -429,3 +429,4 @@ html.full .bar .ib { height: 30px; }
 .vinit .vinum, .system .vinum { font-size: .55em; }
 .vc > span sub { font-size: .7em; margin-left: 1px; }
 .bookbtn { white-space: nowrap; flex: none; }
+#play.loading { opacity: .55; cursor: progress; }

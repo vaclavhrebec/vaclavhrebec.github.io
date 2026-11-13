@@ -1,5 +1,6 @@
 /* Sound: a small additive/subtractive synthesiser with a church-like room. */
 import { midiOf, hz } from './music.js';
+import { word } from './latin.js';
 
 export const TIMBRES = {
   voice: { label: 'Voice (sung by Chimera)' },
@@ -33,33 +34,100 @@ const VOWELS = {
 };
 export const vowelOf = t => { const m = /[aeiouyáéíóúæœ]/i.exec((t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')); const c = m ? m[0].toLowerCase() : 'a'; return c === 'y' ? 'i' : c === 'æ' ? 'e' : c === 'œ' ? 'e' : c; };
 
-/* Voice bank: vowels sung by Chimera's physical vocal-tract model (MIT, Jameson Hodge), rendered offline, one file per body and vowel. */
+/* Voice bank: Latin syllables sung by Chimera's physical vocal-tract model (MIT, Jameson Hodge), rendered offline with its CLI
+   at every pitch of the bank, for a male and a female body. Each syllable is sung as two rendered halves:
+   CV, its onset consonants and its vowel, held so that it can loop ("kw.i", "stɾ.a", ".a"), and
+   VC, the held vowel closing into its final consonants or a diphthong's glide ("u.s", "a.ŋk", "aʊ.").
+   The files are fetched as a piece needs them. */
 const BANK = { map: null, buf: {}, pending: {} };
-export function prepare(base = 'audio/voice/') {
+const BASE = 'audio/voice/';
+export function prepare() {
   ensure();
-  const get = async (k, f, b) => { if (BANK.buf[k] || BANK.pending[k]) return; BANK.pending[k] = 1;
-    try { BANK.buf[k] = await ctx.decodeAudioData(await (await fetch(base + f)).arrayBuffer()); } catch (e) { /* the formant voice stands in */ } };
-  return (async () => {
-    if (!BANK.map) { try { BANK.map = await (await fetch(base + 'map.json')).json(); } catch (e) { return; } }
-    await Promise.all(['male', 'female'].flatMap(b => 'aeiou'.split('').map(v => get(b + v, `${b}_${v}.mp3`))));
-  })();
+  if (!BANK.ready) BANK.ready = fetch(BASE + 'map.json').then(r => r.json()).then(m => { BANK.map = m; }).catch(() => {});
+  return BANK.ready;
 }
-function bankNote(midi, f0, vowel, at, env, sources, tied, soft = false) {
-  const m = BANK.map; if (!m) return false;
-  const body = midi < 57 ? 'male' : 'female', buf = BANK.buf[body + vowel]; if (!buf) return false;
-  const ps = m[body]; let k = 0; ps.forEach((p, i) => { if (Math.abs(p - midi) < Math.abs(ps[k] - midi)) k = i; });
-  const fp = 440 * Math.pow(2, (ps[k] - 69) / 12), slot = k * m.slot;
-  const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = f0 / fp;
-  const n = Math.max(1, Math.round((m.loop[1] - m.loop[0]) * fp));
-  src.loop = true; src.loopStart = slot + m.loop[0]; src.loopEnd = slot + m.loop[0] + n / fp;
-  const v = ctx.createOscillator(); v.frequency.value = 5.2;
-  const vg = ctx.createGain(); vg.gain.setValueAtTime(tied || soft ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied || soft ? .01 : .5));
-  v.connect(vg); vg.connect(src.detune); sources.push(v);
-  /* a note tied into a ligature starts inside the sustained vowel, with no new onset */
-  src.connect(env); src.start(at, tied || soft ? slot + m.loop[0] : slot + m.lead - .03); sources.push(src);
-  return true;
+const bodyOf = midi => (midi < 57 ? 'male' : 'female');
+/* the bank's unit for a syllable half, or the nearest one it has: fewer onset consonants (from the front), fewer coda consonants (from the end) */
+function cvUnit(on, v) {
+  const u = BANK.map && BANK.map.cv.units; if (!u) return null;
+  for (let k = 0; k <= on.length; k++) { const key = on.slice(k).join('') + '.' + v; if (u[key]) return key; }
+  const plain = '.' + ({ aʊ: 'a', eɪ: 'ɛ' }[v] || v); return u[plain] ? plain : '.a';
 }
+function vcUnit(v, co) {
+  const u = BANK.map && BANK.map.vc.units; if (!u) return null;
+  if (!co.length && !u[v + '.']) return null;
+  for (let k = co.length; k >= 1; k--) { const key = v + '.' + co.slice(0, k).join(''); if (u[key]) return key; }
+  return u[v + '.'] ? v + '.' : null;
+}
+/* the halves a syllable needs: {cv, vc} (vc null for an open syllable) */
+export function units(syl) {
+  if (!syl) return { cv: cvUnit([], 'a'), vc: null };
+  return { cv: cvUnit(syl.on, syl.v), vc: vcUnit(syl.v, syl.co) };
+}
+/* fetch the files of these halves for these pitches; resolves when they are in */
+export async function load(list) {
+  await prepare(); if (!BANK.map) return;
+  const want = new Set();
+  for (const { u, midi } of list) {
+    if (!u) continue;
+    const b = bodyOf(midi)[0];
+    if (u.cv) want.add(`${b}_cv${BANK.map.cv.units[u.cv][0]}`);
+    if (u.vc) want.add(`${b}_vc${BANK.map.vc.units[u.vc][0]}`);
+  }
+  await Promise.all([...want].map(f => {
+    if (BANK.buf[f]) return null;
+    if (!BANK.pending[f]) BANK.pending[f] = fetch(BASE + f + '.mp3').then(r => r.arrayBuffer()).then(a => ctx.decodeAudioData(a)).then(x => { BANK.buf[f] = x; }).catch(() => { delete BANK.pending[f]; });
+    return BANK.pending[f];
+  }));
+}
+export const loaded = (u, midi) => !!(BANK.map && u && u.cv && BANK.buf[`${bodyOf(midi)[0]}_cv${BANK.map.cv.units[u.cv][0]}`]);
+/* how long before its beat a syllable's onset consonants begin */
+export function leadOf(u, midi) {
+  if (!BANK.map || !u || !u.cv) return 0;
+  const e = BANK.map.cv.units[u.cv]; return e ? e[bodyOf(midi) === 'male' ? 1 : 2] : 0;
+}
+function nearest(ps, midi) { let k = 0; ps.forEach((p, i) => { if (Math.abs(p - midi) < Math.abs(ps[k] - midi)) k = i; }); return k; }
 
+/* One sung note from the bank. tied: it continues its syllable on the vowel (no onset, no accent);
+   last: the syllable ends with this note, so its coda (or glide) closes it, finishing at `close`. Returns when the coda's sound ends, or 0 for an open syllable. */
+function bankNote({ midi, f0, at, end, env, sources, tied, u, last, close }) {
+  const m = BANK.map; if (!m || !u || !u.cv) return false;
+  const body = bodyOf(midi), ps = m[body], k = nearest(ps, midi), b = body[0];
+  const cvE = m.cv.units[u.cv], buf = BANK.buf[`${b}_cv${cvE[0]}`]; if (!buf) return false;
+  const fp = 440 * Math.pow(2, (ps[k] - 69) / 12), rate = f0 / fp;
+  const slot = k * m.cv.slot, beat = slot + m.cv.pre;
+  const lead = cvE[body === 'male' ? 1 : 2] + .02;
+  const vib = src => { const v = ctx.createOscillator(); v.frequency.value = 5.2;
+    const vg = ctx.createGain(); vg.gain.setValueAtTime(tied ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied ? .01 : .5));
+    v.connect(vg); vg.connect(src.detune); v.start(Math.max(ctx.currentTime, at - lead)); v.stop(end + 1); };
+  /* the vowel: the attack (its onset consonants before the beat), then the held vowel looped a whole number of periods */
+  const src = ctx.createBufferSource(); src.buffer = buf; src.playbackRate.value = rate;
+  const n = Math.max(1, Math.round((m.cv.loop[1] - m.cv.loop[0]) * fp));
+  src.loop = true; src.loopStart = beat + m.cv.loop[0]; src.loopEnd = beat + m.cv.loop[0] + n / fp;
+  const vg = ctx.createGain(); src.connect(vg); vg.connect(env); vib(src);
+  let t1 = at, off = beat + m.cv.loop[0];
+  if (!tied) { t1 = at - lead / rate; off = beat - lead; }
+  if (t1 < ctx.currentTime) { off += (ctx.currentTime - t1) * rate; t1 = ctx.currentTime; }
+  src.start(t1, off);
+  /* the coda: the second half, at this note's pitch, placed so that its last consonant ends at `close`;
+     the held vowel crosses into it shortly before the coda begins */
+  const vcE = last && u.vc && m.vc.units[u.vc], vbuf = vcE && BANK.buf[`${b}_vc${vcE[0]}`];
+  if (vbuf) {
+    const tc = vcE[body === 'male' ? 1 : 3], te = vcE[body === 'male' ? 2 : 4];
+    const T = close - te / rate;                          /* when the half's beat would fall */
+    const sw = Math.max(at + .06, T + (tc - .07) / rate);  /* the crossing */
+    const c = ctx.createBufferSource(); c.buffer = vbuf; c.playbackRate.value = rate;
+    const cg = ctx.createGain(); cg.gain.setValueAtTime(0, sw - .03); cg.gain.linearRampToValueAtTime(1, sw + .03);
+    c.connect(cg); cg.connect(env); vib(c);
+    vg.gain.setValueAtTime(1, sw - .03); vg.gain.linearRampToValueAtTime(0, sw + .03);
+    c.start(sw - .03, k * m.vc.slot + Math.max(0, (sw - .03 - T) * rate));
+    const stop = T + m.vc.slot / rate;
+    c.stop(stop + .05); src.stop(sw + .1);
+    return stop;
+  }
+  src.stop(end + .3);
+  return 0;
+}
 let ctx = null, master = null, dry = null, wet = null, shelf = null;
 
 /* Lute: a plucked gut string (Karplus–Strong with a tuned all-pass), strung in double courses: two strings a few cents
@@ -163,9 +231,17 @@ function out(node, gain) {
    fusae almost none. joined: the note follows another note of its line without a rest. The organ keeps its own speech. */
 export const XF = .09;
 const FLOW = new Set(['voice', 'lute', 'sackbut']);
-export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false }) {
+export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
+  if (timbre === 'voice' && BANK.map) {
+    const unit = u || units(word([text || 'a'])[0]);
+    /* the accent follows the note value (as for the other flowing sounds); a quick note inside a line on a syllable
+       without onset consonants glides in from the note before */
+    const acc = value != null ? .15 * Math.min(1, value / 4) : .3, glide = tied || (joined && value != null && value < 2 && unit.cv && unit.cv[0] === '.');
+    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc });
+    if (!u) load([{ u: unit, midi }]);
+  }
   if (tied) { at -= XF / 2; dur += XF / 2; }
   if (legato) dur += XF / 2;
   const end = at + dur;
@@ -271,8 +347,6 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     const damp = Math.max(t1 + .03, end);
     env.gain.setValueAtTime(lvl, damp); env.gain.linearRampToValueAtTime(0, damp + .12);
     src.start(t1); src.stop(Math.min(damp + .15, t1 + src.buffer.duration)); src.own = true; sources.push(src);
-  } else if (bankNote(midi, f0, vowel, at, env, sources, tied, soft)) {
-    /* sung by Chimera */
   } else {
     /* Voice (until the bank has loaded): a glottal buzz shaped by the formants of the syllable's vowel, with a gentle vibrato. */
     const o = ctx.createOscillator(); o.setPeriodicWave(wave(Array.from({ length: 30 }, (_, i) => 1 / (i + 1))));
@@ -286,6 +360,28 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   }
   sources.forEach(s => { if (s.own) return; if (!s.buffer) s.start(at); s.stop(stop + .05); });
   return sink;
+}
+
+/* a note sung from the bank: the attack's consonants come before the beat; only a syllable's first note carries an accent */
+function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc }) {
+  if (tied) { at -= XF / 2; dur += XF / 2; }
+  if (legato) dur += XF / 2;
+  const end = at + dur, env = ctx.createGain(), g = env.gain;
+  const lead = leadOf(u, midi) + .02;
+  if (tied) { g.setValueAtTime(0, at); g.linearRampToValueAtTime(1, at + XF); }
+  else {
+    g.setValueAtTime(1, Math.max(ctx.currentTime, at - lead));
+    g.setValueAtTime(1, at); g.linearRampToValueAtTime(1 + acc, at + .08); g.linearRampToValueAtTime(1, Math.min(at + .26, Math.max(at + .09, end - .01)));
+  }
+  const stop = bankNote({ midi, f0, at, end, env, tied, u, last, close: close == null ? end : Math.max(at + .1, close) });
+  if (stop) { g.setValueAtTime(1, stop - .03); g.linearRampToValueAtTime(0, stop); }
+  else if (legato) {
+    /* flowing into the next syllable: the vowel gives way where that syllable's onset consonants begin */
+    const f = close == null ? end : Math.min(end, Math.max(at + .1, close + .02));
+    g.setValueAtTime(1, Math.max(at + .01, f - XF)); g.linearRampToValueAtTime(0, Math.max(at + .02, f));
+  }
+  else { g.setValueAtTime(1, Math.max(at + .01, end - .12)); g.linearRampToValueAtTime(0, Math.max(at + .02, end + .06)); }
+  return out(env, level * 2.6);
 }
 
 export function click(at, strong) {

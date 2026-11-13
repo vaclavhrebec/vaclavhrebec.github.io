@@ -1,6 +1,7 @@
 import { pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth } from './engrave.js';
 import * as snd from './audio.js';
+import { syllablesOf } from './latin.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
 import { createTake } from './take.js';
 import { tr, setLang, getLang, guessLang, LANGS, translatePage } from './i18n.js';
@@ -192,7 +193,7 @@ function openItem(item, trail, opts = {}) {
   rebuildPiece();
   render(true);
   hist.undo = []; hist.redo = [];
-  buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips();
+  buildStudio(); buildTransform(); buildEditTools(); buildVoiceChips(); voiceReady();
   document.querySelectorAll('.tree .item').forEach(b => b.setAttribute('aria-current', String(+b.dataset.id === item.id)));
   /* a piece of the Josquin collection is addressed by its number, which a link can open again */
   const jrpId = item.jrp || (item.desc || '').match(/josquin\.stanford\.edu, (\w+)\)/)?.[1];
@@ -524,7 +525,7 @@ function buildSection(which, c) {
 
   /* sound */
   if (which === 'sound') card(tr('Sound'),
-    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') snd.prepare(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') voiceReady(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })));
@@ -796,16 +797,27 @@ function sounding() {
     const texted = !!v.lyrics && v.notes.some(n => n.text);
     /* voice, lute and sackbut sing the whole line legato: every note flows into the next unless a rest comes between */
     const flowing = ['voice', 'lute', 'sackbut'].includes(prefs.timbre);
-    let syl = '', prev = null;
+    /* the voice sings each syllable in Latin, with its consonants: the onset before the first note, the coda at the end of the last */
+    const syls = texted ? syllablesOf(v.notes) : new Map();
+    let syl = '', prev = null, u = null;
     v.notes.forEach(n => {
       if (n.rest) { prev = null; return; }
-      if (n.text) syl = n.text;
-      const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev, joined: !!prev };
+      if (n.text) { syl = n.text; u = snd.units(syls.get(n)); } else if (!texted) u = snd.units(null);
+      const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev, joined: !!prev, u, last: true };
       if ((e.tied || flowing) && prev) prev.legato = true;
+      if (e.tied && prev) prev.last = false;
+      if (prev && !e.tied && Math.abs(prev.n.t + prev.n.len - n.t) < 1e-6) prev.next = e;
       out.push(e); prev = e;
     });
   });
   return out.sort((a, b) => a.n.t - b.n.t);
+}
+
+/* the voice's syllables for this piece, fetched before it sings (the files of a piece are small and stay cached) */
+function voiceReady() {
+  if (prefs.timbre !== 'voice' || !S.piece) return Promise.resolve();
+  const p = S.piece;
+  return Promise.race([snd.prepare().then(() => snd.load(sounding().map(e => ({ u: e.u, midi: midiOf(e.n, p.bflat, S.shift) })))), new Promise(r => setTimeout(r, 6000))]);
 }
 
 function startPlayback() {
@@ -827,7 +839,10 @@ function startPlayback() {
       const at = t0 + Math.max(0, n.t - from) * k;
       const cut = Math.max(0, from - n.t);
       const tie = tied && n.t >= from - 1e-6;
-      playNote({ timbre: prefs.timbre, midi: midiOf(n, p.bflat, S.shift), a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len, joined: !!joined && cut === 0, dur: Math.max(.08, (n.len - cut) * k - (legato ? 0 : .03)), level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+      const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len - cut) * k - (legato ? 0 : .03));
+      /* the coda closes before the next syllable's onset consonants begin */
+      const ev = events[ei - 1], nx = ev.next, close = at + dur - (nx ? Math.min(.25, snd.leadOf(nx.u, midiOf(nx.n, p.bflat, S.shift))) : 0);
+      playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len, joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };
@@ -918,7 +933,7 @@ paper.addEventListener('click', e => {
 /* play / pause: pausing keeps the place, play goes on from there; the button left of it goes back to the beginning */
 $('#play').addEventListener('click', () => {
   if (S.playing) { const pos = clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0; stopPlayback(); S.startAt = Math.max(0, Math.min(pos, S.piece.end - 1e-6)); }
-  else startPlayback();
+  else { snd.ensure(); const b = $('#play'); b.classList.add('loading'); voiceReady().then(() => { b.classList.remove('loading'); if (!S.playing) startPlayback(); }); }
 });
 $('#rewind').addEventListener('click', () => {
   const was = S.playing;
@@ -1581,6 +1596,6 @@ function buildSoundSel() {
   const sel = $('#soundSel'); sel.textContent = '';
   Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(v.label))));
 }
-$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; if (prefs.timbre === 'voice') snd.prepare(); savePrefs(); buildStudio(); });
+$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; if (prefs.timbre === 'voice') voiceReady(); savePrefs(); buildStudio(); });
 buildSoundSel();
 window.cantare = { S, prefs, openItem, jrpGet };
