@@ -44,7 +44,7 @@ export function prepare(base = 'audio/voice/') {
     await Promise.all(['male', 'female'].flatMap(b => 'aeiou'.split('').map(v => get(b + v, `${b}_${v}.mp3`))));
   })();
 }
-function bankNote(midi, f0, vowel, at, env, sources, tied) {
+function bankNote(midi, f0, vowel, at, env, sources, tied, soft = false) {
   const m = BANK.map; if (!m) return false;
   const body = midi < 57 ? 'male' : 'female', buf = BANK.buf[body + vowel]; if (!buf) return false;
   const ps = m[body]; let k = 0; ps.forEach((p, i) => { if (Math.abs(p - midi) < Math.abs(ps[k] - midi)) k = i; });
@@ -53,10 +53,10 @@ function bankNote(midi, f0, vowel, at, env, sources, tied) {
   const n = Math.max(1, Math.round((m.loop[1] - m.loop[0]) * fp));
   src.loop = true; src.loopStart = slot + m.loop[0]; src.loopEnd = slot + m.loop[0] + n / fp;
   const v = ctx.createOscillator(); v.frequency.value = 5.2;
-  const vg = ctx.createGain(); vg.gain.setValueAtTime(tied ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied ? .01 : .5));
+  const vg = ctx.createGain(); vg.gain.setValueAtTime(tied || soft ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied || soft ? .01 : .5));
   v.connect(vg); vg.connect(src.detune); sources.push(v);
   /* a note tied into a ligature starts inside the sustained vowel, with no new onset */
-  src.connect(env); src.start(at, tied ? slot + m.loop[0] : slot + m.lead - .03); sources.push(src);
+  src.connect(env); src.start(at, tied || soft ? slot + m.loop[0] : slot + m.lead - .03); sources.push(src);
   return true;
 }
 
@@ -157,14 +157,22 @@ function out(node, gain) {
 
 /* One note. `bars` are the organ's drawbar levels; other timbres ignore them. */
 /* tied: the note continues a syllable (a ligature, a melisma), so it glides in from the note before without a new attack;
-   legato: the next note is tied to this one, so this one fades into it. A note that is not tied carries a gentle accent. */
+   legato: the next note is tied to this one, so this one fades into it. A note that is not tied carries a gentle accent.
+   value: the note's length in minims. For the voice, the lute and the sackbut the lines are sung legato and the accent
+   follows the note value: a breve or longer gets a small accent, a semibreve less, a minim very little, semiminims and
+   fusae almost none. joined: the note follows another note of its line without a rest. The organ keeps its own speech. */
 export const XF = .09;
-export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false }) {
+const FLOW = new Set(['voice', 'lute', 'sackbut']);
+export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
   if (tied) { at -= XF / 2; dur += XF / 2; }
   if (legato) dur += XF / 2;
   const end = at + dur;
+  const flow = FLOW.has(timbre) && value != null;
+  const acc = flow ? .15 * Math.min(1, value / 4) : .3;      /* breve .15 · semibreve .075 · minim .04 · semiminim .02 */
+  const nz = flow ? Math.min(1, acc / .15) : 1;               /* consonant and tongue noise scale with the accent */
+  const soft = flow && joined && value < 2;                   /* a quick note inside a line: no new onset */
   const env = ctx.createGain();
   const reg = REG[timbre];
   const atk = reg ? Math.max(.005, SOUND.atk / 1000) : timbre === 'organ' ? .045 : timbre === 'voice' ? .1 : timbre === 'sackbut' ? .08 : .055, rel = reg ? Math.max(.01, SOUND.rel / 1000) : timbre === 'organ' ? .09 : .15;
@@ -174,7 +182,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   env.gain.setValueAtTime(0, at);
   if (tied) env.gain.linearRampToValueAtTime(1, Math.max(at + .005, rise));
   else {
-    env.gain.linearRampToValueAtTime(1.3, Math.max(at + .005, rise));
+    env.gain.linearRampToValueAtTime(1 + acc, Math.max(at + .005, rise));
     const settle = Math.min(rise + .18, fall0 - .002);
     if (settle > rise) env.gain.linearRampToValueAtTime(1, settle);
   }
@@ -185,7 +193,7 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   const sink = out(env, timbre === 'voice' ? level * 2.6 : timbre === 'lute' ? level * 1.9 : level);
 
   const noise = (dur, hp, q, g0) => {
-    if (tied) return;
+    if (tied) return; g0 *= nz; if (g0 < .002) return;
     const nb = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * dur), ctx.sampleRate), d = nb.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
     const src = ctx.createBufferSource(); src.buffer = nb;
@@ -217,9 +225,9 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
   } else if (timbre === 'sackbut') {
     /* Sackbut: a soft, round brass tone that opens as the lips settle. */
     const amps = Array.from({ length: 16 }, (_, i) => Math.pow(.78, i));
-    const o = ctx.createOscillator(); o.setPeriodicWave(wave(amps)); o.frequency.setValueAtTime(tied ? f0 : f0 * .985, at); o.frequency.linearRampToValueAtTime(f0, at + .07);
+    const o = ctx.createOscillator(); o.setPeriodicWave(wave(amps)); o.frequency.setValueAtTime(tied || soft ? f0 : f0 * (1 - .1 * acc), at); o.frequency.linearRampToValueAtTime(f0, at + .07);
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.Q.value = 1.4;
-    lp.frequency.setValueAtTime(tied ? Math.min(f0 * 6, 2600) : f0 * 2.2, at); lp.frequency.linearRampToValueAtTime(Math.min(f0 * 6, 2600), at + .16);
+    lp.frequency.setValueAtTime(tied || soft ? Math.min(f0 * 6, 2600) : Math.min(f0 * 6, 2600) * (flow ? 1 - acc * 4 : .37), at); lp.frequency.linearRampToValueAtTime(Math.min(f0 * 6, 2600), at + .16);
     o.connect(lp); lp.connect(env); sources.push(o); vibrato(o, 4.6, .0025, .3);
     noise(.05, Math.min(f0 * 3, 3000), 1.5, .04);
   } else if (timbre === 'chalumeau') {
@@ -252,18 +260,18 @@ export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, t
     }
   } else if (timbre === 'lute') {
     /* the string rings and dies away by itself; the hand damps it when the note ends. A tied note is a slur, softer. */
-    const src = ctx.createBufferSource(); src.buffer = luteBuffer(f0, tied);
+    const src = ctx.createBufferSource(); src.buffer = luteBuffer(f0, tied || (flow && value <= .5));
     const body1 = ctx.createBiquadFilter(); body1.type = 'peaking'; body1.frequency.value = 115; body1.Q.value = 1.2; body1.gain.value = 5;
     const body2 = ctx.createBiquadFilter(); body2.type = 'peaking'; body2.frequency.value = 270; body2.Q.value = 1.4; body2.gain.value = 3.5;
     const rose = ctx.createBiquadFilter(); rose.type = 'peaking'; rose.frequency.value = 2600; rose.Q.value = 1; rose.gain.value = -3;
     const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 5200;
     src.connect(body1); body1.connect(body2); body2.connect(rose); rose.connect(lp); lp.connect(env);
-    const t1 = at + (tied ? XF / 2 : 0), lvl = tied ? .55 : 1;
+    const t1 = at + (tied ? XF / 2 : 0), lvl = tied ? .55 : flow ? .8 + acc * 1.35 : 1;
     env.gain.cancelScheduledValues(at); env.gain.setValueAtTime(0, at); env.gain.linearRampToValueAtTime(lvl, t1 + .004);
     const damp = Math.max(t1 + .03, end);
     env.gain.setValueAtTime(lvl, damp); env.gain.linearRampToValueAtTime(0, damp + .12);
     src.start(t1); src.stop(Math.min(damp + .15, t1 + src.buffer.duration)); src.own = true; sources.push(src);
-  } else if (bankNote(midi, f0, vowel, at, env, sources, tied)) {
+  } else if (bankNote(midi, f0, vowel, at, env, sources, tied, soft)) {
     /* sung by Chimera */
   } else {
     /* Voice (until the bank has loaded): a glottal buzz shaped by the formants of the syllable's vowel, with a gentle vibrato. */
