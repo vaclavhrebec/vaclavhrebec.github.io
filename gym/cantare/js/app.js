@@ -15,12 +15,14 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'manuscript', lang: '',
+const prefs = { theme: 'dark', tempo: 60, timbre: 'organ', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
   unit: 'B', loop: false, audition: true, sound: {} };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
+/* 13 Nov 2026: the engraved Bravura shapes became the default for everyone, once */
+if (!prefs.fontBravura) { prefs.font = 'bravura'; prefs.fontBravura = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 setFont(prefs.font);
 snd.setSound(prefs.sound || {});
 setLang(prefs.lang || guessLang());
@@ -435,7 +437,7 @@ function buildStudio() {
 
   /* view */
   card(tr('View'),
-    chipRow(tr('Notation'), [['manuscript', tr('Manuscript')], ['bravura', tr('Engraved')]].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
+    chipRow(tr('Notation'), [['bravura', tr('Engraved')], ['manuscript', tr('Manuscript')]].map(([k, n]) => chip(n, prefs.font === k, () => { prefs.font = k; setFont(k); savePrefs(); render(true); buildStudio(); }))),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => { prefs.view = k; savePrefs(); S.leaf = 0; render(true); buildStudio(); }, { disabled: k === 'book' && !multi }))),
     el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
     chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light'], ['vellum', 'Vellum']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }, k === 'vellum' ? { title: tr('Vellum and a rastrum: the music on an old page') } : {}))),

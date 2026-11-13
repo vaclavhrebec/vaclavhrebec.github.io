@@ -4,8 +4,8 @@ import { BRAVURA } from './bravura.js';
 import { MS } from './manuscript.js';
 
 /* notation font: 'manuscript' (shapes cut from a c.1500 choirbook) or 'bravura' (SMuFL). Chant always uses the plain forms. */
-let FONT = 'manuscript';
-export const setFont = k => { FONT = k === 'bravura' ? 'bravura' : 'manuscript'; };
+let FONT = 'bravura';
+export const setFont = k => { FONT = k === 'manuscript' ? 'manuscript' : 'bravura'; };
 const ms = style => FONT === 'manuscript' && style !== 'chant';
 const mp = (k, x, y, sx = 1, sy = sx) => `<path d="${MS[k].d}" transform="translate(${f(x)} ${f(y)})${sx === 1 && sy === 1 ? '' : ` scale(${sx} ${sy})`}" class="fill" fill-rule="evenodd"/>`;
 const stemPath = (x, y0, y1) => `<path d="M${f(x - .035)} ${f(y0)}L${f(x - .028)} ${f(y1)}H${f(x + .028)}L${f(x + .035)} ${f(y0)}Z" class="fill"/>`;
