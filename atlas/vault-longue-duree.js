@@ -29,9 +29,9 @@
     {id: 'english-faburden', title: 'Faburden & English sights', folder: 'practice', first: 1430, common: 1450, fade: 1550,
       scope: 'anonymous English treatises of c. 1430–50 (BL Lansdowne 763, which also holds Leonel Power’s discant treatise); faburden settings of hymns and Magnificats; organ faburdens',
       text: 'The English way of improvising on a chant: the singers do not read intervals but imagine their notes on the chant’s own staff (“sights”), transposed. In faburden the chant lies in the middle, a treble sings a fourth above it, and the lowest voice moves between thirds and fifths below – chains of 6–3 sonorities, the English twin of the continental [[fauxbourdon]] of Du Fay’s generation, which Dunstaple and Power knew. The chant-bearing “faburden” line later becomes a cantus firmus of its own.'},
-    {id: 'gymel', title: 'Gymel (twin song)', folder: 'texture', first: 1430, common: 1450, fade: 1550,
+    {id: 'gymel', title: 'Gymel', folder: 'texture', first: 1430, common: 1450, fade: 1550,
       scope: 'English carols and the Eton Choirbook; named by Guilielmus Monachus (c. 1480)',
-      text: 'Latin *cantus gemellus*: two voices, usually of the same range, moving mostly in parallel thirds and sixths and closing on a unison or octave. In English choirbooks a voice part “divides” into gymel for a passage of sweet two-part sound – the [[english-discant|English sonority]] reduced to its core.'},
+      text: 'Two-voice writing, usually for two voices of the same range, moving chiefly in parallel imperfect consonances (thirds, later also sixths) and opening out to the unison or octave at cadences. In English choirbooks the term also marks a voice part that divides into two (cancelled by *semel*), giving passages of sweet two-part sound – the [[english-discant|English sonority]] reduced to its core. The name (also *gimel*) derives from Latin *gemellus*.'},
 
     /* ---------- the long life of fauxbourdon: parallel sonorities ---------- */
     {id: 'sixth-chord-chains', title: 'Chains of 6–3 chords (fauxbourdon’s afterlife)', folder: 'harmony', first: 1500, common: 1600, fade: null,
