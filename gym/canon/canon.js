@@ -2,6 +2,7 @@
 import { pieceFrom, fitClef, clefFor, CLEF_ORDER } from '../cantare/js/music.js';
 import { engraveSystems, systemSVG, glyphIcon } from '../cantare/js/engrave.js';
 import { analyse, rules, nextSteps, MOTION_NAME, INTERVAL_NAME } from './rules.js';
+import { findPatterns } from './patterns.js';
 
 const $ = id => document.getElementById(id);
 const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
@@ -98,7 +99,7 @@ function stepFigure(m, clef) {
 function renderRules() {
   const box = $('rules'); box.hidden = !S.rules;
   $('rulesBtn').setAttribute('aria-expanded', String(!!S.rules));
-  $('rulesBtn').textContent = S.rules ? 'Hide the rules' : 'Show me the rules';
+  $('rulesBtn').textContent = S.rules ? 'Hide the rules and patterns' : 'Show me the rules and patterns';
   if (!S.rules) return;
   const ts = curTs(), A = analysisOf(ts), R = RULES = rules(A);
   const clef = duxClef || 'c4';
@@ -108,9 +109,13 @@ function renderRules() {
     <p class="sub">For a dux that sings one note every ${UNIT_NAME[S.unit]}, so that each new note sounds against the comites. The steps your melody may take:</p>
     <div class="moves" id="moves">${allowed.map(m => stepFigure(m, clef)).join('')}</div>
     <p class="nextline" id="nextline"></p>
+    <h4 class="pathead">Patterns to practise</h4>
+    <p class="sub">Formulas of steps that this canon allows over and over, as in the 16th-century tables of canonic formulas. Each one is written out in full below and was checked note by note, entries and ending included: only consonances, no parallel fifths or octaves. Sing a pattern, continue it, then leave it and improvise.</p>
+    <div class="pats" id="patList"></div>
     ${R.pairs.length ? `<h4>Never one after the other</h4><ul class="cols">${R.pairs.map(p => `<li>${pair(p)}</li>`).join('')}</ul>` : ''}
     ${R.triples.length ? `<details><summary>And never these three in a row (${R.triples.length})</summary><ul class="cols">${R.triples.map(([a, b, c]) => `<li>${MOTION_NAME[a]}, ${MOTION_NAME[b]}, ${MOTION_NAME[c]}</li>`).join('')}</ul></details>` : ''}
-    <p class="note">Worked out note by note: every voice sounds only thirds, fifths, sixths, octaves or unisons against the lowest one (a fourth only between two upper voices), and no two voices move in fifths, octaves or unisons one after another. Steps are counted in the scale: mind mi contra fa (B against F).${A.D > 1 ? ' While you sing, the steps possible from where you stand light up.' : ' While you sing, the steps possible from where you stand light up.'}</p>`;
+    <p class="note">The rules, worked out note by note: every voice sounds only thirds, fifths, sixths, octaves or unisons against the lowest one (a fourth only between two upper voices), and no two voices move in fifths, octaves or unisons one after another. Steps are counted in the scale: mind mi contra fa (B against F).${A.D > 1 ? ' While you sing, the steps possible from where you stand light up.' : ' While you sing, the steps possible from where you stand light up.'}</p>`;
+  renderPatterns();
   liveRules();
 }
 let lastLive = '';
@@ -440,7 +445,7 @@ function syncSettings() {
 }
 const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
 on('startNote', 'change', e => { S.start = e.target.value; save(); sendConfig(); });
-on('bb', 'change', e => { S.bb = e.target.checked; save(); sendConfig(); render(true); });
+on('bb', 'change', e => { S.bb = e.target.checked; save(); sendConfig(); render(true); renderRules(); });
 on('metroVol', 'input', e => { S.metroVol = +e.target.value; save(); applyVolumes(); });
 document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.mode; save(); syncSettings(); sendConfig(); }));
 document.querySelectorAll('[data-tune]').forEach(b => b.addEventListener('click', () => { S.tune = b.dataset.tune; save(); syncSettings(); sendConfig(); }));
@@ -453,48 +458,58 @@ const setLat = v => { S.lat = Math.max(0, Math.min(500, Math.round(v) || 0)); $(
 on('latR', 'input', e => setLat(+e.target.value));
 on('lat', 'change', e => setLat(+e.target.value));
 
-/* ---------- patterns to practise (two voices): [interval, comes after 1 or 2 notes, dux in steps (C4 = 28)], each checked ---------- */
-const PATTERNS = [[0,1,[28,26,28,26,24,26,24,22,24,22,20,22]],[0,2,[28,27,26,29,28,27,30,29,28,31,30,29]],[7,1,[28,26,28,26,24,26,24,22,24,22,20,22]],[7,2,[28,27,26,29,28,27,30,29,28,31,30,29]],[-7,1,[28,26,28,26,24,26,24,22,24,22,20,22]],[-7,2,[28,27,26,29,28,27,30,29,28,31,30,29]],[4,1,[28,27,29,28,30,29,31,30,32,31,33,32]],[4,2,[28,26,27,25,26,24,25,23,24,22,23,21]],[-4,1,[32,30,31,29,30,28,29,27,28,26,27,25]],[-4,2,[32,31,33,32,34,33,35,34,36,35,37,36]],[3,1,[32,30,31,29,30,28,29,27,28,26,27,25]],[3,2,[32,31,33,32,34,33,35,34,36,35,37,36]],[-3,1,[28,27,29,28,30,29,31,30,32,31,33,32]],[-3,2,[28,26,27,25,26,24,25,23,24,22,23,21]],[1,1,[28,27,26,27,26,25,26,25,24,25,24,23]],[1,2,[28,26,27,25,26,24,25,23,24,22,23,21]],[-1,1,[28,27,28,29,28,29,30,29,30,31,30,31]],[-1,2,[28,27,29,28,30,29,31,30,32,31,33,32]],[2,1,[31,33,30,32,29,31,28,30,27,29,26,28]],[2,2,[28,27,26,27,26,25,26,25,24,25,24,23]],[-2,1,[28,26,29,27,30,28,31,29,32,30,33,31]],[-2,2,[28,27,26,27,26,25,26,25,24,25,24,23]],[5,1,[32,33,31,32,30,31,29,30,28,29,27,28]],[5,2,[28,27,26,27,26,25,26,25,24,25,24,23]],[-5,1,[32,34,33,35,34,36,35,37,36,38,37,39]],[-5,2,[28,27,28,29,28,29,30,29,30,31,30,31]],[6,1,[28,27,28,29,28,29,30,29,30,31,30,31]],[6,2,[28,27,29,28,30,29,31,30,32,31,33,32]],[-6,1,[28,27,26,27,26,25,26,25,24,25,24,23]],[-6,2,[28,26,27,25,26,24,25,23,24,22,23,21]]];
+/* ---------- patterns to practise: for the chosen canon, found and checked by patterns.js ---------- */
 const LET = 'CDEFGAB';
-const pmidi = D => stepMidi(D, SCN);
-function patTokens(dux, d, t) {
-  const c = dux.map(D => comesNote({ step: D, attack: true }, t));
-  return [dux.map(D => `${D}S`).join(' ') + ' ' + Array(d).fill('rS').join(' '),
-    Array(d).fill('rS').join(' ') + ' ' + c.map(n => `${n.step}${n.acc}S`).join(' ')];
+const PATS = new Map();
+const PAT_CLEFS = ['c1', 'c2', 'c3', 'c4', 'baritone', 'bass'];   /* C clefs, as in Cantare */
+function patternsNow() {
+  const ts = curTs(), k = key(ts) + (S.bb ? '|b' : '');
+  if (!PATS.has(k)) PATS.set(k, findPatterns(analysisOf(ts), ts, scale(), REAL));
+  return PATS.get(k);
 }
-function patSVG(t, d, dux) {
-  const [a, b] = patTokens(dux, d, t);
-  const all = dux.concat(dux.map(D => D + t));
-  const ca = fitClef(dux, 5, 'c4', CLEFS_POOL).id, cb = fitClef(dux.map(D => D + t), 5, 'c4', CLEFS_POOL).id;
-  const p = pieceFrom({ title: '', t: 'C', poly: t >= 0 ? [{ c: cb, n: b }, { c: ca, n: a }] : [{ c: ca, n: a }, { c: cb, n: b }] }, []);
-  p.talea = true; void all;
-  const s = engraveSystems(p, [0, 1], 46, { names: false, fullLast: true })[0];
-  return systemSVG(s, 6.3);
+function patTokens(v) {
+  const val = S.unit, sc = scale();
+  return v.notes.map(x => {
+    if (!x) return `r${val}`;
+    const has = stepMidi(x.step, sc), deg = ((x.step % 7) + 7) % 7;
+    const acc = x.midi === has ? '' : x.midi > has ? (S.bb && deg === 6 ? 'n' : '#') : 'b';
+    return `${x.step}${acc}${val}`;
+  }).join(' ');
 }
-let patCtx = null;
-function hearPattern(t, d, dux) {
+function patSVG(P) {
+  /* one staff per voice, the highest on top */
+  const vs = [...P.voices].sort((a, b) => b.t - a.t || a.d - b.d);
+  const poly = vs.map(v => ({ c: fitClef(v.notes.filter(Boolean).map(x => x.step), 5, 'c4', PAT_CLEFS).id, n: patTokens(v) }));
+  const p = pieceFrom({ title: '', t: 'C', b: S.bb ? 1 : 0, poly }, []);
+  p.talea = true;
+  let sys = null;
+  for (const w of [44, 52, 62, 76, 92, 112, 140]) { const all = engraveSystems(p, vs.map((_, i) => i), w, { names: false, fullLast: true }); sys = all[0]; if (all.length === 1) break; }
+  return systemSVG(sys, 12);
+}
+let patCtx = null, patStop = [];
+function hearPattern(P) {
   patCtx = patCtx || new (window.AudioContext || window.webkitAudioContext)();
   const c = patCtx; if (c.state === 'suspended') c.resume();
-  const beat = 2 * spm(), t0 = c.currentTime + .08, ref = S.ref || 440, f = m => ref * Math.pow(2, (m - 69) / 12);
-  const tone = (m, at, len, g0) => {
+  patStop.forEach(o => { try { o.stop(); } catch (e) { /* done */ } }); patStop = [];
+  const beat = Math.min(unitSec(), 1.6), t0 = c.currentTime + .08, ref = S.ref || 440, f = m => ref * Math.pow(2, (m - 69) / 12);
+  const g0 = .2 / Math.sqrt(P.voices.length);
+  const tone = (m, at, len, g1) => {
     const o = c.createOscillator(), g = c.createGain();
     o.type = 'triangle'; o.frequency.value = f(m);
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(g0, at + .03); g.gain.setValueAtTime(g0, at + len - .06); g.gain.linearRampToValueAtTime(0, at + len);
-    o.connect(g).connect(c.destination); o.start(at); o.stop(at + len + .02);
+    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(g1, at + .03); g.gain.setValueAtTime(g1, at + len - .06); g.gain.linearRampToValueAtTime(0, at + len);
+    o.connect(g).connect(c.destination); o.start(at); o.stop(at + len + .02); patStop.push(o);
   };
-  dux.forEach((D, i) => tone(pmidi(D), t0 + i * beat, beat * .96, .16));
-  dux.forEach((D, i) => { const n = comesNote({ step: D }, t); tone(pmidi(n.step) + (n.acc === '#' ? 1 : n.acc === 'b' ? -1 : 0), t0 + (i + d) * beat, beat * .96, .12); });
+  P.voices.forEach((v, i) => v.notes.forEach((x, k) => { if (x) tone(x.midi, t0 + k * beat, beat * .96, i ? g0 * .8 : g0); }));
 }
 function renderPatterns() {
-  const box = $('patList');
-  box.innerHTML = PATTERNS.map(([t, d, dux], k) => `<div class="pat"><h4>${escH(canonName([t]))}</h4><div class="ds">comes ${d} ${d === 1 ? 'semibrevis' : 'semibreves'} later · ${t in REAL ? 'real interval' : 'in steps of the scale'}</div>${patSVG(t, d, dux)}<div class="ds">${dux.map(D => LET[D % 7]).join(' ')}</div>
-    <div class="acts"><button class="b" type="button" data-hear="${k}">Hear it</button><button class="b" type="button" data-use="${k}">Use these settings</button></div></div>`).join('');
-  box.querySelectorAll('[data-hear]').forEach(b => { b.onclick = () => hearPattern(...PATTERNS[+b.dataset.hear]); });
-  box.querySelectorAll('[data-use]').forEach(b => { b.onclick = () => {
-    const [t, d] = PATTERNS[+b.dataset.use];
-    S.n = 2; S.canon[2] = String(t); S.unit = d === 1 ? 'S' : 'B'; save(); buildUnits(); afterCanon();
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }; });
+  const box = $('patList'); if (!box) return;
+  let list = [];
+  try { list = patternsNow(); } catch (e) { console.error(e); }
+  if (!list.length) { box.innerHTML = '<p class="note">No repeating formula fits this canon; sing freely along the steps above.</p>'; return; }
+  const nm = D => { const l = LET[((D % 7) + 7) % 7]; return l === 'B' && S.bb ? 'B♭' : l; };
+  box.innerHTML = list.map((P, k) => `<div class="pat"><div class="top2"><h4>${k + 1}. ${escH(P.steps)}</h4><span class="ds">${escH(P.how)} · begin on ${nm(P.dux[0])}</span><span class="acts"><button class="b" type="button" data-hear="${k}">Hear it</button></span></div>
+    <div class="scroll">${patSVG(P)}</div><div class="ds">Dux: ${P.dux.map(nm).join(' ')}</div></div>`).join('');
+  box.querySelectorAll('[data-hear]').forEach(b => { b.onclick = () => hearPattern(list[+b.dataset.hear]); });
 }
 
 /* ---------- the library of canons (from the Josquin Research Project) ---------- */
@@ -539,5 +554,4 @@ $('libSearch').addEventListener('input', renderLib);
 
 $('yr').textContent = new Date().getFullYear();
 syncSettings(); syncTime(); buildUnits(); buildTools(); renderVoices(); poseHand(.5); render(true); renderRules();
-try { renderPatterns(); } catch (e) { console.error(e); }
 window.canonPage = { S, render, get DUX() { return DUX; }, set DUX(v) { DUX = v; }, get SLOTS() { return SLOTS; }, liveRules, analysisOf, curTs };

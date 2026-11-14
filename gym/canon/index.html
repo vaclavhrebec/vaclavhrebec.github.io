@@ -144,11 +144,15 @@
   details.help summary { cursor: pointer; font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-weight: 400; font-size: 1.25rem; }
   .help p, .help li { color: var(--muted); }
   .help ol { padding-left: 1.2rem; }
-  .pats { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; margin-top: .6rem; }
+  .pathead { margin-top: 1.2rem !important; font-size: 1.05rem !important; }
+  .pats { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: .6rem; }
+  .pat .top2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+  .pat .top2 .acts { margin-left: auto; }
   .pat { border: 1px solid var(--line); border-radius: 10px; padding: .7rem .8rem; }
   .pat h4 { margin: 0 0 .2rem; font: 600 1.05rem/1.2 var(--serif, Georgia, serif); }
   .pat .ds { font-size: .82rem; color: var(--muted); }
-  .pat svg { display: block; width: 100%; height: auto; margin: .3rem 0; }
+  .pat svg.system { display: block; width: auto; max-width: 100%; height: auto; margin: .5rem 0 .2rem; color: var(--fg); --staff: var(--accent); }
+  .pat .scroll { overflow-x: auto; }
   .pat svg line { stroke: var(--muted); stroke-width: .8; }
   .pat svg .n { fill: none; stroke: var(--fg); stroke-width: 1.5; }
   .pat svg .n2 { fill: none; stroke: var(--v1); stroke-width: 1.5; opacity: .85; }
@@ -273,7 +277,7 @@
     <div class="top">
       <div class="grp"><span class="lbl">Voices</span><span class="seg nv" id="nv" role="group" aria-label="Number of voices"></span></div>
       <span class="sp"></span>
-      <button class="b" id="rulesBtn" type="button" aria-expanded="false">Show me the rules</button>
+      <button class="b" id="rulesBtn" type="button" aria-expanded="false">Show me the rules and patterns</button>
       <button class="b libbtn" id="openLib" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z"/></svg>Library of canons</button>
     </div>
     <div class="canons" id="canons" role="group" aria-label="Canons"></div>
@@ -309,12 +313,6 @@
         <p class="note">Every device needs a little time between the sound leaving it and your voice coming back in. Raise this until the comes enters exactly with the metronome, or press Clap test and clap with the eight clicks.</p>
       </section>
     </div>
-  </details>
-
-  <details class="help" id="patterns">
-    <summary>Patterns to practise</summary>
-    <p class="note">Short duxes for two voices that make a correct canon with the comes: only consonances against it, no parallel fifths or octaves. Every one was checked note by note. Sing a pattern, then continue it, then leave it and improvise. This is how canons were learnt in the 16th century, from tables of such formulas.</p>
-    <div id="patList" class="pats"></div>
   </details>
 
   <details class="help" id="realcanons">
