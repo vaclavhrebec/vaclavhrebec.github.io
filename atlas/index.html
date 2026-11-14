@@ -233,7 +233,10 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   .side { position: fixed; z-index: 20; top: 44px; bottom: 0; left: 0; width: min(300px, 86vw); transform: translateX(-102%); transition: transform .18s; }
   .app.drawer .side { transform: none; }
   .app.drawer .scrim { display: block; position: fixed; inset: 44px 0 0 0; background: rgba(0,0,0,.45); z-index: 15; }
-  .titlebar nav { display: none; }
+  /* on a phone keep only the way back to the homepage */
+  .titlebar nav { display: flex; margin-left: auto; }
+  .titlebar nav a:not(:first-child) { display: none; }
+  .titlebar .vault { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .note { padding: 20px 16px 70px; }
   .note h1 { font-size: 1.55rem; }
   .props dl { grid-template-columns: 96px 1fr; }
