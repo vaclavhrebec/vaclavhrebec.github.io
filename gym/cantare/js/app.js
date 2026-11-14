@@ -302,7 +302,7 @@ function render(resetLeaf) {
   paper.textContent = '';
   S.index = [];
   const opts = { clefs: S.clefs, state: S.voice, shift: S.shift, names: prefs.names, t: T, fullLast: S.edit, voiceCtl: true };
-  const roll = prefs.roll && !useBook;
+  const roll = !!prefs.roll && !useBook;  /* a real true/false: classList.toggle with undefined would flip the class on every render */
   paper.classList.toggle('rolling', roll);
   if (useBook) renderBook(p, opts, resetLeaf);
   else if (roll) renderRoll(p, opts);
