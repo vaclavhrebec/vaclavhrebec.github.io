@@ -1083,9 +1083,12 @@ function sounding() {
       const mean = ms.reduce((a, m, i) => a + m * ws[i], 0) / ws.reduce((a, w) => a + w, 0);
       phrase.forEach((e, i) => {
         const rise = i ? Math.max(-3, Math.min(3, ms[i] - ms[i - 1])) : 0;
-        e.dyn = Math.max(.7, Math.min(1.35, 1 + .045 * (ms[i] - mean) + .02 * rise - (i === phrase.length - 1 && phrase.length > 1 ? .12 : 0)));
+        e.dyn = 1 + .09 * (ms[i] - mean) + .04 * rise - (i === phrase.length - 1 && phrase.length > 1 ? .15 : 0);
       });
-      phrase.forEach((e, i) => { if (i + 1 < phrase.length) e.swell = phrase[i + 1].dyn / e.dyn; });
+      /* a phrase that ends on a long note lets it die away: the last third falls to about 65 % */
+      const lastE = phrase[phrase.length - 1];
+      if (phrase.length > 1 && lastE.n.len >= 2) lastE.fade = .65;
+      phrase.forEach(e => { e.ph = phrase; });
       phrase = [];
     };
     v.notes.forEach(n => {
@@ -1097,11 +1100,37 @@ function sounding() {
       const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev, joined: !!prev, u, last: true };
       if ((e.tied || flowing) && prev) prev.legato = true;
       if (e.tied && prev) prev.last = false;
+      /* a voice without words sings its whole phrase on one breath: every note joined to the one before continues it */
+      if (!texted && prefs.timbre === 'voice' && prev && Math.abs(prev.n.t + prev.n.len + (prev.extra || 0) - n.t) < 1e-6) { e.tied = true; prev.last = false; prev.legato = true; }
       if (prev && !e.tied && Math.abs(prev.n.t + prev.n.len - n.t) < 1e-6) { prev.next = e; if (inWord) prev.inWord = true; }
       out.push(e); prev = e; phrase.push(e);
     });
     shape();
   });
+  /* dissonance and resolution: a note that clashes with another voice (a second, a seventh, a tritone, or a fourth
+     above the lowest voice), at its start or when another voice moves under it (a suspension), leans in a little;
+     the consonance it resolves to is sung softer. */
+  const P = S.piece, mid = n => midiOf(n, P.bflat, S.shift);
+  const all = P.voices.map(v => v.notes.filter(n => !n.rest));
+  const find = (ns, t) => { let lo = 0, hi = ns.length - 1, r = -1; while (lo <= hi) { const m = (lo + hi) >> 1; if (ns[m].t <= t + 1e-6) { r = m; lo = m + 1; } else hi = m - 1; } return r >= 0 && t < ns[r].t + ns[r].len - 1e-6 ? ns[r] : null; };
+  const at = t => all.map(ns => find(ns, t)).filter(Boolean);
+  const onsets = [...new Set(all.flat().map(n => n.t))].sort((a, b) => a - b);
+  const clash = (n, t) => {
+    const here = at(t), m = mid(n), low = Math.min(...here.map(mid));
+    return here.some(o => { if (o === n) return false; const d = Math.abs(mid(o) - m) % 12; return [1, 2, 6, 10, 11].includes(d) || (d === 5 && Math.min(m, mid(o)) === low); });
+  };
+  const byVoice = new Map();
+  out.forEach(e => { if (!byVoice.has(e.vi)) byVoice.set(e.vi, []); byVoice.get(e.vi).push(e); });
+  if (P.voices.length > 1) byVoice.forEach(list => list.forEach((e, i) => {
+    const n = e.n, moves = [];
+    for (let lo = 0, hi = onsets.length; ; ) { if (lo >= hi) { for (let j = lo; j < onsets.length && onsets[j] < n.t + n.len * .6; j++) if (onsets[j] > n.t + 1e-6) moves.push(onsets[j]); break; } const m = (lo + hi) >> 1; if (onsets[m] <= n.t) lo = m + 1; else hi = m; }
+    e.diss = [n.t, ...moves].some(t => clash(n, t));
+    if (e.diss) e.dyn = (e.dyn || 1) * 1.22;
+    else if (i && list[i - 1].diss && list[i - 1].n.t + list[i - 1].n.len >= n.t - 1e-6) e.dyn = (e.dyn || 1) * .82;
+  }));
+  /* the dynamics kept within a singer's range, then each note swells towards the next of its phrase */
+  out.forEach(e => { e.dyn = Math.max(.5, Math.min(1.7, e.dyn || 1)); });
+  out.forEach(e => { const ph = e.ph, i = ph ? ph.indexOf(e) : -1; if (i >= 0 && i + 1 < ph.length) e.swell = ph[i + 1].dyn / e.dyn; delete e.ph; });
   return out.sort((a, b) => a.n.t - b.n.t);
 }
 
@@ -1140,7 +1169,7 @@ function startPlayback() {
       const close = at + dur - (ev.inWord ? lead * .3 : lead);
       const shaped = prefs.timbre !== 'organ' && prefs.musical !== false;
       playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, inWord: !!ev.inWord,
-        swell: shaped && legato ? ev.swell : null, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
+        swell: shaped && legato ? ev.swell : null, fade: shaped ? ev.fade : null, key: vi, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };

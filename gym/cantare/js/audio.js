@@ -115,7 +115,8 @@ function bankNote({ midi, f0, at, end, env, sources, tied, u, last, close }) {
   const fp = 440 * Math.pow(2, (ps[k] - 69) / 12), rate = f0 / fp;
   const slot = k * m.cv.slot, beat = slot + m.cv.pre;
   const lead = cvE[body === 'male' ? 1 : 2] + .02;
-  const vib = src => { const v = ctx.createOscillator(); v.frequency.value = 5.2;
+  const oscs = [];
+  const vib = src => { const v = ctx.createOscillator(); v.frequency.value = 5.2; oscs.push(v);
     const vg = ctx.createGain(); vg.gain.setValueAtTime(tied ? 14 : 0, at); vg.gain.linearRampToValueAtTime(14, at + (tied ? .01 : .5));
     v.connect(vg); vg.connect(src.detune); v.start(Math.max(ctx.currentTime, at - lead)); v.stop(end + 1); };
   /* the vowel: the attack (its onset consonants before the beat), then the held vowel looped a whole number of periods */
@@ -144,7 +145,60 @@ function bankNote({ midi, f0, at, end, env, sources, tied, u, last, close }) {
     return stop;
   }
   src.stop(end + .3);
+  bankNote.h = { src, vg, oscs, body, fp, rate };
   return 0;
+}
+/* the closing half of a syllable sung over a held vowel source `src` (gain `vg`), at this note's pitch */
+function codaOver(src, vg, env, { midi, f0, at, u, close }) {
+  const m = BANK.map, body = bodyOf(midi), k = nearest(m[body], midi), b = body[0];
+  const vcE = u && u.vc && m.vc.units[u.vc], vbuf = vcE && BANK.buf[`${b}_vc${vcE[0]}`];
+  if (!vbuf) return 0;
+  const fp = 440 * Math.pow(2, (m[body][k] - 69) / 12), rate = f0 / fp;
+  const tc = vcE[body === 'male' ? 1 : 3], te = vcE[body === 'male' ? 2 : 4];
+  const T = close - te / rate, sw = Math.max(at + .06, T + (tc - .07) / rate);
+  const c = ctx.createBufferSource(); c.buffer = vbuf; c.playbackRate.value = rate;
+  const cg = ctx.createGain(); cg.gain.setValueAtTime(0, sw - .03); cg.gain.linearRampToValueAtTime(1, sw + .03);
+  c.connect(cg); cg.connect(env);
+  vg.gain.setValueAtTime(1, sw - .03); vg.gain.linearRampToValueAtTime(0, sw + .03);
+  c.start(sw - .03, k * m.vc.slot + Math.max(0, (sw - .03 - T) * rate));
+  const stop = T + m.vc.slot / rate;
+  c.stop(stop + .05); src.stop(sw + .1);
+  return stop;
+}
+/* the held vowel of each voice, while a syllable runs over several notes (a melisma): the next note of the syllable
+   does not start a new sound, it moves the same breath to the new pitch with a short portamento, as a singer does */
+const LINES = new Map();
+const holdAt = (prm, t) => { if (prm.cancelAndHoldAtTime) prm.cancelAndHoldAtTime(t); else { prm.cancelScheduledValues(t); } };
+function continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade }) {
+  const rate = f0 / H.fp;
+  if (bodyOf(midi) !== H.body || Math.abs(12 * Math.log2(rate)) > 6 || H.gate !== gate || at < ctx.currentTime + .02) return null;
+  const tg = Math.max(ctx.currentTime + .005, at - .045);
+  /* the pitch moves in about 45 ms, arriving on the beat */
+  const pr = H.src.playbackRate; holdAt(pr, tg); pr.setValueAtTime(H.rate, tg); pr.exponentialRampToValueAtTime(rate, at + .005);
+  const g = H.env.gain; holdAt(g, tg); g.linearRampToValueAtTime(1, tg + .02);
+  /* the same pitch again: a gentle lift of the breath, not a new attack */
+  if (Math.abs(rate / H.rate - 1) < .01) { g.linearRampToValueAtTime(.72, at - .005); g.linearRampToValueAtTime(1, at + .07); }
+  const o = H.out.gain; holdAt(o, tg); o.linearRampToValueAtTime(level * 2.6, at + .06);
+  holdAt(H.vg.gain, tg); H.vg.gain.setValueAtTime(1, tg + .001);
+  if (legato) dur += XF / 2;
+  const end = at + dur;
+  H.rate = rate;
+  if (swell && Math.abs(swell - 1) > .01 && end - at > .15) o.linearRampToValueAtTime(level * 2.6 * swell, end);
+  if (fade) { o.setValueAtTime(level * 2.6, at + (end - at) * 2 / 3); o.linearRampToValueAtTime(level * 2.6 * fade, end); }
+  const stop = last ? codaOver(H.src, H.vg, H.env, { midi, f0, at, u, close: close == null ? end : Math.max(at + .1, close) }) : 0;
+  if (stop) { g.setValueAtTime(1, stop - .03); g.linearRampToValueAtTime(0, stop); H.oscs.forEach(v => v.stop(stop + .2)); return o; }
+  if (!last) {
+    /* the syllable goes on: keep the breath; the next note takes it over */
+    H.src.stop(end + .4); H.oscs.forEach(v => v.stop(end + 1));
+    g.setValueAtTime(1, end); g.linearRampToValueAtTime(0, end + .25);
+    return o;
+  }
+  if (legato) {
+    const f = close == null ? end : Math.min(end, Math.max(at + .1, close + .02)), x = inWord ? XF * 1.8 : XF;
+    g.setValueAtTime(1, Math.max(at + .01, f - x)); g.linearRampToValueAtTime(0, Math.max(at + .02, inWord ? f + XF * .6 : f));
+  } else { g.setValueAtTime(1, Math.max(at + .01, end - .12)); g.linearRampToValueAtTime(0, Math.max(at + .02, end + .06)); }
+  H.src.stop(end + .4); H.oscs.forEach(v => v.stop(end + 1));
+  return o;
 }
 let ctx = null, master = null, dry = null, wet = null, shelf = null;
 
@@ -227,6 +281,7 @@ function openGate() {
   gate.click = ctx.createGain(); gate.click.connect(master);
 }
 export function silence() {
+  LINES.clear();
   if (!ctx || !gate) return;
   const g = gate, t = ctx.currentTime;
   [g.gain, g.click.gain].forEach(p => { p.cancelScheduledValues(t); p.setValueAtTime(p.value, t); p.linearRampToValueAtTime(0, t + .012); });
@@ -324,7 +379,7 @@ function modelNote({ timbre, midi, a4, at, dur, level, tied, legato }) {
   return out(env, level * I.GAIN.model);
 }
 
-function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null, swell = null, inWord = false }) {
+function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null, swell = null, inWord = false, key = null, fade = null }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
   if (timbre === 'voice' && BANK.map) {
@@ -332,7 +387,7 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
     /* the accent follows the note value (as for the other flowing sounds); a quick note inside a line on a syllable
        without onset consonants glides in from the note before */
     const acc = value != null ? .15 * Math.min(1, value / 4) : .3, glide = tied || (joined && value != null && value < 2 && unit.cv && unit.cv[0] === '.');
-    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc, swell, inWord });
+    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc, swell, inWord, key, melisma: tied, fade });
     if (!u) load([{ u: unit, midi }]);
   }
   if (tied) { at -= XF / 2; dur += XF / 2; }
@@ -456,7 +511,13 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
 }
 
 /* a note sung from the bank: the attack's consonants come before the beat; only a syllable's first note carries an accent */
-function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc, swell = null, inWord = false }) {
+function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc, swell = null, inWord = false, key = null, melisma = false, fade = null }) {
+  /* the next note of a syllable: the same breath goes on */
+  if (melisma && key != null && LINES.has(key)) {
+    const H = LINES.get(key); LINES.delete(key);
+    const o = continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade });
+    if (o) { if (!last) LINES.set(key, H); return o; }
+  }
   if (tied) { at -= XF / 2; dur += XF / 2; }
   if (legato) dur += XF / 2;
   const end = at + dur, env = ctx.createGain(), g = env.gain;
@@ -466,7 +527,20 @@ function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc,
     g.setValueAtTime(1, Math.max(ctx.currentTime, at - lead));
     g.setValueAtTime(1, at); g.linearRampToValueAtTime(1 + acc, at + .08); g.linearRampToValueAtTime(1, Math.min(at + .26, Math.max(at + .09, end - .01)));
   }
+  bankNote.h = null;
   const stop = bankNote({ midi, f0, at, end, env, tied, u, last, close: close == null ? end : Math.max(at + .1, close) });
+  const held = !last && key != null && bankNote.h;
+  if (key != null) LINES.delete(key);
+  if (held) {
+    /* the syllable goes on over the next note: no fade here, the next note takes this sound over */
+    const H = bankNote.h; H.env = env; H.gate = gate;
+    bankNote.h.src.stop(end + .4); H.oscs.forEach(v => v.stop(end + 1));
+    g.setValueAtTime(1, end); g.linearRampToValueAtTime(0, end + .25);
+    const o = out(env, level * 2.6); H.out = o;
+    if (swell && Math.abs(swell - 1) > .01 && end - at > .15) { o.gain.setValueAtTime(level * 2.6, at + .05); o.gain.linearRampToValueAtTime(level * 2.6 * swell, end); }
+    LINES.set(key, H);
+    return o;
+  }
   if (stop) { g.setValueAtTime(1, stop - .03); g.linearRampToValueAtTime(0, stop); }
   else if (legato) {
     /* flowing into the next syllable: the vowel gives way where that syllable's onset consonants begin */
@@ -479,6 +553,8 @@ function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc,
   const o = out(env, level * 2.6);
   /* the line's shape: the note grows or fades towards the loudness of the next one */
   if (swell && Math.abs(swell - 1) > .01 && end - at > .15) { o.gain.setValueAtTime(level * 2.6, at + .05); o.gain.linearRampToValueAtTime(level * 2.6 * swell, end); }
+  /* the long last note of a phrase dies away over its last third */
+  if (fade) { o.gain.setValueAtTime(level * 2.6, at + (end - at) * 2 / 3); o.gain.linearRampToValueAtTime(level * 2.6 * fade, end); }
   return o;
 }
 
