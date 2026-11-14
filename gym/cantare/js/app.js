@@ -317,6 +317,7 @@ function render(resetLeaf) {
   collectNotes();
   markSel();
   syncZoom();
+  syncSubmit();
 }
 
 /* score or choir book: the book button beside the title, the same choice in Transform and in the Studio */
@@ -1362,6 +1363,11 @@ function sendMine(b = S.base) {
   const it = itemOf(b), key = JSON.stringify(it);
   if (sentAt.get(b.id) === key) return;
   sentAt.set(b.id, key);
+  const body = mailBody(b, it, key);
+  try { fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).catch(() => {}); } catch (e) { /* offline: it goes with the next change */ sentAt.delete(b.id); }
+}
+/* what the email about a melody contains */
+function mailBody(b, it = itemOf(b), key = JSON.stringify(it)) {
   let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
   const body = { _subject: 'Cantare – a new melody: ' + b.title, _template: 'table', _captcha: 'false', About: 'Cantare super librum – melody written by a visitor',
     Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | ') || (it.s || []).join(' '),
@@ -1375,8 +1381,68 @@ function sendMine(b = S.base) {
     body.Notes = b.voices[0].notes.filter(n => !n.rest).map(n => 'CDEFGAB'[((n.step % 7) + 7) % 7] + (n.acc === 'b' ? '♭' : n.acc === '#' ? '♯' : '')).join(' ');
     body.GABC = gabcOf(b.title, clefFor(b.voices[0].clef), b.voices[0].notes);
   }
-  try { fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }).catch(() => {}); } catch (e) { /* offline: it goes with the next change */ sentAt.delete(b.id); }
+  return body;
 }
+
+/* Submit to the collection: the writer's final version, marked so that Václav sees it is offered for the library.
+   Sent even when the automatic copies are switched off, since the writer asks for it here. */
+function askSubmit() {
+  const b = S.base; if (!b || !b.mine) return;
+  const pop = $('#clefPop');
+  const it0 = mine.find(x => x.id === b.id) || {};
+  const notes = b.voices.reduce((a, v) => a + v.notes.filter(n => !n.rest).length, 0);
+  let whoV = ''; try { whoV = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, value: whoV, placeholder: tr('Your name'), 'aria-label': tr('Your name') });
+  const mail = el('input', { type: 'email', class: 'nm-in', maxlength: 120, placeholder: tr('Your email (optional, if you want an answer)'), 'aria-label': tr('Your email (optional, if you want an answer)') });
+  const src = el('input', { type: 'text', class: 'nm-in', maxlength: 200, value: it0.src || '', placeholder: tr('e.g. my own; or a hymn from a 1545 hymnal'), 'aria-label': tr('Composer or source') });
+  const msg = el('textarea', { class: 'nm-in tx-in', rows: 3, maxlength: 2000, placeholder: tr('Anything Václav should know (optional)'), 'aria-label': tr('Message (optional)') });
+  const go = async () => {
+    if (!who.value.trim()) { who.focus(); who.classList.add('need'); return; }
+    if (!src.value.trim()) { src.focus(); src.classList.add('need'); return; }
+    try { localStorage.setItem('cantare-next:who', who.value.trim()); } catch (e) { /* ignore */ }
+    const body = mailBody(b);
+    body._subject = 'Cantare – SUBMITTED TO THE COLLECTION: ' + b.title;
+    body.About = 'Cantare super librum – a visitor submits this melody to the collection (final version)';
+    body['Submitted to the collection'] = 'YES – final version, ' + new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
+    body.Name = who.value.trim();
+    body['Composer or source'] = src.value.trim();
+    if (mail.value.trim()) { body.Email = mail.value.trim(); body._replyto = mail.value.trim(); }
+    body.Message = msg.value.trim() || '—';
+    sendBtn.disabled = true; sendBtn.textContent = tr('Sending…');
+    let ok = false;
+    try {
+      const r = await fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
+      ok = r.ok;
+    } catch (e) { ok = false; }
+    if (!ok) { sendBtn.disabled = false; sendBtn.textContent = tr('Submit'); toast(tr('Could not send: are you online? Please try again.')); return; }
+    const it = mine.find(x => x.id === b.id);
+    if (it) { it.submitted = new Date().toISOString(); it.src = src.value.trim(); saveMineList(); }
+    sentAt.set(b.id, JSON.stringify(itemOf(b)));
+    pop.hidden = true; syncSubmit();
+    toast(tr('Thank you! Václav will look at it for the collection.'));
+  };
+  const sendBtn = el('button', { type: 'button', class: 'chip primary', onclick: go }, tr('Submit'));
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Submit to the collection')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('This sends the melody as it is now — notes, text and title — to Václav Hřebec, who looks at it and may add it to the library for everyone. Finish it first; you can submit a corrected version later.')),
+      el('p', { class: 'sb-what' }, el('strong', {}, b.title), ' · ' + notes + ' ' + tr('notes') + (b.voices.some(v => v.lyrics) ? ' · ' + tr('with text') : ' · ' + tr('no text yet'))),
+      el('label', {}, tr('Your name'), who),
+      el('label', {}, tr('Composer or source'), src),
+      el('label', {}, tr('Your email (optional, if you want an answer)'), mail),
+      el('label', {}, tr('Message (optional)'), msg),
+      el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')), sendBtn)));
+  pop.hidden = false; setTimeout(() => (who.value ? src : who).focus(), 30);
+}
+function syncSubmit() {
+  const bar = $('#submitBar'); if (!bar) return;
+  const b = S.base, show = !!(b && b.mine && b.voices.some(v => v.notes.some(n => !n.rest)));
+  bar.hidden = !show; if (!show) return;
+  const it = mine.find(x => x.id === b.id);
+  $('#submitLbl').textContent = it && it.submitted ? tr('Submit the corrected version') : tr('Submit this melody to the collection');
+  $('#submitHint').textContent = it && it.submitted ? tr('Submitted on') + ' ' + new Date(it.submitted).toLocaleDateString() + ' ✓' : '';
+}
+$('#submitBtn').addEventListener('click', () => askSubmit());
 const sendLater = () => { clearTimeout(sendT); sendT = setTimeout(() => sendMine(), 60000); };
 addEventListener('pagehide', () => sendMine());
 document.addEventListener('visibilitychange', () => { if (document.hidden) sendMine(); });

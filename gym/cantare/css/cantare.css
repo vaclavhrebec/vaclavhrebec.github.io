@@ -518,3 +518,9 @@ html.focus .zoomctl { top: 4px; margin-right: 96px; }
 .tx-voices:empty { display: none; }
 .tx-count { margin: -4px 0 0; }
 .tbtn .tblab { font-size: 13px; }
+/* Submit to the collection, under one's own melody */
+.submitbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 14px; margin: 22px 0 6px; }
+.submitbar[hidden] { display: none; }
+.submitbar .chip { display: inline-flex; align-items: center; gap: 8px; padding: 9px 18px; font-size: 15px; font-weight: 600; cursor: pointer; }
+.submitbar svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; stroke-linecap: round; }
+.sb-what { margin: 0; font-size: 14px; }
