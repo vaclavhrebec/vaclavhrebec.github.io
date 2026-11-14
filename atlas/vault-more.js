@@ -160,5 +160,7 @@
   if (el('microtonality')) el('microtonality').text += ' New instruments are built for it: [[microtonal-instruments]].';
   if (el('conductor')) { el('conductor').title = 'The modern conductor (interpreter with baton)'; el('conductor').text = 'The [[time-beater]] – who had given the beat with hand, staff or roll of paper since the Middle Ages – becomes an interpreter standing before the [[romantic-orchestra]], replacing the leading violinist or the keyboard player of the continuo. The short light baton spreads in the 1820s (Spohr, Weber, Mendelssohn).'; }
   if (el('tactus')) { el('tactus').first = 1430; el('tactus').scope = 'the beat given by the hand; Anselmi (1434), Gaffurius, Practica musicae (1496), Agricola (1532)'; el('tactus').text += ' Who gave it, and with what: see [[time-beater]].'; }
+  const sty = id => V.styles.find(x => x.id === id);
+  if (sty('stylus-phantasticus')) sty('stylus-phantasticus').text = 'The name comes from Athanasius Kircher, *Musurgia universalis* (Rome, 1650), the first source to define it: the *stylus phantasticus* is “aptus instrumentis” – suited to instruments – the freest and least bound way of composing, held to no words and no fixed subject, made to display the player’s invention and skill. Frescobaldi and Froberger (whom Kircher names), Biber, Buxtehude and the north German organists: sections of free fantasy alternate with fugal passages. See [[toccata]].';
   if (el('program-music')) el('program-music').text += ' Its long prehistory: [[battaglia|battle pieces]] and [[birdsong]].';
 })(window.VAULT);

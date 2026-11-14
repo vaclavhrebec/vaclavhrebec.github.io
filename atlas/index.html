@@ -265,7 +265,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     <button class="iconbtn" id="leftBtn" title="Show or hide the file explorer" aria-label="File explorer" aria-pressed="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
   </aside>
   <aside class="side" id="side" aria-label="File explorer">
-    <div class="head"><input class="search" id="search" type="search" placeholder="Search notes…" aria-label="Search notes"></div>
+    <div class="head"><input class="search" id="search" type="search" placeholder="Search notes or composers…" aria-label="Search notes or composers"></div>
     <div class="tree" id="tree"></div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -320,6 +320,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-more.js"></script>
 <script src="vault-crosslinks.js"></script>
 <script src="vault-voices.js"></script>
+<script src="vault-composers.js"></script>
 <script>
 (function () {
   'use strict';
@@ -353,6 +354,27 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   nodes.forEach(n => n.out.forEach(t => { if (byId[t]) { byId[t].back.add(n.id); addEdge(n.id, t, n.kind === 'style' ? 'style' : 'note'); } }));
   nodes.forEach(n => { n.deg = n.out.size + n.back.size; });
   const stylesOf = id => V.styles.filter(s => s.elements.includes(id));
+
+  /* ---------- composers: their styles, and the elements of those styles present in their working years,
+     plus every element or style whose note names them ---------- */
+  const CP = {};
+  const STOP = new Set(['Prez', 'Papa', 'Fay', 'Rue', 'Halle', 'Bingen', 'Chancellor']);
+  const reEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  (V.composers || []).forEach(c => {
+    const last = c.name.split(' ').pop();
+    const terms = [...new Set(c.aka.concat(last.length >= 4 && !STOP.has(last) ? [last] : []))];
+    const re = terms.length ? new RegExp('(^|[^\\p{L}])(' + terms.map(reEsc).join('|') + ')(?![\\p{L}])', 'u') : null;
+    const a = c.born + 18, b = c.died || NOW;
+    const named = new Set(), fromStyle = new Set();
+    if (re) nodes.forEach(n => { if (re.test((n.text || '') + ' ' + (n.scope || '') + (n.kind === 'style' ? ' ' + n.title : ''))) named.add(n.id); });
+    const styles = [...new Set(c.styles.concat([...named].filter(i => byId[i] && byId[i].kind === 'style')))].filter(i => byId[i]);
+    c.styles.forEach(sid => { const s = byId[sid]; if (!s || s.from > b || s.to < a) return;
+      s.elements.forEach(e => { const n = byId[e]; if (n && n.first <= b && (!n.fade || n.fade >= a)) fromStyle.add(e); }); });
+    const els = [...new Set([...fromStyle, ...[...named].filter(i => byId[i] && byId[i].kind === 'el')])];
+    CP[c.id] = Object.assign({}, c, {styleIds: styles, els, named, kind: 'composer', title: c.name});
+  });
+  const composersOf = sid => Object.values(CP).filter(c => c.styleIds.includes(sid)).sort((x, y) => x.born - y.born);
+  const lifeOf = c => (c.born < 0 ? Y(c.born) : c.born) + '–' + (c.died || '');
   const colorVar = f => f === 'style' ? '--c-style' : '--c-' + f;
   const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 
@@ -396,14 +418,16 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       h += `<div class="folder closed"><button type="button">${chev}${esc(V.folders[f])} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(e => file(byId[e.id])).join('')}</div></div>`;
     }
     h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this works</span></a></div></div>`;
+    const comps = Object.values(CP).sort((x, y) => x.born - y.born);
+    h = `<div class="folder closed" id="compFolder"><button type="button">${chev}Composers <span class="cnt">${comps.length}</span></button><div class="kids">${comps.map(c => `<a class="file" href="#note/${c.id}" data-id="${c.id}"><span class="dot" style="background:var(--muted)"></span><span>${esc(c.name)}</span><span class="yr">${c.born}</span></a>`).join('')}</div></div>` + h;
     $('#tree').innerHTML = h;
     $('#tree').querySelectorAll('.folder > button').forEach(b => b.onclick = () => b.parentElement.classList.toggle('closed'));
   }
   $('#search').addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('#tree .file').forEach(f => {
-      const n = byId[f.dataset.id];
-      const hay = n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
+      const n = byId[f.dataset.id] || CP[f.dataset.id];
+      const hay = n && n.kind === 'composer' ? (n.name + ' ' + n.aka.join(' ')).toLowerCase() : n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
       f.classList.toggle('hidden', !!q && !hay.includes(q));
     });
     document.querySelectorAll('#tree .folder').forEach(f => { if (q) f.classList.toggle('closed', !f.querySelector('.file:not(.hidden)')); });
@@ -437,6 +461,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   function renderNote(id) {
     const el = $('#note');
     document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
+    if (CP[id]) { renderComposer(CP[id]); return; }
     if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'Atlas of Musical Style'; renderLinks(null); return; }
     const n = byId[id];
     document.title = n.title + ' · Atlas of Musical Style';
@@ -462,6 +487,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         <dt>${ICON.cal}period</dt><dd>c. ${YR(n.from, n.to, n.alive)}</dd>
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
         ${voiceRow(n.id)}
+        ${composersOf(n.id).length ? `<dt>${ICON.list}composers</dt><dd>${composersOf(n.id).map(c => `<a class="il" href="#note/${c.id}">${esc(c.name)}</a>`).join(', ')}</dd>` : ''}
         <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
         </dl></details>
         <p>${md(n.text)}</p>
@@ -472,6 +498,30 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     el.innerHTML = h;
     el.querySelectorAll('.tag[data-folder]').forEach(t => t.onclick = e => { e.preventDefault(); $('#search').value = ''; filterFolder(t.dataset.folder); });
     renderLinks(n);
+    $('#v-note').scrollTop = 0;
+  }
+  function renderComposer(c) {
+    document.title = c.name + ' · Atlas of Musical Style';
+    const total = V.elements.length, byF = {};
+    c.els.forEach(e => { const f = byId[e].folder; (byF[f] = byF[f] || []).push(e); });
+    const named = c.els.filter(e => c.named.has(e)).length;
+    let h = `<div class="crumb">Composers</div><h1>${esc(c.name)}</h1>
+      <details class="props" open><summary>Properties</summary><dl>
+      <dt>${ICON.cal}lived</dt><dd>${lifeOf(c)}${c.died ? '' : 'today'}</dd>
+      <dt>${ICON.list}styles</dt><dd>${c.styleIds.map(s => `<a class="il style" href="#note/${s}" data-id="${s}">${esc(byId[s].title)}</a>`).join(', ') || '—'}</dd>
+      <dt>${ICON.tag}elements</dt><dd><b>${c.els.length}</b> of ${total}${named ? ` · ${named} named in the notes (✎)` : ''}</dd>
+      </dl></details>
+      <p class="small" style="color:var(--muted)">The elements are those of ${c.styleIds.length > 1 ? 'the styles' : 'the style'} above that were in use during ${esc(c.name.split(' ').pop())}’s working life, together with every element whose note mentions ${c.died ? 'the composer' : 'him or her'} by name. It is a map of the language available to and shared by the composer, not a list of what each work contains.</p>`;
+    for (const f in V.folders) if (byF[f]) {
+      const list = byF[f].sort((a, b) => byId[a].first - byId[b].first);
+      h += `<h2><span class="dot" style="display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;background:var(${colorVar(f)})"></span>${esc(V.folders[f])} <span style="color:var(--faint);font-weight:400">${list.length}</span></h2><ul class="chk">${list.map(e => `<li><a class="il" href="#note/${e}" data-id="${e}">${esc(byId[e].title)}</a>${c.named.has(e) ? ' ✎' : ''}<span class="d">${Y(byId[e].first)}${byId[e].fade ? '–' + Y(byId[e].fade) : '–'}</span></li>`).join('')}</ul>`;
+    }
+    if (c.els.length) h += `<h2>On the timeline</h2><div class="minitl">${miniTimeline(c.els.slice().sort((a, b) => byId[a].first - byId[b].first), c.born, c.died || NOW)}</div><p class="small" style="color:var(--faint);font-size:13px">The shaded band is the composer’s lifetime.</p>`;
+    $('#note').innerHTML = h;
+    document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === c.id));
+    const others = Object.values(CP).filter(o => o !== c && o.styleIds.some(s => c.styleIds.includes(s))).sort((x, y) => Math.abs(x.born - c.born) - Math.abs(y.born - c.born)).slice(0, 12);
+    $('#links').innerHTML = `<h3>Styles (${c.styleIds.length})</h3>${c.styleIds.map(s => `<a class="lk" href="#note/${s}" data-id="${s}">${esc(byId[s].title)}<small>style · ${yrs(byId[s])}</small></a>`).join('') || '<p class="none">None</p>'}<h3>In the same styles</h3>${others.map(o => `<a class="lk" href="#note/${o.id}">${esc(o.name)}<small>${lifeOf(o)}</small></a>`).join('') || '<p class="none">None</p>'}`;
+    drawLocal(null);
     $('#v-note').scrollTop = 0;
   }
   function filterFolder(f) {
