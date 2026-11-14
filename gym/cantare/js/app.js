@@ -799,8 +799,8 @@ const EDIT = {
 };
 
 const ICON = {
-  undo: '<svg class="ico" viewBox="0 0 24 24"><path d="M9 7L4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0 -5)"/></svg>',
-  redo: '<svg class="ico" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/><path d="M20 12H10a6 6 0 0 0 0 12" transform="translate(0 -5)"/></svg>',
+  undo: '<svg class="ico" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
+  redo: '<svg class="ico" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>',
   left: '<svg class="ico" viewBox="0 0 24 24"><path d="M14.500 5l-7 7 7 7"/></svg>',
   right: '<svg class="ico" viewBox="0 0 24 24"><path d="M9.500 5l7 7-7 7"/></svg>',
   up: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 14.500l7-7 7 7"/></svg>',
