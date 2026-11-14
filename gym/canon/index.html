@@ -95,7 +95,8 @@
   .beats i.on { background: var(--accent); border-color: var(--accent); }
   .meter { flex: 1 1 120px; max-width: 220px; height: 8px; border-radius: 4px; background: var(--soft); overflow: hidden; }
   .meter b { display: block; height: 100%; width: 0; background: var(--fg); opacity: .55; transition: width .05s; }
-  #status { font-size: .9rem; color: var(--muted); flex-basis: 100%; min-height: 1.4em; }
+  #status { font-size: .9rem; color: var(--muted); flex-basis: 100%; min-height: 1.4em; margin: 0; }
+  #status:empty { display: none; }
   #status.err { color: var(--accent); }
 
   .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 16px; }
@@ -161,6 +162,83 @@
   .sitenav a:hover,.sitenav a:focus-visible{color:var(--fg);border-bottom-color:currentColor}
   .ft-row, dialog.fb, dialog.fb h2 { font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif !important; }
   .ft-btns button, .ft-btns a, .fb-open, .sh-grid a, .sh-grid button { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif !important; }
+
+  /* ---------- the score: what you sing, written down ---------- */
+  .score { position: relative; min-height: 210px; border-radius: 8px; background: var(--soft); padding: 10px 6px 6px; overflow: hidden; }
+  .score .sys { position: relative; z-index: 1; }
+  .score .system { color: var(--fg); --staff: var(--accent); display: block; }
+  .system .staffline { stroke: var(--staff); stroke-width: .085; fill: none; opacity: .7; }
+  .system .fill { fill: currentColor; }
+  .system .hollow { fill: none; stroke: currentColor; stroke-width: .17; }
+  .system .stroke { fill: none; stroke: currentColor; stroke-width: .14; }
+  .system .stroke.thick { stroke-width: .28; }
+  .system .clefnum { font: .9px Georgia, serif; fill: currentColor; }
+  .system .vinit { font: 4.2px "Fondamento", Georgia, serif; fill: var(--accent); }
+  .system .vinum { font-size: .55em; }
+  .system .vname { display: none; }
+  .system .hit, .system .clef-hit rect { fill: transparent; stroke: none; }
+  .system .note.now { opacity: .55; }
+  .hint { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; text-align: center; pointer-events: none;
+    font-family: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif; font-style: italic; font-size: 1.15rem; color: var(--muted); padding: 1rem 2.6rem; }
+  .hint span { background: color-mix(in srgb, var(--soft) 82%, transparent); border-radius: 10px; padding: .4rem .8rem; }
+  .hint[hidden] { display: none; }
+  /* the tactus hand, behind the music on the right, as in Cantare super librum */
+  .tactus-hand { position: absolute; right: -4%; top: 50%; width: min(62%, 440px); aspect-ratio: 620 / 260; transform: translateY(-50%); pointer-events: none; z-index: 0; opacity: .3; }
+  .tactus-hand.beating { opacity: .45; }
+  .tactus-hand svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  #thArm { transform-origin: 760px 132px; }
+  .tactus-hand[data-style="palm"] #thBaton, .tactus-hand:not([data-style="palm"]) #thPalm { display: none; }
+  .tactus-hand[hidden] { display: none; }
+
+  /* ---------- the bar under the score: time ---------- */
+  .timebar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; }
+  .grp { display: inline-flex; align-items: center; gap: 8px; }
+  .grp .lbl { color: var(--muted); font-size: .9rem; }
+  .seg.units button { display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; }
+  .seg.units .glyph { width: 13px; height: 22px; }
+  .seg.units .glyph .fill { fill: currentColor; } .seg.units .glyph .hollow { fill: none; stroke: currentColor; stroke-width: .17; } .seg.units .glyph .stroke { fill: none; stroke: currentColor; stroke-width: .14; }
+  #tempo { width: 4.2em; }
+  .icon-b { width: 38px; padding: 0 !important; display: inline-grid; place-items: center; }
+  .icon-b svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-b[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ---------- the toolbar: voices, canons, rules ---------- */
+  .tools { margin-top: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px 16px; }
+  .tools .top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+  .tools .top .sp { flex: 1; }
+  .nv button { min-width: 44px; font-weight: 600; }
+  .canons { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-top: 12px; }
+  .cn-b { text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px 8px; cursor: pointer; color: var(--fg); font: inherit; display: flex; flex-direction: column; gap: 4px; }
+  .cn-b:hover { border-color: var(--fg); }
+  .cn-b[aria-pressed="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .cn-b svg { width: 100%; height: 46px; display: block; }
+  .cn-b .nm { font-size: .84rem; line-height: 1.25; }
+  .cn-b .kind { font-size: .72rem; color: var(--muted); display: flex; justify-content: space-between; gap: 6px; align-items: center; }
+  .free { display: inline-flex; gap: 2px; } .free i { width: 5px; height: 9px; border-radius: 1px; background: var(--line); } .free i.on { background: var(--accent); }
+  .disp line.ax { stroke: var(--line); stroke-width: 1; }
+  .disp rect { rx: 2; }
+  .disp text { font: 9px system-ui, sans-serif; fill: var(--muted); }
+  .chosen { margin: 12px 0 0; font-size: .92rem; color: var(--muted); }
+  .chosen b { color: var(--fg); font-weight: 600; }
+  .rules { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+  .rules[hidden] { display: none; }
+  .rules h3 { font: 400 1.25rem "Fondamento", Georgia, serif; margin: 0 0 .2rem; }
+  .rules .sub { font-size: .85rem; color: var(--muted); margin: 0 0 .6rem; }
+  .moves { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mv { margin: 0; border: 1px solid var(--line); border-radius: 8px; padding: 4px 4px 3px; background: var(--bg); text-align: center; transition: opacity .15s, border-color .15s; }
+  .mv svg.system { display: block; color: var(--fg); --staff: var(--muted); }
+  .mv figcaption { font-size: .75rem; color: var(--muted); }
+  .moves.live .mv { opacity: .28; }
+  .moves.live .mv.ok { opacity: 1; border-color: var(--v3); }
+  .moves.live .mv.ok figcaption { color: var(--v3); font-weight: 600; }
+  .nextline:empty { display: none; }
+  .nextline { font-family: "Fondamento", Georgia, serif; font-size: 1.1rem; min-height: 1.5em; margin: .5rem 0 0; }
+  .rules ul { margin: .3rem 0 .6rem; padding-left: 1.1rem; font-size: .9rem; }
+  .rules h4 { margin: .8rem 0 0; font-size: .95rem; }
+  .rules details summary { cursor: pointer; font-size: .9rem; color: var(--muted); margin-top: .5rem; }
+  .cols { columns: 2 220px; }
+  .settings { margin-top: 16px; }
+  .settings .grid { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -171,73 +249,71 @@
     <h1>Improvising canons</h1>
     <p class="tagline">Sing the dux. The comes follows.</p>
   </header>
-  <div class="staff" aria-hidden="true"></div>
 
   <section class="stage" aria-label="Singing">
-    <div class="trace">
-      <canvas id="trace" aria-label="Pitch of your voice and of the following voices over time"></canvas>
-      <div class="hint" id="hint">Put on headphones, press Start and sing.<br>The comes answers you after the entry you chose.</div>
+    <div class="score" id="score">
+      <div class="tactus-hand" id="tactusHand" aria-hidden="true"><svg viewBox="0 0 620 260" preserveAspectRatio="xMaxYMid meet"><defs> <linearGradient id="th-skin" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f5dcc2"/><stop offset=".5" stop-color="#e8bf9c"/><stop offset="1" stop-color="#c99272"/></linearGradient> <linearGradient id="th-skin2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#eac7a6"/><stop offset="1" stop-color="#c38a68"/></linearGradient> <linearGradient id="th-linen" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf7"/><stop offset=".55" stop-color="#f1ebdd"/><stop offset="1" stop-color="#d9d0bd"/></linearGradient> <linearGradient id="th-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d9b98e"/><stop offset=".5" stop-color="#9a6a3c"/><stop offset="1" stop-color="#5a3a1c"/></linearGradient> </defs> <g id="thArm" stroke-linejoin="round" stroke-linecap="round"><g id="thBaton"> <path d="M14 141.4 L14 142.6 L332 140.4 L332 135.4 Z" fill="url(#th-wood)" stroke="#3f2810" stroke-width=".5"/> <path d="M352 150 C344 162 330 168 318 166 C306 164 302 156 306 150 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M332 148 C324 160 310 166 298 164 C286 162 283 154 288 148 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M312 145 C304 157 290 162 280 160 C270 158 268 151 273 146 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M392 110 C370 108 346 108 322 111 C306 113 292 117 282 122 C272 127 264 133 262 140 C260 147 264 153 271 155 C276 156 280 154 280 150 C278 146 276 142 280 138 C286 134 296 134 306 138 C320 143 336 148 352 150 C368 152 382 154 392 156 Z" fill="url(#th-skin)" stroke="#8a5a3e" stroke-width="1.2"/> <g fill="none" stroke="#a46d4f" stroke-width=".9" opacity=".75"> <path d="M286 121 c-3 3 -4 7 -3 10"/><path d="M266 136 c3 1 6 1 9 -1"/> <path d="M318 111 c3 3 7 4 12 3"/><path d="M338 109 c3 3 7 3 11 2"/> </g> <path d="M382 142 C364 136 342 132 318 131 C302 130 290 131 285 134 C281 137 284 140 291 141 C306 142 326 144 346 150 C360 154 372 157 384 158 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M287 134 c-3 1 -4 3 -2 5 c3 1 8 0 10 -2 c-1 -2 -4 -3 -8 -3z" fill="#f8e4d4" stroke="#b07a5c" stroke-width=".7"/> <path d="M386 113 C360 110 330 111 300 118" fill="none" stroke="#fff3e6" stroke-width="2.4" opacity=".55"/> </g><g id="thPalm"> <path d="M300 128 C270 132 236 134 206 134 C196 134 190 136 190 139 C190 142 196 143 206 143 C236 143 268 142 300 140 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M194 135.5 c-3 1 -4 3 -2 5 c3 0 6 0 8 -2z" fill="#f6e0d0" stroke="#b07a5c" stroke-width=".6"/> <path d="M392 110 C366 108 340 108 314 111 C298 113 282 116 264 119 C244 122 224 125 210 127 C200 128 196 131 197 134 C198 137 203 138 212 137 C230 136 252 137 272 139 C290 141 306 145 322 150 C340 155 358 158 378 158 L392 156 Z" fill="url(#th-skin)" stroke="#8a5a3e" stroke-width="1.2"/> <path d="M199 125 c-3 1 -4 5 -2 7 c3 0 7 -1 9 -4 c-1 -2 -4 -3 -7 -3z" fill="#f8e4d4" stroke="#b07a5c" stroke-width=".7"/> <g fill="none" stroke="#a46d4f" stroke-width=".9" opacity=".75"> <path d="M262 120 c-2 4 -2 10 1 15"/><path d="M231 124 c-2 3 -2 8 0 12"/> <path d="M318 111 c3 3 7 4 12 3"/><path d="M300 113 c3 3 7 3 11 2"/> </g> <path d="M380 140 C362 136 340 134 316 135 C300 136 288 138 282 141 C277 144 280 148 288 149 C304 150 326 151 348 154 C362 156 374 158 384 158 Z" fill="url(#th-skin2)" stroke="#8a5a3e" stroke-width="1.1"/> <path d="M285 141 c-3 1 -4 4 -2 6 c3 1 8 0 10 -2 c-1 -3 -4 -4 -8 -4z" fill="#f8e4d4" stroke="#b07a5c" stroke-width=".7"/> <path d="M312 140 c-1 3 -1 6 1 8" fill="none" stroke="#a46d4f" stroke-width=".9" opacity=".7"/> <path d="M386 113 C356 110 320 112 280 119" fill="none" stroke="#fff3e6" stroke-width="2.4" opacity=".55"/> </g> <path d="M394 100 C440 92 520 86 620 84 L620 178 C520 178 440 172 394 164 C389 146 389 118 394 100 Z" fill="url(#th-linen)" stroke="#bdb29c" stroke-width="1.1"/> <g fill="none" stroke="#d3c9b3" stroke-width="1" stroke-linecap="round"> <path d="M418 98 C428 116 428 148 418 166"/><path d="M446 95 C458 118 458 146 446 170"/><path d="M482 91 C492 116 492 148 482 173"/> <path d="M522 88 C532 114 532 150 522 176"/><path d="M566 86 C574 114 574 150 566 177"/><path d="M604 85 C610 114 610 150 604 178"/> </g> <path d="M398 95 C390 99 386 104 388 109 C383 113 383 120 387 124 C382 129 382 136 387 140 C382 145 383 152 388 156 C385 161 389 167 398 168 C402 150 403 114 398 95 Z" fill="#fdfbf5" stroke="#bdb29c" stroke-width="1"/> </g></svg></div>
+      <div class="sys" id="staves" aria-label="What you sing and what the following voices sing, on staves"></div>
+      <div class="hint" id="hint"><span>Put on headphones, press Start and sing:<br>one note for every <b id="hintUnit">semibrevis</b>.</span></div>
     </div>
-    <div class="legend" id="legend"></div>
-    <div class="controls">
+    <div class="timebar">
       <button id="start" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1 13 7 2 13Z"/></svg><span>Start</span></button>
-      <div class="beats" id="beats" aria-hidden="true"></div>
+      <div class="grp"><span class="lbl">Comes after a</span><span class="seg units" id="units" role="group" aria-label="The comes enters after"></span></div>
+      <div class="grp"><label class="lbl" for="tempo" id="tempoLbl">Minima</label><input type="number" id="tempo" min="20" max="300" step="1" inputmode="numeric" aria-label="Minims per minute"><button class="b" id="tap" type="button" title="Tap the minim a few times">Tap</button></div>
+      <div class="grp">
+        <button class="b icon-b" id="metroBtn" type="button" title="Metronome" aria-label="Metronome"><svg viewBox="0 0 24 24"><path d="M9 3h6l3.5 18h-13z"/><path d="M12 17 16.5 6"/><path d="M8 17h8"/></svg></button>
+        <button class="b icon-b" id="handBtn" type="button" title="Tactus: hand, hand with baton, none" aria-label="Tactus hand"><svg viewBox="0 0 24 24"><path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10V4a1.5 1.5 0 0 1 3 0v6M14 10V5.5a1.5 1.5 0 0 1 3 0V12M17 10.5a1.5 1.5 0 0 1 3 0V15a7 7 0 0 1-7 7h-1a6 6 0 0 1-4.6-2.2L4 15.5a1.6 1.6 0 0 1 2.4-2L8 15"/></svg></button>
+      </div>
       <div class="meter" title="Microphone level" aria-hidden="true"><b id="meter"></b></div>
       <p id="status" role="status"></p>
-      <p id="now" aria-live="off"></p>
     </div>
   </section>
 
-  <div class="grid">
-    <section class="card" aria-labelledby="h-canon">
-      <h2 id="h-canon">Canon</h2>
-      <div class="row"><label for="preset">Type</label><select id="preset"></select></div>
-      <div class="row"><button class="b libbtn" id="openLib" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z"/></svg>Library of canons</button><span class="note">322 real canons, about 1450–1530</span></div>
-      <div class="row"><label for="entry">Entry</label><select id="entry"></select></div>
-      <ul class="voices" id="voices"></ul>
-      <div id="diaBox" hidden>
-        <div class="row" style="margin-top:14px"><label for="startNote">Starting note</label>
-          <select id="startNote"><option value="auto">The note I sing</option><option value="0">C</option><option value="2">D</option><option value="4">E</option><option value="5">F</option><option value="7">G</option><option value="9">A</option><option value="11">B</option></select></div>
+  <section class="tools" aria-label="The canon">
+    <div class="top">
+      <div class="grp"><span class="lbl">Voices</span><span class="seg nv" id="nv" role="group" aria-label="Number of voices"></span></div>
+      <span class="sp"></span>
+      <button class="b" id="rulesBtn" type="button" aria-expanded="false">Show me the rules</button>
+      <button class="b libbtn" id="openLib" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16.5 6.2l3.7-1 3 13.4-3.7 1z"/></svg>Library of canons</button>
+    </div>
+    <div class="canons" id="canons" role="group" aria-label="Canons"></div>
+    <p class="chosen" id="chosen"></p>
+    <div class="rules" id="rules" hidden></div>
+  </section>
+
+  <details class="help settings">
+    <summary>Sound, starting note and latency</summary>
+    <div class="grid">
+      <section class="card" aria-labelledby="h-sound">
+        <h2 id="h-sound">Sound</h2>
+        <div class="row"><span class="lbl">The comes sings with</span>
+          <span class="seg" role="group" aria-label="Sound of the following voices"><button class="b" type="button" data-mode="voice">Your voice</button><button class="b" type="button" data-mode="organ">Organ</button></span></div>
+        <div class="row"><span class="lbl">Intervals</span>
+          <span class="seg" role="group" aria-label="Tuning of the intervals"><button class="b" type="button" data-tune="pure" title="Pure fifths 3:2, fourths 4:3, octaves 2:1">Pure</button><button class="b" type="button" data-tune="equal" title="Equal temperament">Equal</button></span></div>
+        <label class="check" id="snapRow"><input type="checkbox" id="snap"> Organ: settle on the nearest note, a′ =&nbsp;<input type="number" id="ref" min="380" max="480" step="1" aria-label="Pitch of a′ in Hz">&nbsp;Hz</label>
+        <label class="check"><input type="checkbox" id="hear"> Hear my own voice too</label>
+        <label class="check"><input type="checkbox" id="speakers"> I am using speakers, not headphones</label>
+        <div class="row"><label for="vol">Volume</label><input type="range" id="vol" min="0" max="100"></div>
+        <div class="row"><label for="metroVol">Metronome</label><input type="range" id="metroVol" min="0" max="100"></div>
+        <ul class="voices" id="voices"></ul>
+      </section>
+      <section class="card" aria-labelledby="h-start">
+        <h2 id="h-start">Starting note</h2>
+        <div class="row"><label for="startNote">I begin on</label>
+          <select id="startNote"><option value="auto">the note I sing</option><option value="0">C</option><option value="2">D</option><option value="4">E</option><option value="5">F</option><option value="7">G</option><option value="9">A</option><option value="11">B</option></select></div>
         <label class="check"><input type="checkbox" id="bb"> B flat instead of B natural</label>
-        <p class="note">In a canon at the second, third, sixth or seventh the comes copies your melody step by step along the white keys, so the size of its intervals changes with the note: if you sing E, a canon at the upper second begins on F (a minor second above); if you sing F, it begins on G (a major second above). The app hears your note by itself. If you tell it your starting note instead, it follows the pitch you really sing, even if you are a little flat or sharp. These canons are always played by the organ.</p>
-      </div>
-    </section>
-
-    <section class="card" aria-labelledby="h-tempo">
-      <h2 id="h-tempo">Tempo</h2>
-      <div class="row">
-        <label for="bpm">Beats per minute</label>
-        <span class="stepper"><button class="b" id="bpmDown" type="button" aria-label="Slower">−</button><input type="number" id="bpm" min="20" max="240" step="1" inputmode="numeric"><button class="b" id="bpmUp" type="button" aria-label="Faster">+</button></span>
-        <button class="b" id="tap" type="button" title="Tap the beat a few times">Tap</button>
-      </div>
-      <div class="row"><label for="bar">Beats per bar</label><select id="bar"></select></div>
-      <label class="check"><input type="checkbox" id="metro"> Metronome</label>
-      <div class="row"><label for="metroVol">Metronome volume</label><input type="range" id="metroVol" min="0" max="100"></div>
-    </section>
-
-    <section class="card" aria-labelledby="h-sound">
-      <h2 id="h-sound">Sound</h2>
-      <div class="row"><span class="lbl">The comes sings with</span>
-        <span class="seg" role="group" aria-label="Sound of the following voices"><button class="b" type="button" data-mode="voice">Your voice</button><button class="b" type="button" data-mode="organ">Organ</button></span></div>
-      <div class="row"><span class="lbl">Intervals</span>
-        <span class="seg" role="group" aria-label="Tuning of the intervals"><button class="b" type="button" data-tune="pure" title="Pure fifths 3:2, fourths 4:3, octaves 2:1">Pure</button><button class="b" type="button" data-tune="equal" title="Equal temperament">Equal</button></span></div>
-      <label class="check" id="snapRow"><input type="checkbox" id="snap"> Organ: settle on the nearest note, a′ =&nbsp;<input type="number" id="ref" min="380" max="480" step="1" aria-label="Pitch of a′ in Hz">&nbsp;Hz</label>
-      <label class="check"><input type="checkbox" id="hear"> Hear my own voice too</label>
-      <label class="check"><input type="checkbox" id="speakers"> I am using speakers, not headphones</label>
-      <div class="row"><label for="vol">Volume</label><input type="range" id="vol" min="0" max="100"></div>
-    </section>
-
-    <section class="card" aria-labelledby="h-lat">
-      <h2 id="h-lat">Latency</h2>
-      <div class="row"><label for="lat">Latency</label><input type="range" id="latR" min="0" max="500" step="1" aria-label="Latency in milliseconds"><input type="number" id="lat" min="0" max="500" step="1" inputmode="numeric"> ms</div>
-      <div class="row"><button class="b" id="clap" type="button">Clap test</button><span class="note" id="clapMsg"></span></div>
-      <p class="note">Every device needs a little time between the sound leaving it and your voice coming back in. Raise this until the comes enters exactly with the metronome. Or press Clap test and clap along with the eight clicks: it measures the latency for you.</p>
-    </section>
-  </div>
+        <p class="note">A comes at the second, third, sixth or seventh copies your melody step by step along the scale, as in the Renaissance: if you sing E, a canon at the upper second answers F; if you sing F, it answers G. Such voices are played by the organ. If you tell the app your starting note, it follows the pitch you really sing, even a little flat or sharp.</p>
+        <h2 id="h-lat" style="margin-top:18px">Latency</h2>
+        <div class="row"><label for="lat">Latency</label><input type="range" id="latR" min="0" max="500" step="1" aria-label="Latency in milliseconds"><input type="number" id="lat" min="0" max="500" step="1" inputmode="numeric"> ms</div>
+        <div class="row"><button class="b" id="clap" type="button">Clap test</button><span class="note" id="clapMsg"></span></div>
+        <p class="note">Every device needs a little time between the sound leaving it and your voice coming back in. Raise this until the comes enters exactly with the metronome, or press Clap test and clap with the eight clicks.</p>
+      </section>
+    </div>
+  </details>
 
   <details class="help" id="patterns">
     <summary>Patterns to practise</summary>
-    <p class="note">Short duxes that make a correct canon with the comes: only consonances against it, no parallel fifths or octaves. Every one was checked note by note. Sing a pattern, then continue it, then leave it and improvise. This is how canons were learnt in the 16th century, from tables of such formulas.</p>
+    <p class="note">Short duxes for two voices that make a correct canon with the comes: only consonances against it, no parallel fifths or octaves. Every one was checked note by note. Sing a pattern, then continue it, then leave it and improvise. This is how canons were learnt in the 16th century, from tables of such formulas.</p>
     <div id="patList" class="pats"></div>
   </details>
 
@@ -249,14 +325,13 @@
   <details class="help">
     <summary>How it works</summary>
     <ol>
-      <li>Put on headphones, so that the microphone hears only you.</li>
-      <li>Choose the canon and the entry, set the tempo, and press Start. Allow the microphone when the browser asks.</li>
-      <li>Sing the dux with the metronome. Each comes repeats what you sang, after its entry and at its interval: you hear yourself in imitation and can improvise the canon against it.</li>
-      <li>In the picture, your line is dark and each comes has its own colour, so you can see the consonances and the parallels as they happen.</li>
+      <li>Choose the number of voices, then the canon: each card shows when every voice enters (left to right) and how high it sings (up and down); your voice, the dux, is red.</li>
+      <li>Choose after which note value the comes enters, and the tempo of the minim. The hand beats the tactus: down on the first minim of every semibrevis, up on the second.</li>
+      <li>Put on headphones and press Start. Sing one note for every value you chose; each comes repeats what you sang, after its entry and at its interval, and everything is written on the staves as you sing.</li>
+      <li><em>Show me the rules</em> lists the steps your melody may take in this canon, and the steps never to take one after another. While you sing, it lights up the steps that are possible from where you are.</li>
     </ol>
-    <p><strong>In steps of the scale</strong> (seconds, thirds, sixths, sevenths): the comes copies your melody along the white keys of the piano, as in the Renaissance, so a canon at the upper second begins on F when you sing E and on G when you sing F. The line on the screen and the letters under it show where the comes stands. Choose a starting note if you want the app to follow your own pitch, even if you sing a little low or high; otherwise it listens to your first note.</p>
-    <p><strong>Your voice</strong> shifts the recording of your singing to the new pitch. <strong>Organ</strong> follows the pitch you sing with a soft organ stop, which sounds cleaner in the higher voices.</p>
-    <p>For three voices in the usual way, choose <em>fifth below, then fourth above</em> with an entry of one beat: the first comes enters one beat after you a fifth lower, the second two beats after you a fourth higher. For four voices, choose <em>rising fourths</em> and sing the lowest part: each comes enters one beat later and a fourth higher than the one before.</p>
+    <p>The canons offered are the dispositions that leave the dux the most freedom: for each, all melodies were checked so that every voice sounds only consonances against the lowest one (a fourth only between upper voices) with no parallel fifths, octaves or unisons. The bars on each card show how much freedom it leaves. The rules count steps of the scale; take care of mi contra fa (B against F).</p>
+    <p><strong>Your voice</strong> shifts the recording of your singing to the new pitch. <strong>Organ</strong> follows the pitch you sing with a soft organ stop.</p>
   </details>
 
   <dialog class="lib" id="lib" aria-labelledby="libTitle">
@@ -457,492 +532,7 @@ class CanonProcessor extends AudioWorkletProcessor {
 registerProcessor('canon', CanonProcessor);
 </script>
 
-<script>
-(() => {
-const $ = id => document.getElementById(id);
-
-// ---------- the canons ----------
-// Each comes: [semitones, pure ratio]. Comes number i enters after (i+1) × entry beats.
-const PRESETS = [
-  { g: 'Two voices', id: 'u',  name: 'Unison', v: [[0, 1]] },
-  { g: 'Two voices', id: '5u', name: 'Fifth above', v: [[7, 3 / 2]] },
-  { g: 'Two voices', id: '5d', name: 'Fifth below', v: [[-7, 2 / 3]] },
-  { g: 'Two voices', id: '4u', name: 'Fourth above', v: [[5, 4 / 3]] },
-  { g: 'Two voices', id: '4d', name: 'Fourth below', v: [[-5, 3 / 4]] },
-  { g: 'Two voices', id: '8u', name: 'Octave above', v: [[12, 2]] },
-  { g: 'Two voices', id: '8d', name: 'Octave below', v: [[-12, 1 / 2]] },
-  { g: 'Three voices', id: '3a', name: 'Fifth below, then fourth above', v: [[-7, 2 / 3], [5, 4 / 3]], entry: 1 },
-  { g: 'Three voices', id: '3b', name: 'Fifth below, then octave above', v: [[-7, 2 / 3], [12, 2]], entry: 1 },
-  { g: 'Three voices', id: '3c', name: 'Octave below, then fifth above', v: [[-12, 1 / 2], [7, 3 / 2]], entry: 1 },
-  { g: 'In steps of the scale', id: 'd2u', name: 'Upper second', v: [[2, 1, 1]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd2d', name: 'Lower second', v: [[-2, 1, -1]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd3u', name: 'Upper third', v: [[4, 1, 2]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd3d', name: 'Lower third', v: [[-4, 1, -2]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd6u', name: 'Upper sixth', v: [[9, 1, 5]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd6d', name: 'Lower sixth', v: [[-9, 1, -5]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd7u', name: 'Upper seventh', v: [[11, 1, 6]], dia: 1 },
-  { g: 'In steps of the scale', id: 'd7d', name: 'Lower seventh', v: [[-11, 1, -6]], dia: 1 },
-  { g: 'Four voices', id: '4r', name: 'Rising fourths (you sing the lowest)', v: [[5, 4 / 3], [10, 16 / 9], [15, 64 / 27]], entry: 1 },
-];
-const IV = { 0: 'at the unison', 12: 'an octave above', '-12': 'an octave below', 7: 'a fifth above', '-7': 'a fifth below',
-  5: 'a fourth above', '-5': 'a fourth below', 10: 'two fourths above (a seventh)', 15: 'three fourths above (a tenth)' };
-const ROMAN = ['I', 'II', 'III'];
-// canons in steps of the scale (third item of a comes: the number of steps; the semitones are only for the picture)
-const DIA_IV = { 1: 'a second above', '-1': 'a second below', 2: 'a third above', '-2': 'a third below', 5: 'a sixth above', '-5': 'a sixth below', 6: 'a seventh above', '-6': 'a seventh below' };
-const SCN = [0, 2, 4, 5, 7, 9, 11], SCB = [0, 2, 4, 5, 7, 9, 10];
-const scale = () => S.bb ? SCB : SCN;
-const stepMidi = (D, sc) => Math.floor(D / 7) * 12 + sc[((D % 7) + 7) % 7];
-// the white-key degree nearest to a (float) midi note
-function degreeOf(m, sc) {
-  const oct = Math.floor(m / 12), pc = m - oct * 12; let bi = 0, bd = 1e9;
-  for (let d = 0; d < 7; d++) { const dd = Math.abs(sc[d] - pc); if (dd < bd) { bd = dd; bi = d; } }
-  if (Math.abs(sc[0] + 12 - pc) < bd) return (oct + 1) * 7;
-  return oct * 7 + bi;
-}
-const NOTE_LETTER = (pc, bb) => ({ 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 10: 'B♭', 11: 'B' }[pc] || '?');
-const QUAL = { 1: { 1: 'a minor second', 2: 'a major second' }, 2: { 3: 'a minor third', 4: 'a major third' },
-  5: { 8: 'a minor sixth', 9: 'a major sixth' }, 6: { 10: 'a minor seventh', 11: 'a major seventh' } };
-const ivText = ([st, , dia]) => dia ? DIA_IV[dia] + ', in steps of the scale' : IV[st];
-const COLORS = ['--v1', '--v2', '--v3'];
-
-// ---------- patterns to practise: [canon, entry in beats, dux as diatonic steps (C4 = 28)], each checked for consonance ----------
-const PATTERNS = [["u",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["u",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["8u",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["8u",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["8d",1,[28,26,28,26,24,26,24,22,24,22,20,22]],["8d",2,[28,27,26,29,28,27,30,29,28,31,30,29]],["5u",1,[28,27,29,28,30,29,31,30,32,31,33,32]],["5u",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["5d",1,[32,30,31,29,30,28,29,27,28,26,27,25]],["5d",2,[32,31,33,32,34,33,35,34,36,35,37,36]],["4u",1,[32,30,31,29,30,28,29,27,28,26,27,25]],["4u",2,[32,31,33,32,34,33,35,34,36,35,37,36]],["4d",1,[28,27,29,28,30,29,31,30,32,31,33,32]],["4d",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["d2u",1,[28,27,26,27,26,25,26,25,24,25,24,23]],["d2u",2,[28,26,27,25,26,24,25,23,24,22,23,21]],["d2d",1,[28,27,28,29,28,29,30,29,30,31,30,31]],["d2d",2,[28,27,29,28,30,29,31,30,32,31,33,32]],["d3u",1,[31,33,30,32,29,31,28,30,27,29,26,28]],["d3u",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d3d",1,[28,26,29,27,30,28,31,29,32,30,33,31]],["d3d",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d6u",1,[32,33,31,32,30,31,29,30,28,29,27,28]],["d6u",2,[28,27,26,27,26,25,26,25,24,25,24,23]],["d6d",1,[32,34,33,35,34,36,35,37,36,38,37,39]],["d6d",2,[28,27,28,29,28,29,30,29,30,31,30,31]],["d7u",1,[28,27,28,29,28,29,30,29,30,31,30,31]],["d7u",2,[28,27,29,28,30,29,31,30,32,31,33,32]],["d7d",1,[28,27,26,27,26,25,26,25,24,25,24,23]],["d7d",2,[28,26,27,25,26,24,25,23,24,22,23,21]]];
-const SCW = [0, 2, 4, 5, 7, 9, 11], LET = 'CDEFGAB';
-const stepToMidi = D => 12 + Math.floor(D / 7) * 12 + SCW[((D % 7) + 7) % 7];
-function comesMidi(pre, D) {
-  const p = PRESETS.find(x => x.id === pre), v = p.v[0];
-  return p.dia ? stepToMidi(D + v[2]) : stepToMidi(D) + v[0];
-}
-function patSVG(pre, d, dux) {
-  /* dux in dark, the comes in red, entering d beats later; a small staff in the soprano clef (c′ on the lowest line) */
-  const W = 300, H = 92, top = 26, gap = 6, x0 = 26, dx = (W - x0 - 10) / (dux.length + d);
-  const y = D => top + 4 * gap - (D - 28) * gap / 2;
-  let o = `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true">`;
-  for (let i = 0; i < 5; i++) o += `<line x1="4" x2="${W - 4}" y1="${top + i * gap}" y2="${top + i * gap}"/>`;
-  /* the C clef, its centre on the lowest line */
-  const cy = top + 4 * gap;
-  o += `<g fill="var(--fg)"><rect x="7" y="${cy - 9}" width="2.6" height="18"/><rect x="11" y="${cy - 9}" width="1" height="18"/><path d="M12 ${cy} L17 ${cy - 5.5} L17 ${cy - 2} Z M12 ${cy} L17 ${cy + 5.5} L17 ${cy + 2} Z"/></g>`;
-  const p = PRESETS.find(x => x.id === pre);
-  const comesStep = D => p.dia ? D + p.v[0][2] : D + ({0: 0, 12: 7, '-12': -7, 7: 4, '-7': -4, 5: 3, '-5': -3})[p.v[0][0]];
-  const head = (cx, D, cls) => {
-    let s = '';
-    const yy = y(D);
-    for (let L = 26; L >= D; L -= 2) s += `<line class="lg" x1="${cx - 7}" x2="${cx + 7}" y1="${y(L)}" y2="${y(L)}"/>`;
-    for (let L = 38; L <= D; L += 2) s += `<line class="lg" x1="${cx - 7}" x2="${cx + 7}" y1="${y(L)}" y2="${y(L)}"/>`;
-    return s + `<ellipse class="${cls}" cx="${cx}" cy="${yy}" rx="4.6" ry="3.3" transform="rotate(-20 ${cx} ${yy})"/>`;
-  };
-  dux.forEach((D, i) => { o += head(x0 + i * dx + dx * .35, D, 'n'); });
-  dux.forEach((D, i) => {
-    const cx = x0 + (i + d) * dx + dx * .65, cs = comesStep(D), m = comesMidi(pre, D);
-    o += head(cx, cs, 'n2');
-    if (m !== stepToMidi(cs)) o += `<text x="${cx - 13}" y="${y(cs) + 4}" font-size="11" fill="var(--v1)">${m > stepToMidi(cs) ? '♯' : '♭'}</text>`;
-  });
-  /* fit the picture to the notes actually used (an octave-below comes reaches far down) */
-  const all = dux.concat(dux.map(comesStep)), yMin = Math.min(y(Math.max(...all)), top) - 10, yMax = Math.max(y(Math.min(...all)), top + 4 * gap) + 10;
-  return o.replace(`viewBox="0 0 ${W} ${H}"`, `viewBox="0 ${yMin.toFixed(1)} ${W} ${(yMax - yMin).toFixed(1)}"`) + '</svg>';
-}
-let patCtx = null;
-function hearPattern(pre, d, dux) {
-  patCtx = patCtx || new (window.AudioContext || window.webkitAudioContext)();
-  const c = patCtx; if (c.state === 'suspended') c.resume();
-  const beat = 60 / S.bpm, t0 = c.currentTime + .08, ref = S.ref || 440;
-  const f = m => ref * Math.pow(2, (m - 69) / 12);
-  const tone = (m, at, len, g0) => {
-    const o = c.createOscillator(), g = c.createGain();
-    o.type = 'triangle'; o.frequency.value = f(m);
-    g.gain.setValueAtTime(0, at); g.gain.linearRampToValueAtTime(g0, at + .03); g.gain.setValueAtTime(g0, at + len - .06); g.gain.linearRampToValueAtTime(0, at + len);
-    o.connect(g).connect(c.destination); o.start(at); o.stop(at + len + .02);
-  };
-  dux.forEach((D, i) => tone(stepToMidi(D), t0 + i * beat, beat * .96, .16));
-  dux.forEach((D, i) => tone(comesMidi(pre, D), t0 + (i + d) * beat, beat * .96, .12));
-}
-function renderPatterns() {
-  const box = $('patList'); if (!box) return;
-  box.innerHTML = PATTERNS.map(([pre, d, dux], k) => {
-    const p = PRESETS.find(x => x.id === pre);
-    const names = dux.map(D => LET[((D % 7) + 7) % 7]).join(' ');
-    return `<div class="pat"><h4>${p.name}</h4><div class="ds">comes ${d} ${d === 1 ? 'beat' : 'beats'} later · ${p.g.toLowerCase()}</div>${patSVG(pre, d, dux)}<div class="ds">${names}</div>
-      <div class="acts"><button class="b" type="button" data-hear="${k}">Hear it</button><button class="b" type="button" data-use="${k}">Use these settings</button></div></div>`;
-  }).join('');
-  box.querySelectorAll('[data-hear]').forEach(b => b.onclick = () => hearPattern(...PATTERNS[+b.dataset.hear]));
-  box.querySelectorAll('[data-use]').forEach(b => b.onclick = () => {
-    const [pre, d] = PATTERNS[+b.dataset.use];
-    S.preset = pre; S.entry = d; save(); syncUI();
-    if (typeof sendConfig === 'function') try { sendConfig(); } catch (e) {}
-    window.scrollTo({top: 0, behavior: 'smooth'});
-  });
-}
-
-// ---------- the library of canons (from the Josquin Research Project) ----------
-let LIB = null;
-const escH = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-function renderLib() {
-  const q = $('libSearch').value.trim().toLowerCase(), words = q.split(/\s+/).filter(Boolean);
-  const body = $('libBody');
-  if (!LIB) { body.innerHTML = '<p class="note">Loading…</p>'; return; }
-  body.innerHTML = LIB.map((g, gi) => {
-    const items = g.items.map((it, ii) => [it, ii]).filter(([it]) => { const h = (it.t + ' ' + it.w + ' ' + it.f.join(' ') + ' ' + it.e).toLowerCase(); return words.every(w => h.includes(w)); });
-    if (!items.length) return '';
-    return `<details${q ? ' open' : ''}><summary>${escH(g.g)}<small>${items.length}</small></summary>` + items.map(([it, ii]) => {
-      const lines = it.f.length ? it.f : (it.e ? [it.e] : []);
-      const entry = it.d ? Math.min(8, Math.max(1, Math.round(it.d * 2))) : 0;
-      return `<div class="cn"><h4>${escH(it.t)}</h4><div class="w">${escH(it.w)}${it.v ? ' · ' + escH(it.v) : ''}</div>` +
-        (lines.length ? `<ul>${lines.map(l => `<li>${escH(l)}</li>`).join('')}</ul>` : '') +
-        `<div class="acts">${g.p ? `<button class="b" type="button" data-prac="${gi}:${ii}" title="Set this page to the interval${entry ? ' and the entry (the semibrevis as the beat)' : ''} of this canon">Practise</button>` : ''}` +
-        `<a href="../cantare/#jrp:${encodeURIComponent(it.id)}" target="_blank" rel="noopener">See the score</a></div></div>`;
-    }).join('') + '</details>';
-  }).join('') || '<p class="note">Nothing found.</p>';
-  body.querySelectorAll('[data-prac]').forEach(b => b.onclick = () => {
-    const [gi, ii] = b.dataset.prac.split(':').map(Number), g = LIB[gi], it = g.items[ii];
-    S.preset = g.p;
-    if (it.d) S.entry = Math.min(8, Math.max(1, Math.round(it.d * 2)));
-    save(); syncUI();
-    if (typeof sendConfig === 'function') try { sendConfig(); } catch (e) {}
-    $('lib').close(); window.scrollTo({ top: 0, behavior: 'smooth' });
-  });
-}
-function openLib(e) {
-  if (e) e.preventDefault();
-  $('lib').showModal();
-  if (!LIB) fetch('library.json').then(r => r.json()).then(d => { LIB = d; renderLib(); }).catch(() => { $('libBody').innerHTML = '<p class="note">Could not load the library (offline?).</p>'; });
-  else renderLib();
-  $('libCredit').hidden = false;
-  $('libCredit').innerHTML = 'From the Josquin Research Project (<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>), CC BY-NC 4.0.';
-}
-$('openLib').onclick = openLib; $('openLib2').onclick = openLib;
-$('libClose').onclick = () => $('lib').close();
-$('lib').addEventListener('click', e => { if (e.target === $('lib')) $('lib').close(); });
-$('libSearch').addEventListener('input', renderLib);
-
-// ---------- settings ----------
-const DEF = { start: 'auto', bb: false, preset: '5u', entry: 2, bpm: 60, bar: 4, metro: true, metroVol: 60, mode: 'voice', tune: 'pure',
-  snap: false, ref: 440, hear: false, speakers: false, vol: 70, lat: null, gains: [80, 80, 80], mutes: [false, false, false] };
-let S = { ...DEF };
-try { Object.assign(S, JSON.parse(localStorage.getItem('canon-settings') || '{}')); } catch (e) {}
-const save = () => { try { localStorage.setItem('canon-settings', JSON.stringify(S)); } catch (e) {} };
-const preset = () => PRESETS.find(p => p.id === S.preset) || PRESETS[1];
-const isDia = () => !!preset().dia;
-
-// ---------- build the controls ----------
-const selP = $('preset');
-for (const g of [...new Set(PRESETS.map(p => p.g))]) {
-  const og = document.createElement('optgroup'); og.label = g;
-  for (const p of PRESETS.filter(p => p.g === g)) og.append(new Option(p.name, p.id));
-  selP.append(og);
-}
-for (let i = 1; i <= 8; i++) $('entry').append(new Option(i === 1 ? 'every 1 beat' : `every ${i} beats`, i));
-for (let i = 1; i <= 6; i++) $('bar').append(new Option(String(i), i));
-
-function renderVoices() {
-  const p = preset(), ul = $('voices'), lg = $('legend');
-  ul.innerHTML = ''; lg.innerHTML = '';
-  const li0 = document.createElement('li');
-  li0.innerHTML = `<span class="sw" style="--c:var(--fg)"></span><span><span class="nm">Dux</span><span class="ds">You</span></span><span></span>`;
-  ul.append(li0);
-  const l0 = document.createElement('span'); l0.style.setProperty('--c', 'var(--fg)'); l0.textContent = 'Dux (you)'; lg.append(l0);
-  p.v.forEach((vv, i) => {
-    const st = vv[0], beats = (i + 1) * S.entry;
-    const li = document.createElement('li');
-    li.style.setProperty('--c', `var(${COLORS[i]})`);
-    li.innerHTML = `<span class="sw"></span><span><span class="nm">Comes ${ROMAN[i]}</span><span class="ds">${beats} ${beats === 1 ? 'beat' : 'beats'} later, ${ivText(vv)}</span></span>
-      <span><input type="range" min="0" max="100" value="${S.gains[i]}" aria-label="Volume of comes ${ROMAN[i]}"></span>`;
-    li.querySelector('input').addEventListener('input', e => { S.gains[i] = +e.target.value; save(); sendConfig(); });
-    ul.append(li);
-    const l = document.createElement('span'); l.style.setProperty('--c', `var(${COLORS[i]})`); l.textContent = `Comes ${ROMAN[i]}`; lg.append(l);
-  });
-}
-
-function syncUI() {
-  selP.value = S.preset; $('entry').value = S.entry; $('bpm').value = S.bpm; $('bar').value = S.bar;
-  $('metro').checked = S.metro; $('metroVol').value = S.metroVol; $('snap').checked = S.snap; $('ref').value = S.ref;
-  $('hear').checked = S.hear; $('speakers').checked = S.speakers; $('vol').value = S.vol;
-  $('lat').value = S.lat ?? 45; $('latR').value = S.lat ?? 45;   // before the first Start: the usual guess, refined when the sound starts
-  document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b.dataset.mode === S.mode));
-  document.querySelectorAll('[data-tune]').forEach(b => b.setAttribute('aria-pressed', b.dataset.tune === S.tune));
-  $('snapRow').style.opacity = S.mode === 'organ' ? 1 : .5;
-  $('startNote').value = S.start; $('bb').checked = S.bb; $('diaBox').hidden = !isDia();
-  renderVoices(); renderBeats();
-}
-
-// ---------- audio ----------
-let ctx = null, node = null, master = null, metroBus = null, src = null, stream = null, running = false;
-const status = (t, err) => { const s = $('status'); s.textContent = t || ''; s.className = err ? 'err' : ''; };
-
-async function ensureAudio() {
-  if (!ctx) {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    ctx = new AC({ latencyHint: 'interactive' });
-    const url = URL.createObjectURL(new Blob([$('worklet').textContent], { type: 'application/javascript' }));
-    await ctx.audioWorklet.addModule(url);
-    node = new AudioWorkletNode(ctx, 'canon', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
-    node.port.onmessage = onMsg;
-    master = ctx.createGain();
-    // a limiter, so the louder comes never distorts
-    const lim = ctx.createDynamicsCompressor();
-    lim.threshold.value = -3; lim.knee.value = 4; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.12;
-    node.connect(master).connect(lim).connect(ctx.destination);
-    metroBus = ctx.createGain(); metroBus.connect(ctx.destination);
-    if (S.lat == null) {   // first visit: a guess from what the browser reports
-      S.lat = Math.round(((ctx.baseLatency || 0.01) + (ctx.outputLatency || 0.02)) * 1000 + 15);
-      syncUI(); save();
-    }
-  }
-  if (ctx.state !== 'running') await ctx.resume();
-  applyVolumes(); sendConfig();
-}
-
-async function openMic() {
-  closeMic();
-  stream = await navigator.mediaDevices.getUserMedia({ audio: {
-    echoCancellation: S.speakers, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
-  src = ctx.createMediaStreamSource(stream); src.connect(node);
-}
-function closeMic() {
-  if (src) { try { src.disconnect(); } catch (e) {} src = null; }
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-}
-
-function beatSec() { return 60 / S.bpm; }
-const pure_dia = v => v[2] || null;
-function sendConfig() {
-  if (!node) return;
-  const p = preset(), sr = ctx.sampleRate;
-  const minDelay = Math.round(0.06 * sr) + 3 * 512;
-  const pans = p.v.length === 1 ? [0.35] : p.v.length === 2 ? [-0.45, 0.45] : [-0.5, 0.5, 0];
-  const voices = p.v.map(([st, pure], i) => {
-    const ratio = st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12);
-    const delay = Math.max(minDelay, ((i + 1) * S.entry * beatSec() - (S.lat || 0) / 1000) * sr);
-    const a = (pans[i] + 1) * Math.PI / 4;
-    const g = Math.pow(S.gains[i] / 100, 1.6) * 1.4;
-    return { delay, ratio, dia: pure_dia(p.v[i]), gain: g, pl: Math.cos(a) * 1.41, pr: Math.sin(a) * 1.41 };
-  });
-  node.port.postMessage({ type: 'config', voices, mode: S.mode, snap: S.snap, ref: S.ref, hear: S.hear ? 0.8 : 0, start: S.start === 'auto' ? -1 : +S.start, bb: !!S.bb });
-}
-function applyVolumes() {
-  if (!master) return;
-  master.gain.setTargetAtTime(Math.pow(S.vol / 100, 1.5) * 6.6, ctx.currentTime, 0.02);   // three times as loud as before
-  metroBus.gain.setTargetAtTime(S.metro ? Math.pow(S.metroVol / 100, 1.5) * 0.9 : 0, ctx.currentTime, 0.02);
-}
-
-// ---------- metronome ----------
-let nextBeat = 0, beatNo = 0, schedTimer = null, beatTimes = [];
-function click(t, acc, bus) {
-  const o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = 'triangle'; o.frequency.value = acc ? 1760 : 1320;
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(acc ? 0.9 : 0.55, t + 0.002);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-  o.connect(g).connect(bus); o.start(t); o.stop(t + 0.06);
-}
-function sched() {
-  while (nextBeat < ctx.currentTime + 0.12) {
-    const n = beatNo % S.bar;
-    click(nextBeat, n === 0 && S.bar > 1, metroBus);
-    beatTimes.push({ t: nextBeat, n });
-    nextBeat += beatSec(); beatNo++;
-  }
-  const old = ctx.currentTime - 60;
-  while (beatTimes.length && beatTimes[0].t < old) beatTimes.shift();
-}
-function startMetro() { nextBeat = ctx.currentTime + 0.2; beatNo = 0; beatTimes = []; sched(); schedTimer = setInterval(sched, 25); }
-function stopMetro() { clearInterval(schedTimer); schedTimer = null; }
-
-function renderBeats() {
-  const b = $('beats'); b.innerHTML = '';
-  for (let i = 0; i < S.bar; i++) { const d = document.createElement('i'); if (i === 0 && S.bar > 1) d.className = 'acc'; b.append(d); }
-}
-
-// ---------- start / stop ----------
-async function start() {
-  if (!window.isSecureContext || !navigator.mediaDevices) { status('The microphone needs a secure (https) page.', true); return; }
-  try {
-    status('Starting…');
-    await ensureAudio();
-    node.port.postMessage({ type: 'reset' });
-    node.port.postMessage({ type: 'mute', on: false });
-    await openMic();
-    pts = []; trV = 0; $('now').textContent = ''; startMetro(); running = true;
-    $('start').classList.add('on'); $('start').querySelector('span').textContent = 'Stop';
-    $('start').querySelector('svg').innerHTML = '<path d="M2 2h10v10H2Z"/>';
-    $('hint').hidden = true;
-    status(S.speakers ? 'Listening. With speakers, keep the volume low.' : 'Listening. Sing with the metronome.');
-  } catch (e) {
-    status(e && e.name === 'NotAllowedError' ? 'The microphone was not allowed. Allow it in the browser and try again.' : 'Could not start: ' + (e.message || e), true);
-    stop();
-  }
-}
-function stop() {
-  stopMetro(); closeMic(); running = false;
-  if (node) node.port.postMessage({ type: 'reset' });
-  $('start').classList.remove('on'); $('start').querySelector('span').textContent = 'Start';
-  $('start').querySelector('svg').innerHTML = '<path d="M2 1 13 7 2 13Z"/>';
-  if (!$('status').classList.contains('err')) status('');
-}
-$('start').addEventListener('click', () => running ? stop() : start());
-document.addEventListener('keydown', e => {
-  if (e.code === 'Space' && !/INPUT|SELECT|TEXTAREA|BUTTON/.test(e.target.tagName)) { e.preventDefault(); running ? stop() : start(); }
-});
-
-// ---------- clap test ----------
-let onsets = null;
-$('clap').addEventListener('click', async () => {
-  if (onsets) return;
-  if (running) stop();
-  const msg = $('clapMsg');
-  try {
-    await ensureAudio();
-    node.port.postMessage({ type: 'mute', on: true });
-    await openMic();
-  } catch (e) { msg.textContent = 'The microphone is needed for the test.'; return; }
-  onsets = [];
-  const gap = 0.6, t0 = ctx.currentTime + 0.8, clicks = [];
-  const bus = ctx.createGain(); bus.gain.value = 0.9; bus.connect(ctx.destination);
-  for (let i = 0; i < 8; i++) { clicks.push(t0 + i * gap); click(t0 + i * gap, i === 0, bus); }
-  node.port.postMessage({ type: 'onsets', on: true });
-  msg.textContent = 'Clap with each click…';
-  setTimeout(() => {
-    node.port.postMessage({ type: 'onsets', on: false });
-    const d = [];
-    for (const c of clicks.slice(2)) {
-      let best = null;
-      for (const o of onsets) { const x = o - c; if (x > -0.08 && x < 0.5 && (best === null || Math.abs(x - 0.1) < Math.abs(best - 0.1))) best = x; }
-      if (best !== null) d.push(best);
-    }
-    onsets = null; closeMic(); node.port.postMessage({ type: 'mute', on: false });
-    if (d.length < 3) { msg.textContent = 'Not enough claps were heard. Try again, a little louder.'; return; }
-    d.sort((a, b) => a - b);
-    const med = d[Math.floor(d.length / 2)];
-    S.lat = Math.max(0, Math.min(500, Math.round(med * 1000))); save(); syncUI(); sendConfig();
-    msg.textContent = `Measured ${S.lat} ms.`;
-  }, (0.8 + 8 * gap + 0.6) * 1000);
-});
-
-// ---------- messages from the audio thread ----------
-let pts = [], level = 0, trV = 0, nowShown = 0;
-// what you sing and where the comes stands, in letters, with the size of the interval
-function showNow(f) {
-  const t = performance.now(); if (t - nowShown < 120) return; nowShown = t;
-  const sc = scale(), p = preset(), m = 69 + 12 * Math.log2(f / S.ref) + trV, D = degreeOf(m, sc), me = stepMidi(D, sc);
-  const nm = x => NOTE_LETTER(((x % 12) + 12) % 12, S.bb);
-  const parts = p.v.map((vv, i) => {
-    const k = vv[2], mc = stepMidi(D + k, sc), semis = Math.abs(mc - me), q = (QUAL[Math.abs(k) + (k < 0 ? 0 : 0)] || {})[semis];
-    return `comes ${ROMAN[i]} ${nm(mc)}${q ? ' (' + q + ')' : ''}`;
-  });
-  $('now').textContent = `You sing ${nm(me)} → ${parts.join(', ')}`;
-}
-function onMsg(e) {
-  const d = e.data;
-  if (d.type === 'p') {
-    if (running) pts.push({ t: d.t, m: d.f > 0 ? 69 + 12 * Math.log2(d.f / 440) : null });
-    level = Math.max(d.lv, level * 0.85);
-    if (running && d.f > 0 && isDia()) showNow(d.f);
-  } else if (d.type === 'tr') trV = d.tr;
-  else if (d.type === 'on' && onsets) onsets.push(d.t);
-}
-
-// ---------- the picture ----------
-const cv = $('trace'), g2 = cv.getContext('2d');
-let center = 57, lastBeatShown = -1;
-const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-// the pitch of a comes in steps of the scale, for the picture
-function diaPitch(m, k) {
-  const sc = scale(), D = degreeOf(m + trV, sc);
-  return stepMidi(D + k, sc) - trV;
-}
-const NAMES = { 0: 'C', 2: 'D', 4: 'E', 5: 'F', 7: 'G', 9: 'A', 11: 'B' };
-function draw() {
-  requestAnimationFrame(draw);
-  const dpr = window.devicePixelRatio || 1, W = cv.clientWidth, H = cv.clientHeight;
-  if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
-  g2.setTransform(dpr, 0, 0, dpr, 0, 0); g2.clearRect(0, 0, W, H);
-  const now = ctx ? ctx.currentTime : 0, span = 8, lat = (S.lat || 0) / 1000;
-  const p = preset(), offs = [0, ...p.v.map(([st, pure, dia]) => dia ? st : 12 * Math.log2(st === 0 ? 1 : S.tune === 'pure' ? pure : Math.pow(2, st / 12)))];
-  // follow the singer
-  const recent = pts.filter(q => q.m !== null && q.t > now - 6).map(q => q.m).sort((a, b) => a - b);
-  if (recent.length > 10) center += (recent[recent.length >> 1] - center) * 0.04;
-  let lo = center + Math.min(...offs) - 6, hi = center + Math.max(...offs) + 6;
-  if (hi - lo < 20) { const c = (hi + lo) / 2; lo = c - 10; hi = c + 10; }
-  const y = m => H - (m - lo) / (hi - lo) * H, x = t => W - (now - t) / span * W;
-  const fg = css('--fg'), muted = css('--muted'), line = css('--line');
-  // note lines
-  g2.font = '11px system-ui, sans-serif'; g2.textBaseline = 'middle';
-  for (let m = Math.ceil(lo); m <= Math.floor(hi); m++) {
-    const pc = ((m % 12) + 12) % 12; if (!(pc in NAMES)) continue;
-    const yy = Math.round(y(m)) + 0.5;
-    g2.strokeStyle = line; g2.globalAlpha = pc === 0 ? 1 : 0.55; g2.lineWidth = 1;
-    g2.beginPath(); g2.moveTo(26, yy); g2.lineTo(W, yy); g2.stroke();
-    g2.globalAlpha = 1; g2.fillStyle = muted;
-    g2.fillText(NAMES[pc] + (pc === 0 ? Math.floor(m / 12) - 1 : ''), 6, yy);
-  }
-  // beats
-  if (running) for (const b of beatTimes) {
-    const xx = Math.round(x(b.t + lat)) + 0.5; if (xx < 26 || xx > W) continue;
-    g2.strokeStyle = b.n === 0 ? muted : line; g2.globalAlpha = b.n === 0 ? 0.6 : 0.9; g2.lineWidth = 1;
-    g2.beginPath(); g2.moveTo(xx, 0); g2.lineTo(xx, H); g2.stroke(); g2.globalAlpha = 1;
-  }
-  // voices: the comes first, the dux on top
-  const lines = [];
-  p.v.forEach((vv, i) => lines.push({ c: css(COLORS[i]), d: (i + 1) * S.entry * beatSec(), o: offs[i + 1], g: S.gains[i], k: vv[2] || 0 }));
-  lines.push({ c: fg, d: 0, o: 0, g: 100 });
-  for (const L of lines) {
-    if (L.g <= 0) continue;
-    g2.strokeStyle = L.c; g2.lineWidth = L.d ? 2.4 : 3; g2.lineJoin = g2.lineCap = 'round';
-    g2.beginPath(); let pen = false, lt = -1;
-    for (const q of pts) {
-      const t = q.t + L.d;
-      if (t > now || x(t) < 26 || q.m === null || t - lt > 0.06) { pen = false; }
-      if (t > now || x(t) < 26 || q.m === null) { lt = t; continue; }
-      const xx = x(t), yy = y(L.k ? diaPitch(q.m, L.k) : q.m + L.o);
-      if (pen) g2.lineTo(xx, yy); else { g2.moveTo(xx, yy); pen = true; }
-      lt = t;
-    }
-    g2.stroke();
-  }
-  if (pts.length && now - pts[0].t > 45) pts = pts.filter(q => q.t > now - 45);
-  // beat dots and meter
-  if (running) {
-    let cur = -1; for (const b of beatTimes) if (b.t <= now) cur = b.n;
-    if (cur !== lastBeatShown) { [...$('beats').children].forEach((d, i) => d.classList.toggle('on', i === cur)); lastBeatShown = cur; }
-  } else if (lastBeatShown !== -1) { [...$('beats').children].forEach(d => d.classList.remove('on')); lastBeatShown = -1; }
-  $('meter').style.width = Math.min(100, Math.sqrt(level) * 140) + '%';
-  if (!running) level *= 0.9;
-}
-requestAnimationFrame(draw);
-
-// ---------- wiring the controls ----------
-const on = (id, ev, fn) => $(id).addEventListener(ev, fn);
-on('preset', 'change', e => { S.preset = e.target.value; const p = preset(); if (p.entry) S.entry = p.entry; save(); syncUI(); sendConfig(); });
-on('entry', 'change', e => { S.entry = +e.target.value; save(); renderVoices(); sendConfig(); });
-const setBpm = v => { S.bpm = Math.max(20, Math.min(240, Math.round(v) || 60)); $('bpm').value = S.bpm; save(); renderVoices(); sendConfig(); };
-on('bpm', 'change', e => setBpm(+e.target.value));
-on('bpmDown', 'click', () => setBpm(S.bpm - 1));
-on('bpmUp', 'click', () => setBpm(S.bpm + 1));
-let taps = [];
-on('tap', 'click', () => {
-  const t = performance.now(); taps = taps.filter(x => t - x < 3000); taps.push(t);
-  if (taps.length >= 2) { const iv = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); setBpm(60000 / iv); }
-});
-on('startNote', 'change', e => { S.start = e.target.value; save(); sendConfig(); });
-on('bb', 'change', e => { S.bb = e.target.checked; save(); sendConfig(); });
-on('bar', 'change', e => { S.bar = +e.target.value; save(); renderBeats(); });
-on('metro', 'change', e => { S.metro = e.target.checked; save(); applyVolumes(); });
-on('metroVol', 'input', e => { S.metroVol = +e.target.value; save(); applyVolumes(); });
-document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { S.mode = b.dataset.mode; save(); syncUI(); sendConfig(); }));
-document.querySelectorAll('[data-tune]').forEach(b => b.addEventListener('click', () => { S.tune = b.dataset.tune; save(); syncUI(); sendConfig(); }));
-on('snap', 'change', e => { S.snap = e.target.checked; save(); sendConfig(); });
-on('ref', 'change', e => { S.ref = Math.max(380, Math.min(480, +e.target.value || 440)); e.target.value = S.ref; save(); sendConfig(); });
-on('hear', 'change', e => { S.hear = e.target.checked; save(); sendConfig(); });
-on('speakers', 'change', async e => { S.speakers = e.target.checked; save(); if (running) { try { await openMic(); } catch (err) {} } });
-on('vol', 'input', e => { S.vol = +e.target.value; save(); applyVolumes(); });
-const setLat = v => { S.lat = Math.max(0, Math.min(500, Math.round(v) || 0)); $('lat').value = S.lat; $('latR').value = S.lat; save(); sendConfig(); };
-on('latR', 'input', e => setLat(+e.target.value));
-on('lat', 'change', e => setLat(+e.target.value));
-
-$('yr').textContent = new Date().getFullYear();
-syncUI();
-renderPatterns();
-})();
-</script>
+<script type="module" src="canon.js"></script>
 <script src="../feedback.js" data-topic="Improvising canons" defer></script>
 </body>
 </html>
