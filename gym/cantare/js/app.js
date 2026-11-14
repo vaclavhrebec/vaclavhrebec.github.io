@@ -1,4 +1,5 @@
-import { pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
+import { readScoreFile, toMusicXML, ACCEPT } from './scorefile.js';
+import { readTokens, pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt } from './engrave.js';
 import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
@@ -230,6 +231,7 @@ function renderTree(filter = '') {
 function openItem(item, trail, opts = {}) {
   stopPlayback();
   S.base = pieceFrom(item, trail.length ? trail : S.flat.find(f => f.item === item)?.trail || []);
+  S.addVi = 0; S.adding = null;
   S.shift = 0; S.clefs = []; S.lines = 0; S.tempus = null; S.cut = null; S.talea = -1; S.taleaLook = 'chant'; S.leaf = 0; S.startAt = 0; S.sel = null;
   S.base.mine = !!item.mine; S.base.sung = !!item.sung;
   /* chant (plainchant and cantus fractus) always opens at 60 */
@@ -880,6 +882,7 @@ function sounding() {
     let syl = '', prev = null, u = null;
     v.notes.forEach(n => {
       if (n.rest) { prev = null; return; }
+      if (n.tie && prev && midiOf(prev.n, S.piece.bflat, 0) === midiOf(n, S.piece.bflat, 0) && Math.abs(prev.n.t + prev.n.len + (prev.extra || 0) - n.t) < 1e-6) { prev.extra = (prev.extra || 0) + n.len; return; }
       if (n.text) { syl = n.text; u = snd.units(syls.get(n)); } else if (!texted) u = snd.units(null);
       const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev, joined: !!prev, u, last: true };
       if ((e.tied || flowing) && prev) prev.legato = true;
@@ -919,10 +922,10 @@ function startPlayback() {
       const at = t0 + Math.max(0, n.t - from) * k;
       const cut = Math.max(0, from - n.t);
       const tie = tied && n.t >= from - 1e-6;
-      const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len - cut) * k - (legato ? 0 : .03));
+      const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len + (events[ei - 1].extra || 0) - cut) * k - (legato ? 0 : .03));
       /* the coda closes before the next syllable's onset consonants begin */
       const ev = events[ei - 1], nx = ev.next, close = at + dur - (nx ? Math.min(.25, snd.leadOf(nx.u, midiOf(nx.n, p.bflat, S.shift))) : 0);
-      playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len, joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+      playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };
@@ -1103,7 +1106,7 @@ let mine = [];
 try { mine = JSON.parse(localStorage.getItem(MINE) || '[]'); } catch (e) { mine = []; }
 mine.forEach(it => { it.id = ++uid; it.mine = true; });
 const saveMineList = () => { try { localStorage.setItem(MINE, JSON.stringify(mine.map(({ id, ...it }) => it))); } catch (e) { /* ignore */ } };
-const tokOf = n => n.rest ? 'r' + n.v + (n.dot ? '.' : '') : n.step + (n.ficta && n.acc ? '^' : '') + (n.acc || '') + n.v + (n.col ? 'k' : '') + (n.dot ? '.' : '');
+const tokOf = n => n.rest ? 'r' + n.v + (n.dot ? '.' : '') : n.step + (n.ficta && n.acc ? '^' : '') + (n.acc || '') + n.v + (n.col ? 'k' : '') + (n.dot ? '.' : '') + (n.tie ? '~' : '');
 /* the base piece as a library item */
 function itemOf(b) {
   const it = { title: b.title, t: b.tempus, b: b.bflat || undefined, cut: b.cut || undefined, mine: true };
@@ -1278,7 +1281,7 @@ function putNote(vi, at, step, rest) {
 /* A to G: that note in the octave closest to the note before */
 function typeNote(letter) {
   if (!S.base) return;
-  const vi = S.sel ? S.sel.vi : 0, ns = S.base.voices[vi].notes, at = S.sel ? S.sel.i + 1 : ns.length;
+  const vi = S.sel ? S.sel.vi : Math.min(S.addVi || 0, S.base.voices.length - 1), ns = S.base.voices[vi].notes, at = S.sel ? S.sel.i + 1 : ns.length;
   let prev = null;
   for (let i = at - 1; i >= 0; i--) if (!ns[i].rest) { prev = ns[i].step; break; }
   if (prev === null) { const c = clefFor(S.clefs[vi] || S.base.voices[vi].clef); prev = c.bottom + S.piece.lines - 1; }
@@ -1290,7 +1293,7 @@ function typeNote(letter) {
 }
 function typeRest() {
   if (!S.base) return;
-  const vi = S.sel ? S.sel.vi : 0, ns = S.base.voices[vi].notes, at = S.sel ? S.sel.i + 1 : ns.length;
+  const vi = S.sel ? S.sel.vi : Math.min(S.addVi || 0, S.base.voices.length - 1), ns = S.base.voices[vi].notes, at = S.sel ? S.sel.i + 1 : ns.length;
   if (!S.edit) S.edit = true;
   putNote(vi, at, 28, true);
 }
@@ -1442,6 +1445,7 @@ function singStop() {
   const changed = take.finish(Math.min(pos, clock.end) * 2, takeCtx());
   take.on = false;
   if (changed || take.parts.length) takeChanged();
+  if (S.adding && S.adding.mode === 'sing') setTimeout(offerKeep, 50);
 }
 mic.onRaw = (now, mm, q, rms, onset) => {
   if (!take.on || !clock) return;
@@ -1670,7 +1674,176 @@ function exportPDF() {
   addEventListener('afterprint', done);
   setTimeout(() => { window.print(); if (!('onafterprint' in window)) setTimeout(done, 1000); }, 60);
 }
-$('#saveBtn').addEventListener('click', exportPDF); /* the same export from the toolbar */
+/* Save: a PDF of the score, or MusicXML for MuseScore and the other notation programs */
+function exportXML() {
+  const p = S.piece; if (!p) return;
+  const xml = toMusicXML(p, n => midiOf(n, p.bflat, S.shift));
+  const a = el('a', { href: URL.createObjectURL(new Blob([xml], { type: 'application/vnd.recordare.musicxml+xml' })), download: (slug(p.title) || 'cantare').slice(0, 60) + '.musicxml' });
+  document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast(tr('Saved as MusicXML: it opens in MuseScore, Sibelius, Finale and Dorico.'));
+}
+$('#saveBtn').addEventListener('click', e => {
+  e.stopPropagation();
+  const pop = $('#clefPop');
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Save')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('The whole piece with the voices you have added.')),
+      el('div', { class: 'nm-go' },
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; exportPDF(); } }, tr('PDF (A4 pages)')),
+        el('button', { type: 'button', class: 'chip primary', onclick: () => { pop.hidden = true; exportXML(); } }, tr('MusicXML (MuseScore…)')))));
+  pop.hidden = false;
+});
+
+/* ------------------------------------------------------------------ your own score, and voices added to a piece */
+/* a piece from the library is not changed: a voice added to it goes into a copy among Your melodies */
+function ensureMine(suffix) {
+  if (S.base.mine) return;
+  const it = itemOf(S.base);
+  it.title = S.base.title + ' – ' + suffix;
+  if (S.base.kind === 'chant' && it.s) { /* plainchant with a voice beside it: written out as breves, so the voices line up */
+    it.n = S.base.voices[0].notes.map(tokOf).join(' '); it.c = S.base.voices[0].clef; delete it.s; delete it.a; it.t = 'C';
+  }
+  const voiceState = S.voice.slice();
+  adoptMine(it);
+  S.voice = voiceState.slice(0, S.base.voices.length);
+  while (S.voice.length < S.base.voices.length) S.voice.push('on');
+}
+const ROLES = ['Cantus', 'Altus', 'Tenor', 'Bassus'];
+function addVoice(name, clef, notes) {
+  stopPlayback();
+  S.base.voices.push({ clef, name, notes, lyrics: '' });
+  S.voice.push('on'); S.clefs.length = S.base.voices.length;
+  if (S.base.kind === 'chant') { S.base.kind = 'mensural'; S.lines = 5; }
+  afterEdit(); buildVoiceChips(); buildStudio(); keepMine();
+  return S.base.voices.length - 1;
+}
+/* the singing as tokens, from the beginning of the piece: rests up to the first sung note */
+const REST_VALS = [[16, 'Mx'], [8, 'L'], [4, 'B'], [2, 'S'], [1, 'M'], [.5, 'Sm'], [.25, 'F']];
+function restsFor(len) { const out = []; let left = Math.round(len * 4) / 4; for (const [v, n] of REST_VALS) while (left >= v - 1e-6) { out.push('r' + n); left -= v; } return out; }
+function keepTake(name) {
+  const ns = take.notes(S.piece.bflat).map(n => ({ ...n, step: n.rest ? n.step : n.step - S.shift }));
+  if (!ns.some(n => !n.rest)) { toast(tr('Nothing was written down yet: sing while the music plays.')); return; }
+  const toks = restsFor(ns[0].t);
+  ns.forEach(n => toks.push(n.rest ? 'r' + n.v + (n.dot ? '.' : '') : n.step + (n.acc || '') + n.v + (n.dot ? '.' : '') + (n.tie ? '~' : '')));
+  const notes = readTokens(toks.join(' '));
+  const steps = notes.filter(n => !n.rest).map(n => n.step);
+  const clef = fitClef(steps, 5, 'c4', CLEF_ORDER).id;
+  ensureMine(tr('with my voices'));
+  take.clear();
+  const vi = addVoice(name, clef, notes);
+  S.adding = null;
+  toast(tr('Your voice is now part of the piece') + ': ' + name + '. ' + tr('Add another, or mute any voice below.'));
+  return vi;
+}
+function offerKeep() {
+  if (!S.adding || !take.parts.some(q => q.m !== null)) return;
+  const pop = $('#clefPop'), name = S.adding.name;
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Keep what you sang?')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('What you sang is written in red. Keep it as a new voice of the piece, or sing it again.')),
+      el('div', { class: 'nm-go' },
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; S.adding = null; take.clear(); render(); } }, tr('Cancel')),
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; take.clear(); render(); S.startAt = 0; voiceReady().then(startPlayback); } }, tr('Sing again')),
+        el('button', { type: 'button', class: 'chip primary', onclick: () => { pop.hidden = true; keepTake(name); } }, tr('Keep it as') + ' ' + name))));
+  pop.hidden = false;
+}
+async function startSinging(name) {
+  if (!mic.on) await micToggle();
+  if (!mic.on) return;
+  prefs.micNotate = true; savePrefs(); buildMic();
+  S.adding = { mode: 'sing', name };
+  take.clear(); S.startAt = 0;
+  toast(tr('The music plays from the beginning: sing your voice with it. Press Stop when you are done.'));
+  await voiceReady(); startPlayback();
+}
+function startWriting(name) {
+  ensureMine(tr('with my voices'));
+  const ref = S.base.voices.at(-1);
+  const vi = addVoice(name, ref ? ref.clef : 'c4', []);
+  S.addVi = vi; S.edit = true; S.sel = null; S.inDur = S.inDur || 'S'; S.inRest = false;
+  $('#editBtn').setAttribute('aria-pressed', 'true');
+  buildEditTools(); render(); syncTitleEdit();
+  toast(tr('Tap the new staff to put a note there, or type A to G.'));
+}
+function askAddVoice() {
+  if (!S.base) return;
+  const pop = $('#clefPop');
+  const have = new Set(S.base.voices.map(v => (v.name || '').replace(/\s*\d+$/, '')));
+  const guess = ROLES.find(r => !have.has(r)) || 'Cantus';
+  const name = el('select', { class: 'nm-in', 'aria-label': tr('Voice') }, ...ROLES.map(r => el('option', { value: r, selected: r === guess }, tr(r))));
+  const nameOf = () => { const r = name.value, same = S.base.voices.filter(v => (v.name || '').replace(/\s*\d+$/, '') === r).length; return same ? r + ' ' + (same + 1) : r; };
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Add a voice')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('Build the piece voice by voice: sing a new voice to what is there, or write it down. Mute or hide any voice with the buttons below the music; Save exports the whole piece.')),
+      el('label', {}, tr('Voice'), name),
+      el('p', { class: 'hint' }, S.base.mine ? '' : tr('The piece in the library stays as it is: your voices go into a copy under Your melodies.')),
+      el('div', { class: 'nm-go' },
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; startWriting(nameOf()); } }, tr('Write it')),
+        el('button', { type: 'button', class: 'chip primary', onclick: () => { pop.hidden = true; startSinging(nameOf()); } }, tr('Sing it')))));
+  pop.hidden = false;
+}
+$('#addVoiceBtn')?.addEventListener('click', e => { e.stopPropagation(); askAddVoice(); });
+
+/* Open: a score from the computer (MuseScore, MusicXML, MIDI) becomes a piece among Your melodies */
+function sendUpload(file, b) {
+  try { if (localStorage.getItem(SENDPREF) === 'no') return; } catch (e) { /* ignore */ }
+  let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  const it = itemOf(b), fd = new FormData();
+  fd.append('_subject', 'Cantare – an uploaded score: ' + b.title); fd.append('_template', 'table'); fd.append('_captcha', 'false');
+  fd.append('About', 'Cantare super librum – a score uploaded by a visitor'); fd.append('Title', b.title); fd.append('Name', who || '—');
+  fd.append('File', file.name + ' (' + Math.round(file.size / 1024) + ' kB)'); fd.append('Link', linkOf(b)); fd.append('Data', JSON.stringify(it));
+  if (file.size < 5e6) fd.append('attachment', file, file.name);
+  sentAt.set(b.id, JSON.stringify(it));
+  fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', headers: { Accept: 'application/json' }, body: fd }).catch(() => sentAt.delete(b.id));
+}
+function askUpload() {
+  const pop = $('#clefPop');
+  let send = true; try { send = localStorage.getItem(SENDPREF) !== 'no'; } catch (e) { /* ignore */ }
+  const box = el('input', { type: 'checkbox', checked: send });
+  const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, placeholder: tr('Your name (optional)'), 'aria-label': tr('Your name (optional)') });
+  try { who.value = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  const input = el('input', { type: 'file', accept: ACCEPT, hidden: true });
+  const status = el('p', { class: 'hint' });
+  input.addEventListener('change', async () => {
+    const f = input.files && input.files[0]; if (!f) return;
+    try { localStorage.setItem(SENDPREF, box.checked ? 'yes' : 'no'); if (who.value.trim()) localStorage.setItem('cantare-next:who', who.value.trim()); } catch (e) { /* ignore */ }
+    status.textContent = tr('Reading') + ' ' + f.name + '…';
+    try {
+      const it = await readScoreFile(f);
+      pop.hidden = true;
+      sendMine();
+      adoptMine(it);
+      sendUpload(f, S.base);
+      toast(tr('Opened') + ': ' + it.title + '. ' + tr('Play it, sing with it, mute voices or add your own.'));
+    } catch (err) {
+      status.textContent = tr('This file could not be read. Try MusicXML (.musicxml or .mxl), exported from your notation program.');
+    }
+  });
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Open your score')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('MuseScore (.mscz, .mscx), MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid). Each part becomes a voice, a whole note a semibrevis; the text comes along. It is kept in this browser under Your melodies.')),
+      el('label', {}, tr('Your name (optional)'), who),
+      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the pieces people bring here (the file, its title and your name if given).'))),
+      status, input,
+      el('div', { class: 'nm-go' },
+        el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),
+        el('button', { type: 'button', class: 'chip primary', onclick: () => input.click() }, tr('Choose a file…')))));
+  pop.hidden = false;
+}
+$('#openBtn')?.addEventListener('click', e => { e.stopPropagation(); askUpload(); });
+/* a score dropped onto the page opens the same way */
+addEventListener('dragover', e => { if ([...(e.dataTransfer?.items || [])].some(i => i.kind === 'file')) e.preventDefault(); });
+addEventListener('drop', async e => {
+  const f = e.dataTransfer?.files?.[0]; if (!f || !/\.(mscz|mscx|musicxml|xml|mxl|midi?)$/i.test(f.name)) return;
+  e.preventDefault();
+  try { const it = await readScoreFile(f); sendMine(); adoptMine(it); sendUpload(f, S.base); toast(tr('Opened') + ': ' + it.title); }
+  catch (err) { toast(tr('This file could not be read. Try MusicXML (.musicxml or .mxl), exported from your notation program.')); }
+});
 
 $('#footShare').addEventListener('click', async () => {
   const url = location.href.split('#')[0] + location.hash, title = 'Cantare super librum';

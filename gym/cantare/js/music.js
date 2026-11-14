@@ -43,7 +43,7 @@ export function fitClef(steps, lines, want, pool = CHANT_CLEFS) {
 }
 
 /* ---------- reading the library's note strings ---------- */
-const TOKEN = /^(r)?(\d+)?(\^)?([bn#])?(Mx|Sm|L|B|S|M|F)(k)?(\.)?$/;
+const TOKEN = /^(r)?(\d+)?(\^)?([bn#])?(Mx|Sm|L|B|S|M|F)(k)?(\.)?(~)?$/; /* ~: tied to the note before (it goes on sounding) */
 
 export function readTokens(text) {
   const notes = [];
@@ -52,9 +52,10 @@ export function readTokens(text) {
   for (const tok of text.trim().split(/\s+/)) {
     const m = TOKEN.exec(tok);
     if (!m) throw new Error('Unreadable note: ' + tok);
-    const [, rest, num, caret, acc, val, colored, dot] = m;
+    const [, rest, num, caret, acc, val, colored, dot, tie] = m;
     const step = num ? +num : last;
     const n = { v: val, rest: !!rest, step, acc: rest ? '' : acc || '', dot: !!dot, col: !!colored, ficta: !!(caret && acc && !rest) };
+    if (tie && !rest) n.tie = true;
     if (!rest) last = step;
     notes.push(n);
   }
