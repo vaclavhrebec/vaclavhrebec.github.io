@@ -43,7 +43,7 @@ function setStyle(v) {
 /* ---------- options ---------- */
 function opts() {
   const num = id => +$('#' + id).value, chk = id => $('#' + id).checked;
-  return { ...DEFAULTS, schools: $$('#schools input:checked').map(x => x.value), density: num('density'), minDur: num('minDur'), minValue: num('minValue'), maxLeap: num('maxLeap'), targetLeap: Math.max(3, num('maxLeap') + 1),
+  return { ...DEFAULTS, schools: $$('#schools input:checked').map(x => x.value), density: num('density'), maxSimul: num('maxSimul'), together: num('together'), minDur: num('minDur'), minValue: num('minValue'), maxLeap: num('maxLeap'), targetLeap: Math.max(3, num('maxLeap') + 1),
     noSeventh: chk('noSeventh'), consBeat: chk('consBeat'), passDiss: chk('passDiss'), noParallels: chk('noParallels'), noCross: chk('noCross'), noTritone: chk('noTritone'), keepRange: chk('keepRange'), keepFinal: chk('keepFinal'), cadences: chk('cadences') };
 }
 const toast = (m, ms = 2200) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), ms); };
@@ -104,7 +104,7 @@ function run() {
   if (!vs.length) { toast('Tick at least one voice to ornament'); return; }
   if (!o.schools.length) { toast('Tick at least one manner'); return; }
   S.pre = snapshot(S.st); push(); const rng = makeRng(nextSeed()); let n = 0;
-  vs.forEach(([, i]) => { n += diminuteVoice(S.st, i, o, rng); });
+  vs.map(x => [rng(), x]).sort((a, b) => a[0] - b[0]).forEach(([, [, i]]) => { n += diminuteVoice(S.st, i, o, rng); });
   render(); toast(n ? n + ' figures placed' : 'No figure would fit under these rules');
 }
 $('#btnDim').onclick = run;
@@ -360,6 +360,7 @@ $('#clickBtn').setAttribute('aria-pressed', String(P.click)); $('#loopBtn').setA
 snd.warm(P.timbre);
 $('#rules').addEventListener('change', () => { if (S.st) render(); });
 $('#density').oninput = e => $('#densityOut').textContent = e.target.value;
+$('#together').oninput = e => $('#togetherOut').textContent = e.target.value;
 
 /* ---------- catalogue ---------- */
 const INTS = [[0, 'the same note'], [1, 'a step up'], [-1, 'a step down'], [2, 'a third up'], [-2, 'a third down'], [3, 'a fourth up'], [-3, 'a fourth down'], [4, 'a fifth up'], [-4, 'a fifth down'], [5, 'a sixth up'], [-5, 'a sixth down']];

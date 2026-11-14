@@ -49,6 +49,8 @@
         <fieldset><legend>Where</legend>
           <label>How many notes get a figure <input id="density" type="range" min="10" max="100" value="60"> <output id="densityOut">60</output>%</label>
           <label>Only notes at least <select id="minDur"><option value="2">a semibreve</option><option value="4">a breve</option><option value="1">a minim</option></select> long</label>
+          <label>At most <select id="maxSimul"><option value="1">one voice</option><option value="2" selected>two voices</option><option value="3">three voices</option><option value="4">four voices</option></select> ornamenting at the same moment</label>
+          <label>Chance that voices ornament together <input id="together" type="range" min="0" max="100" value="50"> <output id="togetherOut">50</output>%</label>
           <label><input type="checkbox" id="cadences" checked> Ornament cadences</label>
           <label><input type="checkbox" id="keepFinal" checked> Leave the final note plain</label>
         </fieldset>

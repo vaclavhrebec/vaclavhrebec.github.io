@@ -121,7 +121,7 @@ const isCons = (semis, vsBass) => { const m = ((semis % 12) + 12) % 12; return C
 
 export const DEFAULTS = {
   schools: ['coclico', 'ortiz', 'dallacasa'], density: 60, minDur: 2, minValue: .5, maxLeap: 2, targetLeap: 3,
-  noSeventh: true, consBeat: true, passDiss: true, noParallels: true, noCross: true, noTritone: true, keepRange: true, keepFinal: true, cadences: true, beat: 2,
+  noSeventh: true, consBeat: true, passDiss: true, noParallels: true, noCross: true, noTritone: true, keepRange: true, keepFinal: true, cadences: true, beat: 2, maxSimul: 2, together: 50,
 };
 
 /* Check a figure (array of {step, len, acc?}) that would replace base note k of voice vi. Returns a list of broken rules. */
@@ -236,14 +236,23 @@ export function applyFigure(st, vi, k, f) { st.voices[vi].dims.set(k, { notes: f
 
 export function rankVoices(st) { const med = st.voices.map(v => { const s = v.base.filter(n => !n.rest).map(n => n.step).sort((a, b) => a - b); return s.length ? s[s.length >> 1] : 0; }); const order = med.map((m, i) => [m, i]).sort((a, b) => b[0] - a[0]); const rank = []; order.forEach(([, i], r) => rank[i] = r); return rank; }
 
+/* the time spans (in minims) in which a voice other than vi already carries a figure */
+function othersBusy(st, vi) {
+  const spans = [];
+  st.voices.forEach((w, j) => { if (j === vi) return; let t = 0; w.base.forEach((n, k) => { if (w.dims.has(k)) spans.push([t, t + n.len, j]); t += n.len; }); });
+  return spans;
+}
 export function diminuteVoice(st, vi, o, rng) {
-  const v = st.voices[vi]; let count = 0;
+  const v = st.voices[vi]; let count = 0, T = 0; const times = v.base.map(n => { const t = T; T += n.len; return t; });
   const lastSound = (() => { for (let i = v.base.length - 1; i >= 0; i--) if (!v.base[i].rest) return i; return -1; })();
   for (let k = 0; k < v.base.length; k++) {
     const n = v.base[k]; if (n.rest || v.dims.has(k) || n.len < o.minDur) continue;
     if (o.keepFinal && k === lastSound) continue;
     if (!o.cadences && isCadence(v, k)) continue;
     if (rng() * 100 >= o.density) continue;
+    const busy = new Set(othersBusy(st, vi).filter(([a, b]) => a < times[k] + n.len - 1e-9 && b > times[k] + 1e-9).map(x => x[2]));
+    if (busy.size + 1 > (o.maxSimul || 4)) continue;
+    if (busy.size && rng() * 100 >= o.together) continue;
     const ctx = context(st); ctx.rank = rankVoices(st);
     const c = candidates(ctx, vi, k, o, rng, 1);
     if (c.length) { applyFigure(st, vi, k, c[0]); count++; }
