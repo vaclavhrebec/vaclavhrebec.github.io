@@ -69,8 +69,17 @@ function vcUnit(v, co) {
   return u[v + '.'] ? v + '.' : null;
 }
 /* the halves a syllable needs: {cv, vc} (vc null for an open syllable) */
+/* A diphthong is held on its first vowel and glides only at the end of the syllable: the held half of a rendered diphthong
+   already contains the glide, and looping it would sing "frau-au-au". So the held half is the first vowel with the same
+   onset ("fɾ.a"), and the closing half ("aʊ.", "aʊ.s") carries the glide, on the syllable's last note. */
+const DIPH = { aʊ: 'a', aɪ: 'a', ɔɪ: 'ɔ', eɪ: 'e', ɔʏ: 'ɔ' };
 export function units(syl) {
   if (!syl) return { cv: cvUnit([], 'a'), vc: null };
+  const d = DIPH[syl.v], u = BANK.map && BANK.map.cv.units;
+  if (d && u) {
+    const on = syl.on.join(''), held = [d, ...(d === 'e' ? ['ɛ'] : [])].find(w => u[on + '.' + w]);
+    if (held) return { cv: on + '.' + held, vc: vcUnit(syl.v, syl.co) || vcUnit(held, syl.co) };
+  }
   return { cv: cvUnit(syl.on, syl.v), vc: vcUnit(syl.v, syl.co) };
 }
 /* fetch the files of these halves for these pitches; resolves when they are in */
