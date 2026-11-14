@@ -300,8 +300,8 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     <section class="view" id="v-timeline" role="tabpanel" hidden>
       <div class="tl">
         <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="335" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
-          <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option></select>
-          <span>thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
+          <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option><option value="composers">Composers</option><option value="treatises">Treatises</option><option value="eltr">Elements & treatises</option></select>
+          <span>thin bar: first instances · thick bar: common · ◇ treatise · grey bar: a composer’s lifetime · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
         <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
       </div>
     </section>
@@ -325,6 +325,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-voices.js"></script>
 <script src="vault-composers.js"></script>
 <script src="vault-works.js"></script>
+<script src="vault-treatises.js"></script>
 <script>
 (function () {
   'use strict';
@@ -377,6 +378,12 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     const els = [...new Set([...fromStyle, ...[...named].filter(i => byId[i] && byId[i].kind === 'el')])];
     CP[c.id] = Object.assign({}, c, {styleIds: styles, els, named, kind: 'composer', title: c.name});
   });
+  /* ---------- treatises ---------- */
+  const TR = {};
+  (V.treatises || []).forEach(t => { t.els = t.els.filter(e => byId[e]); TR[t.id] = t; });
+  const treatisesOf = id => Object.values(TR).filter(t => t.els.includes(id)).sort((a, b) => a.year - b.year);
+  const treatisesBy = cid => Object.values(TR).filter(t => t.composer === cid).sort((a, b) => a.year - b.year);
+  const trLink = t => `<a class="il" href="#note/${t.id}" data-id="${t.id}">${esc(t.author)}, <i>${esc(t.title)}</i></a> (${t.year < 1400 ? 'c. ' : ''}${Y(t.year)})`;
   const composersOf = sid => Object.values(CP).filter(c => c.styleIds.includes(sid)).sort((x, y) => x.born - y.born);
   const lifeOf = c => (c.born < 0 ? Y(c.born) : c.born) + '–' + (c.died || '');
   const colorVar = f => f === 'style' ? '--c-style' : '--c-' + f;
@@ -424,6 +431,8 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     }
     h += `</div></div><div class="folder"><button type="button">${chev}About</button><div class="kids"><a class="file" href="#note/about" data-id="about"><span class="dot" style="background:var(--faint)"></span><span>How this works</span></a></div></div>`;
     const comps = Object.values(CP).sort((x, y) => x.born - y.born);
+    const trs = Object.values(TR).sort((a, b) => a.year - b.year);
+    h = `<div class="folder closed" id="trFolder"><button type="button">${chev}Treatises <span class="cnt">${trs.length}</span></button><div class="kids">${trs.map(t => `<a class="file" href="#note/${t.id}" data-id="${t.id}"><span class="dot" style="background:var(--faint)"></span><span>${esc(t.author.replace(/ \(attributed\)$/, ''))}: ${esc(t.title)}</span><span class="yr">${Y(t.year)}</span></a>`).join('')}</div></div>` + h;
     h = `<div class="folder closed" id="compFolder"><button type="button">${chev}Composers <span class="cnt">${comps.length}</span></button><div class="kids">${comps.map(c => `<a class="file" href="#note/${c.id}" data-id="${c.id}"><span class="dot" style="background:var(--muted)"></span><span>${esc(c.name)}</span><span class="yr">${c.born}</span></a>`).join('')}</div></div>` + h;
     $('#tree').innerHTML = h;
     $('#tree').querySelectorAll('.folder > button').forEach(b => b.onclick = () => b.parentElement.classList.toggle('closed'));
@@ -431,8 +440,8 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   $('#search').addEventListener('input', e => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll('#tree .file').forEach(f => {
-      const n = byId[f.dataset.id] || CP[f.dataset.id];
-      const hay = n && n.kind === 'composer' ? (n.name + ' ' + n.aka.join(' ')).toLowerCase() : n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
+      const n = byId[f.dataset.id] || CP[f.dataset.id] || TR[f.dataset.id];
+      const hay = n && n.kind === 'treatise' ? (n.author + ' ' + n.title + ' ' + n.note).toLowerCase() : n && n.kind === 'composer' ? (n.name + ' ' + n.aka.join(' ')).toLowerCase() : n ? (n.title + ' ' + (n.text || '') + ' ' + (n.scope || '')).toLowerCase() : f.textContent.toLowerCase();
       f.classList.toggle('hidden', !!q && !hay.includes(q));
     });
     document.querySelectorAll('#tree .folder').forEach(f => { if (q) f.classList.toggle('closed', !f.querySelector('.file:not(.hidden)')); });
@@ -467,6 +476,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     const el = $('#note');
     document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
     if (CP[id]) { renderComposer(CP[id]); return; }
+    if (TR[id]) { renderTreatise(TR[id]); return; }
     if (id === 'about' || !byId[id]) { el.innerHTML = about(); document.title = 'Atlas of Musical Style'; renderLinks(null); return; }
     const n = byId[id];
     document.title = n.title + ' · Atlas of Musical Style';
@@ -480,6 +490,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + Y(n.fade) : '— still in use today'}</dd>
         <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
         <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
+        ${treatisesOf(id).length ? `<dt>${ICON.list}described in</dt><dd>${treatisesOf(id).map(trLink).join('<br>')}</dd>` : ''}
         <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
         </dl></details>
         ${n.text.split(/\n\n/).map(p => `<p>${md(p)}</p>`).join('')}
@@ -505,6 +516,28 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     renderLinks(n);
     $('#v-note').scrollTop = 0;
   }
+  function renderTreatise(t) {
+    document.title = t.title + ' · Atlas of Musical Style';
+    const els = t.els.slice().sort((a, b) => (byId[a].first || byId[a].from) - (byId[b].first || byId[b].from));
+    const author = t.composer && CP[t.composer] ? `<a class="il" href="#note/${t.composer}">${esc(t.author)}</a>` : esc(t.author);
+    const same = Object.values(TR).filter(o => o !== t && o.els.some(e => t.els.includes(e))).sort((a, b) => Math.abs(a.year - t.year) - Math.abs(b.year - t.year)).slice(0, 10);
+    let h = `<div class="crumb">Treatises</div><h1><i>${esc(t.title)}</i></h1>
+      <details class="props" open><summary>Properties</summary><dl>
+      <dt>${ICON.pin}author</dt><dd>${author}</dd>
+      <dt>${ICON.cal}date</dt><dd>${t.year < 1400 ? 'c. ' : ''}${Y(t.year)}</dd>
+      <dt>${ICON.list}describes</dt><dd>${els.map(e => `<a class="il${byId[e].kind === 'style' ? ' style' : ''}" href="#note/${e}" data-id="${e}">${esc(byId[e].title)}</a>`).join(', ')}</dd>
+      <dt>${ICON.tag}tags</dt><dd><span class="tag">#treatise</span></dd>
+      </dl></details>
+      <p>${md(t.note)}</p>
+      ${t.href ? `<p><a class="ext" href="${t.href}" target="_blank" rel="noopener">↗ Read it on IMSLP</a></p>` : `<p class="small" style="color:var(--faint)">${t.year < 1480 ? 'A manuscript treatise: no printed edition of the time to link to.' : 'Not on IMSLP (still in copyright or not a music print).'}</p>`}
+      <h2>On the timeline</h2><div class="minitl">${miniTimeline(els.filter(e => byId[e].kind === 'el'), t.year - 60, t.year + 60)}</div>
+      <p class="small" style="color:var(--faint);font-size:13px">The shaded band is the 120 years around the treatise.</p>`;
+    $('#note').innerHTML = h;
+    document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === t.id));
+    $('#links').innerHTML = `<h3>Describes (${els.length})</h3>${els.map(e => `<a class="lk" href="#note/${e}" data-id="${e}">${esc(byId[e].title)}<small>${byId[e].kind === 'style' ? 'style · ' + yrs(byId[e]) : esc(V.folders[byId[e].folder]) + ' · ' + Y(byId[e].first)}</small></a>`).join('')}<h3>Related treatises</h3>${same.map(o => `<a class="lk" href="#note/${o.id}">${esc(o.title)}<small>${esc(o.author)} · ${Y(o.year)}</small></a>`).join('') || '<p class="none">None</p>'}`;
+    drawLocal(null);
+    $('#v-note').scrollTop = 0;
+  }
   function renderComposer(c) {
     document.title = c.name + ' · Atlas of Musical Style';
     const total = V.elements.length, byF = {};
@@ -514,6 +547,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <details class="props" open><summary>Properties</summary><dl>
       <dt>${ICON.cal}lived</dt><dd>${lifeOf(c)}${c.died ? '' : 'today'}</dd>
       <dt>${ICON.list}styles</dt><dd>${c.styleIds.map(s => `<a class="il style" href="#note/${s}" data-id="${s}">${esc(byId[s].title)}</a>`).join(', ') || '—'}</dd>
+      ${treatisesBy(c.id).length ? `<dt>${ICON.list}treatises</dt><dd>${treatisesBy(c.id).map(trLink).join('<br>')}</dd>` : ''}
       <dt>${ICON.tag}elements</dt><dd><b>${c.els.length}</b> of ${total}${named ? ` · ${named} named in the notes (✎)` : ''}</dd>
       </dl></details>
       <p class="small" style="color:var(--muted)">The elements are those of ${c.styleIds.length > 1 ? 'the styles' : 'the style'} above that were in use during ${esc(c.name.split(' ').pop())}’s working life, together with every element whose note mentions ${c.died ? 'the composer' : 'him or her'} by name. It is a map of the language available to and shared by the composer, not a list of what each work contains.</p>`;
@@ -656,22 +690,34 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   let tlFocus = null;
   function timeline() {
     const year = sliderYear($('#tlyr')), only = $('#tlShow').value, narrow = window.innerWidth <= 760, W = Math.max(narrow ? 1100 : 860, $('#v-timeline').clientWidth - 36), lab = narrow ? 168 : 250, rowH = 19, x = y => lab + tOf(y) * (W - lab - 10);
-    const rows = []; rows.push({grp: 'Styles'}); V.styles.slice().sort((a, b) => a.from - b.from).forEach(s => rows.push({n: byId[s.id]}));
-    if (only === 'all') for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
-    else if (only !== 'styles') { rows.length = 0; rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    const rows = [], addEls = () => { for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); } };
+    const addComps = () => { rows.push({grp: 'Composers'}); Object.values(CP).sort((a, b) => a.born - b.born).forEach(c => rows.push({c})); };
+    const addTrs = () => { rows.push({grp: 'Treatises'}); Object.values(TR).sort((a, b) => a.year - b.year).forEach(t => rows.push({t})); };
+    if (only === 'all' || only === 'styles') { rows.push({grp: 'Styles'}); V.styles.slice().sort((a, b) => a.from - b.from).forEach(s => rows.push({n: byId[s.id]})); }
+    if (only === 'all') { addComps(); addEls(); addTrs(); }
+    else if (only === 'composers') addComps();
+    else if (only === 'treatises') addTrs();
+    else if (only === 'eltr') { addEls(); addTrs(); }
+    else if (only !== 'styles') { rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
+    const showTr = only !== 'styles' && only !== 'composers';
     const H = 26 + rows.length * rowH + 10; let h = '';
     ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${name}</text>`; });
     TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${Y(c)}</text>`; });
     const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
     rows.forEach((r, i) => { const y = 26 + i * rowH;
       if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
+      if (r.c) { const c = r.c, dim = focusSet && !c.styleIds.includes(tlFocus) ? ' class="dim"' : '', cut = narrow ? 25 : 38, nm = c.name.length > cut ? c.name.slice(0, cut - 1) + '…' : c.name;
+        h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${c.id}">${esc(nm)}<title>${esc(c.name)}</title></text><rect class="bar" data-id="${c.id}" x="${x(c.born)}" y="${y + 5}" width="${Math.max(3, x(c.died || NOW) - x(c.born))}" height="9" rx="3" fill="var(--muted)" opacity=".75"><title>${esc(c.name)}: ${lifeOf(c)}${c.died ? '' : 'today'}</title></rect></g>`; return; }
+      if (r.t) { const t = r.t, dim = focusSet && !t.els.some(e => focusSet.has(e)) ? ' class="dim"' : '', lb = t.author.split(' (')[0].split(' ').pop() + ', ' + t.title, cut = narrow ? 25 : 38;
+        h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${t.id}"><tspan font-style="italic">${esc(lb.length > cut ? lb.slice(0, cut - 1) + '…' : lb)}</tspan><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></text><path class="bar" data-id="${t.id}" d="M${x(t.year)} ${y + 3.5}l6 6-6 6-6-6z" fill="var(--fg)"><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></path></g>`; return; }
       const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
       const cut = narrow ? 25 : 38; h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > cut ? n.title.slice(0, cut - 1) + '…' : n.title)}<title>${esc(n.title)}</title></text>`;
       if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${YR(n.from, n.to)}</title></rect>`;
       else { const end = n.fade || NOW;
         if (n.maybe) h += `<line class="bar" data-id="${n.id}" x1="${x(n.maybe)}" x2="${x(n.first)}" y1="${y + 9.5}" y2="${y + 9.5}" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"><title>${esc(n.title)}: perhaps from c. ${Y(n.maybe)} (?)</title></line>`;
         h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${Y(n.first)}</title></rect>`;
-        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${Y(n.common)}${n.fade ? '–' + Y(n.fade) : ''}</title></rect>`; }
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${Y(n.common)}${n.fade ? '–' + Y(n.fade) : ''}</title></rect>`;
+        if (showTr) treatisesOf(n.id).forEach(t => { h += `<path class="bar" data-id="${t.id}" d="M${x(t.year)} ${y + 4}l5.5 5.5-5.5 5.5-5.5-5.5z" fill="var(--bg)" stroke="var(--fg)" stroke-width="1.3"><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></path>`; }); }
       h += '</g>'; });
     h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
     const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H + 22}`); svg.style.height = (H + 22) + 'px'; svg.innerHTML = h;

@@ -48,7 +48,6 @@
     ['Missa Sancti Jacobi', 'imslp', 'Missa Sancti Jacobi (Dufay, Guillaume)'],
     ['Nuper rosarum flores', 'imslp', 'Nuper rosarum flores (Dufay, Guillaume)'],
     ['Missa Caput', 'imslp', 'Missa Caput (Anonymous)'],
-    ['Fundamentum organisandi', 'diamm', 'Locheimer Liederbuch'],
     ['Buxheim Organ Book', 'diamm', 'Buxheim'],
     ['Brussels basse danse manuscript', 'diamm', 'Brussels 9085'],
     ['Eton Choirbook', 'diamm', 'Eton College 178'],
@@ -66,13 +65,10 @@
     ['Geystliche gesangk Buchleyn', 'imslp', 'Geystliche gesangk Buchleyn (Walter, Johann)'],
     ['La guerre', 'imslp', 'La guerre (Janequin, Clément)'],
     ['Le chant des oiseaux', 'imslp', 'Le chant des oyseaulx (Janequin, Clément)'],
-    ['Fontegara', 'imslp', 'Opera intitulata Fontegara (Ganassi, Silvestro)'],
     ['Milán 1536', 'imslp', 'El Maestro (Milán, Luis de)'],
     ['Narváez 1538', 'imslp', 'Los seys libros del Delphin (Narváez, Luys de)'],
     ['Musica nova', 'imslp', 'Musica nova (Willaert, Adrian)'],
     ['Salmi spezzati', 'imslp', 'Salmi spezzati (Willaert, Adrian)'],
-    ['Trattado de glosas', 'imslp', 'Trattado de glosas (Ortiz, Diego)'],
-    ['Arte de tañer fantasía', 'imslp', 'Arte de tañer fantasía (Santa María, Tomás de)'],
     ['O la, o che bon eccho', 'imslp', 'O là, o che bon eccho (Lassus, Orlande de)'],
     ['Striggio’s mass for 40 voices', 'imslp', 'Missa sopra Ecco sì beato giorno (Striggio, Alessandro)'],
     ['Spem in alium', 'imslp', 'Spem in alium (Tallis, Thomas)'],
@@ -193,17 +189,22 @@
     1913: url('imslp', 'Deutsche Motette, Op.62 (Strauss, Richard)')
   };
 
-  /* turn the first mention of every work in a piece of rendered HTML into a link (never inside another link) */
-  const list = V.works.slice().sort((a, b) => b.text.length - a.text.length);
-  const rx = new RegExp(list.map(w => w.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/’/g, '[’\']')).join('|'), 'g');
-  const find = t => list.find(w => w.text === t || w.text.replace(/’/g, '\'') === t.replace(/’/g, '\''));
+  /* turn the first mention of every work in a piece of rendered HTML into a link (never inside another link).
+     Built on first use, so that later files (treatises) can add their own entries to V.works. */
+  let list = null, rx = null;
+  const norm = t => t.replace(/’/g, '\'');
   V.linkWorks = function (html) {
+    if (!list) {
+      list = V.works.slice().sort((a, b) => b.text.length - a.text.length);
+      rx = new RegExp('(?<![\\p{L}])(' + list.map(w => w.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/’/g, '[’\']')).join('|') + ')(?![\\p{L}])', 'gu');
+    }
     const used = new Set(); let inA = 0;
     return html.split(/(<[^>]+>)/).map(part => {
       if (part[0] === '<') { if (/^<a[\s>]/i.test(part)) inA++; else if (/^<\/a>/i.test(part)) inA = Math.max(0, inA - 1); return part; }
       if (inA) return part;
       return part.replace(rx, m => {
-        const w = find(m); if (!w || used.has(w.href)) return m; used.add(w.href);
+        const w = list.find(x => norm(x.text) === norm(m)); if (!w || used.has(w.href)) return m; used.add(w.href);
+        if (w.where === 'atlas') return `<a class="il" href="${w.href}" data-id="${w.id}">${m}</a>`;
         const site = w.where === 'diamm' ? 'DIAMM' : 'IMSLP';
         return `<a class="wk" href="${w.href}" target="_blank" rel="noopener" title="Open on ${site}">${m}</a>`;
       });
