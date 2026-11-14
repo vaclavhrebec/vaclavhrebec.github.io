@@ -14,7 +14,7 @@
     'ars-nova': [2, 3, 4, 'Machaut’s motets in three or four voices and his four-voice Mass; five voices only in rare pieces'],
     'trecento': [2, 3, 3, 'the Italian madrigal is for two voices, the caccia for three'],
     'ars-subtilior-style': [3, 3, 4, null],
-    'english-style': [3, 3, 4, 'three voices in the sweet sonority of the carols and the Old Hall pieces; four from the early 15th century'],
+    'english-style': [3, 3, 5, 'three voices in the sweet sonority of the carols and most Old Hall pieces; four from the early 15th century; a few five-voice Mass movements in Old Hall (Pycard, Power)'],
     'burgundian': [3, 3, 4, 'three voices (cantus, tenor, contratenor); four only occasionally'],
     'ockeghem': [3, 4, 4, 'four voices become the norm; the 36-voice Deo gratias is attributed to Ockeghem'],
     'josquin': [4, 6, 6, 'four to six real parts; canons add many more entries but not more different lines'],
