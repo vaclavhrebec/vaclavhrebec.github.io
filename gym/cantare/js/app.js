@@ -1090,6 +1090,13 @@ function sounding() {
         const rise = i ? Math.max(-3, Math.min(3, ms[i] - ms[i - 1])) : 0;
         e.dyn = 1 + .09 * (ms[i] - mean) + .04 * rise - (i === phrase.length - 1 && phrase.length > 1 ? .15 : 0);
       });
+      /* a phrase begins gently, wherever it lies in the voice's range: a high entry is not a loud one. The voice comes in
+         at about 80 % and grows into the line over its first two semibreves; only then does the shape by pitch fully apply. */
+      const t0 = phrase[0].n.t, GROW = 4;
+      phrase.forEach(e => {
+        const w = Math.min(1, (e.n.t - t0) / GROW);
+        e.dyn = (.8 + .2 * w) * (1 + w * (e.dyn - 1));
+      });
       /* a phrase that ends on a long note lets it die away: the last third falls to about 65 % */
       const lastE = phrase[phrase.length - 1];
       if (phrase.length > 1 && lastE.n.len >= 2) lastE.fade = .65;
