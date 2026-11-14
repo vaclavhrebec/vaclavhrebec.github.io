@@ -177,6 +177,7 @@
   const url = (where, q) => /^https?:/.test(q) ? q
     : where === 'diamm' ? 'https://www.diamm.ac.uk/search/?q=' + encodeURIComponent(q)
     : 'https://imslp.org/index.php?title=Special:Search&search=' + encodeURIComponent(q);
+  V.sourceUrl = url;
   V.works = W.map(([text, where, q]) => ({text, where, href: url(where, q)}));
 
   /* links for the marked pieces in the Voices view, by year */

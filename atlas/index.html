@@ -326,6 +326,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-composers.js"></script>
 <script src="vault-works.js"></script>
 <script src="vault-treatises.js"></script>
+<script src="vault-sources.js"></script>
 <script>
 (function () {
   'use strict';
@@ -503,6 +504,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         <dt>${ICON.cal}period</dt><dd>c. ${YR(n.from, n.to, n.alive)}</dd>
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
         ${voiceRow(n.id)}
+        ${(V.albums || {})[n.id] ? `<dt>${ICON.list}listen</dt><dd>${V.albums[n.id].map(esc).join('<br>')}</dd>` : ''}
         ${composersOf(n.id).length ? `<dt>${ICON.list}composers</dt><dd>${composersOf(n.id).map(c => `<a class="il" href="#note/${c.id}">${esc(c.name)}</a>`).join(', ')}</dd>` : ''}
         <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
         </dl></details>
@@ -529,6 +531,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <dt>${ICON.tag}tags</dt><dd><span class="tag">#treatise</span></dd>
       </dl></details>
       <p>${md(t.note)}</p>
+      ${(t.sources || []).length ? `<h2>Hear it in the music of its time</h2><ul class="chk">${t.sources.map(x => `<li>${x.href ? `<a class="wk" href="${x.href}" target="_blank" rel="noopener" title="Open on ${x.where === 'diamm' ? 'DIAMM' : 'IMSLP'}">${esc(x.label)}</a> <span class="d">${x.where === 'diamm' ? 'DIAMM' : 'IMSLP'}</span>` : esc(x.label)}</li>`).join('')}</ul>` : ''}
       ${t.href ? `<p><a class="ext" href="${t.href}" target="_blank" rel="noopener">↗ Read it on IMSLP</a></p>` : `<p class="small" style="color:var(--faint)">${t.year < 1480 ? 'A manuscript treatise: no printed edition of the time to link to.' : 'Not on IMSLP (still in copyright or not a music print).'}</p>`}
       <h2>On the timeline</h2><div class="minitl">${miniTimeline(els.filter(e => byId[e].kind === 'el'), t.year - 60, t.year + 60)}</div>
       <p class="small" style="color:var(--faint);font-size:13px">The shaded band is the 120 years around the treatise.</p>`;
