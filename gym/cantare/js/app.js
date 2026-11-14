@@ -935,6 +935,24 @@ function startPlayback() {
   frame();
 }
 
+/* jump to the previous or next note (of any voice) while playing, and play on from there */
+function seekStep(dir) {
+  if (!S.playing || !clock) return;
+  const pos = Math.max(clock.from, clock.from + (snd.now() - clock.t0) / clock.k);
+  const on = [...new Set(sounding().map(e => Math.round(e.n.t * 1e6) / 1e6))].sort((a, b) => a - b);
+  if (!on.length) return;
+  let t;
+  if (dir < 0) {
+    let cur = on[0];
+    for (const x of on) if (x <= pos + 1e-6) cur = x;
+    const before = on.filter(x => x < cur - 1e-6);
+    t = before.length ? before[before.length - 1] : on[0];
+  } else {
+    t = on.find(x => x > pos + 1e-6);
+    if (t == null) return;
+  }
+  stopPlayback(true); S.startAt = t; startPlayback();
+}
 function stopPlayback(keep, natural) {
   clearInterval(timer); cancelAnimationFrame(raf);
   /* Stop means stop: the sounding notes are cut at once, not finished */
@@ -1072,6 +1090,8 @@ document.addEventListener('keydown', e => {
     if (S.edit && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redoEdit(); else undo(); }
     return;
   }
+  /* while it plays, the arrows step back or forward note by note and the music goes on from there */
+  if (!S.edit && S.playing && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); seekStep(e.key === 'ArrowLeft' ? -1 : 1); return; }
   /* the keyboard writes music only after the pencil (Edit) is tapped; until then only the page keys work */
   if (!S.edit) {
     if (e.key === 'ArrowRight' && !$('#pager').hidden) $('#nextLeaf').click();
