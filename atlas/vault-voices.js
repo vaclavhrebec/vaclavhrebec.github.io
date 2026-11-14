@@ -41,6 +41,7 @@
     'holy-minimalism': [2, 3, 4, 'in Pärt’s tintinnabuli there are exactly two voices, the melody and the triad voice'],
     'minimalism': [4, 8, 18, 'many players, but built from a few repeated patterns that shift against one another']
   };
+  Object.assign(VV, V.voicesMore || {});
   V.voices = VV;
   V.voiceMarks = [
     {y: 850, n: 2, t: 'Musica enchiriadis', text: 'Parallel organum: the added voice follows the chant at the fifth or fourth below. With octave doubling four lines sound, but there are two real voices.'},
@@ -77,5 +78,5 @@
   const add = (style, ids) => ids.forEach(i => st(style) && !st(style).elements.includes(i) && st(style).elements.push(i));
   ['early-organum', 'aquitanian', 'notre-dame', 'ars-antiqua', 'trecento'].forEach(s => add(s, ['two-voice']));
   ['early-organum', 'french-baroque', 'viennese-classical', 'late-romantic'].forEach(s => add(s, ['real-parts']));
-  ['ockeghem', 'franco-flemish', 'venetian', 'sonorism'].forEach(s => add(s, ['many-voices']));
+  ['ockeghem', 'franco-flemish', 'venetian', 'sonorism', 'tudor'].forEach(s => add(s, ['many-voices']));
 })(window.VAULT);

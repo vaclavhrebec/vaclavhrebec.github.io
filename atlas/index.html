@@ -296,7 +296,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     </section>
     <section class="view" id="v-timeline" role="tabpanel" hidden>
       <div class="tl">
-        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="310" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
+        <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="335" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
           <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option></select>
           <span>thin bar: first instances · thick bar: common · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
         <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
@@ -316,6 +316,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-classical-romantic.js"></script>
 <script src="vault-modern.js"></script>
 <script src="vault-popular.js"></script>
+<script src="vault-longue-duree.js"></script>
 <script src="vault-crosslinks.js"></script>
 <script src="vault-voices.js"></script>
 <script>
@@ -324,14 +325,16 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const V = window.VAULT;
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
-  const MIN = 700, NOW = Math.max(2026, new Date().getFullYear()), MAX = NOW + 14;
+  const MIN = -3200, NOW = Math.max(2026, new Date().getFullYear()), MAX = NOW + 14;
   V.styles.forEach(st => { if (st.to == null) { st.to = NOW; st.alive = true; } });
   /* the historical scale: early centuries compressed, every era gets room */
-  const KNOTS = [[MIN, 0], [1200, .15], [1450, .31], [1600, .43], [1750, .56], [1850, .68], [1900, .75], [1950, .84], [2000, .94], [MAX, 1]];
+  const KNOTS = [[MIN, 0], [-500, .045], [700, .085], [1200, .2], [1450, .335], [1600, .45], [1750, .565], [1850, .685], [1900, .755], [1950, .84], [2000, .94], [MAX, 1]];
   function tOf(y) { for (let i = 1; i < KNOTS.length; i++) if (y <= KNOTS[i][0]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return t0 + (y - y0) / (y1 - y0) * (t1 - t0); } return 1; }
   function yOf(t) { for (let i = 1; i < KNOTS.length; i++) if (t <= KNOTS[i][1]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return Math.round(y0 + (t - t0) / (t1 - t0) * (y1 - y0)); } return MAX; }
-  const TICKS = [800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
-  const ERAS = [['Middle Ages', MIN, 1430], ['Renaissance', 1430, 1600], ['Baroque', 1600, 1750], ['Classical', 1750, 1820], ['Romantic', 1820, 1910], ['Modernism', 1910, 1975], ['Contemporary', 1975, NOW]];
+  const TICKS = [-3000, -1000, 800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
+  const ERAS = [['Antiquity', MIN, 500], ['Middle Ages', 500, 1430], ['Renaissance', 1430, 1600], ['Baroque', 1600, 1750], ['Classical', 1750, 1820], ['Romantic', 1820, 1910], ['Modernism', 1910, 1975], ['Contemporary', 1975, NOW]];
+  const Y = y => y < 0 ? (-y) + ' BC' : y === 0 ? 'AD 1' : String(y);
+  const YR = (a, b, alive) => Y(a) + '–' + (alive ? 'today' : (a < 0 && b > 0 ? 'AD ' : '') + Y(b));
   const sliderYear = el => yOf(+el.value / 1000);
 
   /* ---------- the vault as nodes and links ---------- */
@@ -359,7 +362,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     if (n.fade && y > n.fade) return 0;
     return y < n.common ? 0.5 : 1;
   }
-  const yrs = n => n.kind === 'style' ? `${n.from}–${n.alive ? 'today' : n.to}` : `${n.first}`;
+  const yrs = n => n.kind === 'style' ? YR(n.from, n.to, n.alive) : `${Y(n.first)}`;
 
   /* ---------- markup ---------- */
   function md(s) {
@@ -379,10 +382,10 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     pin: '<svg viewBox="0 0 24 24"><path d="M12 21s-6-5.5-6-11a6 6 0 0 1 12 0c0 5.5-6 11-6 11Z"/><circle cx="12" cy="10" r="2"/></svg>'};
   const chev = '<svg class="chev" viewBox="0 0 10 10"><path d="M2 3.5 5 6.5 8 3.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
   function tree() {
-    const file = n => `<a class="file" href="#note/${n.id}" data-id="${n.id}"><span class="dot" style="background:var(${colorVar(n.folder)})"></span><span>${esc(n.title)}</span><span class="yr">${n.kind === 'style' ? n.from : n.first}</span></a>`;
+    const file = n => `<a class="file" href="#note/${n.id}" data-id="${n.id}"><span class="dot" style="background:var(${colorVar(n.folder)})"></span><span>${esc(n.title)}</span><span class="yr">${Y(n.kind === 'style' ? n.from : n.first)}</span></a>`;
     const POP = new Set(['ragtime', 'early-jazz', 'swing-era', 'bebop', 'modal-jazz-style', 'free-jazz', 'rock', 'hip-hop', 'electronic-dance']);
-    const eraOf = st => POP.has(st.id) ? 'Jazz & popular' : st.from < 1430 ? 'Middle Ages' : st.from < 1600 ? 'Renaissance' : st.from < 1720 ? 'Baroque' : st.from < 1810 ? 'Galant & Classical' : st.from < 1900 ? 'Romantic' : '20th & 21st centuries';
-    const groups = ['Middle Ages', 'Renaissance', 'Baroque', 'Galant & Classical', 'Romantic', '20th & 21st centuries', 'Jazz & popular'];
+    const eraOf = st => POP.has(st.id) ? 'Jazz & popular' : st.from < 500 ? 'Antiquity' : st.from < 1430 ? 'Middle Ages' : st.from < 1600 ? 'Renaissance' : st.from < 1720 ? 'Baroque' : st.from < 1810 ? 'Galant & Classical' : st.from < 1900 ? 'Romantic' : '20th & 21st centuries';
+    const groups = ['Antiquity', 'Middle Ages', 'Renaissance', 'Baroque', 'Galant & Classical', 'Romantic', '20th & 21st centuries', 'Jazz & popular'];
     let h = `<div class="folder"><button type="button">${chev}Styles <span class="cnt">${V.styles.length}</span></button><div class="kids">` + groups.map(g => {
       const list = V.styles.filter(st => eraOf(st) === g).sort((a, b) => a.from - b.from);
       return `<div class="folder closed"><button type="button">${chev}${g} <span class="cnt">${list.length}</span></button><div class="kids">${list.map(st => file(byId[st.id])).join('')}</div></div>`; }).join('') + `</div></div>`;
@@ -409,11 +412,12 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   function miniTimeline(ids, from, to) {
     const W = 680, rowH = 17, top = 18, lab = 190, x = y => lab + tOf(y) * (W - lab - 6);
     let h = `<svg viewBox="0 0 ${W} ${top + ids.length * rowH + 4}" role="img" aria-label="When these elements are present">`;
-    [800, 1200, 1450, 1600, 1750, 1850, 1900, 1950, 2000].forEach(c => { h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c}</text>`; });
+    [-3000, 800, 1200, 1450, 1600, 1750, 1850, 1900, 1950, 2000].forEach(c => { h += `<line x1="${x(c)}" x2="${x(c)}" y1="12" y2="${top + ids.length * rowH}" stroke="var(--line)"/><text x="${x(c)}" y="9" font-size="9.5" fill="var(--faint)" text-anchor="middle" font-family="var(--mono)">${c < 0 ? (-c) + " BC" : c}</text>`; });
     if (from != null) h += `<rect x="${x(from)}" y="12" width="${x(to) - x(from)}" height="${ids.length * rowH + 6}" fill="var(--sel)"/>`;
     ids.forEach((id, i) => {
       const n = byId[id], y = top + i * rowH, c = `var(${colorVar(n.folder)})`, end = n.fade || NOW;
       h += `<text x="${lab - 8}" y="${y + 10}" font-size="11" fill="var(--fg)" text-anchor="end">${esc(n.title.length > 30 ? n.title.slice(0, 29) + '…' : n.title)}</text>`;
+      if (n.maybe) h += `<line x1="${x(n.maybe)}" x2="${x(n.first)}" y1="${y + 6.5}" y2="${y + 6.5}" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"/>`;
       h += `<rect x="${x(n.first)}" y="${y + 5}" width="${Math.max(1, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".55"/>`;
       h += `<rect x="${x(n.common)}" y="${y + 2}" width="${Math.max(2, x(end) - x(n.common))}" height="9" rx="3" fill="${c}"/>`;
     });
@@ -440,9 +444,9 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       const st = stylesOf(id);
       h = `<div class="crumb">Elements / ${esc(V.folders[n.folder])}</div><h1>${esc(n.title)}</h1>
         <details class="props" open><summary>Properties</summary><dl>
-        <dt>${ICON.cal}first</dt><dd>c. ${n.first}</dd>
-        <dt>${ICON.cal}common</dt><dd>c. ${n.common}</dd>
-        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + n.fade : '— still in use today'}</dd>
+        ${n.maybe ? `<dt>${ICON.cal}perhaps</dt><dd>c. ${Y(n.maybe)} (?)</dd>` : ''}<dt>${ICON.cal}first</dt><dd>c. ${Y(n.first)}</dd>
+        <dt>${ICON.cal}common</dt><dd>c. ${Y(n.common)}</dd>
+        <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + Y(n.fade) : '— still in use today'}</dd>
         <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
         <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
         <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
@@ -454,7 +458,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       const els = n.elements.slice().sort((a, b) => byId[a].first - byId[b].first);
       h = `<div class="crumb">Styles</div><h1>${esc(n.title)}</h1>
         <details class="props" open><summary>Properties</summary><dl>
-        <dt>${ICON.cal}period</dt><dd>c. ${n.from}–${n.alive ? 'today' : n.to}</dd>
+        <dt>${ICON.cal}period</dt><dd>c. ${YR(n.from, n.to, n.alive)}</dd>
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
         ${voiceRow(n.id)}
         <dt>${ICON.tag}tags</dt><dd><span class="tag">#style</span></dd>
@@ -475,7 +479,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     $('#app').classList.add('drawer'); $('#app').classList.remove('noleft');
   }
   function renderLinks(n) {
-    const item = id => { const m = byId[id]; return `<a class="lk" href="#note/${id}" data-id="${id}">${esc(m.title)}<small>${m.kind === 'style' ? 'style · ' + yrs(m) : esc(V.folders[m.folder]) + ' · ' + m.first}</small></a>`; };
+    const item = id => { const m = byId[id]; return `<a class="lk" href="#note/${id}" data-id="${id}">${esc(m.title)}<small>${m.kind === 'style' ? 'style · ' + yrs(m) : esc(V.folders[m.folder]) + ' · ' + Y(m.first)}</small></a>`; };
     if (!n) { $('#links').innerHTML = '<h3>Linked mentions</h3><p class="none">Open a note to see its links.</p>'; drawLocal(null); return; }
     const back = [...n.back], out = [...n.out].filter(x => byId[x]);
     $('#links').innerHTML = `<h3>Linked mentions (${back.length})</h3>${back.map(item).join('') || '<p class="none">None</p>'}<h3>Outgoing links (${out.length})</h3>${out.map(item).join('') || '<p class="none">None</p>'}`;
@@ -509,7 +513,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       const top = (-h / 2 - G.oy) / G.scale, bot = (h / 2 - G.oy) / G.scale;
       ERAS.forEach(([name, a, b], i) => { const x0 = (tOf(a) - .5) * AXW, x1 = (tOf(b) - .5) * AXW; cx.globalAlpha = i % 2 ? .07 : .02; cx.fillStyle = muted; cx.fillRect(x0, top, x1 - x0, bot - top); cx.globalAlpha = .9; cx.font = `italic ${12 / G.scale}px ${css('--sans')}`; cx.fillText(name, (x0 + x1) / 2, top + 22 / G.scale); });
       cx.font = `${10.5 / G.scale}px ${css('--mono')}`; cx.fillStyle = muted;
-      TICKS.forEach(c => { const xx = (tOf(c) - .5) * AXW; cx.globalAlpha = .75; cx.fillText(c, xx, bot - 12 / G.scale); });
+      TICKS.forEach(c => { const xx = (tOf(c) - .5) * AXW; cx.globalAlpha = .75; cx.fillText(Y(c), xx, bot - 12 / G.scale); });
       cx.restore(); }
     cx.lineWidth = 1 / G.scale;
     edges.forEach(e => { const p = byId[e.a], q = byId[e.b]; if (!p.vis || !q.vis) return;
@@ -539,7 +543,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const kick = (a = .5) => { G.alpha = Math.max(G.alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
   function setYear(y) {
     G.year = y; const all = y >= MAX - 2;
-    $('#yrLab').textContent = all ? 'all years' : 'c. ' + y; $('#yearNow').textContent = all ? '' : y;
+    $('#yrLab').textContent = all ? 'all years' : 'c. ' + Y(y); $('#yearNow').textContent = all ? '' : Y(y);
     nodes.forEach(n => { const was = n.vis; n.vis = visible(n); if (n.vis && !was) { const nbv = [...nb[n.id]].map(i => byId[i]).find(m => m.vis); if (nbv) { n.x = nbv.x + (Math.random() - .5) * 30; n.y = nbv.y + (Math.random() - .5) * 30; } } });
     kick(.35);
   }
@@ -550,7 +554,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
     if (ptr) { if (Math.hypot(e.clientX - ptr.x, e.clientY - ptr.y) > 4) moved = true;
       if (G.drag) { const p = toWorld(px, py); G.drag.x = p.x; G.drag.y = p.y; kick(.25); } else { G.ox = ptr.ox + e.clientX - ptr.x; G.oy = ptr.oy + e.clientY - ptr.y; draw(); } return; }
-    const n = hit(px, py); if (n !== G.hover) { G.hover = n; cv.style.cursor = n ? 'pointer' : 'grab'; cv.title = n ? n.title + ' · ' + (n.kind === 'style' ? yrs(n) : 'from c. ' + n.first) : ''; draw(); } });
+    const n = hit(px, py); if (n !== G.hover) { G.hover = n; cv.style.cursor = n ? 'pointer' : 'grab'; cv.title = n ? n.title + ' · ' + (n.kind === 'style' ? yrs(n) : 'from c. ' + Y(n.first)) : ''; draw(); } });
   cv.addEventListener('pointerup', () => { const n = ptr && ptr.n; if (n && !moved) location.hash = 'note/' + n.id; G.drag = null; ptr = null; cv.classList.remove('drag'); });
   cv.addEventListener('pointerleave', () => { if (!ptr && G.hover) { G.hover = null; draw(); } });
   function zoomAt(f, px = dims.w / 2, py = dims.h / 2) { const p = toWorld(px, py); G.scale = Math.min(4, Math.max(.25, G.scale * f)); G.ox = px - dims.w / 2 - p.x * G.scale; G.oy = py - dims.h / 2 - p.y * G.scale; draw(); }
@@ -567,7 +571,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   $('#showLabels').onchange = e => { G.labels = e.target.checked; draw(); };
   let playT = 0;
   $('#yrPlay').onclick = () => { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; return; }
-    let t = G.year >= MAX - 2 ? 0.04 : tOf(G.year); $('#yrPlay').textContent = '❚❚ Pause';
+    let t = G.year >= MAX - 2 ? 0 : tOf(G.year); $('#yrPlay').textContent = '❚❚ Pause';
     playT = setInterval(() => { t += 0.004; if (t >= .995) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; $('#yr').value = 1000; setYear(MAX); return; } $('#yr').value = Math.round(t * 1000); setYear(yOf(t)); }, 110); };
   const short = f => ({texture: 'Texture', harmony: 'Harmony', cadence: 'Cadence', counterpoint: 'Counterpoint', rhythm: 'Rhythm', form: 'Form', pitch: 'Pitch & tuning', timbre: 'Timbre & tech', practice: 'Practice', popular: 'Jazz & popular'})[f] || f;
   $('#legend').innerHTML = Object.keys(V.folders).map(f => `<button type="button" data-only="${f}"><i style="background:var(--c-${f})"></i>${esc(short(f))}</button>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
@@ -601,22 +605,23 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     else if (only !== 'styles') { rows.length = 0; rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
     const H = 26 + rows.length * rowH + 10; let h = '';
     ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${name}</text>`; });
-    TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${c}</text>`; });
+    TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${Y(c)}</text>`; });
     const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
     rows.forEach((r, i) => { const y = 26 + i * rowH;
       if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
       const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
       const cut = narrow ? 25 : 38; h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > cut ? n.title.slice(0, cut - 1) + '…' : n.title)}<title>${esc(n.title)}</title></text>`;
-      if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${n.from}–${n.to}</title></rect>`;
+      if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${YR(n.from, n.to)}</title></rect>`;
       else { const end = n.fade || NOW;
-        h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${n.first}</title></rect>`;
-        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${n.common}${n.fade ? '–' + n.fade : ''}</title></rect>`; }
+        if (n.maybe) h += `<line class="bar" data-id="${n.id}" x1="${x(n.maybe)}" x2="${x(n.first)}" y1="${y + 9.5}" y2="${y + 9.5}" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"><title>${esc(n.title)}: perhaps from c. ${Y(n.maybe)} (?)</title></line>`;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${Y(n.first)}</title></rect>`;
+        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${Y(n.common)}${n.fade ? '–' + Y(n.fade) : ''}</title></rect>`; }
       h += '</g>'; });
     h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
     const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H + 22}`); svg.style.height = (H + 22) + 'px'; svg.innerHTML = h;
     svg.querySelectorAll('[data-id]').forEach(t => t.onclick = () => location.hash = 'note/' + t.dataset.id);
     svg.querySelectorAll('[data-style]').forEach(t => t.onclick = () => { tlFocus = tlFocus === t.dataset.style ? null : t.dataset.style; timeline(); });
-    $('#tlyrLab').textContent = year;
+    $('#tlyrLab').textContent = Y(year);
   }
   $('#tlyr').addEventListener('input', timeline);
   $('#tlShow').innerHTML += Object.keys(V.folders).map(f => `<option value="${f}">${esc(V.folders[f])}</option>`).join('');
@@ -690,7 +695,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     let h = '';
     ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="${T}" width="${x(b) - x(a)}" height="${Hh - T - B}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="ax" x="${(x(a) + x(b)) / 2}" y="${Hh - B + 30}" text-anchor="middle" font-style="italic">${name}</text>`; });
     [1, 2, 3, 4, 6, 8, 12, 16, 24, 40].forEach(n => { h += `<line class="gl" x1="${L}" x2="${W - R}" y1="${yv(n)}" y2="${yv(n)}" stroke-dasharray="${n === 1 ? '0' : '2 4'}"/><text class="ax" x="${L - 8}" y="${yv(n) + 4}" text-anchor="end">${n}</text>`; });
-    TICKS.forEach(c => { h += `<text class="ax" x="${x(c)}" y="${Hh - B + 14}" text-anchor="middle">${c}</text>`; });
+    TICKS.forEach(c => { h += `<text class="ax" x="${x(c)}" y="${Hh - B + 14}" text-anchor="middle">${Y(c)}</text>`; });
     const step = (key, up) => pts.map((q, i) => `${i ? 'L' : 'M'}${x(q.y).toFixed(1)} ${yv(q[key] * (up || 1)).toFixed(1)}`).join('');
     h += `<path d="${step('hi', 1.12)} ${pts.slice().reverse().map(q => `L${x(q.y).toFixed(1)} ${yv(q.lo / 1.12).toFixed(1)}`).join('')}Z" fill="var(--accent)" fill-opacity=".22" stroke="var(--accent)" stroke-opacity=".6"><title>The usual number of voices (the median of the styles of the time)</title></path>`;
     h += `<path d="${step('pk')}" fill="none" stroke="var(--accent)" stroke-opacity=".75" stroke-dasharray="3 4"><title>The most voices known in any style of the time</title></path>`;
