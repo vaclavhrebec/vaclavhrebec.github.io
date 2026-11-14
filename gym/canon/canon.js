@@ -92,8 +92,8 @@ function stepFigure(m, clef) {
   const c = clefFor(clef), from = c.bottom + 4 - (m > 0 ? Math.min(3, Math.ceil(m / 2)) : Math.max(-3, Math.floor(m / 2)));
   const p = pieceFrom({ title: '', c: clef, n: `${from}S ${from + m}S` }, []);
   p.talea = true;
-  const sys = engraveSystems(p, [0], 11, { names: false, fullLast: true })[0];
-  return `<figure class="mv" data-m="${m}">${systemSVG(sys, 7.5)}<figcaption>${SHORT[m]}</figcaption></figure>`;
+  const sys = engraveSystems(p, [0], 16, { names: false, fullLast: true })[0];
+  return `<figure class="mv" data-m="${m}">${systemSVG(sys, 6.4)}<figcaption>${SHORT[m]}</figcaption></figure>`;
 }
 function renderRules() {
   const box = $('rules'); box.hidden = !S.rules;
