@@ -324,7 +324,7 @@ function modelNote({ timbre, midi, a4, at, dur, level, tied, legato }) {
   return out(env, level * I.GAIN.model);
 }
 
-function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null }) {
+function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null, swell = null, inWord = false }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
   if (timbre === 'voice' && BANK.map) {
@@ -332,7 +332,7 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
     /* the accent follows the note value (as for the other flowing sounds); a quick note inside a line on a syllable
        without onset consonants glides in from the note before */
     const acc = value != null ? .15 * Math.min(1, value / 4) : .3, glide = tied || (joined && value != null && value < 2 && unit.cv && unit.cv[0] === '.');
-    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc });
+    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc, swell, inWord });
     if (!u) load([{ u: unit, midi }]);
   }
   if (tied) { at -= XF / 2; dur += XF / 2; }
@@ -456,7 +456,7 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
 }
 
 /* a note sung from the bank: the attack's consonants come before the beat; only a syllable's first note carries an accent */
-function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc }) {
+function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc, swell = null, inWord = false }) {
   if (tied) { at -= XF / 2; dur += XF / 2; }
   if (legato) dur += XF / 2;
   const end = at + dur, env = ctx.createGain(), g = env.gain;
@@ -471,10 +471,15 @@ function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc 
   else if (legato) {
     /* flowing into the next syllable: the vowel gives way where that syllable's onset consonants begin */
     const f = close == null ? end : Math.min(end, Math.max(at + .1, close + .02));
-    g.setValueAtTime(1, Math.max(at + .01, f - XF)); g.linearRampToValueAtTime(0, Math.max(at + .02, f));
+    /* inside a word the vowel melts into the next syllable over a longer crossing */
+    const x = inWord ? XF * 1.8 : XF;
+    g.setValueAtTime(1, Math.max(at + .01, f - x)); g.linearRampToValueAtTime(0, Math.max(at + .02, inWord ? f + XF * .6 : f));
   }
   else { g.setValueAtTime(1, Math.max(at + .01, end - .12)); g.linearRampToValueAtTime(0, Math.max(at + .02, end + .06)); }
-  return out(env, level * 2.6);
+  const o = out(env, level * 2.6);
+  /* the line's shape: the note grows or fades towards the loudness of the next one */
+  if (swell && Math.abs(swell - 1) > .01 && end - at > .15) { o.gain.setValueAtTime(level * 2.6, at + .05); o.gain.linearRampToValueAtTime(level * 2.6 * swell, end); }
+  return o;
 }
 
 /* ---------- a held voice, for live playing (the Guidonian hand) ----------

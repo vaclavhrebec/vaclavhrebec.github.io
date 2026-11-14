@@ -1074,17 +1074,33 @@ function sounding() {
     const flowing = ['voice', 'lute', 'sackbut'].includes(prefs.timbre);
     /* the voice sings each syllable in Latin, with its consonants: the onset before the first note, the coda at the end of the last */
     const syls = texted ? syllablesOf(v.notes) : new Map();
-    let syl = '', prev = null, u = null;
+    let syl = '', prev = null, u = null, hy = false, phrase = [];
+    /* the shape of a phrase (the notes between two rests): rising lines grow, falling lines soften, the phrase's last
+       note is let go; the voice also swells or fades within a note towards the next one, so the line breathes as one */
+    const shape = () => {
+      if (!phrase.length) return;
+      const ms = phrase.map(e => midiOf(e.n, S.piece.bflat, S.shift)), ws = phrase.map(e => e.n.len);
+      const mean = ms.reduce((a, m, i) => a + m * ws[i], 0) / ws.reduce((a, w) => a + w, 0);
+      phrase.forEach((e, i) => {
+        const rise = i ? Math.max(-3, Math.min(3, ms[i] - ms[i - 1])) : 0;
+        e.dyn = Math.max(.7, Math.min(1.35, 1 + .045 * (ms[i] - mean) + .02 * rise - (i === phrase.length - 1 && phrase.length > 1 ? .12 : 0)));
+      });
+      phrase.forEach((e, i) => { if (i + 1 < phrase.length) e.swell = phrase[i + 1].dyn / e.dyn; });
+      phrase = [];
+    };
     v.notes.forEach(n => {
-      if (n.rest) { prev = null; return; }
+      if (n.rest) { prev = null; shape(); return; }
       if (n.tie && prev && midiOf(prev.n, S.piece.bflat, 0) === midiOf(n, S.piece.bflat, 0) && Math.abs(prev.n.t + prev.n.len + (prev.extra || 0) - n.t) < 1e-6) { prev.extra = (prev.extra || 0) + n.len; return; }
-      if (n.text) { syl = n.text; u = snd.units(syls.get(n)); } else if (!texted) u = snd.units(null);
+      /* a new syllable of the same word (the one before ended in a hyphen) is bound to it */
+      const inWord = !!(n.text && prev && hy);
+      if (n.text) { syl = n.text; u = snd.units(syls.get(n)); hy = !!n.hyphen; } else if (!texted) u = snd.units(null);
       const e = { vi, n, syl: n.text || syl, tied: texted && !n.text && !!prev, joined: !!prev, u, last: true };
       if ((e.tied || flowing) && prev) prev.legato = true;
       if (e.tied && prev) prev.last = false;
-      if (prev && !e.tied && Math.abs(prev.n.t + prev.n.len - n.t) < 1e-6) prev.next = e;
-      out.push(e); prev = e;
+      if (prev && !e.tied && Math.abs(prev.n.t + prev.n.len - n.t) < 1e-6) { prev.next = e; if (inWord) prev.inWord = true; }
+      out.push(e); prev = e; phrase.push(e);
     });
+    shape();
   });
   return out.sort((a, b) => a.n.t - b.n.t);
 }
@@ -1119,8 +1135,12 @@ function startPlayback() {
       const tie = tied && n.t >= from - 1e-6;
       const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len + (events[ei - 1].extra || 0) - cut) * k - (legato ? 0 : .03));
       /* the coda closes before the next syllable's onset consonants begin */
-      const ev = events[ei - 1], nx = ev.next, close = at + dur - (nx ? Math.min(.25, snd.leadOf(nx.u, midiOf(nx.n, p.bflat, S.shift))) : 0);
-      playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) });
+      /* inside a word the vowel runs on into the next syllable's consonants (legato); between words it gives way to them */
+      const ev = events[ei - 1], nx = ev.next, lead = nx ? Math.min(.25, snd.leadOf(nx.u, midiOf(nx.n, p.bflat, S.shift))) : 0;
+      const close = at + dur - (ev.inWord ? lead * .3 : lead);
+      const shaped = prefs.timbre !== 'organ' && prefs.musical !== false;
+      playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, inWord: !!ev.inWord,
+        swell: shaped && legato ? ev.swell : null, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };
