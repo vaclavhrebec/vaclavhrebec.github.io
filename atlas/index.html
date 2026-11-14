@@ -331,7 +331,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const KNOTS = [[MIN, 0], [-500, .045], [700, .085], [1200, .2], [1450, .335], [1600, .45], [1750, .565], [1850, .685], [1900, .755], [1950, .84], [2000, .94], [MAX, 1]];
   function tOf(y) { for (let i = 1; i < KNOTS.length; i++) if (y <= KNOTS[i][0]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return t0 + (y - y0) / (y1 - y0) * (t1 - t0); } return 1; }
   function yOf(t) { for (let i = 1; i < KNOTS.length; i++) if (t <= KNOTS[i][1]) { const [y0, t0] = KNOTS[i - 1], [y1, t1] = KNOTS[i]; return Math.round(y0 + (t - t0) / (t1 - t0) * (y1 - y0)); } return MAX; }
-  const TICKS = [-3000, -1000, 800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
+  const TICKS = [-3000, 800, 1000, 1200, 1300, 1400, 1500, 1600, 1700, 1750, 1800, 1850, 1900, 1925, 1950, 1975, 2000];
   const ERAS = [['Antiquity', MIN, 500], ['Middle Ages', 500, 1430], ['Renaissance', 1430, 1600], ['Baroque', 1600, 1750], ['Classical', 1750, 1820], ['Romantic', 1820, 1910], ['Modernism', 1910, 1975], ['Contemporary', 1975, NOW]];
   const Y = y => y < 0 ? (-y) + ' BC' : y === 0 ? 'AD 1' : String(y);
   const YR = (a, b, alive) => Y(a) + '–' + (alive ? 'today' : (a < 0 && b > 0 ? 'AD ' : '') + Y(b));
