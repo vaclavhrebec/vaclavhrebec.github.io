@@ -12,7 +12,7 @@
 :root {
   --bg: #1e1e1e; --bg2: #262626; --bg3: #2f2f2f; --line: #363636; --fg: #dcddde; --muted: #999; --faint: #6b6b6b;
   --accent: #a88bfa; --accent2: #8a5cf5; --sel: rgba(138,92,245,.18); --hover: rgba(255,255,255,.06);
-  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a; --c-harmony: #f08a6c; --c-timbre: #a6d96a; --c-popular: #f2a4d8;
+  --c-texture: #6ab0f3; --c-cadence: #f0b35a; --c-counterpoint: #7fd1a8; --c-rhythm: #e88aa8; --c-form: #c7a1f5; --c-pitch: #5fd0d6; --c-practice: #e6d36a; --c-harmony: #f08a6c; --c-timbre: #a6d96a; --c-popular: #f2a4d8; --c-forces: #9fb4ff;
   --c-style: #a88bfa;
   --sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
@@ -21,14 +21,14 @@
 :root[data-theme="light"] {
   --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
   --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
-  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
+  --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f; --c-forces: #4a5fc1;
   --c-style: #7b55e6; color-scheme: light;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     --bg: #ffffff; --bg2: #f6f6f6; --bg3: #ececec; --line: #e0e0e0; --fg: #222; --muted: #6b6b6b; --faint: #9a9a9a;
     --accent: #7b55e6; --accent2: #6a3fe0; --sel: rgba(123,85,230,.12); --hover: rgba(0,0,0,.05);
-    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f;
+    --c-texture: #2b7fd1; --c-cadence: #c47d10; --c-counterpoint: #229063; --c-rhythm: #c94471; --c-form: #8a52d6; --c-pitch: #138d93; --c-practice: #9a8510; --c-harmony: #c9502c; --c-timbre: #5b9a1f; --c-popular: #b8478f; --c-forces: #4a5fc1;
     --c-style: #7b55e6; color-scheme: light;
   }
 }
@@ -327,6 +327,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-works.js"></script>
 <script src="vault-treatises.js"></script>
 <script src="vault-sources.js"></script>
+<script src="vault-forces.js"></script>
 <script>
 (function () {
   'use strict';
@@ -468,6 +469,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <p>A style is not a thing but a <b>combination</b>. This atlas breaks the history of composed music – from the lyre songs of Sumer and Greece and plainchant to spectralism, from the troubadours to hip hop – into <b>elements</b> – a kind of cadence, a texture, a notation, a tuning – and dates each one: when it <em>first</em> appears in the sources, when it becomes <em>common</em>, and when it <em>fades</em>. A <b>style</b> is then simply the set of elements that coexist in a place and time.</p>
       <p>Take the <a class="il" href="#note/picardy-third" data-id="picardy-third">major third in the final chord</a>: it needs a texture of four or more voices and a tuning in which the third is sweet. So it cannot belong to the <a class="il style" href="#note/notre-dame" data-id="notre-dame">Notre Dame school</a>, it appears rarely in the <a class="il style" href="#note/ockeghem" data-id="ockeghem">Ockeghem generation</a> and becomes the rule with <a class="il style" href="#note/palestrina" data-id="palestrina">Palestrina</a>.</p>
       <p>Every style also has a number of <b>real voices</b> – independent contrapuntal lines, not performers – so that a piece in four voices stays a four-voice piece however many instruments play it. The <b>voices view</b> follows the number from the single line of plainchant, through the two voices that carry most of the Magnus liber organi, to the 40-part works of the 16th century; the <a class="il" href="#combine" data-go="combine">style finder</a> can filter by it.</p>
+      <p>Every style also has a <b>medium</b> – vocal, instrumental, voices with instruments, or electronic – and a note on the ensemble that performed it; every element says whether it belongs to voices, to instruments or to both. A vocal style therefore never contains a lute technique, and the instrumental music of an age has its own entry beside its vocal polyphony. The ensembles themselves – the chant choir, the chapel, the minstrels, the consort, the orchestra, the wind band, the choral society and the band – are in the folder <i>Forces &amp; ensembles</i>, with a definition of when an orchestra is an orchestra.</p>
       <p>Open the <b>graph view</b> and move the year slider – or press Play – to watch elements appear and the styles form around them; switch on <b>Time axis</b> to line everything up chronologically, and click a colour in the legend to follow one family of elements (harmony, rhythm, timbre…) through the centuries. The <b>timeline</b> shows every element as a bar, era by era. The <b>style finder</b> works backwards: pick the elements you hear in a piece and it tells you when they could have coexisted and which styles share them.</p>
       <p>Some elements return after centuries in a new guise – <a class="il" href="#note/parallel-chords" data-id="parallel-chords">Debussy’s parallel chords</a> after <a class="il" href="#note/parallel-organum" data-id="parallel-organum">parallel organum</a>, <a class="il" href="#note/swing" data-id="swing">swing</a> after <a class="il" href="#note/notes-inegales" data-id="notes-inegales">notes inégales</a>, <a class="il" href="#note/total-serialism" data-id="total-serialism">total serialism</a> after <a class="il" href="#note/isorhythm" data-id="isorhythm">isorhythm</a>. The links between such notes are the morphology: forms that grow, die back and sprout again.</p>
       <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the <b>Feedback</b> button below.</div>
@@ -490,6 +492,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         <dt>${ICON.cal}common</dt><dd>c. ${Y(n.common)}</dd>
         <dt>${ICON.cal}fades</dt><dd>${n.fade ? 'c. ' + Y(n.fade) : '— still in use today'}</dd>
         <dt>${ICON.pin}where</dt><dd>${md(n.scope)}</dd>
+        <dt>${ICON.list}medium</dt><dd>${{v: 'vocal only', i: 'instrumental only', m: 'voices and instruments together', vi: 'vocal or instrumental'}[n.forces] || '—'}</dd>
         <dt>${ICON.tag}tags</dt><dd><a class="tag" href="#" data-folder="${n.folder}">#${n.folder}</a></dd>
         ${treatisesOf(id).length ? `<dt>${ICON.list}described in</dt><dd>${treatisesOf(id).map(trLink).join('<br>')}</dd>` : ''}
         <dt>${ICON.list}in styles</dt><dd>${st.length ? st.map(s => `<a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a>`).join(', ') : '—'}</dd>
@@ -502,6 +505,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       h = `<div class="crumb">Styles</div><h1>${esc(n.title)}</h1>
         <details class="props" open><summary>Properties</summary><dl>
         <dt>${ICON.cal}period</dt><dd>c. ${YR(n.from, n.to, n.alive)}</dd>
+        ${n.medium ? `<dt>${ICON.list}medium</dt><dd><a class="tag" href="#combine" data-medium="${n.medium}">#${n.medium}</a>${n.ensemble ? '<br><span class="small" style="color:var(--muted);font-size:12.5px">' + esc(n.ensemble) + '</span>' : ''}</dd>` : ''}
         <dt>${ICON.list}elements</dt><dd>${n.elements.length}</dd>
         ${voiceRow(n.id)}
         ${(V.albums || {})[n.id] ? `<dt>${ICON.list}listen</dt><dd>${V.albums[n.id].map(esc).join('<br>')}</dd>` : ''}
@@ -515,6 +519,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     }
     el.innerHTML = h;
     el.querySelectorAll('.tag[data-folder]').forEach(t => t.onclick = e => { e.preventDefault(); $('#search').value = ''; filterFolder(t.dataset.folder); });
+    el.querySelectorAll('.tag[data-medium]').forEach(t => t.onclick = () => { mpick = t.dataset.medium; });
     renderLinks(n);
     $('#v-note').scrollTop = 0;
   }
@@ -733,14 +738,16 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   $('#tlShow').addEventListener('change', timeline);
 
   /* ---------- style finder ---------- */
-  const pick = new Set(); let vpick = null;
+  const pick = new Set(); let vpick = null, mpick = null;
   function combine() {
     let h = `<h1>Style finder</h1><p class="lead">Choose the elements you hear in a piece. The finder shows when all of them could have coexisted and which styles share the combination – a style is a set of elements present at the same time.</p><div>`;
     h += `<fieldset><legend>Number of real voices</legend><div class="opts">${[1, 2, 3, 4, 5, 6, 8, 12, 16, 24, 40].map(n => `<button class="pill" type="button" data-v="${n}" aria-pressed="${vpick === n}">${n}</button>`).join('')}</div></fieldset>`;
+    h += `<fieldset><legend>Medium</legend><div class="opts">${Object.entries(V.MEDIA || {}).map(([k, t]) => `<button class="pill" type="button" data-m="${k}" aria-pressed="${mpick === k}">${esc(t)}</button>`).join('')}</div></fieldset>`;
     for (const f in V.folders) h += `<fieldset><legend>${esc(V.folders[f])}</legend><div class="opts">${V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).map(e => `<button class="pill" type="button" data-p="${e.id}" aria-pressed="${pick.has(e.id)}">${esc(e.title)}</button>`).join('')}</div></fieldset>`;
     h += `</div><div class="res" id="res"></div>`;
     $('#cmb').innerHTML = h;
     $('#cmb').querySelectorAll('[data-p]').forEach(b => b.onclick = () => { pick.has(b.dataset.p) ? pick.delete(b.dataset.p) : pick.add(b.dataset.p); b.setAttribute('aria-pressed', pick.has(b.dataset.p)); results(); });
+    $('#cmb').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { mpick = mpick === b.dataset.m ? null : b.dataset.m; $('#cmb').querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', mpick === x.dataset.m)); results(); });
     $('#cmb').querySelectorAll('[data-v]').forEach(b => b.onclick = () => { vpick = vpick === +b.dataset.v ? null : +b.dataset.v; $('#cmb').querySelectorAll('[data-v]').forEach(x => x.setAttribute('aria-pressed', vpick === +x.dataset.v)); results(); });
     results();
   }
@@ -748,7 +755,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     const sel = [...pick].map(id => byId[id]);
     let h = '';
     const usual = s => VV[s.id] && vpick >= VV[s.id][0] && vpick <= VV[s.id][1], rare = s => VV[s.id] && !usual(s) && vpick >= VV[s.id][0] && vpick <= VV[s.id][2];
-    if (!sel.length && vpick) h = '';
+    if (!sel.length && (vpick || mpick)) h = '';
     else if (!sel.length) h = `<div class="box"><h3>Start here</h3><p class="small">Pick two or three elements – for example <button class="linkbtn" data-ex="pervasive-imitation,picardy-third,five-plus-voices">imitation + Picardy third + five voices</button> or <button class="linkbtn" data-ex="isorhythm,double-leading-tone,formes-fixes">isorhythm + double leading tone + formes fixes</button>, <button class="linkbtn" data-ex="sonata-form,alberti-bass,classical-orchestra">sonata form + Alberti bass + Classical orchestra</button> or <button class="linkbtn" data-ex="extended-tertian,parallel-chords,whole-tone">extended chords + parallel chords + whole-tone scale</button>.</p></div>`;
     else {
       const lo = Math.max(...sel.map(n => n.first)), hi = Math.min(...sel.map(n => n.fade || NOW));
@@ -757,12 +764,16 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         ? `<div class="era">c. ${lo}–${hi === NOW ? 'today' : hi}</div><p class="small">${loC <= hi ? `All of them normal together from c. ${loC}.` : 'They overlap only while some are still new.'}</p>`
         : `<div class="era">—</div><p class="small">These elements never coexisted in the sources: one had faded before another appeared.</p>`) + `</div>`;
       const ranked = V.styles.map(s => { const inter = sel.filter(n => s.elements.includes(n.id)).length; const union = new Set(s.elements.concat([...pick])).size; return {s, inter, score: inter / union, cover: inter / sel.length}; })
-        .filter(r => r.inter && (!vpick || usual(r.s) || rare(r.s))).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
+        .filter(r => r.inter && (!vpick || usual(r.s) || rare(r.s)) && (!mpick || r.s.medium === mpick)).sort((a, b) => b.cover - a.cover || b.score - a.score).slice(0, 6);
       h += `<div class="box"><h3>Styles with this combination</h3>${ranked.length ? ranked.map(r => `<div class="match"><a class="il style" href="#note/${r.s.id}" data-id="${r.s.id}">${esc(r.s.title)}</a><span class="pc">${r.inter}/${sel.length}</span><span class="barw"><i style="width:${Math.round(r.cover * 100)}%"></i></span></div>`).join('') : '<p class="small">No style in the vault uses these elements.</p>'}</div>`;
       h += `<p><button class="linkbtn" id="clr">Clear the selection</button></p>`;
     }
+    if (mpick && !sel.length) {
+      const list = V.styles.filter(s => s.medium === mpick).sort((a, b) => a.from - b.from);
+      h += `<div class="box"><h3>${esc(V.MEDIA[mpick])}: ${list.length} styles</h3>${list.map(s => `<div class="match"><a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a><span class="pc">${s.from}–${s.alive ? 'today' : s.to}</span></div>`).join('')}</div>`;
+    }
     if (vpick) {
-      const f = V.styles.filter(usual).sort((a, b) => a.from - b.from), g = V.styles.filter(rare).sort((a, b) => a.from - b.from), li = s => `<div class="match"><a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a><span class="pc">${s.from}–${s.alive ? 'today' : s.to}</span></div>`;
+      const okM = s => !mpick || s.medium === mpick, f = V.styles.filter(s => usual(s) && okM(s)).sort((a, b) => a.from - b.from), g = V.styles.filter(s => rare(s) && okM(s)).sort((a, b) => a.from - b.from), li = s => `<div class="match"><a class="il style" href="#note/${s.id}" data-id="${s.id}">${esc(s.title)}</a><span class="pc">${s.from}–${s.alive ? 'today' : s.to}</span></div>`;
       h += `<div class="box"><h3>${vpick} real voice${vpick > 1 ? 's' : ''}: usual in</h3>${f.length ? f.map(li).join('') : '<p class="small">No style in the collection uses this many voices as a rule.</p>'}</div>` + (g.length ? `<div class="box"><h3>Possible but exceptional in</h3>${g.map(li).join('')}</div>` : '');
     }
     $('#res').innerHTML = h;
