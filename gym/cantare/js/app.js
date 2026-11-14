@@ -678,13 +678,13 @@ function buildSection(which, c) {
 
   /* sound */
   if (which === 'sound') card(tr('Sound'),
-    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; voiceReady(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; voiceReady(); savePrefs(); buildStudio(); testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })));
 
-  /* the organ registers speak with the pipe settings; Your own takes the drawbars */
-  if (which === 'pipes' && (snd.REG[prefs.timbre] || prefs.timbre === 'custom')) {
+  /* the organ registers speak with the pipe settings; Your own takes the drawbars (shown in the same Sound window) */
+  if ((which === 'pipes' || which === 'sound') && (snd.REG[prefs.timbre] || prefs.timbre === 'custom')) {
     const pipe = card(tr('Pipes'));
     [['atk', 'Attack', 0, 300, 1, ' ms'], ['rel', 'Release', 10, 600, 5, ' ms'], ['chiff', 'Chiff', 0, 100, 1, ''], ['ens', 'Ensemble', 0, 12, .1, ' ct'], ['wind', 'Wind', 0, 100, 1, ''], ['scoop', 'Scoop', 0, 30, 1, ' ct']]
       .forEach(([k, label, a, b, st, u]) => pipe.append(slider(tr(label), a, b, snd.SOUND[k], v => setSound({ [k]: v }), st, u)));
@@ -710,9 +710,8 @@ function buildSection(which, c) {
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));
 
   if (which === 'tactus') card(tr('Tactus'),
-    chipRow(tr('Hand'), [['off', tr('Off')], ['palm', tr('Bare hand')], ['baton', tr('With a baton')]].map(([k, n]) => chip(n, k === 'off' ? !prefs.hand : prefs.hand && (prefs.handStyle || 'palm') === k, () => { if (k === 'off') prefs.hand = false; else { prefs.hand = true; prefs.handStyle = k; } savePrefs(); syncHand(); buildStudio(); }))),
+    chipRow(tr('Show'), BEATS.map(([k, n]) => chip(tr(n), beatNow() === k, () => setBeat(k)))),
     slider(tr('Size of the hand'), 50, 200, Math.round((prefs.handSize || 1) * 100), v => { prefs.handSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
-    chipRow(tr('Pendulum'), [chip(tr('On'), prefs.pendulum, () => { prefs.pendulum = true; savePrefs(); syncHand(); buildStudio(); }), chip(tr('Off'), !prefs.pendulum, () => { prefs.pendulum = false; savePrefs(); syncHand(); buildStudio(); })]),
     slider(tr('Size of the pendulum'), 40, 200, Math.round((prefs.pendSize || 1) * 100), v => { prefs.pendSize = v / 100; savePrefs(); syncHand(); }, 5, '%', null, true),
     chipRow(tr('Click'), [chip(tr('On'), prefs.click, () => { prefs.click = true; savePrefs(); buildStudio(); }), chip(tr('Off'), !prefs.click, () => { prefs.click = false; savePrefs(); buildStudio(); })]));
   if (which === 'share') card(tr('Share'), el('div', { class: 'row' }, chip(tr('Copy link'), false, async () => {
@@ -758,6 +757,25 @@ function beatButton() {
   b.append(parse(`<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`), el('span', {}, tr(label)));
   return b;
 }
+function setBeat(n) {
+  prefs.hand = n === 'palm' || n === 'baton'; if (prefs.hand) prefs.handStyle = n;
+  prefs.pendulum = n === 'pendulum';
+  savePrefs(); syncHand(); buildStudio();
+}
+/* one button for the tactus (hand, baton, pendulum, click): it shows what beats now and opens its window */
+function tactusButton() {
+  const [id, label, icon] = BEATS.find(b => b[0] === beatNow());
+  const b = el('button', { type: 'button', class: 'chip opt beatcycle', 'aria-pressed': String(id !== 'off' || !!prefs.click), title: tr('Tactus: hand, baton, pendulum and click'), onclick: () => (optOpen === 'tactus' ? closeOpt() : openOpt('tactus')) });
+  b.append(parse(`<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg>`), el('span', {}, tr(label) + (prefs.click ? ' + ' + tr('Click') : '') + ' ▾'));
+  return b;
+}
+/* one small button for the sound: it names the sound now chosen and opens the window with all of them */
+function soundButton() {
+  const name = tr((snd.TIMBRES[prefs.timbre] || {}).label || 'Sound');
+  const b = el('button', { type: 'button', class: 'chip opt soundbtn', title: tr('Sound') + ': ' + name, onclick: () => (optOpen === 'sound' ? closeOpt() : openOpt('sound')) });
+  b.append(parse('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.500 8.500a5 5 0 0 1 0 7M19 6a8.500 8.500 0 0 1 0 12"/></svg>'), el('span', {}, name), el('span', { class: 'caret' }, '▾'));
+  return b;
+}
 function buildStudio() {
   const bar = $('#optbar'), b = S.base, multi = b.voices.length > 1;
   const btn = (label, pressed, fn, title) => el('button', { type: 'button', class: 'chip opt', ...(pressed == null ? {} : { 'aria-pressed': String(!!pressed) }), onclick: fn, title: title || '' }, label);
@@ -765,11 +783,8 @@ function buildStudio() {
   const THEMES = [['dark', 'Dark'], ['light', 'Light']];
   const themeName = (THEMES.find(t => t[0] === prefs.theme) || THEMES[0])[1];
   bar.replaceChildren(...[
-    btn(tr('Sound') + ' ▾', null, more('sound')),
-    (snd.REG[prefs.timbre] || prefs.timbre === 'custom') ? btn(tr('Pipes') + ' ▾', null, more('pipes')) : '',
-    btn(tr('Click'), prefs.click, () => { prefs.click = !prefs.click; savePrefs(); buildStudio(); }),
-    beatButton(),
-    btn(tr('Hand and pendulum') + ' ▾', null, more('tactus')),
+    soundButton(),
+    tactusButton(),
     btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
     multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',
     btn(tr('One line'), !!prefs.roll, () => { prefs.roll = !prefs.roll; if (prefs.roll && prefs.view === 'book') prefs.view = 'score'; savePrefs(); render(true); buildStudio(); try { buildTransform(); } catch (e) {} }, tr('The whole piece on one long line that rolls by while it plays; the clefs stay at the left')),
@@ -782,8 +797,7 @@ function buildStudio() {
       : btn(tr('Keep as my melody'), null, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, tr('Keep this melody, as it is now, among your own, to change and send')),
   ].filter(Boolean));
   if (optOpen) {
-    if (optOpen === 'pipes' && !(snd.REG[prefs.timbre] || prefs.timbre === 'custom')) closeOpt();
-    else { const box = $('#optPop .cards'); if (box) { box.textContent = ''; buildSection(optOpen, box); } }
+    { const box = $('#optPop .cards'); if (box) { box.textContent = ''; buildSection(optOpen, box); } }
   }
 }
 document.addEventListener('pointerdown', e => { const pop = $('#optPop'); if (pop && !pop.hidden && !pop.contains(e.target) && !e.target.closest('#optbar')) closeOpt(); });
@@ -2185,9 +2199,9 @@ new ResizeObserver(() => {
 if (prefs.timbre === 'voice') snd.prepare(); else if (snd.TIMBRES[prefs.timbre]) snd.warm(prefs.timbre);
 /* the sound, chosen in the bar at the bottom (the same choice as Timbre in the Studio); Voice is sung by Chimera */
 function buildSoundSel() {
-  const sel = $('#soundSel'); sel.textContent = '';
+  const sel = $('#soundSel'); if (!sel) return; sel.textContent = '';
   Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(v.label))));
 }
-$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; voiceReady(); savePrefs(); buildStudio(); });
-buildSoundSel();
+/* the sound is now chosen in the Sound window only (the list in the bar is gone) */
+if ($('#soundSel')) { $('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; voiceReady(); savePrefs(); buildStudio(); }); buildSoundSel(); }
 window.cantare = { S, prefs, openItem, jrpGet };
