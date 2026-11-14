@@ -114,16 +114,17 @@
   <button class="rewind" id="rewind" aria-label="Back to the beginning" title="Back to the beginning"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14"/><path d="M19 6v12l-9.5-6z"/></svg></button>
   <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
   <button class="rewind loop" id="loopBtn" aria-pressed="false" aria-label="Loop" title="Loop: repeat the whole piece until stopped"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9a3 3 0 0 1 3-3h11"/><path d="M15 3l3 3-3 3"/><path d="M20 13v2a3 3 0 0 1-3 3H6"/><path d="M9 21l-3-3 3-3"/></svg></button>
-  <label class="tempo" title="Semibreves per minute"><span>Semibrevis</span><input type="number" id="tempo" min="10" max="300" step="1" inputmode="numeric" value="60" aria-label="Semibreves per minute"></label>
+  <label class="tempo" title="Semibreves per minute: type the tempo"><span>Semibrevis</span><input type="number" id="tempo" min="10" max="300" step="1" inputmode="numeric" value="60" aria-label="Semibreves per minute"></label>
+  <button class="chip" id="tap" type="button" title="Tap the beat twice or more: the tempo follows your taps">Tap</button>
   <label class="tempo pitch" title="The pitch of a′ in Hz"><span>Pitch</span><span class="pitchrow">a′ =<input type="text" id="pitchHz" inputmode="decimal" value="440" aria-label="a′ in Hz"></span></label>
-  <label class="tempo snd" title="Sound"><span>Sound</span><select id="soundSel"></select></label>
-  <label class="tempo vol" title="Volume"><span>Volume</span><input type="range" id="vol" min="0" max="100" value="80"></label>
-  <button class="chip" id="clickBtn" aria-pressed="false" title="A click on every semibreve">Click</button>
+  <button class="chip opt soundbtn" id="soundBtn" type="button" title="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg><span id="soundName">Voice</span><span class="caret">▾</span></button>
+  <button class="chip opt" id="clickBtn" aria-pressed="false" title="A click on every semibreve">Click</button>
 </footer>
 <div id="sheet" class="sheet" hidden>
   <div class="sheet-head"><b id="shTitle"></b><span class="grow"></span><button id="shPlay" class="btn small">▶ From here</button><button id="shClose" class="btn small" aria-label="Close">✕</button></div>
   <div id="shBody" class="sheet-body"></div>
 </div>
+<div class="pop optpop" id="optPop" hidden></div>
 <div id="toast" class="toast" role="status"></div>
 <script type="module" src="js/app.js"></script>
 </body>

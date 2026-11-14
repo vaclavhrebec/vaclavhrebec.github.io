@@ -117,3 +117,25 @@ body[data-tab="tre"] .dock, body[data-tab="about"] .dock { display: none; }
 .toast { position: fixed; left: 50%; bottom: 120px; transform: translate(-50%, 20px); background: var(--ink); color: var(--bg); padding: 8px 14px; border-radius: 10px; font-size: 13px; opacity: 0; pointer-events: none; transition: .25s; z-index: 30; max-width: 90vw; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 @media (max-width: 640px) { .tre { grid-template-columns: 1fr; } .brand span { display: none; } .brand b { font-size: 24px; } .tabs { top: 55px; } .dock { gap: 6px 8px; } .tempo.vol { display: none; } }
+
+/* the player bar as in Cantare: one compact row, labels beside their boxes, the sound in one button with its window */
+.dock { gap: 6px 10px; padding: 6px 12px; padding-bottom: max(6px, env(safe-area-inset-bottom)); flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+.dock::-webkit-scrollbar { display: none; }
+.dock .play { width: 44px; height: 44px; } .dock .rewind { width: 34px; height: 34px; }
+.rewind.loop { margin-right: 0; margin-left: -4px; }
+.rewind.loop[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.dock .tempo { flex-direction: row; align-items: center; gap: 6px; }
+.dock .tempo input[type=number], .dock .tempo input[type=text] { width: 3.8rem; padding: 4px 6px; font-size: 15px; }
+.dock .chip { flex: none; white-space: nowrap; }
+.chip.soundbtn { display: inline-flex; align-items: center; gap: 6px; max-width: 9.5rem; }
+.chip.soundbtn span:not(.caret) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.chip.soundbtn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(440px, calc(100vw - 24px)); max-height: min(80vh, 640px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); padding: 10px; display: grid; gap: 10px; z-index: 30; }
+.pop[hidden] { display: none; }
+.pop .card { margin: 0; }
+.pop .card h3 { margin: 0 0 8px; font: 600 12px var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--soft); }
+.pop .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 6px 0; }
+.pop .row > label { min-width: 5.5rem; font-size: 13px; color: var(--soft); }
+.pop input[type=range] { flex: 1; accent-color: var(--accent); min-width: 6rem; }
+.pop .hint { font-size: 12.5px; color: var(--soft); margin: 6px 0 0; }
+.pophead { display: flex; justify-content: flex-end; } .pophead button { border: 0; background: none; font-size: 22px; color: var(--soft); cursor: pointer; }

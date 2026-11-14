@@ -16,9 +16,11 @@ const FSTORE = 'fiorire:v1';
 let cp = {}, fp = {};
 try { cp = JSON.parse(localStorage.getItem('cantare-next:v1')) || {}; } catch (e) { /* none */ }
 try { fp = JSON.parse(localStorage.getItem(FSTORE)) || {}; } catch (e) { /* none */ }
-const okTimbre = t => t && t !== 'voice' && t !== 'custom' && snd.TIMBRES[t];
-const P = { theme: cp.theme === 'light' ? 'light' : 'dark', tempo: cp.tempo || 60, timbre: okTimbre(cp.timbre) ? cp.timbre : 'organ', a4: cp.a4 || 440, volume: cp.volume ?? .8, zoom: 12, view: 'score', click: false, loop: false, bookKind: cp.bookKind || 'it', ...fp };
-if (!okTimbre(P.timbre)) P.timbre = 'organ';
+/* the same sounds as Cantare, in the same order; Chimera's voice first and by default */
+const okTimbre = t => t && snd.TIMBRES[t];
+const P = { theme: cp.theme === 'light' ? 'light' : 'dark', tempo: cp.tempo || 60, timbre: 'voice', a4: cp.a4 || 440, volume: cp.volume ?? .8, zoom: 12, view: 'score', click: false, loop: false, bookKind: cp.bookKind || 'it', ...fp };
+if (!fp.voiceDefault) { P.timbre = 'voice'; P.voiceDefault = true; }
+if (!okTimbre(P.timbre)) P.timbre = 'voice';
 snd.setSound(cp.sound || {});
 const savePrefs = () => { try { localStorage.setItem(FSTORE, JSON.stringify(P)); } catch (e) { /* ignore */ } };
 function applyTheme() { document.documentElement.dataset.theme = P.theme; const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = P.theme === 'dark' ? '#000000' : '#ffffff'; }
@@ -202,24 +204,78 @@ function setPlaying(on) {
   $('#playIcon').innerHTML = on ? '<path d="M7 6h3v12H7zM14 6h3v12h-3z"/>' : '<path d="M8 5.500v13l10.500-6.500z"/>';
   $('#play').setAttribute('aria-label', on ? 'Pause' : 'Play');
 }
+/* ---------- the shape of the lines, as in Cantare: a voice sings each phrase (from rest to rest) on one breath;
+   a phrase begins gently and grows, rising lines grow and falling ones soften, semiminims go in slurred pairs,
+   and a phrase ending on a long note lets it die away */
+function phrase(events, bflat) {
+  const flowing = ['voice', 'lute', 'sackbut'].includes(P.timbre);
+  const by = new Map();
+  events.forEach(e => { if (!by.has(e.vi)) by.set(e.vi, []); by.get(e.vi).push(e); });
+  by.forEach(list => {
+    list.sort((a, b) => a.n.t - b.n.t);
+    let ph = [];
+    const shape = () => {
+      if (!ph.length) return;
+      const ms = ph.map(e => midiOf(e.n, bflat)), ws = ph.map(e => e.n.len);
+      const mean = ms.reduce((a, m, i) => a + m * ws[i], 0) / ws.reduce((a, w) => a + w, 0), t0 = ph[0].n.t;
+      ph.forEach((e, i) => {
+        const rise = i ? Math.max(-3, Math.min(3, ms[i] - ms[i - 1])) : 0;
+        let d = 1 + .09 * (ms[i] - mean) + .04 * rise - (i === ph.length - 1 && ph.length > 1 ? .15 : 0);
+        const w = Math.min(1, (e.n.t - t0) / 4);
+        e.dyn = (.8 + .2 * w) * (1 + w * (d - 1));
+      });
+      ph.forEach((a, i) => {
+        const b = ph[i + 1];
+        if (b && !a.pairB && a.n.v === 'Sm' && b.n.v === 'Sm' && Math.abs(((a.n.t % 1) + 1) % 1) < 1e-6) {
+          a.pairA = true; b.pairB = true; a.dyn *= 1.06; b.dyn *= .84;
+          const ineg = P.inegal === 'inegal' || P.inegal === 'contre' ? P.inegal : null;
+          if (ineg && Math.abs(a.n.step - b.n.step) <= 1) { const r = P.inegalDeg === 'dotted' ? .75 : .6, d = (ineg === 'contre' ? 1 - r : r) - .5; a.dl = d; b.dt = d; b.dl = -d; }
+        }
+      });
+      ph.forEach(e => { e.dyn = Math.max(.5, Math.min(1.7, e.dyn)); });
+      ph.forEach((e, i) => { if (i + 1 < ph.length) e.swell = ph[i + 1].dyn / e.dyn; });
+      const z = ph[ph.length - 1]; if (ph.length > 1 && z.n.len >= 2) z.fade = .65;
+      ph = [];
+    };
+    list.forEach((e, i) => {
+      const p = list[i - 1];
+      const joined = p && Math.abs(p.n.t + p.n.len - e.n.t) < 1e-6;
+      if (!joined) shape();
+      if (joined) {
+        e.joined = true;
+        if (flowing) p.legato = true;
+        if (P.timbre === 'voice') { e.tied = true; p.last = false; }
+      }
+      ph.push(e);
+    });
+    shape();
+  });
+}
 /* exps: the voices to sound; follow: highlight the notes in the score and turn the leaves */
 async function startPlayback(from = 0, until = Infinity, src = null) {
   stopPlayback(true);
   const ctx = snd.ensure(); snd.setVolume(P.volume);
   const follow = !src, exps = src ? src.exps : S.exps, bflat = src ? src.bflat : S.st.bflat, mute = src ? [] : S.st.voices.map(v => v.mute);
   const b = $('#play'); b.disabled = true;
-  await Promise.race([snd.warm(P.timbre), new Promise(r => setTimeout(r, 8000))]);
-  b.disabled = false;
   const events = []; exps.forEach((ex, vi) => { if (mute[vi]) return; ex.forEach(n => { if (!n.rest && n.t + n.len > from + 1e-6 && n.t < until) events.push({ vi, n }); }); });
+  phrase(events, bflat);
   events.sort((a, c) => a.n.t - c.n.t);
+  /* the voice sings on "a": its files for the pitches of the piece load first */
+  const ready = P.timbre === 'voice' ? snd.prepare().then(() => snd.load(events.map(e => ({ u: snd.units(null), midi: midiOf(e.n, bflat) })))) : snd.warm(P.timbre);
+  await Promise.race([ready, new Promise(r => setTimeout(r, 8000))]);
+  b.disabled = false;
   const k = spm(), t0 = ctx.currentTime + .15, end = Math.min(until, Math.max(0, ...exps.map(ex => ex.length ? ex[ex.length - 1].t + ex[ex.length - 1].len : 0)));
   clock = { t0, from, k, end, follow };
   let ei = 0, bi = Math.ceil(from / 2 - 1e-9);
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
     while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
-      const { vi, n } = events[ei++]; const cut = Math.max(0, from - n.t), at = t0 + Math.max(0, n.t - from) * k;
-      playNote({ timbre: P.timbre, midi: midiOf(n, bflat), a4: P.a4, at, text: 'a', value: n.len, dur: Math.max(.08, (n.len - cut) * k - .03), key: vi, level: .2 / Math.sqrt(Math.max(1, exps.length)) });
+      const e = events[ei++], { vi, n } = e, nt = n.t + (e.dt || 0); const cut = Math.max(0, from - nt), at = t0 + Math.max(0, nt - from) * k;
+      const shaped = P.timbre !== 'organ';
+      playNote({ timbre: P.timbre, midi: midiOf(n, bflat), a4: P.a4, at, text: 'a', value: n.len, dur: Math.max(.08, (n.len + (e.dl || 0) - cut) * k - (e.legato ? 0 : .03)),
+        tied: !!e.tied && cut === 0, legato: !!e.legato, joined: !!e.joined && cut === 0, last: e.last !== false, key: vi,
+        swell: shaped && e.legato ? e.swell : null, fade: shaped ? e.fade : null, lift: !!e.pairA,
+        level: .2 / Math.sqrt(Math.max(1, exps.length)) * (shaped ? e.dyn || 1 : 1) });
     }
     while (P.click && bi * 2 < end && t0 + (bi * 2 - from) * k < horizon) { snd.click(t0 + (bi * 2 - from) * k, bi % 2 === 0); bi++; }
   };
@@ -255,10 +311,38 @@ $('#tempo').value = P.tempo;
 $('#tempo').addEventListener('change', e => { const v = +e.target.value; if (!v) { e.target.value = P.tempo; return; } P.tempo = Math.max(10, Math.min(300, Math.round(v))); e.target.value = P.tempo; savePrefs(); restartHere(); });
 $('#pitchHz').value = P.a4;
 $('#pitchHz').addEventListener('change', e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (!(v >= 380 && v <= 500)) { e.target.value = P.a4; return; } P.a4 = v; e.target.value = v; savePrefs(); restartHere(); });
-$('#vol').value = Math.round(P.volume * 100);
-$('#vol').oninput = e => { P.volume = e.target.value / 100; snd.setVolume(P.volume); savePrefs(); };
-$('#soundSel').innerHTML = Object.entries(snd.TIMBRES).filter(([k]) => okTimbre(k)).map(([k, v]) => `<option value="${k}" ${P.timbre === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('');
-$('#soundSel').onchange = e => { P.timbre = e.target.value; savePrefs(); snd.warm(P.timbre); toast('Loading the sound…', 1200); };
+/* the sound: one button naming the sound; its window holds the same sounds as Cantare, the volume, brightness, room and inégalité */
+const SNDCARD = () => {
+  const chip = (text, on, fn) => { const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.setAttribute('aria-pressed', String(!!on)); c.textContent = text; c.onclick = fn; return c; };
+  const row = (label, ...kids) => { const r = document.createElement('div'); r.className = 'row'; if (label) { const l = document.createElement('label'); l.textContent = label; r.append(l); } r.append(...kids); return r; };
+  const range = (v, fn) => { const i = document.createElement('input'); i.type = 'range'; i.min = 0; i.max = 100; i.value = v; i.oninput = e => fn(+e.target.value); return i; };
+  const card = document.createElement('section'); card.className = 'card';
+  card.append(Object.assign(document.createElement('h3'), { textContent: 'Sound' }),
+    row('Timbre', ...Object.entries(snd.TIMBRES).map(([k, v]) => chip(v.label, P.timbre === k, () => { P.timbre = k; savePrefs(); snd.warm(k); showSound(); openSound(); }))),
+    row('Volume', range(Math.round(P.volume * 100), v => { P.volume = v / 100; snd.setVolume(P.volume); savePrefs(); })),
+    row('Brightness', range(snd.SOUND.bright, v => snd.setSound({ bright: v }))),
+    row('Room', range(snd.SOUND.room, v => snd.setSound({ room: v }))),
+    row('Inégalité', ...[['off', 'Equal'], ['inegal', 'Inégal (long–short, Bourgeois)'], ['contre', 'Contre-inégal (short–long)']].map(([k, n]) => chip(n, (P.inegal || 'off') === k, () => { P.inegal = k; savePrefs(); openSound(); }))),
+    ...(P.inegal && P.inegal !== 'off' ? [row('Degree', ...[['gentle', 'Gentle (3 : 2)'], ['dotted', 'Dotted (3 : 1)']].map(([k, n]) => chip(n, (P.inegalDeg || 'gentle') === k, () => { P.inegalDeg = k; savePrefs(); openSound(); })))] : []),
+    Object.assign(document.createElement('p'), { className: 'hint', textContent: 'Semiminims are always sung in pairs, as under one slur. Inégalité makes the pairs that move by step unequal: Bourgeois (1550) sings the first longer, as if dotted; contre-inégalité sings it shorter.' }));
+  return card;
+};
+function openSound() {
+  const pop = $('#optPop'); pop.textContent = '';
+  const head = document.createElement('div'); head.className = 'pophead';
+  const x = document.createElement('button'); x.type = 'button'; x.setAttribute('aria-label', 'Close'); x.textContent = '×'; x.onclick = () => { pop.hidden = true; };
+  head.append(x); pop.append(head, SNDCARD()); pop.hidden = false;
+}
+function showSound() { const n = (snd.TIMBRES[P.timbre] || {}).label || 'Sound'; $('#soundName').textContent = n; $('#soundBtn').title = 'Sound: ' + n; }
+$('#soundBtn').onclick = () => { if (!$('#optPop').hidden) $('#optPop').hidden = true; else openSound(); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#optPop').hidden = true; });
+showSound();
+/* Tap: the tempo follows two or more taps */
+let taps = [];
+$('#tap').onclick = () => {
+  const t = performance.now(); taps = taps.filter(x => t - x < 4000); taps.push(t);
+  if (taps.length >= 2) { const d = (taps[taps.length - 1] - taps[0]) / (taps.length - 1); const v = Math.max(10, Math.min(300, Math.round(60000 / d))); P.tempo = v; $('#tempo').value = v; savePrefs(); restartHere(); }
+};
 $('#clickBtn').setAttribute('aria-pressed', String(P.click)); $('#loopBtn').setAttribute('aria-pressed', String(P.loop));
 snd.warm(P.timbre);
 $('#rules').addEventListener('change', () => { if (S.st) render(); });
@@ -306,7 +390,7 @@ $('#aboutBody').innerHTML = `
 <p>The manners are modern descriptions of what the tutors teach, as the scholarship on them describes it. They are <strong>not</strong> transcriptions of the printed tables of any one book, and the catalogue shows generated figures, not quotations. Real tables, in particular Coclico’s examples in the chapter <em>De modo ornate canendi</em>, Ortiz’s glosas on cadences and Dalla Casa’s passaggi by interval, could be encoded one by one so that you could choose “this figure from this page”. That is the natural next step, and it needs the facsimiles read carefully.</p>
 <p>The rules are a practical model of Renaissance counterpoint, not a complete one: they do not yet know about suspensions in the model, musica ficta in the figures, or the text underlay a singer would have to fit.</p>
 <h2>Credits</h2>
-<p>The polyphonic models come from the Josquin Research Project (josquin.stanford.edu; CC BY-NC 4.0) and from the collection of <a href="../gym/cantare/">Cantare super librum</a>, which converted them to its own notation. The notation, the font and the sounds are those of Cantare: music in <a href="https://github.com/steinbergmedia/bravura" target="_blank" rel="noopener">Bravura</a> by Steinberg Media Technologies (SIL Open Font License 1.1); organ, sackbut, recorders and harpsichord recorded by <a href="https://versilian-studios.com/vcsl/" target="_blank" rel="noopener">Versilian Studios</a> (VCSL and VSCO 2 CE, public domain); regal, cornett, crumhorn and chalumeau modelled after the Synthesis ToolKit (Cook and Scavone).</p>
+<p>The polyphonic models come from the Josquin Research Project (josquin.stanford.edu; CC BY-NC 4.0) and from the collection of <a href="../gym/cantare/">Cantare super librum</a>, which converted them to its own notation. The notation, the font and the sounds are those of Cantare: music in <a href="https://github.com/steinbergmedia/bravura" target="_blank" rel="noopener">Bravura</a> by Steinberg Media Technologies (SIL Open Font License 1.1); the voice sung by <a href="https://github.com/jamesondh/chimera-vocal-synth" target="_blank" rel="noopener">CHIMERA</a>, a physical voice synthesiser by Jameson Hodge (MIT License); organ, sackbut, recorders and harpsichord recorded by <a href="https://versilian-studios.com/vcsl/" target="_blank" rel="noopener">Versilian Studios</a> (VCSL and VSCO 2 CE, public domain); regal, cornett, crumhorn and chalumeau modelled after the Synthesis ToolKit (Cook and Scavone).</p>
 <p class="small">A project by Václav Hřebec. The treatise notes are short and cautious; check a title page before you cite any of this.</p>`;
 
 /* ---------- catalogue controls and schools ---------- */
