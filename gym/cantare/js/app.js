@@ -49,6 +49,8 @@ const S = {
   leaf: 0, leaves: [],
   playing: false, startAt: 0, sel: null, index: [], systems: null, edit: false,
 };
+/* the Du Fay easter egg (js/dufay-egg.js) counts only the time in which music is really sounding */
+window.cantareSounding = () => !!S.playing;
 
 /* Taleae: a repeating rhythm laid over the chant, one value for each chant note; rests (r…) take no note.
    B brevis, L longa, L. perfect longa, Ba brevis altera (written as a brevis, lasting two), Mx duplex longa (maxima), Mx. perfect maxima.
