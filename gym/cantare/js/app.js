@@ -681,7 +681,12 @@ function buildSection(which, c) {
     chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; voiceReady(); savePrefs(); buildStudio(); testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
-    slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })));
+    slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })),
+    /* inégalité: pairs of semiminims in stepwise motion sung unequally. Bourgeois (Le droict chemin de musique, 1550):
+       long–short, as if the first were dotted; contre-inégalité the other way round, short–long */
+    chipRow(tr('Inégalité'), [['off', tr('Equal')], ['inegal', tr('Inégal (long–short, Bourgeois)')], ['contre', tr('Contre-inégal (short–long)')]].map(([k, n]) => chip(n, (prefs.inegal || 'off') === k, () => { prefs.inegal = k; savePrefs(); buildStudio(); }))),
+    prefs.inegal && prefs.inegal !== 'off' ? chipRow(tr('Degree'), [['gentle', tr('Gentle (3 : 2)')], ['dotted', tr('Dotted (3 : 1)')]].map(([k, n]) => chip(n, (prefs.inegalDeg || 'gentle') === k, () => { prefs.inegalDeg = k; savePrefs(); buildStudio(); }))) : '',
+    el('p', { class: 'hint' }, tr('Semiminims are always sung in pairs, as under one slur. Inégalité makes the pairs that move by step unequal: Bourgeois (1550) sings the first longer, as if dotted; contre-inégalité sings it shorter.')));
 
   /* the organ registers speak with the pipe settings; Your own takes the drawbars (shown in the same Sound window) */
   if ((which === 'pipes' || which === 'sound') && (snd.REG[prefs.timbre] || prefs.timbre === 'custom')) {
@@ -1107,6 +1112,20 @@ function sounding() {
     });
     shape();
   });
+  /* semiminims go in pairs, as under one slur (each pair starting on a minim of the tactus): the second note is lighter
+     and flows from the first; a new pair takes a small fresh breath. With inégalité the stepwise pairs are unequal. */
+  const ineg = prefs.inegal === 'inegal' || prefs.inegal === 'contre' ? prefs.inegal : null;
+  const r = ineg ? (prefs.inegalDeg === 'dotted' ? .75 : .6) : .5, first = ineg === 'contre' ? 1 - r : r;
+  const lists = new Map();
+  out.forEach(e => { if (!lists.has(e.vi)) lists.set(e.vi, []); lists.get(e.vi).push(e); });
+  lists.forEach(list => list.forEach((a, i) => {
+    const b = list[i + 1], q = (S.piece.beatOff || 0);
+    if (!b || a.pairB || a.n.v !== 'Sm' || b.n.v !== 'Sm' || Math.abs(a.n.len - .5) > 1e-6 || Math.abs(b.n.len - .5) > 1e-6) return;
+    if (Math.abs(a.n.t + a.n.len - b.n.t) > 1e-6 || Math.abs(((a.n.t - q) % 1 + 1) % 1) > 1e-6) return;
+    a.pairA = true; b.pairB = true;
+    a.dyn = (a.dyn || 1) * 1.06; b.dyn = (b.dyn || 1) * .84;
+    if (ineg && Math.abs(a.n.step - b.n.step) <= 1) { const d = first * 1 - .5; a.dl = d; b.dt = d; b.dl = -d; }
+  }));
   /* dissonance and resolution: a note that clashes with another voice (a second, a seventh, a tritone, or a fourth
      above the lowest voice), at its start or when another voice moves under it (a suspension), leans in a little;
      the consonance it resolves to is sung softer. */
@@ -1159,17 +1178,18 @@ function startPlayback() {
     const horizon = ctx.currentTime + 1.2;
     while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
       const { vi, n, syl, tied, legato, joined } = events[ei++];
-      const at = t0 + Math.max(0, n.t - from) * k;
-      const cut = Math.max(0, from - n.t);
+      const ev0 = events[ei - 1], nt = n.t + (ev0.dt || 0);
+      const at = t0 + Math.max(0, nt - from) * k;
+      const cut = Math.max(0, from - nt);
       const tie = tied && n.t >= from - 1e-6;
-      const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len + (events[ei - 1].extra || 0) - cut) * k - (legato ? 0 : .03));
+      const midi = midiOf(n, p.bflat, S.shift), dur = Math.max(.08, (n.len + (ev0.dl || 0) + (events[ei - 1].extra || 0) - cut) * k - (legato ? 0 : .03));
       /* the coda closes before the next syllable's onset consonants begin */
       /* inside a word the vowel runs on into the next syllable's consonants (legato); between words it gives way to them */
       const ev = events[ei - 1], nx = ev.next, lead = nx ? Math.min(.25, snd.leadOf(nx.u, midiOf(nx.n, p.bflat, S.shift))) : 0;
       const close = at + dur - (ev.inWord ? lead * .3 : lead);
       const shaped = prefs.timbre !== 'organ' && prefs.musical !== false;
       playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, inWord: !!ev.inWord,
-        swell: shaped && legato ? ev.swell : null, fade: shaped ? ev.fade : null, key: vi, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
+        swell: shaped && legato ? ev.swell : null, fade: shaped ? ev.fade : null, lift: !!ev.pairA, key: vi, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
     }
     while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
   };

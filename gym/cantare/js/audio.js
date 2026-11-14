@@ -169,7 +169,7 @@ function codaOver(src, vg, env, { midi, f0, at, u, close }) {
    does not start a new sound, it moves the same breath to the new pitch with a short portamento, as a singer does */
 const LINES = new Map();
 const holdAt = (prm, t) => { if (prm.cancelAndHoldAtTime) prm.cancelAndHoldAtTime(t); else { prm.cancelScheduledValues(t); } };
-function continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade }) {
+function continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade, lift }) {
   const rate = f0 / H.fp;
   if (bodyOf(midi) !== H.body || Math.abs(12 * Math.log2(rate)) > 6 || H.gate !== gate || at < ctx.currentTime + .02) return null;
   const tg = Math.max(ctx.currentTime + .005, at - .045);
@@ -178,6 +178,8 @@ function continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swe
   const g = H.env.gain; holdAt(g, tg); g.linearRampToValueAtTime(1, tg + .02);
   /* the same pitch again: a gentle lift of the breath, not a new attack */
   if (Math.abs(rate / H.rate - 1) < .01) { g.linearRampToValueAtTime(.72, at - .005); g.linearRampToValueAtTime(1, at + .07); }
+  /* a new pair of semiminims: a small fresh breath between the slurs */
+  else if (lift) { g.linearRampToValueAtTime(.8, at - .005); g.linearRampToValueAtTime(1, at + .06); }
   const o = H.out.gain; holdAt(o, tg); o.linearRampToValueAtTime(level * 2.6, at + .06);
   holdAt(H.vg.gain, tg); H.vg.gain.setValueAtTime(1, tg + .001);
   if (legato) dur += XF / 2;
@@ -379,7 +381,7 @@ function modelNote({ timbre, midi, a4, at, dur, level, tied, legato }) {
   return out(env, level * I.GAIN.model);
 }
 
-function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null, swell = null, inWord = false, key = null, fade = null }) {
+function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null, swell = null, inWord = false, key = null, fade = null, lift = false }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
   if (timbre === 'voice' && BANK.map) {
@@ -387,7 +389,7 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
     /* the accent follows the note value (as for the other flowing sounds); a quick note inside a line on a syllable
        without onset consonants glides in from the note before */
     const acc = value != null ? .15 * Math.min(1, value / 4) : .3, glide = tied || (joined && value != null && value < 2 && unit.cv && unit.cv[0] === '.');
-    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc, swell, inWord, key, melisma: tied, fade });
+    if (loaded(unit, midi)) return sungNote({ midi, f0, at, dur, level, tied: glide, legato, u: unit, last, close, acc, swell, inWord, key, melisma: tied, fade, lift });
     if (!u) load([{ u: unit, midi }]);
   }
   if (tied) { at -= XF / 2; dur += XF / 2; }
@@ -511,11 +513,11 @@ function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tex
 }
 
 /* a note sung from the bank: the attack's consonants come before the beat; only a syllable's first note carries an accent */
-function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc, swell = null, inWord = false, key = null, melisma = false, fade = null }) {
+function sungNote({ midi, f0, at, dur, level, tied, legato, u, last, close, acc, swell = null, inWord = false, key = null, melisma = false, fade = null, lift = false }) {
   /* the next note of a syllable: the same breath goes on */
   if (melisma && key != null && LINES.has(key)) {
     const H = LINES.get(key); LINES.delete(key);
-    const o = continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade });
+    const o = continueNote(H, { midi, f0, at, dur, level, legato, u, last, close, swell, inWord, fade, lift });
     if (o) { if (!last) LINES.set(key, H); return o; }
   }
   if (tied) { at -= XF / 2; dur += XF / 2; }
