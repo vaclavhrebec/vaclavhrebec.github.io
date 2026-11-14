@@ -45,6 +45,11 @@
   </aside>
 
   <main class="stage" id="stage">
+    <div class="zoomctl" role="group" aria-label="Zoom" data-i18n-title="Zoom: make the music bigger or smaller" title="Zoom: make the music bigger or smaller">
+      <button type="button" id="zoomOut" aria-label="Zoom out: smaller" data-i18n-title="Zoom out: smaller" title="Zoom out: smaller">&minus;</button>
+      <button type="button" class="zlab" id="zoomPct" aria-label="Zoom: back to 100 %" data-i18n-title="Zoom: back to 100 %" title="Zoom: back to 100 %"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5"/></svg><span class="zword" data-i18n="Zoom">Zoom</span><span id="zoomPct2"></span></button>
+      <button type="button" id="zoomIn" aria-label="Zoom in: bigger" data-i18n-title="Zoom in: bigger" title="Zoom in: bigger">+</button>
+    </div>
     <section class="piece-head">
       <p class="trail" id="trail"></p>
       <div class="titlerow"><h2 id="title"></h2><span class="layoutsw" id="layoutSw" hidden><button type="button" class="bookbtn" id="bookBtn" aria-pressed="false" title="Choir book / score" data-i18n-title="Choir book / score"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C10 5 7 4.500 3.500 4.800V18.500C7 18.200 10 18.700 12 20c2-1.300 5-1.800 8.500-1.500V4.800C17 4.500 14 5 12 6.500z"/><path d="M12 6.500V20"/></svg><span id="bookLbl"></span></button><span class="bookkind" id="bookKind" hidden><button type="button" data-bk="it" title="Italian choir book: Cantus and Tenor on the left page, Altus and Bassus on the right" data-i18n-title="Italian choir book: Cantus and Tenor on the left page, Altus and Bassus on the right">IT</button><button type="button" data-bk="de" title="German choir book: Cantus and Bassus on the left page, Altus and Tenor on the right" data-i18n-title="German choir book: Cantus and Bassus on the left page, Altus and Tenor on the right">DE</button></span></span><button type="button" class="hacek" id="noteToggle" aria-expanded="false" aria-controls="note" title="Description" data-i18n-title="Description" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button></div>

@@ -498,3 +498,17 @@ html.full .brand .gymlink { height: 24px; }
 .nm .hint.warn, .si-view .warn { color: var(--accent); }
 .si-syl { font-family: var(--serif); }
 .nm-go[hidden] { display: none; }
+
+/* zoom: always in sight at the top right of the music, also in Focus */
+.zoomctl { position: sticky; top: 0; float: right; z-index: 6; display: inline-flex; align-items: stretch; margin: 0 0 6px 10px; border: 1.5px solid var(--accent); border-radius: 999px; background: var(--surface); box-shadow: 0 2px 10px rgba(0, 0, 0, .18); overflow: hidden; }
+.zoomctl button { border: 0; background: transparent; color: var(--ink); cursor: pointer; font: 600 22px/1 var(--sans); min-width: 44px; height: 42px; display: grid; place-items: center; padding: 0 10px; }
+.zoomctl #zoomOut, .zoomctl #zoomIn { color: var(--accent); font-size: 26px; }
+.zoomctl button:hover:not(:disabled) { background: var(--raised); }
+.zoomctl button:disabled { opacity: .3; cursor: default; }
+.zoomctl .zlab { display: inline-flex; align-items: center; gap: 6px; font: 500 13px var(--sans); border-left: 1px solid var(--line); border-right: 1px solid var(--line); padding: 0 12px; color: var(--soft); }
+.zoomctl .zlab svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.zoomctl .zword { color: var(--ink); font-weight: 600; }
+#zoomPct2 { min-width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+html.focus .zoomctl { top: 4px; margin-right: 96px; }
+@media (max-width: 560px) { .zoomctl .zword { display: none; } .zoomctl button { min-width: 40px; } }
+#paper { clear: both; }

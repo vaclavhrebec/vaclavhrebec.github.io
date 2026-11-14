@@ -1,6 +1,6 @@
 import { readScoreFile, toMusicXML, ACCEPT } from './scorefile.js';
 import { readTokens, pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
-import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt } from './engrave.js';
+import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt, setSpacing } from './engrave.js';
 import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
@@ -20,7 +20,7 @@ const el = (tag, attrs = {}, ...kids) => {
 
 /* ------------------------------------------------------------------ state */
 const STORE = 'cantare-next:v1';
-const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'palm', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
+const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, spacing: 1, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'palm', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
@@ -33,6 +33,7 @@ setFont(prefs.font);
 if (!prefs.voiceDefault) { prefs.timbre = 'voice'; prefs.voiceDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 /* 14 Nov 2026: the bare hand (flat palm, no baton) became the default for everyone, once */
 if (!prefs.palmDefault) { prefs.handStyle = 'palm'; prefs.palmDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
+setSpacing(prefs.spacing);
 snd.setSound(prefs.sound || {});
 setLang(prefs.lang || guessLang());
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
@@ -315,6 +316,7 @@ function render(resetLeaf) {
   else renderScore(p, opts);
   collectNotes();
   markSel();
+  syncZoom();
 }
 
 /* score or choir book: the book button beside the title, the same choice in Transform and in the Studio */
@@ -331,23 +333,49 @@ function syncLayoutSw(p) {
 $('#bookBtn').addEventListener('click', () => setView(prefs.view === 'book' ? 'score' : 'book'));
 $('#bookKind').addEventListener('click', e => { const b = e.target.closest('[data-bk]'); if (b) setBookKind(b.dataset.bk); });
 
+/* ---------- zoom: the + and − beside the music. 100 % is the usual size; the biggest is one line on the whole screen */
+const ZMIN = 5, ZDEF = 13, ZSTEP = 1.18;
+function setZoom(z) {
+  const max = S.zoomMax && isFinite(S.zoomMax) ? S.zoomMax : 200;
+  prefs.zoom = Math.max(ZMIN, Math.min(max, z));
+  S.scoreZoom = null; S.bookScale = null; S.fitFor = null; S.bookFor = null; /* the size chosen now holds, also while editing */
+  savePrefs(); render();
+}
+function syncZoom() {
+  const out = $('#zoomOut'), inn = $('#zoomIn'), pct = $('#zoomPct2');
+  if (!out) return;
+  const max = S.zoomMax && isFinite(S.zoomMax) ? S.zoomMax : 200;
+  const shown = Math.min(prefs.zoom, max);
+  pct.textContent = Math.round(shown / ZDEF * 100) + ' %';
+  inn.disabled = shown >= max - .01;
+  out.disabled = shown <= ZMIN + .01;
+  const r = $('#zoomRange'); if (r) { r.max = Math.max(ZDEF, Math.ceil(max)); r.value = shown; }
+}
+$('#zoomIn').addEventListener('click', () => setZoom(Math.min(prefs.zoom, S.zoomMax || 200) * ZSTEP));
+$('#zoomOut').addEventListener('click', () => setZoom(Math.min(prefs.zoom, S.zoomMax || 200) / ZSTEP));
+$('#zoomPct').addEventListener('click', () => setZoom(ZDEF));
+
 function renderScore(p0, opts) {
   const { p, order } = withTake(p0);
   let z = prefs.zoom, w = spaceW() * prefs.zoom / z;
   let systems = engraveSystems(p, order, w, opts);
-  /* four, five or six voices: shrink so that a whole line of all the voices fits the height of the window */
+  /* the biggest size: one line (with all its voices) fills the height of the window; four to six voices therefore
+     always show a whole line of all the voices. Zoom + stops there. */
   /* while editing the size stays as it was when Edit was tapped (the editing toolbar may take room; the music must not jump) */
   const frozen = S.edit && S.fitFor === p0.id && S.scoreZoom;
   if (frozen) { z = S.scoreZoom; w = spaceW() * prefs.zoom / z; systems = engraveSystems(p, order, w, opts); }
-  else if (order.filter(v => v < p0.voices.length).length >= 4) {
+  else {
     const st = $('#stage'), avail = st.clientHeight - paper.offsetTop - 30;
-    for (let k = 0; k < 2 && avail > 120; k++) {
+    let cap = Infinity;
+    for (let k = 0; k < 3 && avail > 120; k++) {
       const h = Math.max(...systems.map(s => s.h));
+      cap = Math.max(ZMIN, avail / h * .99);
       if (h * z <= avail) break;
-      z = Math.max(4, avail / h * .99);
+      z = cap;
       w = spaceW() * prefs.zoom / z;
       systems = engraveSystems(p, order, w, opts);
     }
+    S.zoomMax = cap;
   }
   S.scoreZoom = z; S.fitFor = p0.id;
   /* several voices: the space between two systems is about twice the space between two voices of one system */
@@ -362,7 +390,10 @@ function renderScore(p0, opts) {
 function renderRoll(p0, opts) {
   const { p, order } = withTake(p0);
   const [sys] = engraveSystems(p, order, 1e7, { ...opts, justify: false, count: 5 });
-  const z = prefs.zoom, hw = sys.ind + sys.head;
+  const avail = $('#stage').clientHeight - paper.offsetTop - 30;
+  S.zoomMax = avail > 120 ? Math.max(ZMIN, avail / sys.h * .99) : Infinity;
+  const z = Math.min(prefs.zoom, S.zoomMax), hw = sys.ind + sys.head;
+  S.rollZ = z;
   const head = el('div', { class: 'rollhead', style: `width:${(hw * z).toFixed(1)}px` },
     parse(`<svg class="system" viewBox="0 0 ${hw.toFixed(2)} ${sys.h.toFixed(2)}" width="${(hw * z).toFixed(1)}" height="${(sys.h * z).toFixed(1)}" xmlns="http://www.w3.org/2000/svg">${sys.svg}</svg>`));
   head.querySelectorAll('.note, .brevenum').forEach(n => n.remove());
@@ -381,7 +412,7 @@ function rollX(pos) {
   while (i + 1 < xt.length && xt[i + 1][0] <= pos) i++;
   const [t0, x0] = xt[i], [t1, x1] = i + 1 < xt.length ? xt[i + 1] : [S.piece.end, sys.w - sys.ind];
   const x = t1 > t0 ? x0 + (x1 - x0) * Math.min(1, Math.max(0, (pos - t0) / (t1 - t0))) : x0;
-  return (sys.ind + x) * prefs.zoom;
+  return (sys.ind + x) * (S.rollZ || prefs.zoom);
 }
 
 function renderBook(p, opts, resetLeaf) {
@@ -393,7 +424,9 @@ function renderBook(p, opts, resetLeaf) {
   let scale = prefs.zoom;
   const probe = p.voices.map((_, i) => engraveSystems(p, [i], Math.max(18, paneCss / scale), { ...opts, names: false }));
   const maxH = Math.max(...probe.map(s => Math.max(...s.map(x => x.h))));
-  scale = Math.max(R > 2 ? 5 : 8, Math.min(scale, (availH / R - 34) / ((R > 2 ? 1 : 2) * maxH + 1.2)));
+  const bookFit = Math.max(R > 2 ? 5 : 8, (availH / R - 34) / ((R > 2 ? 1 : 2) * maxH + 1.2));
+  S.zoomMax = bookFit;
+  scale = Math.min(scale, bookFit);
   if (S.edit && S.bookFor === p.id && S.bookScale) scale = S.bookScale; /* editing keeps the size */
   S.bookScale = scale; S.bookFor = p.id;
   const paneW = Math.max(18, paneCss / scale);
@@ -610,7 +643,8 @@ function buildSection(which, c) {
   /* view */
   if (which === 'view') card(tr('View'),
     chipRow(tr('Layout'), [['score', tr('Score')], ['book', tr('Choir book')]].map(([k, n]) => chip(n, prefs.view === k, () => setView(k), { disabled: k === 'book' && !multi }))),
-    el('div', { class: 'row' }, el('label', {}, tr('Size')), el('input', { type: 'range', min: 9, max: 24, value: prefs.zoom, oninput: e => { prefs.zoom = +e.target.value; savePrefs(); render(); } })),
+    el('div', { class: 'row' }, el('label', {}, tr('Zoom')), el('input', { type: 'range', id: 'zoomRange', min: ZMIN, max: 60, step: .5, value: prefs.zoom, oninput: e => setZoom(+e.target.value) })),
+    slider(tr('Spacing'), 60, 200, Math.round((prefs.spacing || 1) * 100), v => { prefs.spacing = v / 100; setSpacing(prefs.spacing); savePrefs(); render(); }, 5, '%', null, true),
     chipRow(tr('Theme'), [['dark', 'Dark'], ['light', 'Light']].map(([k, n]) => chip(tr(n), prefs.theme === k, () => { prefs.theme = k; savePrefs(); applyTheme(); buildStudio(); }))),
     chipRow(tr('Screen'), [chip(tr('Focus'), document.documentElement.classList.contains('focus'), () => setFocus(true), { title: tr('Only the music: everything else is put away') }),
       document.fullscreenEnabled ? chip(tr('Full screen'), !!document.fullscreenElement, () => toggleFull()) : ''].filter(Boolean)));

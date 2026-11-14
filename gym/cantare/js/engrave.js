@@ -120,7 +120,10 @@ function textWidth(t) {
 }
 
 /* ---------- column model ---------- */
-const spacing = d => 1.4 + 1.15 * Math.log2(1 + d);
+/* the distance between notes; the Spacing setting (View) widens or narrows it, the size of the notes stays */
+let SPACING = 1;
+export const setSpacing = k => { SPACING = Math.max(.5, Math.min(2.5, +k || 1)); };
+const spacing = d => (1.4 + 1.15 * Math.log2(1 + d)) * SPACING;
 
 function glyphNeed(n, style) {
   if (n.rest) return 1.3;
