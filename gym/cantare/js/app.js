@@ -135,11 +135,13 @@ async function fillLazy(g, trail) {
   renderTree($('#search').value);
 }
 
-/* a random piece: first a category at random (each equally likely), then a piece within it */
-const RANDOM_GROUPS = ['Cantus planus', 'Cantus fractus', 'Cantus mensurabilis', 'Polyphonic models'];
+/* a random piece: first a category at random, then a piece within it.
+   Polyphony is drawn twice as often as each of the other three. */
+const RANDOM_GROUPS = [['Cantus planus', 1], ['Cantus fractus', 1], ['Cantus mensurabilis', 1], ['Polyphonic models', 2]];
 async function randomPick() {
-  const pools = RANDOM_GROUPS.map(g => S.flat.filter(f => f.trail[0] === g)).filter(p => p.length);
-  const pool = pools.length ? pools[Math.floor(Math.random() * pools.length)] : S.flat;
+  const pools = RANDOM_GROUPS.map(([g, w]) => ({ w, p: S.flat.filter(f => f.trail[0] === g) })).filter(x => x.p.length);
+  let r = Math.random() * pools.reduce((a, x) => a + x.w, 0), pool = S.flat;
+  for (const x of pools) { if ((r -= x.w) < 0) { pool = x.p; break; } }
   /* the polyphonic models also hold the whole Josquin collection: draw from all of it */
   if (pool[0]?.trail[0] === 'Polyphonic models') {
     try {
