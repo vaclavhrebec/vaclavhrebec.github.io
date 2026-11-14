@@ -1,13 +1,29 @@
-import { pieceFrom, stepName } from '../../gym/cantare/js/music.js';
-import { SCHOOLS, FAMILIES, RHYTHMS, DEFAULTS, makeRng, fromPiece, expand, context, rankVoices, candidates, applyFigure, diminuteVoice, stripAll, reduceVoice, snapshot, restore, countDims, smallest, violations } from './engine.js';
-import { engrave } from './render.js';
-import { play, stop } from './synth.js';
+import { pieceFrom, stepName, midiOf } from '../../gym/cantare/js/music.js';
+import { engraveSystems, systemSVG } from '../../gym/cantare/js/engrave.js';
+import * as snd from '../../gym/cantare/js/audio.js';
+import { bookPlan, bookOrder } from './book.js';
+import { SCHOOLS, FAMILIES, RHYTHMS, DEFAULTS, makeRng, fromPiece, expand, engravable, context, rankVoices, candidates, applyFigure, diminuteVoice, stripAll, reduceVoice, snapshot, restore, countDims, smallest, violations } from './engine.js';
 import { TREATISES } from './treatises.js';
 
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const parse = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
 const JRP = '../gym/cantare/jrp/';
-const S = { st: null, undo: [], pre: null, sel: null, index: [], models: [], seed: (Math.random() * 1e9) | 0, playing: false };
+const S = { st: null, undo: [], pre: null, sel: null, index: [], models: [], seed: (Math.random() * 1e9) | 0, playing: false, leaf: 0, exps: [] };
+
+/* ---------- preferences: Cantare's own (theme, sound, pitch, volume) are taken as the starting point ---------- */
+const FSTORE = 'fiorire:v1';
+let cp = {}, fp = {};
+try { cp = JSON.parse(localStorage.getItem('cantare-next:v1')) || {}; } catch (e) { /* none */ }
+try { fp = JSON.parse(localStorage.getItem(FSTORE)) || {}; } catch (e) { /* none */ }
+const okTimbre = t => t && t !== 'voice' && t !== 'custom' && snd.TIMBRES[t];
+const P = { theme: cp.theme === 'light' ? 'light' : 'dark', tempo: cp.tempo || 60, timbre: okTimbre(cp.timbre) ? cp.timbre : 'organ', a4: cp.a4 || 440, volume: cp.volume ?? .8, zoom: 12, view: 'score', click: false, loop: false, bookKind: cp.bookKind || 'it', ...fp };
+if (!okTimbre(P.timbre)) P.timbre = 'organ';
+snd.setSound(cp.sound || {});
+const savePrefs = () => { try { localStorage.setItem(FSTORE, JSON.stringify(P)); } catch (e) { /* ignore */ } };
+function applyTheme() { document.documentElement.dataset.theme = P.theme; const m = document.querySelector('meta[name=theme-color]'); if (m) m.content = P.theme === 'dark' ? '#000000' : '#ffffff'; }
+applyTheme();
+$('#toggleTheme').onclick = () => { P.theme = P.theme === 'dark' ? 'light' : 'dark'; applyTheme(); savePrefs(); };
 
 /* ---------- options ---------- */
 function opts() {
@@ -15,39 +31,41 @@ function opts() {
   return { ...DEFAULTS, schools: $$('#schools input:checked').map(x => x.value), density: num('density'), minDur: num('minDur'), minValue: num('minValue'), maxLeap: num('maxLeap'), targetLeap: Math.max(3, num('maxLeap') + 1),
     noSeventh: chk('noSeventh'), consBeat: chk('consBeat'), passDiss: chk('passDiss'), noParallels: chk('noParallels'), noCross: chk('noCross'), noTritone: chk('noTritone'), keepRange: chk('keepRange'), keepFinal: chk('keepFinal'), cadences: chk('cadences') };
 }
-const toast = (m, ms = 2200) => { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(toast.h); toast.h = setTimeout(() => t.hidden = true, ms); };
+const toast = (m, ms = 2200) => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove('show'), ms); };
 const nextSeed = () => (S.seed = (S.seed * 1664525 + 1013904223) >>> 0);
 
 /* ---------- loading pieces ---------- */
 async function loadIndex() {
   const [search, lib] = await Promise.all([fetch(JRP + 'search.json').then(r => r.json()), fetch('../gym/cantare/data/library.json').then(r => r.json())]);
-  S.index = search.map(([id, title, comp]) => ({ id, title, comp }));
+  S.index_ = search.map(([id, title, comp]) => ({ id, title, comp }));
   const poly = lib.find(g => g.group === 'Polyphonic models');
-  (poly.subs || []).forEach(sub => (sub.items || []).forEach(it => { if (it.poly) S.models.push({ item: it, title: it.title }); }));
-  const comps = [...new Set(S.index.map(x => x.comp))].sort((a, b) => a.localeCompare(b));
+  (poly.subs || []).forEach(sub => (sub.items || []).forEach(it => { if (it.poly) S.models.push({ item: it, title: it.title, trail: ['Polyphonic models', sub.group] }); }));
+  const comps = [...new Set(S.index_.map(x => x.comp))].sort((a, b) => a.localeCompare(b));
   $('#selComp').innerHTML = `<option value="@models">Polyphonic models</option>` + comps.map(c => `<option>${esc(c)}</option>`).join('');
   fillPieces();
 }
 function fillPieces() {
   const c = $('#selComp').value;
-  const list = c === '@models' ? S.models.map((m, i) => ({ v: 'm' + i, t: m.title })) : S.index.filter(x => x.comp === c).map(x => ({ v: 'j' + x.id, t: x.title }));
+  const list = c === '@models' ? S.models.map((m, i) => ({ v: 'm' + i, t: m.title })) : S.index_.filter(x => x.comp === c).map(x => ({ v: 'j' + x.id, t: x.title }));
   $('#selPiece').innerHTML = list.map(x => `<option value="${x.v}">${esc(x.t)}</option>`).join('');
 }
 async function openChoice(v) {
-  let item;
-  try { item = v[0] === 'm' ? JSON.parse(JSON.stringify(S.models[+v.slice(1)].item)) : await fetch(JRP + 'p/' + v.slice(1) + '.json').then(r => { if (!r.ok) throw 0; return r.json(); }); }
+  let item, trail = [];
+  try { if (v[0] === 'm') { const m = S.models[+v.slice(1)]; item = JSON.parse(JSON.stringify(m.item)); trail = m.trail; } else item = await fetch(JRP + 'p/' + v.slice(1) + '.json').then(r => { if (!r.ok) throw 0; return r.json(); }); }
   catch { toast('Could not load that piece (offline?)'); return; }
   item.id ??= 1;
-  const piece = pieceFrom(item, []);
-  S.st = fromPiece(piece); S.undo = []; S.pre = null; S.sel = null; closeSheet(); stop();
+  const piece = pieceFrom(item, trail.length ? trail : [$('#selComp').selectedOptions[0]?.textContent || '']);
+  stopPlayback(); S.st = fromPiece(piece); S.undo = []; S.pre = null; S.leaf = 0;
+  closeSheet();
   const rank = rankVoices(S.st); S.st.voices.forEach((x, i) => { x.on = rank[i] === 0; });
-  voiceList(); render();
-  $('#credit').innerHTML = esc(S.st.title) + (S.st.credit ? ' · ' + esc(S.st.credit) : '') + ' · Licence for the Josquin Research Project encodings: CC BY-NC 4.0.';
+  voiceList(); render(true);
+  $('#trail').textContent = (piece.trail || []).join('  ›  '); $('#title').textContent = piece.title; $('#note').textContent = piece.note || '';
+  $('#credit').innerHTML = piece.credit ? esc(piece.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>') : '';
 }
 async function randomPiece() {
-  const pool = S.index.length + S.models.length, r = Math.floor(Math.random() * pool);
-  if (r < S.index.length) { const x = S.index[r]; $('#selComp').value = x.comp; fillPieces(); $('#selPiece').value = 'j' + x.id; await openChoice('j' + x.id); }
-  else { $('#selComp').value = '@models'; fillPieces(); const i = r - S.index.length; $('#selPiece').value = 'm' + i; await openChoice('m' + i); }
+  const pool = S.index_.length + S.models.length, r = Math.floor(Math.random() * pool);
+  if (r < S.index_.length) { const x = S.index_[r]; $('#selComp').value = x.comp; fillPieces(); $('#selPiece').value = 'j' + x.id; await openChoice('j' + x.id); }
+  else { $('#selComp').value = '@models'; fillPieces(); const i = r - S.index_.length; $('#selPiece').value = 'm' + i; await openChoice('m' + i); }
 }
 
 /* ---------- voices ---------- */
@@ -57,13 +75,13 @@ function voiceList() {
 $('#voices').addEventListener('change', e => { const i = e.target.dataset.on; if (i != null) S.st.voices[i].on = e.target.checked; });
 $('#voices').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.mute != null) { const v = S.st.voices[b.dataset.mute]; v.mute = !v.mute; b.setAttribute('aria-pressed', v.mute); b.textContent = v.mute ? '🔇' : '🔊'; }
+  if (b.dataset.mute != null) { const v = S.st.voices[b.dataset.mute]; v.mute = !v.mute; b.setAttribute('aria-pressed', v.mute); b.textContent = v.mute ? '🔇' : '🔊'; render(); }
   if (b.dataset.plain != null) { push(); stripAll(S.st, +b.dataset.plain); render(); }
 });
 
-/* ---------- history ---------- */
+/* ---------- history and the buttons ---------- */
 function push() { S.undo.push(snapshot(S.st)); if (S.undo.length > 60) S.undo.shift(); }
-$('#btnUndo').onclick = () => { if (!S.undo.length) { toast('Nothing to undo'); return; } restore(S.st, S.undo.pop()); S.sel = null; closeSheet(); render(); };
+$('#btnUndo').onclick = () => { if (!S.undo.length) { toast('Nothing to undo'); return; } restore(S.st, S.undo.pop()); closeSheet(); render(); };
 $('#btnPlain').onclick = () => { if (!countDims(S.st)) { toast('Already plain'); return; } push(); stripAll(S.st); render(); };
 $('#btnReduce').onclick = () => { const vs = S.st.voices.filter(v => v.on); if (!vs.length) { toast('Tick a voice first'); return; } push(); vs.forEach(v => reduceVoice(v, 2)); render(); toast('Reduced to the skeleton'); };
 function run() {
@@ -77,39 +95,80 @@ function run() {
 $('#btnDim').onclick = run;
 $('#btnAgain').onclick = () => { if (S.pre) { restore(S.st, S.pre); S.undo.pop(); } run(); };
 
-/* ---------- score ---------- */
+/* ---------- the score: Cantare's engraver, as a score or as a choir book ---------- */
 let rt = 0;
-function render() {
+function render(resetLeaf) {
   if (!S.st) return;
-  const exps = S.st.voices.map(expand), wrap = $('#scoreWrap');
-  const W = Math.max(660, wrap.clientWidth - 8), sp = wrap.clientWidth < 500 ? 7 : 8;
-  const r = engrave(exps, S.st.voices, { width: W, sp, bflat: S.st.bflat, sel: S.sel });
-  $('#score').innerHTML = r.svg; S.exps = exps;
+  const paper = $('#paper'), exps = S.st.voices.map(expand); S.exps = exps;
+  const p = engravable(S.st, exps); S.p = p;
+  const order = p.voices.map((_, i) => i), z = P.zoom, W = Math.max(200, paper.clientWidth - 4);
+  const o = { names: true, state: S.st.voices.map(v => (v.mute ? 'mute' : '')) };
+  paper.textContent = ''; S.systems = null; S.leaves = null;
+  const book = P.view === 'book' && p.voices.length > 1;
+  paper.className = book ? 'book' : 'paper'; $('#pager').hidden = !book;
+  $('#vScore').setAttribute('aria-pressed', String(!book)); $('#vBook').setAttribute('aria-pressed', String(book));
+  if (!book) {
+    const systems = engraveSystems(p, order, W / z, o);
+    const between = systems[0] && systems[0].staves.length > 1 ? `margin-bottom:${Math.max(18, Math.round(4.8 * z))}px` : '';
+    systems.forEach((s, i) => { const d = document.createElement('div'); d.className = 'sys'; d.dataset.sys = i; d.style.cssText = between; d.append(parse(systemSVG(s, z))); paper.append(d); });
+    S.systems = systems;
+  } else {
+    const R = Math.max(2, Math.ceil(p.voices.length / 2)), sc = Math.max(6, z * .8), paneW = Math.max(18, (W / 2 - 36) / sc), rows = R > 2 ? 1 : 2;
+    const { plan, bp, sys } = bookPlan(p, paneW, rows, o);
+    S.leaves = plan.leaves; if (resetLeaf) S.leaf = 0; S.leaf = Math.min(S.leaf, S.leaves.length - 1);
+    const L = S.leaves[S.leaf]; $('#leafNo').textContent = `Leaf ${S.leaf + 1} of ${S.leaves.length}`;
+    paper.style.setProperty('--rows', String(R));
+    const bo = bookOrder(p, P.bookKind);
+    bo.forEach(vi => {
+      const pane = document.createElement('div'); pane.className = 'pane';
+      if (vi >= 0 && vi < p.voices.length) {
+        const v = p.voices[vi]; if (v.name) { const tg = document.createElement('span'); tg.className = 'tag'; tg.textContent = v.name; pane.append(tg); }
+        sys[vi].filter(x => x.t0 >= L.t0 - 1e-6 && x.t0 < L.t1 - 1e-6).forEach(s => { const d = document.createElement('div'); d.className = 'sys'; d.append(parse(systemSVG(s, sc))); pane.append(d); });
+      }
+      paper.append(pane);
+    });
+    void bp;
+  }
+  S.index = [...paper.querySelectorAll('.note')].map(e => ({ e, t: +e.dataset.t, end: +e.dataset.t + +e.dataset.len, on: false }));
+  paper.querySelectorAll('.note').forEach(e => { const x = S.exps[+e.dataset.v]?.[+e.dataset.i]; if (x && x.dim) e.classList.add('dim'); });
+  markSel();
   S.st.voices.forEach((v, i) => { const c = $(`[data-cnt="${i}"]`); if (c) c.textContent = v.dims.size ? v.dims.size + ' figures' : ''; });
-  const o = opts(), nd = countDims(S.st), bad = nd ? violations(S.st, o) : 0, sm = smallest(S.st);
+  const op = opts(), nd = countDims(S.st), bad = nd ? violations(S.st, op) : 0, sm = smallest(S.st);
   const names = { 1: 'minim', .5: 'semiminim', .25: 'fusa', .75: 'dotted semiminim' };
   $('#info').textContent = nd ? `${nd} figures · quickest note: ${names[sm] || sm + ' minims'} · ${bad ? bad + ' break the rules now switched on' : 'all obey the rules now switched on'}` : 'The model is plain. Press Diminute, or tap any note to choose a figure for it.';
   $('#btnUndo').disabled = !S.undo.length;
 }
-window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 150); });
-$('#score').addEventListener('click', e => {
-  const g = e.target.closest('.n'); if (!g) { closeSheet(); return; }
-  S.sel = { v: +g.dataset.v, k: +g.dataset.k }; $$('#score .n.sel').forEach(x => x.classList.remove('sel'));
-  $$(`#score .n[data-v="${S.sel.v}"][data-k="${S.sel.k}"]`).forEach(x => x.classList.add('sel'));
+function markSel() {
+  $$('#paper .note.sel').forEach(x => x.classList.remove('sel'));
+  if (!S.sel) return;
+  (S.exps[S.sel.v] || []).forEach((e, i) => { if (e.k === S.sel.k) $$(`#paper .note[data-v="${S.sel.v}"][data-i="${i}"]`).forEach(x => x.classList.add('sel')); });
+}
+window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => render(), 200); });
+$('#vScore').onclick = () => { P.view = 'score'; savePrefs(); render(true); };
+$('#vBook').onclick = () => { P.view = 'book'; savePrefs(); render(true); };
+$('#zIn').onclick = () => { P.zoom = Math.min(40, P.zoom * 1.12); savePrefs(); render(); };
+$('#zOut').onclick = () => { P.zoom = Math.max(6, P.zoom / 1.12); savePrefs(); render(); };
+const leafGo = d => { if (!S.leaves) return; S.leaf = Math.max(0, Math.min(S.leaves.length - 1, S.leaf + d)); render(); };
+$('#leafPrev').onclick = () => leafGo(-1); $('#leafNext').onclick = () => leafGo(1);
+$('#paper').addEventListener('click', e => {
+  const g = e.target.closest('.note'); if (!g) return;
+  const vi = +g.dataset.v, x = S.exps[vi]?.[+g.dataset.i]; if (!x) return;
+  S.sel = { v: vi, k: x.k }; markSel();
+  if (!x.rest && !S.playing) { const c = snd.ensure(); playNote({ timbre: P.timbre, midi: midiOf(x, S.st.bflat), a4: P.a4, at: c.currentTime + .02, dur: .7, text: 'a', key: vi }); }
   openSheet();
 });
 
 /* ---------- the sheet for one note ---------- */
 let showAll = false;
 const pitchName = n => stepName(n.step) + ({ b: '♭', '#': '♯', n: '♮' }[n.acc] || '');
-function closeSheet() { $('#sheet').hidden = true; S.sel = null; $$('#score .n.sel').forEach(x => x.classList.remove('sel')); }
+function closeSheet() { $('#sheet').hidden = true; S.sel = null; markSel(); }
 $('#shClose').onclick = closeSheet;
 function openSheet() {
-  const { v: vi, k } = S.sel, v = S.st.voices[vi], n = v.base[k], ex = S.exps[vi], first = ex.find(x => x.k === k);
+  const { v: vi, k } = S.sel, v = S.st.voices[vi], n = v.base[k], first = S.exps[vi].find(x => x.k === k);
   $('#sheet').hidden = false;
   const lenNames = { 16: 'maxima', 8: 'longa', 4: 'breve', 2: 'semibreve', 1: 'minim', .5: 'semiminim', 12: 'dotted longa', 6: 'dotted breve', 3: 'dotted semibreve' };
   $('#shTitle').textContent = `${v.name || 'Voice ' + (vi + 1)} · ${n.rest ? 'rest' : pitchName(n)} · ${lenNames[n.len] || n.len + ' minims'}`;
-  $('#shPlay').onclick = () => playFrom(first ? first.t : 0);
+  $('#shPlay').onclick = () => startPlayback(first ? first.t : 0);
   if (n.rest) { $('#shBody').innerHTML = '<p>A rest. Tap a note.</p>'; return; }
   const o = opts(); const ctx = context(S.st); ctx.rank = rankVoices(S.st);
   const rng = makeRng(nextSeed() ^ (k * 977));
@@ -130,20 +189,80 @@ $('#shBody').addEventListener('click', e => {
   const b = e.target.closest('.cand'); if (!b || !S.sel) return;
   const { v: vi, k } = S.sel; push();
   if (b.dataset.plain) S.st.voices[vi].dims.delete(k); else applyFigure(S.st, vi, k, S.cands[+b.dataset.i]);
-  render(); const t = S.exps[vi].find(x => x.k === k); S.sel = { v: vi, k };
-  $$(`#score .n[data-v="${vi}"][data-k="${k}"]`).forEach(x => x.classList.add('sel')); openSheet();
-  if (!b.dataset.plain) playFrom(Math.max(0, (t ? t.t : 0) - 4), (t ? t.t : 0) + S.st.voices[vi].base[k].len + 4);
+  render(); S.sel = { v: vi, k }; markSel(); const t = S.exps[vi].find(x => x.k === k); openSheet();
+  if (!b.dataset.plain) startPlayback(Math.max(0, (t ? t.t : 0) - 4), (t ? t.t : 0) + S.st.voices[vi].base[k].len + 4);
 });
 
-/* ---------- playing ---------- */
-function playFrom(from = 0, until = Infinity) {
-  const o = { from, until, minim: 60 / +$('#tempo').value, timbre: $('#timbre').value, a4: +$('#pitch').value, mute: S.st.voices.map(v => v.mute), onEnd: () => { S.playing = false; $('#btnPlay').textContent = '▶ Play'; } };
-  S.playing = true; $('#btnPlay').textContent = '■ Stop'; play(S.exps || S.st.voices.map(expand), S.st, o);
+/* ---------- playing: Cantare's sound engine, scheduled the way Cantare's player does it ---------- */
+const spm = () => (60 / P.tempo) / 2; /* seconds per minim: the tempo is in semibreves per minute */
+let clock = null, timer = 0, raf = 0, lastSys = -1;
+function playNote(o) { snd.note(o); }
+function setPlaying(on) {
+  S.playing = on;
+  $('#playIcon').innerHTML = on ? '<path d="M7 6h3v12H7zM14 6h3v12h-3z"/>' : '<path d="M8 5.500v13l10.500-6.500z"/>';
+  $('#play').setAttribute('aria-label', on ? 'Pause' : 'Play');
 }
-$('#btnPlay').onclick = () => { if (S.playing) { stop(); S.playing = false; $('#btnPlay').textContent = '▶ Play'; } else playFrom(0); };
-$('#tempo').oninput = e => $('#tempoOut').textContent = e.target.value;
-$('#density').oninput = e => $('#densityOut').textContent = e.target.value;
+/* exps: the voices to sound; follow: highlight the notes in the score and turn the leaves */
+async function startPlayback(from = 0, until = Infinity, src = null) {
+  stopPlayback(true);
+  const ctx = snd.ensure(); snd.setVolume(P.volume);
+  const follow = !src, exps = src ? src.exps : S.exps, bflat = src ? src.bflat : S.st.bflat, mute = src ? [] : S.st.voices.map(v => v.mute);
+  const b = $('#play'); b.disabled = true;
+  await Promise.race([snd.warm(P.timbre), new Promise(r => setTimeout(r, 8000))]);
+  b.disabled = false;
+  const events = []; exps.forEach((ex, vi) => { if (mute[vi]) return; ex.forEach(n => { if (!n.rest && n.t + n.len > from + 1e-6 && n.t < until) events.push({ vi, n }); }); });
+  events.sort((a, c) => a.n.t - c.n.t);
+  const k = spm(), t0 = ctx.currentTime + .15, end = Math.min(until, Math.max(0, ...exps.map(ex => ex.length ? ex[ex.length - 1].t + ex[ex.length - 1].len : 0)));
+  clock = { t0, from, k, end, follow };
+  let ei = 0, bi = Math.ceil(from / 2 - 1e-9);
+  const pump = () => {
+    const horizon = ctx.currentTime + 1.2;
+    while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
+      const { vi, n } = events[ei++]; const cut = Math.max(0, from - n.t), at = t0 + Math.max(0, n.t - from) * k;
+      playNote({ timbre: P.timbre, midi: midiOf(n, bflat), a4: P.a4, at, text: 'a', value: n.len, dur: Math.max(.08, (n.len - cut) * k - .03), key: vi, level: .2 / Math.sqrt(Math.max(1, exps.length)) });
+    }
+    while (P.click && bi * 2 < end && t0 + (bi * 2 - from) * k < horizon) { snd.click(t0 + (bi * 2 - from) * k, bi % 2 === 0); bi++; }
+  };
+  pump(); timer = setInterval(pump, 150); setPlaying(true); frame();
+}
+function stopPlayback(keep) {
+  clearInterval(timer); cancelAnimationFrame(raf);
+  if (!keep) snd.silence(); else if (clock) snd.silence();
+  clock = null; setPlaying(false);
+  (S.index || []).forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
+}
+function frame() {
+  if (!clock) return;
+  const pos = clock.from + (snd.now() - clock.t0) / clock.k;
+  if (pos >= clock.end + .5) { const f = clock.follow; stopPlayback(false); if (f && P.loop) startPlayback(0); return; }
+  if (clock.follow) {
+    for (const x of S.index) { const on = x.t <= pos && pos < x.end; if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); } }
+    if (S.leaves) { const li = S.leaves.findIndex(l => pos >= l.t0 - 1e-6 && pos < l.t1); if (li >= 0 && li !== S.leaf) { S.leaf = li; const keep = clock; render(); S.index.forEach(x => { x.on = false; }); void keep; } }
+    else if (S.systems) {
+      const si = S.systems.findIndex(s => pos >= s.t0 && pos < s.t1);
+      if (si >= 0 && si !== lastSys) { lastSys = si; const node = $('#paper').children[si]; if (node) { const r = node.getBoundingClientRect(); if (r.top < 120 || r.bottom > innerHeight - 140) scrollTo({ top: scrollY + r.top - 160, behavior: 'smooth' }); } }
+    }
+  }
+  raf = requestAnimationFrame(frame);
+}
+const nowPos = () => (clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0);
+$('#play').onclick = () => { if (S.playing) stopPlayback(false); else { snd.ensure(); startPlayback(S.startAt || 0); } };
+$('#rewind').onclick = () => { const was = S.playing; stopPlayback(false); S.startAt = 0; lastSys = -1; if (was) startPlayback(0); else scrollTo({ top: $('#paper').offsetTop - 140, behavior: 'smooth' }); };
+$('#loopBtn').onclick = () => { P.loop = !P.loop; $('#loopBtn').setAttribute('aria-pressed', String(P.loop)); savePrefs(); };
+$('#clickBtn').onclick = () => { P.click = !P.click; $('#clickBtn').setAttribute('aria-pressed', String(P.click)); savePrefs(); if (S.playing) { const p = nowPos(); startPlayback(p); } };
+const restartHere = () => { if (S.playing && clock && clock.follow) { const p = nowPos(); startPlayback(Math.max(0, p)); } };
+$('#tempo').value = P.tempo;
+$('#tempo').addEventListener('change', e => { const v = +e.target.value; if (!v) { e.target.value = P.tempo; return; } P.tempo = Math.max(10, Math.min(300, Math.round(v))); e.target.value = P.tempo; savePrefs(); restartHere(); });
+$('#pitchHz').value = P.a4;
+$('#pitchHz').addEventListener('change', e => { const v = parseFloat(String(e.target.value).replace(',', '.')); if (!(v >= 380 && v <= 500)) { e.target.value = P.a4; return; } P.a4 = v; e.target.value = v; savePrefs(); restartHere(); });
+$('#vol').value = Math.round(P.volume * 100);
+$('#vol').oninput = e => { P.volume = e.target.value / 100; snd.setVolume(P.volume); savePrefs(); };
+$('#soundSel').innerHTML = Object.entries(snd.TIMBRES).filter(([k]) => okTimbre(k)).map(([k, v]) => `<option value="${k}" ${P.timbre === k ? 'selected' : ''}>${esc(v.label)}</option>`).join('');
+$('#soundSel').onchange = e => { P.timbre = e.target.value; savePrefs(); snd.warm(P.timbre); toast('Loading the sound…', 1200); };
+$('#clickBtn').setAttribute('aria-pressed', String(P.click)); $('#loopBtn').setAttribute('aria-pressed', String(P.loop));
+snd.warm(P.timbre);
 $('#rules').addEventListener('change', () => { if (S.st) render(); });
+$('#density').oninput = e => $('#densityOut').textContent = e.target.value;
 
 /* ---------- catalogue ---------- */
 const INTS = [[0, 'the same note'], [1, 'a step up'], [-1, 'a step down'], [2, 'a third up'], [-2, 'a third down'], [3, 'a fourth up'], [-3, 'a fourth down'], [4, 'a fifth up'], [-4, 'a fifth down'], [5, 'a sixth up'], [-5, 'a sixth down']];
@@ -151,7 +270,8 @@ let cSeed = 7;
 function catalogue() {
   const rel = +$('#cInt').value, D = +$('#cDur').value, sch = $('#cSchool').value, fam = $('#cFam').value, rh = $('#cRh').value;
   const base = [{ step: 32, acc: '', len: D, rest: false }, { step: 32 + rel, acc: '', len: 4, rest: false }, { step: 32 + rel, acc: '', len: 8, rest: false }];
-  const mk = () => ({ bflat: false, voices: [{ name: '', clef: 'treble', base: base.map(x => ({ ...x })), dims: new Map() }] });
+  const mini = { kind: 'mensural', lines: 5, tempus: 'C', abs: true, cut: false, ternary: false, bflat: false, voices: [{ clef: 'treble', name: '', notes: [] }] };
+  const mk = () => ({ bflat: false, piece: mini, voices: [{ name: '', clef: 'treble', base: base.map(x => ({ ...x })), dims: new Map() }] });
   const st = mk(), ctx = context(st); ctx.rank = [0];
   const o = { ...DEFAULTS, schools: sch ? [sch] : Object.keys(SCHOOLS), minValue: .25, maxLeap: 3, targetLeap: 4, keepRange: false, noParallels: false, consBeat: false, passDiss: false, noCross: false, noSeventh: false, noTritone: false };
   const rng = makeRng(cSeed); let list = candidates(ctx, 0, 0, o, rng, 80, false);
@@ -160,10 +280,11 @@ function catalogue() {
   $('#cards').innerHTML = list.length ? '' : '<div class="card">No figure of that kind fits here. Try another length or interval.</div>';
   list.forEach((f, i) => {
     const s2 = mk(); applyFigure(s2, 0, 0, f); const exps = s2.voices.map(expand);
-    const r = engrave(exps, s2.voices, { width: 300, sp: 7 });
+    const pc = engravable(s2, exps), sy = engraveSystems(pc, [0], 26, { names: false, count: false });
     const d = document.createElement('div'); d.className = 'fig';
-    d.innerHTML = `<button class="btn small pl" data-play="${i}">▶</button><h3>${esc(FAMILIES[f.fam])}</h3><div class="meta">${esc(RHYTHMS[f.rh])} · ${f.notes.length} notes · in the manner of ${esc(SCHOOLS[f.school].name)}</div>${r.svg}`;
-    d.querySelector('button').onclick = () => { S.playing = false; play(exps, s2, { minim: 60 / +$('#tempo').value, timbre: $('#timbre').value, a4: +$('#pitch').value }); };
+    d.innerHTML = `<button class="chip pl" data-play="${i}">▶</button><h3>${esc(FAMILIES[f.fam])}</h3><div class="meta">${esc(RHYTHMS[f.rh])} · ${f.notes.length} notes · in the manner of ${esc(SCHOOLS[f.school].name)}</div>` + sy.map(s => `<div class="sys">${systemSVG(s, 11)}</div>`).join('');
+    d.querySelectorAll('.note').forEach(e => { const x = exps[0][+e.dataset.i]; if (x && x.dim) e.classList.add('dim'); });
+    d.querySelector('button').onclick = () => startPlayback(0, Infinity, { exps, bflat: false });
     $('#cards').appendChild(d);
   });
 }
@@ -185,7 +306,7 @@ $('#aboutBody').innerHTML = `
 <p>The manners are modern descriptions of what the tutors teach, as the scholarship on them describes it. They are <strong>not</strong> transcriptions of the printed tables of any one book, and the catalogue shows generated figures, not quotations. Real tables, in particular Coclico’s examples in the chapter <em>De modo ornate canendi</em>, Ortiz’s glosas on cadences and Dalla Casa’s passaggi by interval, could be encoded one by one so that you could choose “this figure from this page”. That is the natural next step, and it needs the facsimiles read carefully.</p>
 <p>The rules are a practical model of Renaissance counterpoint, not a complete one: they do not yet know about suspensions in the model, musica ficta in the figures, or the text underlay a singer would have to fit.</p>
 <h2>Credits</h2>
-<p>The polyphonic models come from the Josquin Research Project (josquin.stanford.edu; CC BY-NC 4.0) and from the collection of <a href="../gym/cantare/">Cantare super librum</a>, which converted them to its own notation. Accidentals are drawn from the Bravura font (SIL Open Font Licence).</p>
+<p>The polyphonic models come from the Josquin Research Project (josquin.stanford.edu; CC BY-NC 4.0) and from the collection of <a href="../gym/cantare/">Cantare super librum</a>, which converted them to its own notation. The notation, the font and the sounds are those of Cantare: music in <a href="https://github.com/steinbergmedia/bravura" target="_blank" rel="noopener">Bravura</a> by Steinberg Media Technologies (SIL Open Font License 1.1); organ, sackbut, recorders and harpsichord recorded by <a href="https://versilian-studios.com/vcsl/" target="_blank" rel="noopener">Versilian Studios</a> (VCSL and VSCO 2 CE, public domain); regal, cornett, crumhorn and chalumeau modelled after the Synthesis ToolKit (Cook and Scavone).</p>
 <p class="small">A project by Václav Hřebec. The treatise notes are short and cautious; check a title page before you cite any of this.</p>`;
 
 /* ---------- catalogue controls and schools ---------- */
@@ -199,7 +320,7 @@ $('#cMore').onclick = () => { cSeed = nextSeed(); catalogue(); };
 $('#coclicoNote').innerHTML = 'Coclico (<em>Compendium musices</em>, Nuremberg 1552) treats ornamenting in its chapter <em>De modo ornate canendi</em>; the <a href="https://nbn-resolving.org/urn:nbn:de:bvb:12-bsb00103405-2" target="_blank" rel="noopener">facsimile from the Bayerische Staatsbibliothek</a> is online. The “Coclico” manner here only models its plain, short, stepwise figures.';
 
 /* ---------- tabs ---------- */
-function tab(name) { $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name)); $$('.pane').forEach(p => p.classList.toggle('on', p.id === name)); if (name === 'cat' && !$('#cards').children.length) catalogue(); if (name === 'work') render(); scrollTo(0, 0); }
+function tab(name) { document.body.dataset.tab = name; $$('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab === name)); $$('.pane').forEach(p => p.classList.toggle('on', p.id === name)); if (name === 'cat' && !$('#cards').children.length) catalogue(); if (name === 'work') render(); scrollTo(0, 0); }
 $$('.tab').forEach(t => t.onclick = () => { closeSheet(); tab(t.dataset.tab); });
 document.addEventListener('click', e => { const a = e.target.closest('[data-goto]'); if (a) { e.preventDefault(); tab(a.dataset.goto); } });
 $('#selComp').onchange = () => { fillPieces(); openChoice($('#selPiece').value); };
@@ -208,4 +329,5 @@ $('#btnRandom').onclick = randomPiece;
 
 treatises();
 loadIndex().then(() => { $('#selComp').value = '@models'; fillPieces(); const i = S.models.findIndex(m => /Mille regretz/.test(m.title)); $('#selPiece').value = 'm' + Math.max(0, i); return openChoice($('#selPiece').value); });
-window.fiorire = { S, opts, catalogue };
+document.body.dataset.tab = 'work';
+window.fiorire = { S, opts, catalogue, P };

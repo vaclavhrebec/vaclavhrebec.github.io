@@ -1,21 +1,22 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Fiorire · Diminution in the Renaissance</title>
 <meta name="description" content="Apply, place and remove Renaissance diminutions on polyphonic models, with rules you choose, and browse the treatises of the art of diminution.">
-<meta name="theme-color" content="#f4efe4">
+<meta name="theme-color" content="#000000">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23c8402a'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23231f1b'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="css/fiorire.css">
 </head>
-<body>
+<body data-tab="work">
 <header class="top">
   <a class="back" href="../" title="Václav Hřebec">←</a>
   <div class="brand"><b>Fiorire</b><span>Diminution in the Renaissance</span></div>
   <div class="grow"></div>
   <a class="toplink" href="../gym/cantare/">Cantare</a>
   <a class="toplink" href="../gym/">Gym</a>
+  <button class="ib" id="toggleTheme" aria-label="Light / dark" title="Light / dark"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9 7 7 0 0 1-9-9z"/></svg></button>
 </header>
 <nav class="tabs" role="tablist">
   <button class="tab on" data-tab="work" role="tab">Workshop</button>
@@ -39,13 +40,7 @@
       <button id="btnUndo" class="btn" title="Undo the last change">Undo</button>
       <button id="btnPlain" class="btn" title="Remove every diminution">Plain</button>
       <button id="btnReduce" class="btn" title="Strip the quick notes from the chosen voices, leaving the skeleton">Reduce</button>
-      <button id="btnPlay" class="btn">▶ Play</button>
-    </div>
-    <div class="row opts2">
-      <label>Tempo <input id="tempo" type="range" min="50" max="170" value="100"> <output id="tempoOut">100</output> minims/min</label>
-      <label>Sound <select id="timbre"><option value="organ">Organ</option><option value="lute">Lute</option></select></label>
-      <label>Pitch <select id="pitch"><option value="440">a′ = 440</option><option value="415">a′ = 415</option><option value="466">a′ = 466</option></select></label>
-    </div>
+          </div>
     <details id="rules" class="rules">
       <summary>Manner and rules</summary>
       <div class="grid">
@@ -73,7 +68,14 @@
     </details>
     <p id="info" class="info"></p>
   </div>
-  <div id="scoreWrap" class="scorewrap"><div id="score"></div></div>
+  <div class="piece-head"><p class="trail" id="trail"></p><div class="titlerow"><h2 id="title"></h2></div><p class="note" id="note"></p></div>
+  <div class="viewbar">
+    <div class="seg" role="group" aria-label="Layout"><button id="vScore" aria-pressed="true">Score</button><button id="vBook" aria-pressed="false">Choir book</button></div>
+    <span class="grow"></span>
+    <button class="chip" id="zOut" aria-label="Smaller" title="Smaller">A−</button><button class="chip" id="zIn" aria-label="Larger" title="Larger">A+</button>
+  </div>
+  <div class="paper" id="paper" aria-live="polite"></div>
+  <div class="pager" id="pager" hidden><button id="leafPrev" aria-label="Previous leaf">‹</button><span id="leafNo"></span><button id="leafNext" aria-label="Next leaf">›</button></div>
   <p id="credit" class="credit"></p>
 </section>
 
@@ -108,11 +110,21 @@
 </section>
 </main>
 
+<footer class="dock" id="dock">
+  <button class="rewind" id="rewind" aria-label="Back to the beginning" title="Back to the beginning"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14"/><path d="M19 6v12l-9.5-6z"/></svg></button>
+  <button class="play" id="play" aria-label="Play"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5.5v13l10.5-6.5z"/></svg></button>
+  <button class="rewind loop" id="loopBtn" aria-pressed="false" aria-label="Loop" title="Loop: repeat the whole piece until stopped"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11V9a3 3 0 0 1 3-3h11"/><path d="M15 3l3 3-3 3"/><path d="M20 13v2a3 3 0 0 1-3 3H6"/><path d="M9 21l-3-3 3-3"/></svg></button>
+  <label class="tempo" title="Semibreves per minute"><span>Semibrevis</span><input type="number" id="tempo" min="10" max="300" step="1" inputmode="numeric" value="60" aria-label="Semibreves per minute"></label>
+  <label class="tempo pitch" title="The pitch of a′ in Hz"><span>Pitch</span><span class="pitchrow">a′ =<input type="text" id="pitchHz" inputmode="decimal" value="440" aria-label="a′ in Hz"></span></label>
+  <label class="tempo snd" title="Sound"><span>Sound</span><select id="soundSel"></select></label>
+  <label class="tempo vol" title="Volume"><span>Volume</span><input type="range" id="vol" min="0" max="100" value="80"></label>
+  <button class="chip" id="clickBtn" aria-pressed="false" title="A click on every semibreve">Click</button>
+</footer>
 <div id="sheet" class="sheet" hidden>
   <div class="sheet-head"><b id="shTitle"></b><span class="grow"></span><button id="shPlay" class="btn small">▶ From here</button><button id="shClose" class="btn small" aria-label="Close">✕</button></div>
   <div id="shBody" class="sheet-body"></div>
 </div>
-<div id="toast" class="toast" hidden></div>
+<div id="toast" class="toast" role="status"></div>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

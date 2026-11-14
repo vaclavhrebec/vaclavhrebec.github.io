@@ -65,15 +65,30 @@ export function expand(voice) {
 }
 
 export function fromPiece(piece) {
-  const voices = piece.voices.map((v, i) => {
-    const base = [];
-    for (const n of v.notes) {
-      const prev = base[base.length - 1];
-      if (n.rest && prev && prev.rest) prev.len += n.len; else base.push({ step: n.step, acc: n.acc || '', len: n.len, rest: !!n.rest });
-    }
-    return { name: v.name || '', clef: v.clef, base, dims: new Map(), on: true, mute: false };
+  const voices = piece.voices.map(v => ({ name: v.name || '', clef: v.clef, base: v.notes.map(n => ({ step: n.step, acc: n.acc || '', len: n.len, rest: !!n.rest, o: n })), dims: new Map(), on: true, mute: false }));
+  return { title: piece.title, credit: piece.credit, note: piece.note, trail: piece.trail, bflat: !!piece.bflat, piece, voices };
+}
+
+/* ---------- from the model to Cantare's engraver ---------- */
+const VALS = [['Mx', 16], ['L', 8], ['B', 4], ['S', 2], ['M', 1], ['Sm', .5], ['F', .25]];
+export function tokenOf(len) {
+  for (const [v, l] of VALS) { if (Math.abs(len - l) < 1e-9) return { v, dot: false }; if (Math.abs(len - 1.5 * l) < 1e-9) return { v, dot: true }; }
+  const f = VALS.find(([, l]) => l <= len + 1e-9) || VALS[VALS.length - 1]; return { v: f[0], dot: false };
+}
+/* the notes of a voice as Cantare's engraver wants them: plain notes as they were, figure notes as new notes */
+export function engravable(st, exps, pieceOver = null) {
+  const base = pieceOver || st.piece;
+  const voices = base.voices.map((v, vi) => {
+    const src = st.voices[vi].base;
+    const notes = exps[vi].map((e, i) => {
+      let n;
+      if (!e.dim) { n = { ...(src[e.k].o || {}), step: e.step, acc: e.acc || '', rest: e.rest, len: e.len }; if (!n.v) Object.assign(n, tokenOf(e.len)); }
+      else { n = { ...tokenOf(e.len), step: e.step, acc: e.acc || '', rest: false, col: false, ficta: false, len: e.len }; if (e.j === 0) { const o = src[e.k].o; if (o && o.text) { n.text = o.text; n.hyphen = o.hyphen; } } }
+      n.t = e.t; n.src = i; return n;
+    });
+    return { ...v, notes, end: notes.length ? notes[notes.length - 1].t + notes[notes.length - 1].len : 0 };
   });
-  return { title: piece.title, credit: piece.credit, note: piece.note, bflat: !!piece.bflat, voices };
+  return { ...base, voices, end: Math.max(0, ...voices.map(v => v.end)) };
 }
 
 export function snapshot(st) { return JSON.stringify(st.voices.map(v => ({ base: v.base, dims: [...v.dims] }))); }
