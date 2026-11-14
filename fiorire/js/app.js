@@ -9,6 +9,7 @@ const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAl
 const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const parse = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
 const JRP = '../gym/cantare/jrp/';
+const SCAN = '<svg class="scanico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5C6.5 4.5 9.5 4.5 12 6c2.5-1.5 5.5-1.5 8-.5v13c-2.5-1-5.5-1-8 .5-2.5-1.5-5.5-1.5-8-.5z"/><path d="M12 6v13"/></svg>';
 const S = { st: null, undo: [], pre: null, sel: null, index: [], models: [], seed: (Math.random() * 1e9) | 0, playing: false, leaf: 0, exps: [] };
 
 /* ---------- preferences: Cantare's own (theme, sound, pitch, volume) are taken as the starting point ---------- */
@@ -390,7 +391,7 @@ function catalogue() {
 /* ---------- treatises ---------- */
 function treatises() {
   const q = $('#tFilter').value.toLowerCase().trim();
-  $('#treList').innerHTML = TREATISES.filter(t => !q || [t.y, t.a, t.t, t.p, t.k, t.n].join(' ').toLowerCase().includes(q)).map(t => `<article class="tre"><div class="yr">${esc(t.y)}</div><div><h3>${esc(t.t)}</h3><div class="who">${esc(t.a)} · ${esc(t.p)}</div><p>${esc(t.n)}</p><div class="k">For: ${esc(t.k)} · <a href="${t.u}" target="_blank" rel="noopener">${esc(t.ul || 'Search on IMSLP')}</a></div></div></article>`).join('') || '<div class="card">Nothing found.</div>';
+  $('#treList').innerHTML = TREATISES.filter(t => !q || [t.y, t.a, t.t, t.p, t.k, t.n].join(' ').toLowerCase().includes(q)).map(t => `<article class="tre"><div class="yr">${esc(t.y)}</div><div><h3>${esc(t.t)} <a class="scan" href="${t.u}" target="_blank" rel="noopener" title="${esc(t.ul || 'Search on IMSLP')}" aria-label="Open the treatise: ${esc(t.ul || 'Search on IMSLP')}">${SCAN}</a></h3><div class="who">${esc(t.a)} · ${esc(t.p)}</div><p>${esc(t.n)}</p><div class="k">For: ${esc(t.k)} · <a href="${t.u}" target="_blank" rel="noopener">${esc(t.ul || 'Search on IMSLP')}</a></div></div></article>`).join('') || '<div class="card">Nothing found.</div>';
 }
 $('#tFilter').oninput = treatises;
 
@@ -408,7 +409,10 @@ $('#aboutBody').innerHTML = `
 <p class="small">A project by Václav Hřebec. The treatise notes are short and cautious; check a title page before you cite any of this.</p>`;
 
 /* ---------- catalogue controls and schools ---------- */
-$('#schools').innerHTML = Object.entries(SCHOOLS).map(([k, s]) => `<label><input type="checkbox" value="${k}" ${DEFAULTS.schools.includes(k) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('');
+/* each manner with a small book icon that opens its treatise */
+const SRC = { adorg: 'Ad organum faciendum', notredame: 'De mensuris et discantu', trecento: 'Pomerium', coclico: 'Compendium musices', finck: 'Practica musica', ganassi: 'Opera intitulata Fontegara', ortiz: 'Trattado de glosas', dallacasa: 'Ricercate, passaggi et cadentie', bovicelli: 'Regole, passaggi di musica', caccini: 'Le nuove musiche' };
+const treOf = k => TREATISES.find(t => SRC[k] && t.t.startsWith(SRC[k]));
+$('#schools').innerHTML = Object.entries(SCHOOLS).map(([k, s]) => { const t = treOf(k); return `<label><input type="checkbox" value="${k}" ${DEFAULTS.schools.includes(k) ? 'checked' : ''}> ${esc(s.name)}${t ? `&nbsp;<a class="scan" href="${t.u}" target="_blank" rel="noopener" title="${esc(t.a + ', ' + t.t + ': ' + (t.ul || 'Search on IMSLP'))}" aria-label="Open the treatise">${SCAN}</a>` : ''}</label>`; }).join('');
 styleList(); $('#style').value = P.style || '@ren'; setStyle($('#style').value); $('#style').onchange = e => setStyle(e.target.value);
 $('#cSchool').innerHTML = '<option value="">all</option>' + Object.entries(SCHOOLS).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join('');
 $('#cFam').innerHTML += Object.entries(FAMILIES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
