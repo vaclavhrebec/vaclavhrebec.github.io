@@ -103,6 +103,9 @@ button { font: inherit; color: inherit; }
 .tag { display: inline-block; padding: 0 8px; border-radius: 10px; background: var(--sel); color: var(--accent); font-size: 12.5px; margin: 0 4px 3px 0; text-decoration: none; }
 .note p { margin: 0 0 1em; }
 .il { color: var(--accent); text-decoration: none; cursor: pointer; }
+.wk { color: inherit; text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+.wk:hover { color: var(--accent); text-decoration-style: solid; }
+.wk::after { content: "\2197"; font-size: .7em; margin-left: 1px; color: var(--accent); vertical-align: super; line-height: 0; }
 .il:hover { text-decoration: underline; }
 .il.style { font-weight: 600; }
 .ext { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; text-decoration: none; color: var(--fg); font-size: 14px; }
@@ -321,6 +324,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-crosslinks.js"></script>
 <script src="vault-voices.js"></script>
 <script src="vault-composers.js"></script>
+<script src="vault-works.js"></script>
 <script>
 (function () {
   'use strict';
@@ -388,14 +392,15 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const yrs = n => n.kind === 'style' ? YR(n.from, n.to, n.alive) : `${Y(n.first)}`;
 
   /* ---------- markup ---------- */
+  const works = V.linkWorks || (h => h);
   function md(s) {
-    return esc(s)
+    return works(esc(s)
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
       .replace(/\*([^*]+)\*/g, '<em>$1</em>')
       .replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, id, lab) => {
         const n = byId[id]; if (!n) return esc(lab || id);
         return `<a class="il${n.kind === 'style' ? ' style' : ''}" href="#note/${id}" data-id="${id}">${lab || n.title}</a>`;
-      });
+      }));
   }
 
   /* ---------- file explorer ---------- */
@@ -721,7 +726,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const vrange = r => r[0] === r[1] ? String(r[0]) : r[0] + '–' + r[1];
   function voiceRow(id) {
     const r = VV[id]; if (!r) return '';
-    return `<dt>${ICON.list}real voices</dt><dd>usually ${vrange(r)}${r[2] > r[1] ? ' · up to ' + r[2] : ''}${r[3] ? '<br><span class="small" style="color:var(--muted);font-size:12.5px">' + esc(r[3]) + '</span>' : ''}</dd>`;
+    return `<dt>${ICON.list}real voices</dt><dd>usually ${vrange(r)}${r[2] > r[1] ? ' · up to ' + r[2] : ''}${r[3] ? '<br><span class="small" style="color:var(--muted);font-size:12.5px">' + works(esc(r[3])) + '</span>' : ''}</dd>`;
   }
   const VTABLE = [
     ['c. 800–1100', '1–2', '2', 'Plainchant, then parallel and free organum. Doubling at the octave adds sounding lines but no voice.'],
@@ -769,7 +774,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <h2 style="font-size:1.1rem;margin:22px 0 8px">Voices by period</h2>
       <table class="vtab"><thead><tr><th>Period</th><th>Usual</th><th>Most</th><th></th></tr></thead><tbody>${VTABLE.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${esc(r[3])}</td></tr>`).join('')}</tbody></table>
       <p class="small" style="color:var(--faint);font-size:12.5px">The numbers are rough guides, counted in real parts. In styles driven by harmony the count changes from bar to bar. In a canon the entries multiply but the lines do not.</p>`;
-    host.querySelectorAll('.mk').forEach(b => b.onclick = () => { const m = marks[+b.dataset.m]; $('#vvd').innerHTML = `<b>${esc(m.t)}</b> · c. ${m.y} · ${m.n} ${m.parts ? 'real voices' : 'parts'}${m.attributed ? ' (attribution uncertain)' : ''}<br>${esc(m.text)}`; });
+    host.querySelectorAll('.mk').forEach(b => b.onclick = () => { const m = marks[+b.dataset.m]; $('#vvd').innerHTML = `<b>${esc(m.t)}</b> · c. ${m.y} · ${m.n} ${m.parts ? 'real voices' : 'parts'}${m.attributed ? ' (attribution uncertain)' : ''}<br>${esc(m.text)}${(V.workMarks || {})[m.y] ? `<br><a class="wk" href="${V.workMarks[m.y]}" target="_blank" rel="noopener">Score or source</a>` : ''}`; });
   }
 
   /* ---------- views and routing ---------- */
