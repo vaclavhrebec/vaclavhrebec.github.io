@@ -512,3 +512,9 @@ html.full .brand .gymlink { height: 24px; }
 html.focus .zoomctl { top: 4px; margin-right: 96px; }
 @media (max-width: 560px) { .zoomctl .zword { display: none; } .zoomctl button { min-width: 40px; } }
 #paper { clear: both; }
+/* the Text window and button */
+.nm textarea.tx-in { height: auto; min-height: 76px; padding: 8px 10px; resize: vertical; font: 16px/1.4 var(--sans); }
+.tx-voices { display: flex; flex-wrap: wrap; gap: 6px; }
+.tx-voices:empty { display: none; }
+.tx-count { margin: -4px 0 0; }
+.tbtn .tblab { font-size: 13px; }

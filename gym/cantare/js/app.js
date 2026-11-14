@@ -750,6 +750,7 @@ function buildVoiceChips() {
 const hist = { undo: [], redo: [] };
 const snap = () => JSON.stringify(S.base.voices.map(v => v.notes));
 function afterEdit() {
+  S.base.voices.forEach(v => { if (S.base.mine || v.userText) applyText(v); });
   S.base.voices.forEach(v => { stamp(v.notes, S.base.abs ? 'C' : S.base.tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
   S.base.end = Math.max(...S.base.voices.map(v => v.end));
   stopPlayback();
@@ -799,6 +800,7 @@ const EDIT = {
 };
 
 const ICON = {
+  text: '<svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 6V4.5h14V6"/><path d="M12 4.5V17"/><path d="M9 17h6"/><path d="M4 21h16"/></svg>',
   undo: '<svg class="ico" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>',
   redo: '<svg class="ico" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg>',
   left: '<svg class="ico" viewBox="0 0 24 24"><path d="M14.500 5l-7 7 7 7"/></svg>',
@@ -809,6 +811,88 @@ const ICON = {
   plus: '<svg class="ico" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
   trash: '<svg class="ico" viewBox="0 0 24 24"><path d="M5 7h14M10 7V4.500h4V7M7 7l1 13h8l1-13"/></svg>',
 };
+
+
+/* ---------- text under the notes, for melodies people write themselves.
+   Typed as words with hyphens between syllables ("A-ve ma-ris stel-la"); one syllable to each note, in order (rests are
+   skipped). A dot ( . ) lets a syllable go on over one more note; after the last syllable the last one simply goes on.
+   Kept in the voice as the library's own text format ("A- ve ma- ris"), so Chimera sings it, the link carries it and the
+   copy sent to Václav contains it. */
+function lyrOfTyped(t) {
+  const out = [];
+  t.replace(/[\r\n]+/g, ' ').trim().split(/\s+/).filter(Boolean).forEach(w => {
+    if (w === '.' || !w.includes('-') || w === '-') { out.push(w); return; }
+    const parts = w.split('-').filter(x => x !== '');
+    parts.forEach((x, i) => out.push(x === '.' ? '.' : i < parts.length - 1 ? x + '-' : x));
+  });
+  return out.join(' ');
+}
+function typedOfLyr(l) {
+  const out = []; let word = null;
+  (l || '').trim().split(/\s+/).filter(Boolean).forEach(tok => {
+    const open = tok.length > 1 && tok.endsWith('-');
+    if (word !== null) {
+      if (tok === '.') { word += '.-'; return; }
+      word += tok;
+      if (!open) { out.push(word); word = null; }
+    } else if (open) word = tok;
+    else out.push(tok);
+  });
+  if (word !== null) out.push(word.replace(/-$/, ''));
+  return out.join(' ');
+}
+function applyText(v) {
+  v.notes.forEach(n => { delete n.text; delete n.hyphen; });
+  if (!v.lyrics) return;
+  const parts = v.lyrics.trim().split(/\s+/);
+  let i = 0;
+  for (const n of v.notes) {
+    if (n.rest || i >= parts.length) continue;
+    let w = parts[i++];
+    if (w === '.') continue;
+    w = w.replace(/_/g, ' ');
+    if (w.length > 1 && w.endsWith('-')) { n.text = w.slice(0, -1); n.hyphen = true; } else n.text = w;
+  }
+}
+/* the Text window */
+function askText(vi0 = 0) {
+  if (!S.base) return;
+  const pop = $('#clefPop'), b = S.base;
+  let vi = Math.min(vi0, b.voices.length - 1);
+  const area = el('textarea', { class: 'nm-in tx-in', rows: 4, spellcheck: 'false', placeholder: tr('e.g. A-ve ma-ris stel-la, De-i Ma-ter al-ma'), 'aria-label': tr('Text under the notes') });
+  const count = el('p', { class: 'hint tx-count' });
+  const voiceRow = el('div', { class: 'tx-voices' });
+  const syls = () => lyrOfTyped(area.value).split(' ').filter(Boolean).length;
+  const showCount = () => {
+    const notes = b.voices[vi].notes.filter(n => !n.rest).length, k = area.value.trim() ? syls() : 0;
+    count.textContent = tr('Notes') + ': ' + notes + ' · ' + tr('Syllables (and dots)') + ': ' + k +
+      (k > notes ? ' — ' + tr('more syllables than notes: the rest waits for new notes') : k && k < notes ? ' — ' + tr('the last syllable goes on over the remaining notes') : '');
+  };
+  const put = () => {
+    const v = b.voices[vi];
+    v.lyrics = lyrOfTyped(area.value); v.userText = true;
+    applyText(v); afterEdit(); keepMine(); showCount();
+  };
+  let t = null;
+  area.addEventListener('input', () => { clearTimeout(t); t = setTimeout(put, 250); showCount(); });
+  const pickVoice = i => { vi = i; area.value = typedOfLyr(b.voices[vi].lyrics); drawVoices(); showCount(); };
+  const drawVoices = () => {
+    voiceRow.replaceChildren(...(b.voices.length > 1 ? b.voices.map((v, i) => el('button', { type: 'button', class: 'chip' + (i === vi ? ' on' : ''), 'aria-pressed': String(i === vi), onclick: () => pickVoice(i) }, v.name || tr('Voice') + ' ' + (i + 1))) : []));
+  };
+  const close = () => { clearTimeout(t); put(); pop.hidden = true; sendLater(); };
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Text under the notes')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: close }, '×')),
+    el('div', { class: 'nm' },
+      voiceRow,
+      el('label', {}, tr('Type the text, with a hyphen between the syllables of a word'), area),
+      count,
+      el('p', { class: 'hint' }, tr('One syllable to each note, in order. A dot ( . ) lets a syllable go on over one more note: A-.-ve gives “A” two notes. Chimera sings the text when you press Play.')),
+      el('div', { class: 'nm-go' },
+        el('button', { type: 'button', class: 'chip', onclick: () => { area.value = ''; put(); } }, tr('Clear the text')),
+        el('button', { type: 'button', class: 'chip primary', onclick: close }, tr('Done')))));
+  pickVoice(vi);
+  pop.hidden = false; setTimeout(() => area.focus(), 30);
+}
 
 function buildEditTools() {
   const box = $('#editTools');
@@ -828,6 +912,7 @@ function buildEditTools() {
     grp(btn(glyphIcon('rest'), tr('Rest'), () => { if (has) EDIT.rest(); else { S.inRest = !S.inRest; buildEditTools(); } }, { on: has ? n.rest : !!S.inRest }), btn(ICON.dot, tr('Dot'), () => EDIT.dot(), { on: has && n.dot, dis: !has })),
     grp([['b', tr('Flat')], ['n', tr('Natural')], ['#', tr('Sharp')]].map(([k, t]) => btn(glyphIcon('acc', k), t, () => EDIT.acc(k), { on: has && n.acc === k, dis: !has || n.rest }))),
     grp(btn(ICON.plus, tr('Add a note after this one'), () => EDIT.add()), btn(ICON.trash, tr('Delete'), () => EDIT.del(), { dis: !has })),
+    grp(btn(ICON.text + '<span class="tblab">' + esc(tr('Text')) + '</span>', tr('Text under the notes'), () => askText(S.sel ? S.sel.vi : 0))),
   );
   $('#toolbar').classList.toggle('editing', S.edit);
   if (!has) box.append(el('span', { class: 'edit-hint' }, tr('Tap a note to select it, or tap the staff to put a note there.')));
@@ -1196,10 +1281,12 @@ function adoptMine(item, open = true) {
   mine.unshift(item); saveMineList(); mineGroup(); renderTree($('#search').value);
   if (open) { openItem(item, [tr('Your melodies')]); S.base.mine = true; }
 }
-function newMelody(title) {
+function newMelody(title, words = '') {
   const cur = S.base;
   sendMine();
-  adoptMine({ title: title || tr('Your own melody'), n: '', c: cur && cur.kind !== 'chant' ? cur.voices[0].clef : 'c4', t: 'C', mine: true });
+  const lyr = lyrOfTyped(words || '');
+  adoptMine({ title: title || tr('Your own melody'), n: '', c: cur && cur.kind !== 'chant' ? cur.voices[0].clef : 'c4', t: 'C', mine: true, lyr: lyr || undefined });
+  if (lyr && S.base) S.base.voices[0].lyrics = lyr;
   S.edit = true; S.sel = null; S.inDur = 'S'; S.inRest = false; buildEditTools(); render(); markSel();
   toast(tr('Tap the staff to put a note there, or type A to G.'));
 }
@@ -1210,12 +1297,13 @@ function askNewMelody() {
   let send = true; try { send = localStorage.getItem(SENDPREF) !== 'no'; } catch (e) { /* ignore */ }
   const name = el('input', { type: 'text', class: 'nm-in', maxlength: 120, placeholder: tr('e.g. My cantus firmus in the first mode'), 'aria-label': tr('Name of the melody') });
   const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, placeholder: tr('Your name (optional)'), 'aria-label': tr('Your name (optional)') });
+  const words = el('textarea', { class: 'nm-in tx-in', rows: 2, maxlength: 4000, spellcheck: 'false', placeholder: tr('e.g. A-ve ma-ris stel-la'), 'aria-label': tr('Text (optional)') });
   const box = el('input', { type: 'checkbox', checked: send });
   const go = () => {
     const t = name.value.trim();
     if (!t) { name.focus(); name.classList.add('need'); return; }
     try { localStorage.setItem(SENDPREF, box.checked ? 'yes' : 'no'); if (who.value.trim()) localStorage.setItem('cantare-next:who', who.value.trim()); } catch (e) { /* ignore */ }
-    pop.hidden = true; newMelody(t);
+    pop.hidden = true; newMelody(t, words.value);
   };
   try { who.value = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
   name.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); go(); } });
@@ -1224,7 +1312,8 @@ function askNewMelody() {
     el('div', { class: 'nm' },
       el('label', {}, tr('Name of the melody'), name),
       el('label', {}, tr('Your name (optional)'), who),
-      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the melodies people write here (title, notes and your name if given).'))),
+      el('label', {}, tr('Text (optional): a hyphen between syllables; it can also be added later with the Text button'), words),
+      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the melodies people write here (title, notes, text and your name if given).'))),
       el('p', { class: 'hint' }, tr('Your melody is saved in this browser under Your melodies in the library.')),
       el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),
         el('button', { type: 'button', class: 'chip', onclick: () => singIn(name.value.trim()) }, tr('Sing a chant instead')),
@@ -1275,7 +1364,9 @@ function sendMine(b = S.base) {
   sentAt.set(b.id, key);
   let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
   const body = { _subject: 'Cantare – a new melody: ' + b.title, _template: 'table', _captcha: 'false', About: 'Cantare super librum – melody written by a visitor',
-    Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | ') || (it.s || []).join(' '), Link: linkOf(b), Data: key };
+    Title: b.title, Name: who || '—', Notes: it.n || (it.poly || []).map(v => v.n).join(' | ') || (it.s || []).join(' '),
+    Text: b.voices.map(v => typedOfLyr(v.lyrics).replace(/\s\.(?=\s|$)/g, '').replace(/-\.-/g, '-').replace(/-/g, '')).filter(Boolean).join(' | ') || '—',
+    Syllables: b.voices.map(v => v.lyrics || '').filter(Boolean).join(' | ') || '—', Link: linkOf(b), Data: key };
   if (b.kind === 'chant') {
     /* a chant also goes as GABC, the plain-text chant notation that Gregorio and GregoBase read */
     body._subject = 'Cantare – a new chant' + (b.sung ? ' (sung in)' : '') + ': ' + b.title;
