@@ -1,6 +1,6 @@
 import { readScoreFile, toMusicXML, ACCEPT } from './scorefile.js';
-import { readTokens, pieceFrom, stamp, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
-import { engraveSystems, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt, setSpacing } from './engrave.js';
+import { readTokens, pieceFrom, stamp, lengthOf, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
+import { engraveSystems, buildColumns, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt, setSpacing } from './engrave.js';
 import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
 import { createMic, describe, spellMidi, median } from './mic.js';
@@ -416,6 +416,76 @@ function rollX(pos) {
   return (sys.ind + x) * (S.rollZ || prefs.zoom);
 }
 
+/* ---------- the choir book: where the lines and the pages turn ----------
+   Each voice is measured on its own (its columns and their widths). A line runs from one moment to the next as long as
+   every voice's music for that time fits the width of a page; the most crowded voice decides. A leaf holds `rows` lines. */
+function planBook(p, paneW, rows, opts) {
+  const meas = p.voices.map((v, i) => {
+    const cols = buildColumns(p, [i]);
+    const pre = [0]; cols.forEach(c => pre.push(pre.at(-1) + c.need));
+    const head = headWidth(p, clefFor(opts.clefs?.[i] || v.clef)) + .4;
+    return { v, cols, pre, cap: Math.max(4, (paneW - 3.4 - head) * .97) };
+  });
+  const lowerIdx = (cols, t) => { let lo = 0, hi = cols.length; while (lo < hi) { const m = (lo + hi) >> 1; if (cols[m].t < t - 1e-6) lo = m + 1; else hi = m; } return lo; };
+  /* the room one voice needs between two moments; a voice still silent or still holding a note at the start gets a little lead */
+  const need = (m, s, e) => {
+    const a = lowerIdx(m.cols, s), b = lowerIdx(m.cols, e);
+    let w = m.pre[b] - m.pre[a];
+    const first = a < m.cols.length ? m.cols[a].t : e;
+    if (first > s + 1e-6 && first < e) w += 1.8;
+    return w;
+  };
+  /* how many voices hold a sounding note across the moment t (a line or page should rather turn where none does) */
+  const held = t => p.voices.reduce((k, v) => k + (v.notes.some(n => !n.rest && n.t < t - 1e-6 && n.t + n.len > t + 1e-6) ? 1 : 0), 0);
+  const end = p.end;
+  const times = [...new Set(meas.flatMap(m => m.cols.map(c => Math.round(c.t * 1e4) / 1e4)).concat([Math.round(end * 1e4) / 1e4]))].sort((a, b) => a - b);
+  const starts = [0];
+  let s = 0;
+  while (s < end - 1e-6) {
+    let k = times.findIndex(t => t > s + 1e-6);
+    if (k < 0) break;
+    const fit = [];
+    for (; k < times.length; k++) {
+      const e = times[k];
+      if (fit.length && !meas.every(m => need(m, s, e) <= m.cap)) break;
+      fit.push(e);
+    }
+    let e = fit[fit.length - 1];
+    if (e < end - 1e-6 && fit.length > 1) {
+      /* among the last good places, the latest where no voice is holding a note over the turn */
+      const span = e - s;
+      const good = fit.filter(t => t - s >= span * .82);
+      const best = Math.min(...good.map(held));
+      e = good.filter(t => held(t) === best).at(-1);
+    }
+    if (e >= end - 1e-6) break;
+    starts.push(e); s = e;
+  }
+  const leaves = [];
+  for (let i = 0; i < starts.length; i += rows) leaves.push({ t0: starts[i], t1: i + rows < starts.length ? starts[i + rows] : Infinity, lines: starts.slice(i, i + rows) });
+  return { starts, leaves };
+}
+/* a copy of the piece in which every rest that runs over one of the moments is cut there into rests of the usual values */
+function splitRestsAt(p, cuts) {
+  const tp = p.talea || p.abs ? 'C' : p.tempus;
+  const VALS = ['L', 'B', 'S', 'M', 'Sm', 'F'].map(v => ({ v, len: lengthOf({ v }, tp) })).sort((a, b) => b.len - a.len);
+  const restsOf = (n, src, t, d) => {
+    const out = [];
+    let left = d;
+    for (const x of VALS) while (left >= x.len - 1e-6) { out.push({ ...n, v: x.v, dot: false, col: false, alt: false, t, len: x.len, src }); t += x.len; left -= x.len; }
+    if (left > 1e-6) out.push({ ...n, t, len: left, src }); /* an odd remainder keeps the last piece */
+    return out;
+  };
+  const cutsIn = (a, b) => cuts.filter(c => c > a + 1e-6 && c < b - 1e-6);
+  return { ...p, voices: p.voices.map(v => ({ ...v, notes: v.notes.flatMap((n, i) => {
+    if (!n.rest) return [n];
+    const cs = cutsIn(n.t, n.t + n.len);
+    if (!cs.length) return [n];
+    const pts = [n.t, ...cs, n.t + n.len];
+    return pts.slice(1).flatMap((b, j) => restsOf(n, i, pts[j], b - pts[j]));
+  }) })) };
+}
+
 function renderBook(p, opts, resetLeaf) {
   const paneCss = (paper.clientWidth || $('#stage').clientWidth) / 2 - 36;
   const availH = Math.max(300, $('#stage').clientHeight - 130);
@@ -434,26 +504,15 @@ function renderBook(p, opts, resetLeaf) {
   const per = p.voices.map((_, i) => engraveSystems(p, [i], paneW, { ...opts, names: false }));
   const sysH = Math.max(...per.map(s => Math.max(...s.map(x => x.h)))) * scale + 14;
   const rows = Math.max(R > 2 ? 1 : 2, Math.floor((availH / R - 30) / sysH));
-  /* leaves: every voice shows at most `rows` lines; the boundaries fall on starts of lines of any voice.
-     A voice shows the lines that begin on the leaf. If none begins there (its line started on an earlier leaf:
-     long notes, long rests), it shows the line still running, so no voice ever disappears from the opening. */
-  per.forEach(s => s.forEach((x, i) => { x.tEnd = i + 1 < s.length ? s[i + 1].t0 : Infinity; }));
-  const linesOn = (s, t0, t1) => {
-    const begin = s.filter(x => x.t0 >= t0 - 1e-6 && x.t0 < t1 - 1e-6);
-    if (begin.length) return begin;
-    const run = s.find(x => x.t0 < t0 + 1e-6 && x.tEnd > t0 + 1e-6) || s[s.length - 1];
-    return run ? [run] : [];
-  };
-  const cuts = [...new Set(per.flatMap(s => s.map(x => x.t0)))].sort((a, b) => a - b);
-  const leaves = [];
-  let a = 0;
-  while (a < cuts.length) {
-    let b = a + 1;
-    const fits = e => per.every(s => linesOn(s, cuts[a], e < cuts.length ? cuts[e] : Infinity).length <= rows);
-    while (b < cuts.length && fits(b + 1)) b++;
-    leaves.push({ t0: cuts[a], t1: b < cuts.length ? cuts[b] : Infinity });
-    a = b;
-  }
+  /* The opening is synchronised: every voice shows the same stretch of time, and every line of the opening begins at the
+     same moment in all the voices. The voice that needs the most room for that time (many minims, many syllables) decides
+     where a line ends; the others are spread to the same span. A rest that runs over a line or a turn of the page is split,
+     so that each page shows only the silence that belongs to it; a sounding note stays on the page where it begins. */
+  const plan = planBook(p, paneW, rows, opts);
+  const leaves = plan.leaves;
+  const bp = splitRestsAt(p, plan.starts);
+  const sys = bp.voices.map((_, i) => engraveSystems(bp, [i], paneW, { ...opts, names: false, breaks: plan.starts.slice(1) }));
+  const linesOn = (s, t0, t1) => s.filter(x => x.t0 >= t0 - 1e-6 && x.t0 < t1 - 1e-6);
   S.leaves = leaves;
   if (resetLeaf) S.leaf = 0;
   S.leaf = Math.min(S.leaf, leaves.length - 1);
@@ -483,7 +542,7 @@ function renderBook(p, opts, resetLeaf) {
     if (vi >= 0 && vi < p.voices.length) {
       const v = p.voices[vi];
       if (v.name) pane.append(el('span', { class: 'tag' }, vname(v.name)));
-      linesOn(per[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
+      linesOn(sys[vi], L.t0, L.t1).forEach(s => pane.append(el('div', { class: 'sys' }, parse(systemSVG(s, scale)))));
     }
     paper.append(pane);
   });

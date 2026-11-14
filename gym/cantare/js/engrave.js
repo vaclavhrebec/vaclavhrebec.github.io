@@ -326,7 +326,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
         const strokes = restGroup.get(k);
         g = strokes ? strokes.map((code, j) => go(code, x + .45 + j * .5, restLine)).join('') : '';
       } else g = restGlyph(n, x + .55, restLine, style);
-      body += `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}</g>`;
+      body += `<g class="note" data-v="${vi}" data-i="${n.src ?? i}" data-t="${n.t}" data-len="${n.len}">${g}</g>`;
       return;
     }
     const step = n.step + shift;
@@ -357,7 +357,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     bottom = Math.max(bottom, low);
     lowest = Math.max(lowest, low);
     notesHere.push({ n, x, k, i });
-    body += pre + `<g class="note" data-v="${vi}" data-i="${i}" data-t="${n.t}" data-len="${n.len}">${g}<rect x="${f(x - .8)}" y="${f(Math.min(y, 0) - 1)}" width="1.6" height="${f(Math.abs(Math.max(y, lines - 1) - Math.min(y, 0)) + 2)}" class="hit"/></g>`;
+    body += pre + `<g class="note" data-v="${vi}" data-i="${n.src ?? i}" data-t="${n.t}" data-len="${n.len}">${g}<rect x="${f(x - .8)}" y="${f(Math.min(y, 0) - 1)}" width="1.6" height="${f(Math.abs(Math.max(y, lines - 1) - Math.min(y, 0)) + 2)}" class="hit"/></g>`;
   });
   /* text underlay */
   const base = Math.max(textY, lowest + 1.3);
@@ -477,7 +477,17 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
   const BR = vidx.length > 1 && opts.brace !== false ? 2.1 : 0;
   /* room at the end of each line for the custos */
   const CUST = 3.2;
-  const ranges = breakLines(cols, width - BR - CUST, headW, INDENT);
+  /* the choir book gives the moments at which the lines begin (the same for every voice of an opening) */
+  let ranges;
+  if (opts.breaks) {
+    ranges = [];
+    let a = 0;
+    for (const bt of opts.breaks) {
+      let b = a; while (b < cols.length && cols[b].t < bt - 1e-6) b++;
+      if (b > a) { ranges.push([a, b]); a = b; }
+    }
+    if (a < cols.length) ranges.push([a, cols.length]);
+  } else ranges = breakLines(cols, width - BR - CUST, headW, INDENT);
   if (!ranges.length) ranges.push([0, 0]); /* nothing written yet: one empty staff */
   const gap = opts.gap ?? 2.4;
   return ranges.map(([a, b], si) => {
@@ -485,7 +495,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
     const natural = slice.reduce((a, c) => a + c.need, 0);
     const last = b >= cols.length;
     const ind = (si === 0 ? INDENT : 0) + BR;
-    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW - CUST) / natural, 1), piece.kind === 'chant' ? 1.4 : 2.6);
+    const stretch = last || opts.justify === false ? 1 : Math.min(Math.max((width - ind - headW - CUST) / natural, 1), piece.kind === 'chant' ? 1.4 : opts.breaks ? 4 : 2.6);
     const at = [];
     let x = headW;
     slice.forEach(c => { at.push(x + .35); x += c.need * (c.tight ? 1 : stretch); });
