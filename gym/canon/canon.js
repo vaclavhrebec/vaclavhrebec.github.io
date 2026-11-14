@@ -162,6 +162,7 @@ function buildUnits() {
 function syncTime() {
   $('tempo').value = S.minim;
   $('metroBtn').setAttribute('aria-pressed', String(!!S.metro));
+  $('metroTxt').textContent = S.metro ? 'Metronome on' : 'Metronome off';
   $('handBtn').setAttribute('aria-pressed', String(S.beat !== 'none'));
   const h = $('tactusHand'); h.hidden = S.beat === 'none'; h.dataset.style = S.beat === 'baton' ? 'baton' : 'palm';
 }
