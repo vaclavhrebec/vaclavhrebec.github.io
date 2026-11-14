@@ -12,7 +12,15 @@
       text: 'The earliest written music. The clay tablets from Ugarit name intervals of the lyre’s strings; Greek notation writes pitches with letter signs, one set for voices and one for instruments, with signs for long notes. Only about sixty fragments survive, and the knowledge was lost: medieval chant had to be written down anew in [[neumes]].'},
     {id: 'greek-genera', title: 'Tetrachords & the three genera', folder: 'pitch', first: -450, common: -350, fade: 600,
       scope: 'Philolaus and Archytas (5th–4th c. BC), Aristoxenus, Elementa harmonica (c. 330 BC); Ptolemy, Harmonics (2nd c. AD); passed on by Boethius',
-      text: 'Greek theory builds scales from tetrachords – four notes spanning a fourth – in three genera: diatonic, chromatic and enharmonic (with quarter tones). The ratios of the [[pythagorean]] intervals come from here. Through Boethius the Greek system shapes medieval theory, and Vicentino tries to revive the chromatic and enharmonic genera in 1555 ([[chromaticism]]).'},
+      text: 'Greek theory builds scales from tetrachords – four notes spanning a fourth – in three genera: diatonic, chromatic and enharmonic (with quarter tones). The ratios of the [[pythagorean]] intervals come from here. Through Boethius the Greek system shapes medieval theory; in the 16th century the humanists dig it up again ([[greek-humanism]]) and Vicentino tries to make the chromatic and enharmonic genera sound ([[enharmonic-revival]]).'},
+
+    /* ---------- the Renaissance digs up Greek music ---------- */
+    {id: 'greek-humanism', title: 'Humanist revival of Greek music', folder: 'form', first: 1540, common: 1570, fade: 1660,
+      scope: 'Girolamo Mei in Rome, De modis musicis antiquorum (1573) and his letters to Vincenzo Galilei; Galilei, Dialogo della musica antica et della moderna (1581); the Florentine Camerata; Giovanni Battista Doni in Rome (1630s–40s)',
+      text: 'Renaissance humanists try to excavate Greek music theory and to make music act on the listener as the ancient writers claimed it did. Girolamo Mei, a Florentine scholar living in Rome, reads the Greek treatises in manuscript and concludes that Greek music was a single line, sung with an instrument; through his letters to Vincenzo Galilei this idea reaches the Florentine Camerata and helps to bring about [[monody]] and [[opera]]. Others, beginning with Vicentino, try to bring back the Greek [[greek-genera|genera]] themselves ([[enharmonic-revival]]). Doni, again in Rome, designs instruments and modes “all’antica” well into the 17th century.'},
+    {id: 'enharmonic-revival', title: 'Chromatic & enharmonic genera revived (microtones)', folder: 'pitch', first: 1550, common: 1555, fade: 1700,
+      scope: 'the debate between Vicentino and Lusitano in Rome (1551); Vicentino, L’antica musica ridotta alla moderna prattica (Rome, 1555) and his 31-note archicembalo; split-key keyboards; Cavalieri’s Lamentations (Rome, before 1600); Colonna’s sambuca lincea (1618); Doni',
+      text: 'An attempt to make the Greek chromatic and enharmonic [[greek-genera|genera]] sound again. Vicentino divides the octave into 31 parts, builds the archicembalo and writes madrigals with enharmonic dieses – intervals of about a fifth of a tone – marked by a dot over the note. Keyboards with split keys give separate G♯ and A♭, D♯ and E♭ within [[meantone]]. In Cavalieri’s Lamentations an enharmonic passage, also marked with dots, needs a keyboard with 19 notes to the octave (Elam Rotem’s edition and recording with Profeti della Quinta, and his Early Music Sources video, demonstrate it). Violinists, with no frets, can play such distinctions anywhere: Muffat’s Sonata violino solo (Prague, 1677) has chromatic writing that keeps sharps and flats apart. The line runs on to modern [[microtonality]].'},
 
     /* ---------- improvised and written polyphony on a chant ---------- */
     {id: 'discant', title: 'Discant (note against note on a chant)', folder: 'counterpoint', first: 1170, common: 1230, fade: 1650,
@@ -77,6 +85,9 @@
   add('viennese-classical', ['sixth-chord-chains']);
   add('early-romantic', ['accompanied-monody']);
   add('impressionism', ['mixture-sound']);
+  add('madrigal', ['greek-humanism', 'enharmonic-revival']);
+  add('early-baroque', ['greek-humanism', 'enharmonic-revival']);
+  add('stylus-phantasticus', ['enharmonic-revival']);
   add('rock', ['power-chord', 'accompanied-monody']);
 
   /* links from older notes */
@@ -86,6 +97,8 @@
   if (el('parallel-chords')) el('parallel-chords').text += ' Its relatives: the [[mixture-sound|organ mixture]], the [[sixth-chord-chains]] of fauxbourdon, and the [[power-chord]] of rock.';
   if (el('lute-song')) el('lute-song').text += ' Its ancestor is the oldest practice in this atlas, [[accompanied-monody|self-accompanied song]]; it depends on [[lute-polyphony]].';
   if (el('troubadour-song')) el('troubadour-song').text += ' How far they accompanied themselves is debated: see [[accompanied-monody]].';
+  if (el('microtonality')) el('microtonality').text += ' It has a Renaissance prehistory: [[enharmonic-revival|Vicentino’s archicembalo, Cavalieri’s enharmonic Lamentations and split-key keyboards]].';
+  if (el('monody')) el('monody').text += ' Its theory comes from the [[greek-humanism|humanist study of Greek music]] (Mei, Galilei).';
   if (el('double-leading-tone')) el('double-leading-tone').text += ' Compare the later [[english-cadence]].';
 
   /* real voices of the new styles (read by vault-voices.js) */
