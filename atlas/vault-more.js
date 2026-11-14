@@ -100,9 +100,12 @@
     {id: 'public-concert', title: 'Public concerts', folder: 'practice', first: 1672, common: 1730, fade: null,
       scope: 'John Banister’s concerts in London (1672); collegia musica (Telemann, Bach in Leipzig); Concert spirituel, Paris (1725); Leipzig Gewandhaus (1781)',
       text: 'Music for anyone who buys a ticket, outside church and court. The public concert creates the repertory of the [[symphony]] and the [[virtuosity|virtuoso]], and in the 19th century the idea of a canon of “classics” played again and again.'},
-    {id: 'pitch-standard', title: 'Pitch standards (a′ = …)', folder: 'pitch', first: 1619, common: 1859, fade: null,
-      scope: 'Praetorius on Chorton and Kammerton (1619); the French diapason normal a′ = 435 (1859); the London conference a′ = 440 (1939, ISO 1955); a′ = 415, 430, 466 in historical performance today',
-      text: 'For most of history pitch differed from town to town and between church organs and chamber music. Only the 19th and 20th centuries fix a single reference tone. The historical-performance movement in turn adopts conventional pitches for older repertoires, such as a′ = 415 for the Baroque and 466 for some 17th-century music.'},
+    {id: 'pitch-standard', title: 'Pitch standards (a′ = …)', folder: 'pitch', first: 1490, common: 1600, fade: null,
+      scope: 'late-Gothic organs built to the pitch of their town or church; Arnolt Schlick, Spiegel der Orgelmacher (1511), who prints the length of the lowest pipe to fix the pitch; Praetorius on Chorton and Kammerton (1619); the French diapason normal a′ = 435 (1859); the London conference a′ = 440 (1939, ISO 1955); a′ = 415, 430, 466 in historical performance today',
+      text: 'There was never one pitch for everyone, but there were standards long before the modern a′ = 440 – for a church, a town or a court. Restorers of organs from around 1500 find instruments built deliberately a tone lower (or higher) than others of the time, to match the local choir and the town’s wind players; Arnolt Schlick in 1511 tells organ builders the exact length of the pipe that sets the pitch, and Praetorius in 1619 names the *Chorton* of church music and the *Kammerton* of chamber music. Only the 19th and 20th centuries fix one reference tone for all: the French *diapason normal* (435 Hz, 1859) and a′ = 440 (1939). The historical-performance movement in turn adopts conventional pitches for older repertoires, such as a′ = 415 for the Baroque and 466 for some 17th-century music.'},
+    {id: 'time-beater', title: 'Time-beating with hand, staff or roll of paper', folder: 'practice', first: 1200, common: 1430, fade: 1800,
+      scope: 'precentors’ staffs kept in cathedral treasuries from the 12th century; singers touching each other’s shoulders in medieval miniatures; Anselmi (Parma, 1434) on showing the tactus with the hand; the choir director’s duties in Philomathes, Musicorum libri quatuor (Vienna, 1512); the cantor with his stick in German Latin schools and Czech literati brotherhoods (Kutná Hora Gradual, 1490s); the roll of paper of Praetorius’s Kapellmeister; Lully’s staff',
+      text: 'Someone has always given the beat to an ensemble. From the 12th century the precentor carries a staff – a sign of office, but long enough to be seen by the whole choir – and medieval pictures show singers keeping time by tapping one another on the shoulder. From the 15th century the theorists describe the [[tactus]] as the down-up motion of the leader’s hand; choirmasters and cantors are depicted with a long stick, used to beat the tactus (and, in the Latin schools, the pupils). In [[cori-spezzati|polychoral]] music a chief time-beater stands at the organ and others relay his beat in each choir, often with a roll of paper. Lully famously beat time with a heavy staff. The [[conductor|modern conductor]] of the 19th century is not the beginning of this story but a new role within it: an interpreter rather than a time-keeper.'},
     {id: 'sound-recording', title: 'Sound recording & broadcasting', folder: 'timbre', first: 1877, common: 1925, fade: null,
       scope: 'Edison’s phonograph (1877); the gramophone disc; electrical recording (1925); radio; the LP (1948); tape, CD, streaming',
       text: 'Music can be kept and heard without performers. Jazz and popular styles spread by record rather than score; performers learn from recordings; and the record itself becomes a work in the [[multitrack-studio|studio]], in [[musique-concrete]] and in [[sampling]].'},
@@ -141,7 +144,10 @@
   add('viennese-classical', ['minuet-trio', 'sturm-und-drang', 'opera-buffa']);
   add('late-romantic', ['hemiola', 'public-concert']);
   add('chant-style', ['antiphony', 'chant-restoration']);
-  add('venetian', ['antiphony']);
+  add('venetian', ['antiphony', 'time-beater']);
+  add('burgundian', ['time-beater']);
+  add('josquin', ['time-beater']);
+  add('french-baroque', ['time-beater']);
   add('early-baroque', ['public-opera']);
   add('high-baroque', ['public-opera', 'public-concert']);
   add('viennese-classical', ['public-concert']);
@@ -152,5 +158,7 @@
   const el = id => V.elements.find(e => e.id === id);
   if (el('enharmonic-revival')) el('enharmonic-revival').text += ' The instruments: [[enharmonic-keyboards]].';
   if (el('microtonality')) el('microtonality').text += ' New instruments are built for it: [[microtonal-instruments]].';
+  if (el('conductor')) { el('conductor').title = 'The modern conductor (interpreter with baton)'; el('conductor').text = 'The [[time-beater]] – who had given the beat with hand, staff or roll of paper since the Middle Ages – becomes an interpreter standing before the [[romantic-orchestra]], replacing the leading violinist or the keyboard player of the continuo. The short light baton spreads in the 1820s (Spohr, Weber, Mendelssohn).'; }
+  if (el('tactus')) { el('tactus').first = 1430; el('tactus').scope = 'the beat given by the hand; Anselmi (1434), Gaffurius, Practica musicae (1496), Agricola (1532)'; el('tactus').text += ' Who gave it, and with what: see [[time-beater]].'; }
   if (el('program-music')) el('program-music').text += ' Its long prehistory: [[battaglia|battle pieces]] and [[birdsong]].';
 })(window.VAULT);
