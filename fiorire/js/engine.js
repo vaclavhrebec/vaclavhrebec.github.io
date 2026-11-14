@@ -16,13 +16,16 @@ export const RHYTHMS = { even: 'even notes', long: 'long note, then quick ones',
 /* The manners. Each says how many notes a figure has, which contours and rhythms it likes, and whether it leaps.
    These are modern descriptions of the manners, not transcriptions: see the About page. */
 export const SCHOOLS = {
-  coclico: { name: 'Coclico, 1552', n: [3, 4], fam: { tirata: 3, gruppo: 2, arch: 1, passaggio: 1, tremolo: 0 }, rh: { even: 3, long: 3, dotted: 0, lomb: 0 }, leap: 1, cad: 2 },
-  finck: { name: 'Finck, 1556', n: [3, 4, 6], fam: { tirata: 3, gruppo: 2, arch: 2, passaggio: 1, tremolo: 0 }, rh: { even: 3, long: 2, dotted: 0, lomb: 0 }, leap: 1, cad: 2 },
-  ganassi: { name: 'Ganassi, 1535', n: [4, 6, 8], fam: { tirata: 1, gruppo: 3, arch: 1, passaggio: 2, tremolo: 4 }, rh: { even: 5, long: 2, dotted: 1, lomb: 1 }, leap: 2, cad: 2 },
-  ortiz: { name: 'Ortiz, 1553', n: [3, 4, 6, 8], fam: { tirata: 4, gruppo: 1, arch: 3, passaggio: 3, tremolo: 1 }, rh: { even: 5, long: 2, dotted: 1, lomb: 0 }, leap: 3, cad: 3 },
-  dallacasa: { name: 'Dalla Casa & Bassano, 1584–91', n: [4, 6, 8], fam: { tirata: 5, gruppo: 1, arch: 2, passaggio: 3, tremolo: 0 }, rh: { even: 3, long: 1, dotted: 4, lomb: 1 }, leap: 2, cad: 3 },
-  bovicelli: { name: 'Bovicelli, 1594', n: [4, 6, 8, 12], fam: { tirata: 3, gruppo: 2, arch: 3, passaggio: 4, tremolo: 1 }, rh: { even: 3, long: 1, dotted: 4, lomb: 2 }, leap: 3, cad: 3 },
-  caccini: { name: 'Zacconi & Caccini, 1592–1601', n: [3, 4, 6], fam: { tirata: 2, gruppo: 5, arch: 1, passaggio: 1, tremolo: 3 }, rh: { even: 3, long: 3, dotted: 2, lomb: 0 }, leap: 1, cad: 4 },
+  adorg: { era: 'medieval', name: 'Ad organum faciendum, Milan c. 1100', n: [2, 3, 4], fam: { tirata: 3, gruppo: 1, arch: 3, passaggio: 0, tremolo: 0 }, rh: { even: 5, long: 2, dotted: 0, lomb: 0 }, leap: 1, cad: 3 },
+  notredame: { era: 'medieval', name: 'Notre-Dame organum, c. 1200', n: [4, 8, 16], fam: { tirata: 2, gruppo: 3, arch: 3, passaggio: 2, tremolo: 1 }, rh: { even: 5, long: 2, dotted: 0, lomb: 0 }, leap: 1, cad: 3 },
+  trecento: { era: 'medieval', name: 'Trecento divisions (Marchetto, Berkeley)', n: [4, 6, 8], fam: { tirata: 3, gruppo: 2, arch: 3, passaggio: 2, tremolo: 0 }, rh: { even: 5, long: 1, dotted: 0, lomb: 0 }, leap: 2, cad: 4 },
+  coclico: { era: 'renaissance', name: 'Coclico, 1552', n: [3, 4], fam: { tirata: 3, gruppo: 2, arch: 1, passaggio: 1, tremolo: 0 }, rh: { even: 3, long: 3, dotted: 0, lomb: 0 }, leap: 1, cad: 2 },
+  finck: { era: 'renaissance', name: 'Finck, 1556', n: [3, 4, 6], fam: { tirata: 3, gruppo: 2, arch: 2, passaggio: 1, tremolo: 0 }, rh: { even: 3, long: 2, dotted: 0, lomb: 0 }, leap: 1, cad: 2 },
+  ganassi: { era: 'renaissance', name: 'Ganassi, 1535', n: [4, 6, 8], fam: { tirata: 1, gruppo: 3, arch: 1, passaggio: 2, tremolo: 4 }, rh: { even: 5, long: 2, dotted: 1, lomb: 1 }, leap: 2, cad: 2 },
+  ortiz: { era: 'renaissance', name: 'Ortiz, 1553', n: [3, 4, 6, 8], fam: { tirata: 4, gruppo: 1, arch: 3, passaggio: 3, tremolo: 1 }, rh: { even: 5, long: 2, dotted: 1, lomb: 0 }, leap: 3, cad: 3 },
+  dallacasa: { era: 'renaissance', name: 'Dalla Casa & Bassano, 1584–91', n: [4, 6, 8], fam: { tirata: 5, gruppo: 1, arch: 2, passaggio: 3, tremolo: 0 }, rh: { even: 3, long: 1, dotted: 4, lomb: 1 }, leap: 2, cad: 3 },
+  bovicelli: { era: 'renaissance', name: 'Bovicelli, 1594', n: [4, 6, 8, 12], fam: { tirata: 3, gruppo: 2, arch: 3, passaggio: 4, tremolo: 1 }, rh: { even: 3, long: 1, dotted: 4, lomb: 2 }, leap: 3, cad: 3 },
+  caccini: { era: 'renaissance', name: 'Zacconi & Caccini, 1592–1601', n: [3, 4, 6], fam: { tirata: 2, gruppo: 5, arch: 1, passaggio: 1, tremolo: 3 }, rh: { even: 3, long: 3, dotted: 2, lomb: 0 }, leap: 1, cad: 4 },
 };
 
 const PLAIN = new Set([16, 8, 4, 2, 1, .5, .25]);

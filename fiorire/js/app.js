@@ -27,6 +27,19 @@ function applyTheme() { document.documentElement.dataset.theme = P.theme; const 
 applyTheme();
 $('#toggleTheme').onclick = () => { P.theme = P.theme === 'dark' ? 'light' : 'dark'; applyTheme(); savePrefs(); };
 
+/* ---------- the style the figures are made in ---------- */
+const GROUPS = { medieval: 'Middle Ages', renaissance: 'Renaissance' };
+function styleList() {
+  const o = ['<option value="@ren">Renaissance, all manners mixed</option>', '<option value="@med">Middle Ages, all manners mixed</option>'];
+  Object.entries(GROUPS).forEach(([g, gn]) => o.push(`<optgroup label="${gn}">` + Object.entries(SCHOOLS).filter(([, s]) => s.era === g).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join('') + '</optgroup>'));
+  $('#style').innerHTML = o.join('');
+}
+function setStyle(v) {
+  const set = v === '@ren' ? Object.keys(SCHOOLS).filter(k => SCHOOLS[k].era === 'renaissance') : v === '@med' ? Object.keys(SCHOOLS).filter(k => SCHOOLS[k].era === 'medieval') : [v];
+  $$('#schools input').forEach(x => { x.checked = set.includes(x.value); });
+  P.style = v; savePrefs();
+}
+
 /* ---------- options ---------- */
 function opts() {
   const num = id => +$('#' + id).value, chk = id => $('#' + id).checked;
@@ -383,7 +396,7 @@ $('#tFilter').oninput = treatises;
 /* ---------- about ---------- */
 $('#aboutBody').innerHTML = `
 <h2>What this is</h2>
-<p>Fiorire (“to flower”) puts the Renaissance art of diminution into a workshop. Take a polyphonic model, choose which voices to ornament, and either let the engine place figures at random under rules you choose, or tap a single note and choose its figure yourself. Everything can be taken back: undo, <em>Plain</em> for the bare model, <em>Reduce</em> to strip the quick notes from a voice that already has them, or <em>Plain again</em> on one note.</p>
+<p>Fiorire (“to flower”) puts the art of diminution into a workshop, from the florid organum of the Middle Ages to the passaggi of 1600. Take a polyphonic model, choose which voices to ornament, and either let the engine place figures at random under rules you choose, or tap a single note and choose its figure yourself. Everything can be taken back: undo, <em>Plain</em> for the bare model, <em>Reduce</em> to strip the quick notes from a voice that already has them, or <em>Plain again</em> on one note.</p>
 <h2>How the engine works</h2>
 <p>A figure always begins on the original pitch, fills exactly the length of the note it replaces and runs toward the next note of the voice. It is grown from a <em>contour</em> (tirata, a scale run; gruppo, a turn; tremolo, an alternation; arco, an arch; passaggio, a mixed run) and a <em>rhythm</em> (even notes, a long note and then quick ones, dotted, snapped), and each “manner” prefers different mixes: how many notes, how quick, how much leaping, how much dotting. A figure is kept only if it passes every rule you switched on: leaps, the quickest note, consonance on the beat, dissonance off the beat only by step, no sevenths, no parallel fifths or octaves, no crossing of voices, and a stay within the voice’s range.</p>
 <h2>What it is not (yet)</h2>
@@ -395,6 +408,7 @@ $('#aboutBody').innerHTML = `
 
 /* ---------- catalogue controls and schools ---------- */
 $('#schools').innerHTML = Object.entries(SCHOOLS).map(([k, s]) => `<label><input type="checkbox" value="${k}" ${DEFAULTS.schools.includes(k) ? 'checked' : ''}> ${esc(s.name)}</label>`).join('');
+styleList(); $('#style').value = P.style || '@ren'; setStyle($('#style').value); $('#style').onchange = e => setStyle(e.target.value);
 $('#cSchool').innerHTML = '<option value="">all</option>' + Object.entries(SCHOOLS).map(([k, s]) => `<option value="${k}">${esc(s.name)}</option>`).join('');
 $('#cFam').innerHTML += Object.entries(FAMILIES).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');
 $('#cRh').innerHTML += Object.entries(RHYTHMS).map(([k, v]) => `<option value="${k}">${esc(v)}</option>`).join('');

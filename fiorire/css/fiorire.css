@@ -139,3 +139,5 @@ body[data-tab="tre"] .dock, body[data-tab="about"] .dock { display: none; }
 .pop input[type=range] { flex: 1; accent-color: var(--accent); min-width: 6rem; }
 .pop .hint { font-size: 12.5px; color: var(--soft); margin: 6px 0 0; }
 .pophead { display: flex; justify-content: flex-end; } .pophead button { border: 0; background: none; font-size: 22px; color: var(--soft); cursor: pointer; }
+.stylesel { display: flex; flex-direction: column; gap: 2px; font-size: .78rem; color: var(--muted, inherit); flex: 1 1 14rem; }
+.stylesel select { font: inherit; font-size: .95rem; padding: .5rem .6rem; border-radius: 10px; border: 1px solid var(--line, #444); background: var(--card, transparent); color: var(--fg, inherit); }
