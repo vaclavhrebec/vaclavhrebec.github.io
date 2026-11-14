@@ -4,4 +4,4 @@ Every Latin syllable of the Cantare library is sung in the Italianate (ecclesias
   m_cvN.mp3 / f_cvN.mp3  onset consonants + vowel, held (e.g. "kw.i", "stɾ.a", ".a")
   m_vcN.mp3 / f_vcN.mp3  held vowel + coda consonants, or a diphthong's glide (e.g. "u.s", "a.ŋk", "aʊ.")
 map.json names each half (onset.vowel / vowel.coda in IPA), with its number, the lead of its onset before the beat, and the place of its coda.
-js/latin.js turns the sung text into these syllables.
+js/latin.js turns the sung text into these syllables. Texts in French, German and Flemish are sung in the pronunciation of their time (js/tongues.js: Middle French, Luther's German), with their own syllables in the same two halves (nasal vowels, [y ø œ ə], ʒ ç x and the rest).

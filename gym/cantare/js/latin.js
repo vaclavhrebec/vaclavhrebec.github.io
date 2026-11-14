@@ -1,3 +1,5 @@
+import { language, FRONT_ENDS } from './tongues.js';
+
 /* Latin as it is sung (the Italianate, ecclesiastical pronunciation), syllable by syllable, in IPA.
    Each sung syllable becomes { on: [onset consonants], v: vowel, co: [coda consonants] }; its key (onset.vowel.coda,
    e.g. "kw.i." for qui, "s.a.ŋk" for sanc-, "t.u.s" for -tus) names the syllable in the voice bank sung by Chimera.
@@ -100,10 +102,13 @@ export const keyOf = s => s ? `${s.on.join('')}.${s.v}.${s.co.join('')}` : '';
 
 /* the sung syllables of a voice's notes: for every note that starts a syllable, its {on, v, co, key};
    words run over notes whose text ends in a hyphen */
-export function syllablesOf(notes) {
+export function syllablesOf(notes, lang) {
   const res = new Map();
+  /* the language of the voice's text decides the front end (French, German, Flemish; Italian is sung as Latin) */
+  if (!lang) lang = language(notes.filter(n => !n.rest && n.text).map(n => n.text + (n.hyphen ? '-' : '')).join(' '));
+  const say = FRONT_ENDS[lang] || word;
   let w = [];
-  const flush = () => { if (!w.length) return; const ps = word(w.map(n => n.text)); w.forEach((n, k) => { if (ps[k]) res.set(n, { ...ps[k], key: keyOf(ps[k]) }); }); w = []; };
+  const flush = () => { if (!w.length) return; const ps = say(w.map(n => n.text)); w.forEach((n, k) => { if (ps[k]) res.set(n, { ...ps[k], key: keyOf(ps[k]) }); }); w = []; };
   for (const n of notes) {
     if (n.rest || !n.text) continue;
     w.push(n);

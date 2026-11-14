@@ -54,15 +54,18 @@ export function prepare() {
 }
 const bodyOf = midi => (midi < 57 ? 'male' : 'female');
 /* the bank's unit for a syllable half, or the nearest one it has: fewer onset consonants (from the front), fewer coda consonants (from the end) */
+/* a vowel the bank lacks sings as its nearest neighbour (a nasal vowel as its oral one, [y] as [i] …) */
+const NEAR = { 'ɑ̃': 'ɑ̃ a', 'ɔ̃': 'ɔ̃ ɔ', 'ɛ̃': 'ɛ̃ ɛ', 'œ̃': 'œ̃ œ ɛ', y: 'y i', ø: 'ø e', œ: 'œ ɛ', ə: 'ə ɛ', ɪ: 'ɪ i', ʊ: 'ʊ u', aɪ: 'aɪ a', ɔɪ: 'ɔɪ ɔ', aʊ: 'aʊ a', eɪ: 'eɪ ɛ', e: 'e ɛ', o: 'o ɔ' };
 function cvUnit(on, v) {
   const u = BANK.map && BANK.map.cv.units; if (!u) return null;
-  for (let k = 0; k <= on.length; k++) { const key = on.slice(k).join('') + '.' + v; if (u[key]) return key; }
-  const plain = '.' + ({ aʊ: 'a', eɪ: 'ɛ' }[v] || v); return u[plain] ? plain : '.a';
+  const vs = (NEAR[v] || v).split(' ');
+  for (const w of vs) for (let k = 0; k <= on.length; k++) { const key = on.slice(k).join('') + '.' + w; if (u[key]) return key; }
+  return '.a';
 }
 function vcUnit(v, co) {
   const u = BANK.map && BANK.map.vc.units; if (!u) return null;
   if (!co.length && !u[v + '.']) return null;
-  for (let k = co.length; k >= 1; k--) { const key = v + '.' + co.slice(0, k).join(''); if (u[key]) return key; }
+  for (const w of (NEAR[v] || v).split(' ')) for (let k = co.length; k >= 1; k--) { const key = w + '.' + co.slice(0, k).join(''); if (u[key]) return key; }
   return u[v + '.'] ? v + '.' : null;
 }
 /* the halves a syllable needs: {cv, vc} (vc null for an open syllable) */
