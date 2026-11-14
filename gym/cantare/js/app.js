@@ -1544,7 +1544,7 @@ function askSubmit() {
   const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, value: whoV, placeholder: tr('Your name'), 'aria-label': tr('Your name') });
   const mail = el('input', { type: 'email', class: 'nm-in', maxlength: 120, placeholder: tr('Your email (optional, if you want an answer)'), 'aria-label': tr('Your email (optional, if you want an answer)') });
   const src = el('input', { type: 'text', class: 'nm-in', maxlength: 200, value: it0.src || '', placeholder: tr('e.g. my own; or a hymn from a 1545 hymnal'), 'aria-label': tr('Composer or source') });
-  const msg = el('textarea', { class: 'nm-in tx-in', rows: 3, maxlength: 2000, placeholder: tr('Anything Václav should know (optional)'), 'aria-label': tr('Message (optional)') });
+  const msg = el('textarea', { class: 'nm-in tx-in', rows: 5, maxlength: 2000, placeholder: tr('Say hello, tell me where the melody comes from, or ask me anything'), 'aria-label': tr('Write a short message to Václav') });
   const go = async () => {
     if (!who.value.trim()) { who.focus(); who.classList.add('need'); return; }
     if (!src.value.trim()) { src.focus(); src.classList.add('need'); return; }
@@ -1579,7 +1579,7 @@ function askSubmit() {
       el('label', {}, tr('Your name'), who),
       el('label', {}, tr('Composer or source'), src),
       el('label', {}, tr('Your email (optional, if you want an answer)'), mail),
-      el('label', {}, tr('Message (optional)'), msg),
+      el('label', { class: 'msg-l' }, el('strong', {}, tr('Write a short message to Václav')), msg),
       el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')), sendBtn)));
   pop.hidden = false; setTimeout(() => (who.value ? src : who).focus(), 30);
 }
