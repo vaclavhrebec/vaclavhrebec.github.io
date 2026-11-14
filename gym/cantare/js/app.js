@@ -579,7 +579,7 @@ function buildSection(which, c) {
 
   /* sound */
   if (which === 'sound') card(tr('Sound'),
-    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; if (k === 'voice') voiceReady(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
+    chipRow(tr('Timbre'), Object.entries(snd.TIMBRES).map(([k, v]) => chip(tr(v.label), prefs.timbre === k, () => { prefs.timbre = k; voiceReady(); savePrefs(); buildStudio(); try { $('#soundSel').value = k; } catch (e) {} testTone(); }))),
     el('div', { class: 'row' }, el('label', {}, tr('Volume')), el('input', { type: 'range', min: 0, max: 100, value: Math.round(prefs.volume * 100), oninput: e => { prefs.volume = e.target.value / 100; snd.setVolume(prefs.volume); savePrefs(); } })),
     slider(tr('Brightness'), 0, 100, snd.SOUND.bright, v => setSound({ bright: v })),
     slider(tr('Room'), 0, 100, snd.SOUND.room, v => setSound({ room: v })));
@@ -891,7 +891,9 @@ function sounding() {
 
 /* the voice's syllables for this piece, fetched before it sings (the files of a piece are small and stay cached) */
 function voiceReady() {
-  if (prefs.timbre !== 'voice' || !S.piece) return Promise.resolve();
+  /* recorded and modelled instruments: their notes (a few MB at most, kept for offline use) load before they play */
+  if (prefs.timbre !== 'voice') return Promise.race([snd.warm(prefs.timbre), new Promise(r => setTimeout(r, 8000))]);
+  if (!S.piece) return Promise.resolve();
   const p = S.piece;
   return Promise.race([snd.prepare().then(() => snd.load(sounding().map(e => ({ u: e.u, midi: midiOf(e.n, p.bflat, S.shift) })))), new Promise(r => setTimeout(r, 6000))]);
 }
@@ -1733,12 +1735,12 @@ new ResizeObserver(() => {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 
-if (prefs.timbre === 'voice') snd.prepare();
+if (prefs.timbre === 'voice') snd.prepare(); else if (snd.TIMBRES[prefs.timbre]) snd.warm(prefs.timbre);
 /* the sound, chosen in the bar at the bottom (the same choice as Timbre in the Studio); Voice is sung by Chimera */
 function buildSoundSel() {
   const sel = $('#soundSel'); sel.textContent = '';
   Object.entries(snd.TIMBRES).forEach(([k, v]) => sel.append(el('option', { value: k, selected: prefs.timbre === k }, tr(v.label))));
 }
-$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; if (prefs.timbre === 'voice') voiceReady(); savePrefs(); buildStudio(); });
+$('#soundSel').addEventListener('change', e => { prefs.timbre = e.target.value; voiceReady(); savePrefs(); buildStudio(); });
 buildSoundSel();
 window.cantare = { S, prefs, openItem, jrpGet };

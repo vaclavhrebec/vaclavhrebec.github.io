@@ -1,14 +1,20 @@
 /* Sound: a small additive/subtractive synthesiser with a church-like room. */
 import { midiOf, hz } from './music.js';
 import { word } from './latin.js';
+import * as I from './instruments.js';
 
 export const TIMBRES = {
   voice: { label: 'Voice' },
-  sackbut: { label: 'Sackbut' },
-  lute: { label: 'Lute' },
   organ: { label: 'Organ, Principal 8′' },
+  plenum: { label: 'Organ, full (plenum)' },
   regal: { label: 'Regal' },
+  recorder: { label: 'Recorders' },
+  cornett: { label: 'Cornett' },
+  sackbut: { label: 'Sackbut' },
+  crumhorn: { label: 'Crumhorn' },
   chalumeau: { label: 'Chalumeau' },
+  harpsichord: { label: 'Harpsichord (Italian)' },
+  lute: { label: 'Lute' },
   flute: { label: 'Open flute 8′' },
   gedackt: { label: 'Gedackt 8′ (stopped flute)' },
   sine: { label: 'Sine' },
@@ -231,7 +237,82 @@ function out(node, gain) {
    fusae almost none. joined: the note follows another note of its line without a rest. The organ keeps its own speech. */
 export const XF = .09;
 const FLOW = new Set(['voice', 'lute', 'sackbut']);
-export function note({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null }) {
+/* Recorded and modelled instruments play once they have loaded; until then (and where the browser cannot run the
+   models) the synthesised sound of a related instrument stands in, so that nothing is ever silent. */
+const STAND_IN = { plenum: 'organ', recorder: 'flute', harpsichord: 'lute', crumhorn: 'regal', cornett: 'sackbut' };
+export function warm(t) { return I.warm(ensure(), t); }
+export function note(args) {
+  ensure();
+  const r = instrumentNote(args);
+  if (r) return r;
+  const t = args.timbre || 'organ';
+  if (I.bankOf(t) || I.isModel(t)) I.warm(ctx, t);
+  return synthNote(STAND_IN[t] ? { ...args, timbre: STAND_IN[t] } : args);
+}
+
+function instrumentNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, tied = false, legato = false, value = null }) {
+  const b = I.bankOf(timbre);
+  if (b) {
+    const st = I.bank(b);
+    if (!st || !st.map) return null;
+    const n = I.nearest(st, midi);
+    return n ? sampleNote(st, n, b, { timbre, midi, a4, at, dur, level, tied, legato, value }) : null;
+  }
+  if (I.isModel(timbre) && I.modelsReady()) return modelNote({ timbre, midi, a4, at, dur, level, tied, legato });
+  return null;
+}
+
+function sampleNote(st, n, b, { timbre, midi, a4, at, dur, level, tied, legato, value }) {
+  const buf = st.bufs[n.m], sr = buf.sampleRate, plucked = !st.map.loop;
+  if (tied && !plucked) { at -= XF / 2; dur += XF / 2; }
+  if (legato && !plucked) dur += XF / 2;
+  const end = at + dur;
+  const src = ctx.createBufferSource(); src.buffer = buf;
+  src.playbackRate.value = hz(midi, a4) / n.hz;
+  let offset = 0;
+  if (!plucked) {
+    const L = st.loops[n.m];
+    src.loop = true; src.loopStart = L[0] / sr; src.loopEnd = L[1] / sr;
+    if (tied) offset = Math.min(.3, L[0] / sr);          /* a continuing syllable: no new attack */
+  }
+  const env = ctx.createGain(), g = env.gain;
+  const flow = (timbre === 'sackbut' || timbre === 'recorder') && value != null;
+  const acc = flow ? .15 * Math.min(1, value / 4) : 0;
+  const rel = plucked ? .1 : timbre === 'organ' || timbre === 'plenum' ? .09 : .12;
+  const fall0 = legato && !plucked ? end - XF : end, fall1 = legato && !plucked ? end : end + rel;
+  g.setValueAtTime(0, at);
+  if (tied && !plucked) g.linearRampToValueAtTime(1, at + XF);
+  else { g.linearRampToValueAtTime(1 + acc, at + .006); if (acc) g.linearRampToValueAtTime(1, Math.min(at + .2, Math.max(at + .01, fall0 - .01))); }
+  g.setValueAtTime(1, Math.max(at + .012, fall0));
+  g.linearRampToValueAtTime(0, Math.max(at + .02, fall1));
+  src.connect(env);
+  src.start(at, offset);
+  src.stop(Math.max(at + .03, fall1) + .05);
+  return out(env, level * I.GAIN[b]);
+}
+
+const BREATH = { chalumeau: .8, crumhorn: .82, cornett: .85, regal: .8 };
+const SPEAK = { chalumeau: .05, crumhorn: .03, cornett: .04, regal: .012 };
+function modelNote({ timbre, midi, a4, at, dur, level, tied, legato }) {
+  if (tied) { at -= XF / 2; dur += XF / 2; }
+  if (legato) dur += XF / 2;
+  const end = at + dur, rel = timbre === 'regal' ? .05 : .08, stop = legato ? end + .02 : end + rel;
+  let node;
+  try {
+    node = new AudioWorkletNode(ctx, 'pm', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [1],
+      processorOptions: { type: timbre, f0: hz(midi, a4), end: stop + .15, seed: (Math.random() * 1e6) | 0 } });
+  } catch (e) { return null; }
+  const b = node.parameters.get('breath'), P = BREATH[timbre], atk = tied ? XF : SPEAK[timbre];
+  b.setValueAtTime(0, at);
+  b.linearRampToValueAtTime(P * (tied ? 1 : 1.08), at + atk);
+  b.linearRampToValueAtTime(P, at + atk + .12);
+  b.setValueAtTime(P, Math.max(at + atk + .13, legato ? end - XF : end));
+  b.linearRampToValueAtTime(0, Math.max(at + atk + .15, stop));
+  const env = ctx.createGain(); env.gain.value = 1; node.connect(env);
+  return out(env, level * I.GAIN.model);
+}
+
+function synthNote({ timbre = 'organ', midi, a4 = 440, at, dur, level = .22, text, tied = false, legato = false, value = null, joined = false, u = null, last = true, close = null }) {
   ensure();
   const f0 = hz(midi, a4), vowel = vowelOf(text);
   if (timbre === 'voice' && BANK.map) {
