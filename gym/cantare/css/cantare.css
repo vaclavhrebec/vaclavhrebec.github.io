@@ -4,8 +4,8 @@
 /* Light: white page, tulip-red staves. Dark: black page, brighter red staves, white notes. */
 :root {
   --fg: var(--ink); --muted: var(--soft); --card: var(--surface); --accent-ink: #fff;
-  --bg: #ffffff; --surface: #ffffff; --raised: #ffffff; --line: #e4dfe0; --ink: #1b1416; --soft: #6f6568;
-  --accent: #c9202f; --accent-ink: #ffffff; --note: #14100f; --staff: #c9202f; --hl: #e08a00; --sel: #1a6be0; --shadow: 0 6px 24px rgba(20, 10, 10, .10);
+  --bg: #e9dcc4; --surface: #f1e6d1; --raised: #e2d3b7; --line: #cdbb9a; --ink: #2a2017; --soft: #6c5c48;
+  --accent: #9e1b17; --accent-ink: #ffffff; --note: #21180f; --staff: #a8231d; --hl: #e08a00; --sel: #1a6be0; --shadow: 0 6px 24px rgba(20, 10, 10, .10);
   --serif: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   color-scheme: light;

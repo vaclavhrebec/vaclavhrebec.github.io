@@ -553,6 +553,5 @@ $('libClose').onclick = () => $('lib').close();
 $('lib').addEventListener('click', e => { if (e.target === $('lib')) $('lib').close(); });
 $('libSearch').addEventListener('input', renderLib);
 
-$('yr').textContent = new Date().getFullYear();
 syncSettings(); syncTime(); buildUnits(); buildTools(); renderVoices(); poseHand(.5); render(true); renderRules();
 window.canonPage = { S, render, get DUX() { return DUX; }, set DUX(v) { DUX = v; }, get SLOTS() { return SLOTS; }, liveRules, analysisOf, curTs };
