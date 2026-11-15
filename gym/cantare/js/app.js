@@ -239,7 +239,7 @@ function openItem(item, trail, opts = {}) {
   S.base.mine = !!item.mine; S.base.sung = !!item.sung;
   /* chant (plainchant and cantus fractus) always opens at 60 */
   if (S.base.kind === 'chant' || S.base.kind === 'fractus') setTempo(60);
-  S.voice = S.base.voices.map(() => 'on');
+  S.voice = S.base.voices.map(() => 'on'); S.nofollow = [];
   rebuildPiece();
   render(true);
   hist.undo = []; hist.redo = [];
@@ -551,7 +551,7 @@ function renderBook(p, opts, resetLeaf) {
 const parse = html => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstChild; };
 
 function collectNotes() {
-  S.index = [...paper.querySelectorAll('.note')].map(e => ({ e, t: +e.dataset.t, end: +e.dataset.t + +e.dataset.len, on: false }));
+  S.index = [...paper.querySelectorAll('.note')].map(e => ({ e, t: +e.dataset.t, end: +e.dataset.t + +e.dataset.len, v: +e.dataset.v, on: false }));
 }
 
 /* ------------------------------------------------------------------ studio */
@@ -818,8 +818,10 @@ function buildVoiceChips() {
     const name = v.name || tr('Voice') + ' ' + (i + 1);
     const MUTE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>';
     const HIDE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12z"/><path d="M4 20L20 4"/></svg>';
+    const NOFOL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h6"/><path d="M14 8l5 4-5 4z"/><path d="M4 20L20 4"/></svg>';
     box.append(el('div', { class: 'vc', title: name }, el('span', {}, name.charAt(0).toUpperCase(), /\d+$/.test(name) ? el('sub', {}, name.match(/\d+$/)[0]) : ''),
       el('button', { 'aria-pressed': String(S.voice[i] === 'mute'), title: name + ' – ' + tr('Mute') + ': ' + tr('Seen, not heard: sing it from the notation'), 'aria-label': name + ' ' + tr('Mute'), onclick: set('mute') }, parse(MUTE)),
+      el('button', { 'aria-pressed': String(!!(S.nofollow && S.nofollow[i])), title: name + ' – ' + tr('Do not follow') + ': ' + tr('Heard and seen, but the notes are not lit as they sound: follow it yourself'), 'aria-label': name + ' ' + tr('Do not follow'), onclick: () => { S.nofollow = S.nofollow || []; S.nofollow[i] = !S.nofollow[i]; if (S.nofollow[i]) S.index.forEach(x => { if (x.v === i && x.on) { x.e.classList.remove('on'); x.on = false; } }); buildVoiceChips(); } }, parse(NOFOL)),
       el('button', { 'aria-pressed': String(S.voice[i] === 'hide'), title: name + ' – ' + tr('Hide') + ': ' + tr('Neither seen nor heard: improvise it'), 'aria-label': name + ' ' + tr('Hide'), onclick: set('hide') }, parse(HIDE))));
   });
 }
@@ -1250,7 +1252,7 @@ function frame() {
   if (prefs.pendulum) swingPendulum(Math.max(0, pos));
   if (pos >= clock.end + 0.5) { stopPlayback(false, true); S.startAt = 0; if (prefs.loop) startPlayback(); return; }
   for (const x of S.index) {
-    const on = x.t <= pos && pos < x.end;
+    const on = !(S.nofollow && S.nofollow[x.v]) && x.t <= pos && pos < x.end;
     if (on !== x.on) { x.on = on; x.e.classList.toggle('on', on); }
   }
   /* follow the music */
