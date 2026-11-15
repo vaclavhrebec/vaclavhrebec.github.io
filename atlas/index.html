@@ -150,12 +150,12 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 .panel { position: absolute; top: 10px; right: 10px; width: 250px; background: var(--bg2); border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; font-size: 13px; box-shadow: 0 8px 24px -10px rgba(0,0,0,.5); }
 .panel h4 { margin: 0 0 8px; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
 .panel h4 button { border: 0; background: none; padding: 0; font: inherit; color: inherit; letter-spacing: inherit; text-transform: inherit; cursor: pointer; }
-.panel.min > :not(h4):not(.row) { display: none; }
+.panel.min > :not(h4):not(.row):not(.yrs) { display: none; }
 .panel.min { width: 230px; }
 .panel label { display: flex; align-items: center; gap: 8px; margin: 3px 0; cursor: pointer; }
 .panel .row { display: flex; align-items: center; gap: 8px; }
 .panel input[type=range] { flex: 1; accent-color: var(--accent2); }
-.yr-big { font: 600 20px var(--mono); color: var(--fg); }
+.yr-big { font: 600 17px var(--mono); flex: 1; min-width: 0; color: var(--fg); }
 .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; margin-top: 8px; font-size: 12px; color: var(--muted); }
 .legend span, .legend button { display: flex; align-items: center; gap: 5px; border: 0; background: none; padding: 1px 3px; margin: 0 -3px; border-radius: 4px; color: inherit; font: inherit; cursor: pointer; text-align: left; }
 .legend button:hover { color: var(--fg); }
@@ -166,6 +166,22 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 .yearnow { position: absolute; left: 14px; top: 10px; font: 600 40px/1 var(--mono); color: var(--fg); opacity: .14; pointer-events: none; }
 .panel .playyr { border: 1px solid var(--line); background: var(--bg); border-radius: 6px; height: 26px; padding: 0 9px; cursor: pointer; font-size: 12.5px; }
 .panel .mini { color: var(--faint); font-size: 11.5px; margin-top: 6px; line-height: 1.4; }
+/* two-handled year range */
+.dual { position: relative; flex: 1; height: 24px; min-width: 120px; }
+.dual .trk, .dual .fill { position: absolute; top: 10px; height: 4px; border-radius: 2px; pointer-events: none; }
+.dual .trk { left: 0; right: 0; background: var(--line); }
+.dual .fill { background: var(--accent2); }
+.dual input[type=range] { position: absolute; left: 0; top: 0; width: 100%; height: 24px; margin: 0; padding: 0; -webkit-appearance: none; appearance: none; background: transparent; pointer-events: none; }
+.dual input[type=range]::-webkit-slider-runnable-track { background: transparent; height: 24px; }
+.dual input[type=range]::-moz-range-track { background: transparent; }
+.dual input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; pointer-events: auto; width: 16px; height: 16px; margin-top: 4px; border-radius: 50%; background: var(--accent2); border: 2px solid var(--bg2); cursor: pointer; }
+.dual input[type=range]::-moz-range-thumb { pointer-events: auto; width: 13px; height: 13px; border-radius: 50%; background: var(--accent2); border: 2px solid var(--bg2); cursor: pointer; }
+.yrs { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.yrs input { width: 66px; font: 12.5px var(--mono); color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 3px 5px; }
+.yrs button { border: 1px solid var(--line); background: var(--bg); color: var(--muted); border-radius: 6px; height: 24px; padding: 0 7px; cursor: pointer; font-size: 12px; }
+.yrs button:hover { color: var(--fg); }
+.panel .yrs { margin: 4px 0 6px; }
+.panel .yrs label { margin: 0; gap: 4px; }
 
 /* timeline */
 .tl { padding: 16px 18px 50px; width: max-content; min-width: 100%; }
@@ -291,18 +307,21 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <div class="panel">
         <h4><button type="button" id="panelBtn" aria-expanded="true">Filters <span aria-hidden="true">▾</span></button></h4>
         <div class="row"><span class="yr-big" id="yrLab">all years</span><button class="playyr" id="yrPlay" title="Let the centuries pass">▶ Play</button></div>
-        <div class="row"><input type="range" id="yr" min="0" max="1000" step="1" value="1000" aria-label="Year"></div>
+        <div class="row"><div class="dual" id="gRange"><div class="trk"></div><div class="fill"></div><input type="range" min="0" max="1000" step="1" value="0" aria-label="From year"><input type="range" min="0" max="1000" step="1" value="1000" aria-label="To year"></div></div>
+        <div class="yrs" id="gYrs"><label>from <input type="number" step="1" placeholder="start" aria-label="From year (negative = BC)"></label><label>to <input type="number" step="1" placeholder="today" aria-label="To year"></label><button type="button" title="Show all years">all</button></div>
         <label><input type="checkbox" id="showStyles" checked> Styles</label>
         <label><input type="checkbox" id="showLabels" checked> Labels</label>
         <label title="Line the nodes up from left (early) to right (today)"><input type="checkbox" id="timeAxis"> Time axis</label>
         <div class="legend" id="legend"></div>
-        <p class="mini">Bright: established in that year. Faint: just emerging. Hidden: not yet there, or gone. Drag nodes, scroll to zoom, click to open. Click a colour to show only that folder.</p>
+        <p class="mini">Bright: established in that year. Faint: just emerging. Hidden: not yet there, or gone. Set both ends to limit the years (e.g. 1750 to 1760); both ends on one year shows that year alone. Drag nodes, pinch or Ctrl + scroll to zoom, scroll or drag to move, click to open. Click a colour to show only that folder.</p>
       </div>
       <div class="zoom"><button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button><button id="zfit" aria-label="Fit" title="Fit">⤢</button></div>
     </section>
     <section class="view" id="v-timeline" role="tabpanel" hidden>
       <div class="tl">
         <div class="ctl"><span>Year</span><input type="range" id="tlyr" min="0" max="1000" step="1" value="335" aria-label="Year on the timeline"><b id="tlyrLab" style="font-family:var(--mono);color:var(--fg)">1450</b>
+          <span>Period</span><div class="dual" id="tRange" style="flex:none;width:220px"><div class="trk"></div><div class="fill"></div><input type="range" min="0" max="1000" step="1" value="0" aria-label="Timeline from"><input type="range" min="0" max="1000" step="1" value="1000" aria-label="Timeline to"></div>
+          <div class="yrs" id="tYrs"><label>from <input type="number" step="1" placeholder="start" aria-label="Timeline from year (negative = BC)"></label><label>to <input type="number" step="1" placeholder="today" aria-label="Timeline to year"></label><button type="button" title="Whole timeline">all</button></div>
           <select id="tlShow" aria-label="Show"><option value="all">Everything</option><option value="styles">Styles only</option><option value="composers">Composers</option><option value="treatises">Treatises</option><option value="eltr">Elements & treatises</option></select>
           <span>thin bar: first instances · thick bar: common · ◇ treatise · grey bar: a composer’s lifetime · click a row to open its note, a style to highlight its elements · the scale gives each era room</span></div>
         <svg id="tlsvg" role="img" aria-label="Timeline of musical elements and styles"></svg>
@@ -348,6 +367,27 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const Y = y => y < 0 ? (-y) + ' BC' : y === 0 ? 'AD 1' : String(y);
   const YR = (a, b, alive) => Y(a) + '–' + (alive ? 'today' : (a < 0 && b > 0 ? 'AD ' : '') + Y(b));
   const sliderYear = el => yOf(+el.value / 1000);
+  /* a from–to year range: two slider handles plus two number fields for exact years */
+  function DualYears(root, fields, onChange) {
+    const [ra, rb] = root.querySelectorAll('input[type=range]'), [na, nb] = fields.querySelectorAll('input[type=number]'), fill = root.querySelector('.fill');
+    let a = MIN, b = MAX;
+    const clamp = v => Math.min(MAX, Math.max(MIN, v));
+    const paint = () => { ra.value = a <= MIN ? 0 : Math.round(tOf(a) * 1000); rb.value = b >= MAX ? 1000 : Math.round(tOf(b) * 1000);
+      fill.style.left = ra.value / 10 + '%'; fill.style.width = Math.max(0, rb.value - ra.value) / 10 + '%';
+      ra.style.zIndex = +ra.value > 980 ? 3 : 1; rb.style.zIndex = 2;
+      if (document.activeElement !== na) na.value = a <= MIN ? '' : a; if (document.activeElement !== nb) nb.value = b >= MAX ? '' : b; };
+    const fire = () => { paint(); onChange(a, b); };
+    ra.addEventListener('input', () => { if (+ra.value > +rb.value) ra.value = rb.value; a = +ra.value <= 0 ? MIN : yOf(+ra.value / 1000); if (a > b) a = b; fire(); });
+    rb.addEventListener('input', () => { if (+rb.value < +ra.value) rb.value = ra.value; b = +rb.value >= 1000 ? MAX : yOf(+rb.value / 1000); if (b < a) b = a; fire(); });
+    const num = (el, dflt) => { const v = parseInt(String(el.value).replace('−', '-'), 10); return isNaN(v) ? dflt : clamp(v); };
+    na.addEventListener('change', () => { a = num(na, MIN); if (a > b) b = a; fire(); });
+    nb.addEventListener('change', () => { b = num(nb, MAX); if (b < a) a = b; fire(); });
+    [na, nb].forEach(el => el.addEventListener('keydown', e => { if (e.key === 'Enter') el.blur(); }));
+    fields.querySelector('button').onclick = () => { a = MIN; b = MAX; fire(); };
+    paint();
+    return {get: () => [a, b], set(x, y) { a = x; b = y; paint(); }, all: () => a <= MIN && b >= MAX - 2};
+  }
+  const rangeLab = (a, b) => a === b ? 'c. ' + Y(a) : (a <= MIN ? 'until ' : Y(a) + '–') + (b >= MAX - 2 ? 'today' : Y(b));
 
   /* ---------- the vault as nodes and links ---------- */
   const nodes = [], byId = {};
@@ -588,7 +628,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   }
 
   /* ---------- force-directed graph ---------- */
-  const G = {scale: 1, ox: 0, oy: 0, year: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true, axis: false, only: null};
+  const G = {scale: 1, ox: 0, oy: 0, a: MIN, b: MAX, hover: null, drag: null, alpha: 1, labels: true, styles: true, axis: false, only: null};
   const AXW = 2400;
   const timeOf = n => n.kind === 'style' ? (n.from + Math.min(n.to, n.from + 80)) / 2 : n.first;
   nodes.forEach(n => n.tx = (tOf(timeOf(n)) - .5) * AXW);
@@ -605,7 +645,11 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   const cv = $('#graph'), cx = cv.getContext('2d');
   function sizeCanvas(c) { const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1; c.width = Math.max(1, r.width * d); c.height = Math.max(1, r.height * d); return {w: r.width, h: r.height, d}; }
   let dims = {w: 1, h: 1, d: 1};
-  function visible(n) { if (n.kind === 'style' && !G.styles) return false; if (G.only && n.kind !== 'style' && n.folder !== G.only) return false; if (G.only && n.kind === 'style' && ![...nb[n.id]].some(i => byId[i].folder === G.only)) return false; return G.year >= MAX || presence(n, G.year) > 0; }
+  function visible(n) { if (n.kind === 'style' && !G.styles) return false; if (G.only && n.kind !== 'style' && n.folder !== G.only) return false; if (G.only && n.kind === 'style' && ![...nb[n.id]].some(i => byId[i].folder === G.only)) return false; return pres(n) > 0; }
+  const allYrs = () => G.a <= MIN && G.b >= MAX - 2;
+  /* presence within a span of years: 1 established somewhere in it, 0.5 only emerging, 0 absent */
+  function presR(n, a, b) { if (n.kind === 'style') return n.from <= b && n.to >= a ? 1 : 0; if (n.first > b) return 0; if (n.fade && n.fade < a) return 0; return n.common <= b ? 1 : 0.5; }
+  const pres = n => allYrs() ? 1 : presR(n, G.a, G.b);
   function draw() {
     const {w, h, d} = dims; cx.setTransform(d, 0, 0, d, 0, 0); cx.clearRect(0, 0, w, h);
     cx.save(); cx.translate(w / 2 + G.ox, h / 2 + G.oy); cx.scale(G.scale, G.scale);
@@ -621,7 +665,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       const on = hov && (e.a === hov.id || e.b === hov.id);
       cx.strokeStyle = on ? acc : line; cx.globalAlpha = hov && !on ? .25 : (e.type === 'style' ? .55 : .9); cx.lineWidth = (on ? 1.6 : 1) / G.scale;
       cx.beginPath(); cx.moveTo(p.x, p.y); cx.lineTo(q.x, q.y); cx.stroke(); });
-    nodes.forEach(n => { if (!n.vis) return; const pr = G.year >= MAX ? 1 : presence(n, G.year);
+    nodes.forEach(n => { if (!n.vis) return; const pr = pres(n);
       const dim = hov && hov !== n && !hl.has(n.id);
       cx.globalAlpha = dim ? .18 : (pr === 0.5 ? .45 : 1);
       cx.fillStyle = css(colorVar(n.folder)); cx.beginPath(); cx.arc(n.x, n.y, n.r, 0, 7); cx.fill();
@@ -634,7 +678,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         if (!show) return; const dim = hov && hov !== n && !hl.has(n.id); if (dim) return;
         const fs = (n.kind === 'style' ? 12 : 10.5) / Math.max(G.scale, .7);
         cx.font = `${n.kind === 'style' ? 600 : 400} ${fs}px ${css('--sans')}`; cx.fillStyle = n.kind === 'style' ? fg : muted;
-        cx.globalAlpha = (G.year >= MAX ? 1 : presence(n, G.year)) === 0.5 ? .55 : 1;
+        cx.globalAlpha = pres(n) === 0.5 ? .55 : 1;
         const tt = n.title.length > 34 ? n.title.slice(0, 33) + '…' : n.title; cx.lineJoin = 'round'; cx.strokeStyle = css('--bg'); cx.lineWidth = 3.5 / G.scale; cx.strokeText(tt, n.x, n.y + n.r + 3 / G.scale); cx.fillText(tt, n.x, n.y + n.r + 3 / G.scale); });
     }
     cx.restore(); cx.globalAlpha = 1;
@@ -642,41 +686,60 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   let raf = 0;
   function loop() { raf = 0; const list = nodes.filter(n => n.vis); if (G.alpha > .02) { tick(list, edges, G.alpha); G.alpha *= .985; } draw(); if (G.alpha > .02 || G.drag) raf = requestAnimationFrame(loop); }
   const kick = (a = .5) => { G.alpha = Math.max(G.alpha, a); if (!raf) raf = requestAnimationFrame(loop); };
-  function setYear(y) {
-    G.year = y; const all = y >= MAX - 2;
-    $('#yrLab').textContent = all ? 'all years' : 'c. ' + Y(y); $('#yearNow').textContent = all ? '' : Y(y);
+  function setRange(a, b) {
+    G.a = a; G.b = b; const all = allYrs();
+    $('#yrLab').textContent = all ? 'all years' : rangeLab(a, b); $('#yearNow').textContent = all ? '' : (a === b ? Y(a) : rangeLab(a, b));
     nodes.forEach(n => { const was = n.vis; n.vis = visible(n); if (n.vis && !was) { const nbv = [...nb[n.id]].map(i => byId[i]).find(m => m.vis); if (nbv) { n.x = nbv.x + (Math.random() - .5) * 30; n.y = nbv.y + (Math.random() - .5) * 30; } } });
     kick(.35);
   }
   function toWorld(px, py) { return {x: (px - dims.w / 2 - G.ox) / G.scale, y: (py - dims.h / 2 - G.oy) / G.scale}; }
   function hit(px, py) { const p = toWorld(px, py); let best = null, bd = 1e9; nodes.forEach(n => { if (!n.vis) return; const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < n.r + 6 / G.scale && d < bd) { bd = d; best = n; } }); return best; }
-  let ptr = null, moved = false;
-  cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), n = hit(e.clientX - r.left, e.clientY - r.top); ptr = {x: e.clientX, y: e.clientY, ox: G.ox, oy: G.oy, n}; moved = false; cv.setPointerCapture(e.pointerId); if (n) { G.drag = n; kick(.3); } cv.classList.add('drag'); });
+  let ptr = null, moved = false, pinch = null; const touches = new Map();
+  const pinchInfo = () => { const [p, q] = [...touches.values()], r = cv.getBoundingClientRect(); return {d: Math.hypot(p.x - q.x, p.y - q.y) || 1, mx: (p.x + q.x) / 2 - r.left, my: (p.y + q.y) / 2 - r.top}; };
+  cv.addEventListener('pointerdown', e => { touches.set(e.pointerId, {x: e.clientX, y: e.clientY}); cv.setPointerCapture(e.pointerId);
+    if (touches.size === 2) { /* two fingers: pinch to zoom */ G.drag = null; ptr = null; moved = true; const i = pinchInfo(); pinch = {d0: i.d, s0: G.scale, w: toWorld(i.mx, i.my)}; return; }
+    if (touches.size > 2) return;
+    const r = cv.getBoundingClientRect(), n = hit(e.clientX - r.left, e.clientY - r.top); ptr = {x: e.clientX, y: e.clientY, ox: G.ox, oy: G.oy, n}; moved = false; if (n) { G.drag = n; kick(.3); } cv.classList.add('drag'); });
   cv.addEventListener('pointermove', e => { const r = cv.getBoundingClientRect(), px = e.clientX - r.left, py = e.clientY - r.top;
+    if (touches.has(e.pointerId)) touches.set(e.pointerId, {x: e.clientX, y: e.clientY});
+    if (pinch && touches.size >= 2) { const i = pinchInfo(); G.scale = Math.min(6, Math.max(.2, pinch.s0 * i.d / pinch.d0)); G.ox = i.mx - dims.w / 2 - pinch.w.x * G.scale; G.oy = i.my - dims.h / 2 - pinch.w.y * G.scale; draw(); return; }
     if (ptr) { if (Math.hypot(e.clientX - ptr.x, e.clientY - ptr.y) > 4) moved = true;
       if (G.drag) { const p = toWorld(px, py); G.drag.x = p.x; G.drag.y = p.y; kick(.25); } else { G.ox = ptr.ox + e.clientX - ptr.x; G.oy = ptr.oy + e.clientY - ptr.y; draw(); } return; }
+    if (e.pointerType !== 'mouse') return;
     const n = hit(px, py); if (n !== G.hover) { G.hover = n; cv.style.cursor = n ? 'pointer' : 'grab'; cv.title = n ? n.title + ' · ' + (n.kind === 'style' ? yrs(n) : 'from c. ' + Y(n.first)) : ''; draw(); } });
-  cv.addEventListener('pointerup', () => { const n = ptr && ptr.n; if (n && !moved) location.hash = 'note/' + n.id; G.drag = null; ptr = null; cv.classList.remove('drag'); });
+  const lift = e => { touches.delete(e.pointerId);
+    if (pinch) { if (touches.size < 2) { pinch = null; const rest = [...touches.values()][0]; ptr = rest ? {x: rest.x, y: rest.y, ox: G.ox, oy: G.oy, n: null} : null; moved = true; } if (!touches.size) cv.classList.remove('drag'); return; }
+    const n = ptr && ptr.n; if (e.type === 'pointerup' && n && !moved) location.hash = 'note/' + n.id; G.drag = null; ptr = null; cv.classList.remove('drag'); };
+  cv.addEventListener('pointerup', lift); cv.addEventListener('pointercancel', lift);
   cv.addEventListener('pointerleave', () => { if (!ptr && G.hover) { G.hover = null; draw(); } });
-  function zoomAt(f, px = dims.w / 2, py = dims.h / 2) { const p = toWorld(px, py); G.scale = Math.min(4, Math.max(.25, G.scale * f)); G.ox = px - dims.w / 2 - p.x * G.scale; G.oy = py - dims.h / 2 - p.y * G.scale; draw(); }
-  cv.addEventListener('wheel', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(Math.exp(-e.deltaY * .0015), e.clientX - r.left, e.clientY - r.top); }, {passive: false});
+  function zoomAt(f, px = dims.w / 2, py = dims.h / 2) { const p = toWorld(px, py); G.scale = Math.min(6, Math.max(.2, G.scale * f)); G.ox = px - dims.w / 2 - p.x * G.scale; G.oy = py - dims.h / 2 - p.y * G.scale; draw(); }
+  /* Ctrl (or ⌘) + wheel, and trackpad pinch, zoom at the pointer; a plain wheel or two-finger scroll moves the graph */
+  cv.addEventListener('wheel', e => { e.preventDefault(); const k = e.deltaMode === 1 ? 33 : e.deltaMode === 2 ? 400 : 1, dy = e.deltaY * k, dx = e.deltaX * k;
+    if (e.ctrlKey || e.metaKey) { const r = cv.getBoundingClientRect(); zoomAt(Math.exp(-Math.max(-60, Math.min(60, dy)) * .006), e.clientX - r.left, e.clientY - r.top); }
+    else { G.ox -= e.shiftKey && !dx ? dy : dx; G.oy -= e.shiftKey && !dx ? 0 : dy; draw(); } }, {passive: false});
+  /* Safari's own trackpad pinch */
+  let gs = 1; cv.addEventListener('gesturestart', e => { e.preventDefault(); gs = 1; });
+  cv.addEventListener('gesturechange', e => { e.preventDefault(); const r = cv.getBoundingClientRect(); zoomAt(e.scale / gs, e.clientX - r.left, e.clientY - r.top); gs = e.scale; });
   $('#zin').onclick = () => zoomAt(1.25); $('#zout').onclick = () => zoomAt(.8);
   function fit() { const v = nodes.filter(n => n.vis); if (!v.length) return; let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; v.forEach(n => { x0 = Math.min(x0, n.x); x1 = Math.max(x1, n.x); y0 = Math.min(y0, n.y); y1 = Math.max(y1, n.y); });
     G.scale = Math.min(2, Math.max(.3, Math.min((dims.w - 60) / (x1 - x0 + 120), (dims.h - 60) / (y1 - y0 + 80)))); G.ox = -(x0 + x1) / 2 * G.scale; G.oy = -(y0 + y1) / 2 * G.scale; draw(); }
   $('#zfit').onclick = fit;
   $('#panelBtn').onclick = () => { const m = document.querySelector('.panel').classList.toggle('min'); $('#panelBtn').setAttribute('aria-expanded', !m); $('#panelBtn span').textContent = m ? '▸' : '▾'; };
   if (window.innerWidth <= 760) { document.querySelector('.panel').classList.add('min'); $('#panelBtn').setAttribute('aria-expanded', 'false'); $('#panelBtn span').textContent = '▸'; }
-  $('#yr').addEventListener('input', e => setYear(+e.target.value >= 1000 ? MAX : sliderYear(e.target)));
+  const gR = DualYears($('#gRange'), $('#gYrs'), (a, b) => { stopPlay(); setRange(a, b); });
   $('#timeAxis').onchange = e => { G.axis = e.target.checked; G.alpha = 1; kick(1); setTimeout(fit, 1200); };
-  $('#showStyles').onchange = e => { G.styles = e.target.checked; setYear(G.year); };
+  $('#showStyles').onchange = e => { G.styles = e.target.checked; setRange(G.a, G.b); };
   $('#showLabels').onchange = e => { G.labels = e.target.checked; draw(); };
-  let playT = 0;
-  $('#yrPlay').onclick = () => { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; return; }
-    let t = G.year >= MAX - 2 ? 0 : tOf(G.year); $('#yrPlay').textContent = '❚❚ Pause';
-    playT = setInterval(() => { t += 0.004; if (t >= .995) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; $('#yr').value = 1000; setYear(MAX); return; } $('#yr').value = Math.round(t * 1000); setYear(yOf(t)); }, 110); };
+  /* Play: a single year, or the chosen window of years, travels through the centuries */
+  let playT = 0, playKeep = null;
+  function stopPlay() { if (playT) { clearInterval(playT); playT = 0; $('#yrPlay').textContent = '▶ Play'; } }
+  $('#yrPlay').onclick = () => { if (playT) { stopPlay(); return; }
+    const all = allYrs(), dt = all ? 0 : tOf(G.b) - tOf(G.a); let t = all || tOf(G.b) >= .99 ? 0 : tOf(G.a); playKeep = [G.a, G.b]; $('#yrPlay').textContent = '❚❚ Pause';
+    playT = setInterval(() => { t += 0.004; if (t + dt >= .995) { stopPlay(); gR.set(...playKeep); setRange(...playKeep); return; }
+      const a = yOf(t), b = dt ? yOf(t + dt) : a; gR.set(a, b); setRange(a, b); }, 110); };
   const short = f => ({texture: 'Texture', harmony: 'Harmony', cadence: 'Cadence', counterpoint: 'Counterpoint', rhythm: 'Rhythm', form: 'Form', pitch: 'Pitch & tuning', timbre: 'Timbre & tech', practice: 'Practice', popular: 'Jazz & popular'})[f] || f;
   $('#legend').innerHTML = Object.keys(V.folders).map(f => `<button type="button" data-only="${f}"><i style="background:var(--c-${f})"></i>${esc(short(f))}</button>`).join('') + '<span><i style="background:var(--c-style)"></i>Styles</span>';
-  $('#legend').querySelectorAll('[data-only]').forEach(b => b.onclick = () => { G.only = G.only === b.dataset.only ? null : b.dataset.only; $('#legend').querySelectorAll('[data-only]').forEach(x => x.setAttribute('aria-pressed', x.dataset.only === G.only)); setYear(G.year); setTimeout(fit, 700); });
+  $('#legend').querySelectorAll('[data-only]').forEach(b => b.onclick = () => { G.only = G.only === b.dataset.only ? null : b.dataset.only; $('#legend').querySelectorAll('[data-only]').forEach(x => x.setAttribute('aria-pressed', x.dataset.only === G.only)); setRange(G.a, G.b); setTimeout(fit, 700); });
   /* settle the layout once before showing it */
   nodes.forEach(n => n.vis = true); for (let i = 0; i < 600; i++) tick(nodes, edges, Math.max(.05, 1 - i / 600)); G.alpha = 0;
 
@@ -698,9 +761,12 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
   }
 
   /* ---------- timeline ---------- */
-  let tlFocus = null;
+  let tlFocus = null, tR = null;
   function timeline() {
-    const year = sliderYear($('#tlyr')), only = $('#tlShow').value, narrow = window.innerWidth <= 760, W = Math.max(narrow ? 1100 : 860, $('#v-timeline').clientWidth - 36), lab = narrow ? 168 : 250, rowH = 19, x = y => lab + tOf(y) * (W - lab - 10);
+    const [A, B] = tR ? tR.get() : [MIN, MAX], cropped = !(A <= MIN && B >= MAX - 2), B2 = Math.max(B, A + 1);
+    const year = sliderYear($('#tlyr')), only = $('#tlShow').value, narrow = window.innerWidth <= 760, W = Math.max(narrow ? 1100 : 860, $('#v-timeline').clientWidth - 36), lab = narrow ? 168 : 250, rowH = 19;
+    const t0 = tOf(A), t1 = tOf(B2), xr = y => lab + (tOf(y) - t0) / (t1 - t0) * (W - lab - (cropped ? 26 : 10)), x = y => xr(Math.min(B2, Math.max(A, y)));
+    const inW = (a, b) => a <= B2 && b >= A;
     const rows = [], addEls = () => { for (const f in V.folders) { rows.push({grp: V.folders[f]}); V.elements.filter(e => e.folder === f).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); } };
     const addComps = () => { rows.push({grp: 'Composers'}); Object.values(CP).sort((a, b) => a.born - b.born).forEach(c => rows.push({c})); };
     const addTrs = () => { rows.push({grp: 'Treatises'}); Object.values(TR).sort((a, b) => a.year - b.year).forEach(t => rows.push({t})); };
@@ -711,32 +777,40 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     else if (only === 'eltr') { addEls(); addTrs(); }
     else if (only !== 'styles') { rows.push({grp: V.folders[only]}); V.elements.filter(e => e.folder === only).sort((a, b) => a.first - b.first).forEach(e => rows.push({n: byId[e.id]})); }
     const showTr = only !== 'styles' && only !== 'composers';
+    if (cropped) { /* keep only what reaches into the chosen period, and the headings that still have rows */
+      const keep = r => r.c ? inW(r.c.born, r.c.died || NOW) : r.t ? inW(r.t.year, r.t.year) : r.n.kind === 'style' ? inW(r.n.from, r.n.to) : inW(r.n.maybe || r.n.first, r.n.fade || NOW);
+      const kept = rows.filter(r => r.grp || keep(r)); rows.length = 0; kept.forEach((r, i) => { if (!r.grp || (kept[i + 1] && !kept[i + 1].grp)) rows.push(r); }); }
+    if (!rows.length) rows.push({grp: 'Nothing in ' + rangeLab(A, B)});
+    const ticks = !cropped ? TICKS : (() => { const span = B2 - A, steps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000], st = steps.find(s => span / s <= (W - lab) / 60) || 1000, out = []; let last = -1e9;
+      for (let c = Math.ceil(A / st) * st; c <= B2; c += st) { if (xr(c) - last >= 46) { out.push(c); last = xr(c); } } return out; })();
+    const major = cropped ? (ticks.length > 1 ? (ticks[1] - ticks[0]) * 5 : 1) : 100;
     const H = 26 + rows.length * rowH + 10; let h = '';
-    ERAS.forEach(([name, a, b], i) => { h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${name}</text>`; });
-    TICKS.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % 100 ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${Y(c)}</text>`; });
+    ERAS.forEach(([name, a, b], i) => { if (!inW(a, b)) return; h += `<rect x="${x(a)}" y="18" width="${x(b) - x(a)}" height="${H - 18}" fill="var(--fg)" opacity="${i % 2 ? .035 : 0}"/><text class="era" x="${(x(a) + x(b)) / 2}" y="${H + 14}" text-anchor="middle">${x(b) - x(a) > 60 ? name : ''}</text>`; });
+    ticks.forEach(c => { h += `<line class="gl" x1="${x(c)}" x2="${x(c)}" y1="20" y2="${H}" ${c % major ? 'stroke-dasharray="2 4"' : ''}/><text class="tick" x="${x(c)}" y="13" text-anchor="middle">${Y(c)}</text>`; });
     const focusSet = tlFocus ? new Set(byId[tlFocus].elements.concat(tlFocus)) : null;
     rows.forEach((r, i) => { const y = 26 + i * rowH;
       if (r.grp) { h += `<text class="grp" x="4" y="${y + 13}">${esc(r.grp)}</text>`; return; }
       if (r.c) { const c = r.c, dim = focusSet && !c.styleIds.includes(tlFocus) ? ' class="dim"' : '', cut = narrow ? 25 : 38, nm = c.name.length > cut ? c.name.slice(0, cut - 1) + '…' : c.name;
         h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${c.id}">${esc(nm)}<title>${esc(c.name)}</title></text><rect class="bar" data-id="${c.id}" x="${x(c.born)}" y="${y + 5}" width="${Math.max(3, x(c.died || NOW) - x(c.born))}" height="9" rx="3" fill="var(--muted)" opacity=".75"><title>${esc(c.name)}: ${lifeOf(c)}${c.died ? '' : 'today'}</title></rect></g>`; return; }
-      if (r.t) { const t = r.t, dim = focusSet && !t.els.some(e => focusSet.has(e)) ? ' class="dim"' : '', lb = t.author.split(' (')[0].split(' ').pop() + ', ' + t.title, cut = narrow ? 25 : 38;
+      if (r.t) { const t = r.t; if (cropped && !inW(t.year, t.year)) return; const dim = focusSet && !t.els.some(e => focusSet.has(e)) ? ' class="dim"' : '', lb = t.author.split(' (')[0].split(' ').pop() + ', ' + t.title, cut = narrow ? 25 : 38;
         h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${t.id}"><tspan font-style="italic">${esc(lb.length > cut ? lb.slice(0, cut - 1) + '…' : lb)}</tspan><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></text><path class="bar" data-id="${t.id}" d="M${x(t.year)} ${y + 3.5}l6 6-6 6-6-6z" fill="var(--fg)"><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></path></g>`; return; }
       const n = r.n, c = `var(${colorVar(n.folder)})`, dim = focusSet && !focusSet.has(n.id) ? ' class="dim"' : '';
       const cut = narrow ? 25 : 38; h += `<g${dim}><text class="rowlab" x="14" y="${y + 13}" data-id="${n.id}">${esc(n.title.length > cut ? n.title.slice(0, cut - 1) + '…' : n.title)}<title>${esc(n.title)}</title></text>`;
       if (n.kind === 'style') h += `<rect class="bar" data-style="${n.id}" x="${x(n.from)}" y="${y + 3}" width="${x(n.to) - x(n.from)}" height="13" rx="4" fill="${c}" opacity="${tlFocus === n.id ? 1 : .8}"><title>${esc(n.title)}: ${YR(n.from, n.to)}</title></rect>`;
       else { const end = n.fade || NOW;
-        if (n.maybe) h += `<line class="bar" data-id="${n.id}" x1="${x(n.maybe)}" x2="${x(n.first)}" y1="${y + 9.5}" y2="${y + 9.5}" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"><title>${esc(n.title)}: perhaps from c. ${Y(n.maybe)} (?)</title></line>`;
-        h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${Y(n.first)}</title></rect>`;
-        h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${Y(n.common)}${n.fade ? '–' + Y(n.fade) : ''}</title></rect>`;
-        if (showTr) treatisesOf(n.id).forEach(t => { h += `<path class="bar" data-id="${t.id}" d="M${x(t.year)} ${y + 4}l5.5 5.5-5.5 5.5-5.5-5.5z" fill="var(--bg)" stroke="var(--fg)" stroke-width="1.3"><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></path>`; }); }
+        if (n.maybe && inW(n.maybe, n.first)) h += `<line class="bar" data-id="${n.id}" x1="${x(n.maybe)}" x2="${x(n.first)}" y1="${y + 9.5}" y2="${y + 9.5}" stroke="${c}" stroke-width="2" stroke-dasharray="2 3" opacity=".7"><title>${esc(n.title)}: perhaps from c. ${Y(n.maybe)} (?)</title></line>`;
+        if (inW(n.first, n.common)) h += `<rect class="bar" data-id="${n.id}" x="${x(n.first)}" y="${y + 8}" width="${Math.max(1.5, x(n.common) - x(n.first))}" height="3" rx="1.5" fill="${c}" opacity=".6"><title>${esc(n.title)}: first c. ${Y(n.first)}</title></rect>`;
+        if (inW(n.common, end)) h += `<rect class="bar" data-id="${n.id}" x="${x(n.common)}" y="${y + 4}" width="${Math.max(2, x(end) - x(n.common))}" height="11" rx="3.5" fill="${c}"><title>${esc(n.title)}: common c. ${Y(n.common)}${n.fade ? '–' + Y(n.fade) : ''}</title></rect>`;
+        if (showTr) treatisesOf(n.id).filter(t => inW(t.year, t.year)).forEach(t => { h += `<path class="bar" data-id="${t.id}" d="M${x(t.year)} ${y + 4}l5.5 5.5-5.5 5.5-5.5-5.5z" fill="var(--bg)" stroke="var(--fg)" stroke-width="1.3"><title>${esc(t.author)}, ${esc(t.title)} (${Y(t.year)})</title></path>`; }); }
       h += '</g>'; });
-    h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
+    if (inW(year, year)) h += `<line class="cur" x1="${x(year)}" x2="${x(year)}" y1="18" y2="${H}"/>`;
     const svg = $('#tlsvg'); svg.setAttribute('viewBox', `0 0 ${W} ${H + 22}`); svg.style.height = (H + 22) + 'px'; svg.style.width = W + 'px'; svg.innerHTML = h;
     svg.querySelectorAll('[data-id]').forEach(t => t.onclick = () => location.hash = 'note/' + t.dataset.id);
     svg.querySelectorAll('[data-style]').forEach(t => t.onclick = () => { tlFocus = tlFocus === t.dataset.style ? null : t.dataset.style; timeline(); });
     $('#tlyrLab').textContent = Y(year);
   }
   $('#tlyr').addEventListener('input', timeline);
+  tR = DualYears($('#tRange'), $('#tYrs'), () => { /* keep the year cursor inside the period */ const [a, b] = tR.get(), y = sliderYear($('#tlyr')); if (y < a || y > b) $('#tlyr').value = Math.round(tOf(Math.min(b, Math.max(a, y))) * 1000); timeline(); });
   $('#tlShow').innerHTML += Object.keys(V.folders).map(f => `<option value="${f}">${esc(V.folders[f])}</option>`).join('');
   $('#tlShow').addEventListener('change', timeline);
 
@@ -847,7 +921,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
     ['note', 'graph', 'timeline', 'combine', 'voices'].forEach(k => { $('#v-' + k).hidden = k !== v; });
     document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.go === v));
     document.querySelectorAll('.ribbon [data-go]').forEach(t => t.setAttribute('aria-pressed', t.dataset.go === v));
-    if (v === 'graph') { dims = sizeCanvas(cv); if (!G.fitted) { setYear(G.year); fit(); G.fitted = true; } kick(.1); }
+    if (v === 'graph') { dims = sizeCanvas(cv); if (!G.fitted) { setRange(G.a, G.b); fit(); G.fitted = true; } kick(.1); }
     if (v === 'timeline') timeline();
     if (v === 'combine' && !builtC) { combine(); builtC = true; }
     if (v === 'voices') voicesView();
