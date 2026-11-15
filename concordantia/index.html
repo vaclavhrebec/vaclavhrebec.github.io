@@ -74,6 +74,7 @@ h2{font-weight:400;font-size:28px;margin:6px 0 4px}
 <nav><div class="in" id="nav"></div></nav>
 <main id="app"></main>
 
+<script src="tml.js"></script>
 <script>
 const TOPICS={
   solm:"Solmisation & the hand", modes:"Modes", mens:"Mensural notation", cpt:"Counterpoint",
@@ -85,37 +86,37 @@ const LANES={treatise:["Music treatise","--l-treatise"],ms:["Manuscript / print"
 
 /* q = search string for the repositories; direct = verified deep links */
 const T=[
- {id:"boethius",author:"Boethius",title:"De institutione musica",date:"c. 500",y:500,place:"Ravenna / Rome",q:"Boethius De institutione musica",
+ {id:"boethius",tml:["6th-8th/BOEDIM1", "6th-8th/BOEDIM2", "6th-8th/BOEDIM3", "6th-8th/BOEDIM4", "6th-8th/BOEDIM5"],author:"Boethius",title:"De institutione musica",date:"c. 500",y:500,place:"Ravenna / Rome",q:"Boethius De institutione musica",
   ctx:"Written for the Latin West at the end of antiquity; for a millennium the authority on music as a mathematical art of the quadrivium.",
   says:{spec:"Divides music into mundana (the cosmos), humana (body and soul) and instrumentalis (sounding music); the true musicus judges by reason, ranking above the mere performer.",
         tuning:"Derives the consonances from the ratios 2:1, 3:2 and 4:3 and teaches the division of the monochord in the Pythagorean tradition."}},
- {id:"guido-micr",author:"Guido of Arezzo",title:"Micrologus",date:"c. 1026",y:1026,place:"Arezzo",q:"Guido Micrologus",
+ {id:"guido-micr",tml:["9th-11th/GUIMIC"],author:"Guido of Arezzo",title:"Micrologus",date:"c. 1026",y:1026,place:"Arezzo",q:"Guido Micrologus",
   ctx:"A short practical manual by the monk who also devised staff lines in his antiphoner; among the most copied medieval music books.",
   says:{modes:"Explains the modes through their finals and their authentic and plagal forms, and how a melody's ending defines it.",
         cpt:"Gives rules for organum (diaphonia), including how the voices should come together at the cadence (occursus)."}},
- {id:"guido-ep",author:"Guido of Arezzo",title:"Epistola de ignoto cantu",date:"c. 1030",y:1030,place:"Pomposa / Arezzo",q:"Guido Epistola de ignoto cantu",
+ {id:"guido-ep",tml:["9th-11th/GUIEP"],author:"Guido of Arezzo",title:"Epistola de ignoto cantu",date:"c. 1030",y:1030,place:"Pomposa / Arezzo",q:"Guido Epistola de ignoto cantu",
   ctx:"A letter to the monk Michael describing Guido's method of teaching boys to sing unknown chants quickly.",
   says:{solm:"Uses the hymn Ut queant laxis, whose phrases begin on successive steps, so that singers can fix the sound of each step by its syllable."}},
- {id:"franco",author:"Franco of Cologne",title:"Ars cantus mensurabilis",date:"c. 1280",y:1280,place:"Paris / Cologne",q:"Franco Ars cantus mensurabilis",
+ {id:"franco",tml:["13th/FRAACM"],author:"Franco of Cologne",title:"Ars cantus mensurabilis",date:"c. 1280",y:1280,place:"Paris / Cologne",q:"Franco Ars cantus mensurabilis",
   ctx:"Codifies the notation of the Notre-Dame and motet repertory.",
   says:{mens:"Lets the shape of a note, not only its context, define its duration; builds the system on ternary perfection and gives rules for ligatures.",
         cpt:"Classifies concords as perfect, imperfect and intermediate, and treats discant voice by voice."}},
- {id:"vitry",author:"attr. Philippe de Vitry",title:"Ars nova",date:"c. 1320",y:1320,place:"Paris",q:"Vitry Ars nova",
+ {id:"vitry",tml:["14th/VITARN"],author:"attr. Philippe de Vitry",title:"Ars nova",date:"c. 1320",y:1320,place:"Paris",q:"Vitry Ars nova",
   ctx:"Gave its name to a whole period; survives in several differing redactions.",
   says:{mens:"Recognises imperfect (duple) time and prolation alongside perfect, the minim as a value, and red notes for changes of mensuration."}},
- {id:"jacobus",author:"Jacobus of Liège",title:"Speculum musicae",date:"c. 1330",y:1330,place:"Liège / Paris",q:"Jacobus Speculum musicae",
+ {id:"jacobus",tml:["14th/JACSP1A", "14th/JACSM7"],author:"Jacobus of Liège",title:"Speculum musicae",date:"c. 1330",y:1330,place:"Liège / Paris",q:"Jacobus Speculum musicae",
   ctx:"The largest medieval treatise on music, in seven books.",
   says:{spec:"An encyclopedic survey of speculative music in the Boethian tradition.",
         mens:"Its last book defends the older ars antiqua against the innovations of the moderns."}},
- {id:"prosdocimo",author:"Prosdocimo de' Beldomandi",title:"Contrapunctus",date:"1412",y:1412,place:"Padua",q:"Prosdocimo Contrapunctus",
+ {id:"prosdocimo",tml:["15th/PROCON"],author:"Prosdocimo de' Beldomandi",title:"Contrapunctus",date:"1412",y:1412,place:"Padua",q:"Prosdocimo Contrapunctus",
   ctx:"By a Paduan professor of astronomy and mathematics.",
   says:{cpt:"Teaches note-against-note counterpoint and forbids successive perfect consonances of the same kind.",
         ficta:"Allows ficta to make perfect intervals perfect and to approach them from the nearest imperfect interval."}},
- {id:"tinctoris",author:"Johannes Tinctoris",title:"Liber de arte contrapuncti",date:"1477",y:1477,place:"Naples",q:"Tinctoris Liber de arte contrapuncti",
+ {id:"tinctoris",tml:["15th/TINCON1", "15th/TINCON2", "15th/TINCON3"],author:"Johannes Tinctoris",title:"Liber de arte contrapuncti",date:"1477",y:1477,place:"Naples",q:"Tinctoris Liber de arte contrapuncti",
   ctx:"Written at the Aragonese court in Naples and dedicated to King Ferrante; the young Gaffurius met Tinctoris there shortly after.",
   says:{cpt:"Book III closes with eight general rules of counterpoint, including the demand for variety.",
         improv:"Book II distinguishes counterpoint sung over the book (super librum, mentally) from written counterpoint (res facta), and discusses what each permits."}},
- {id:"gaffurius",author:"Franchinus Gaffurius",title:"Practica musicae",date:"1496",y:1496,place:"Milan",q:"Gaffurius Practica musicae",
+ {id:"gaffurius",tml:["15th/GAFPM1", "15th/GAFPM2", "15th/GAFPM3", "15th/GAFPM4"],author:"Franchinus Gaffurius",title:"Practica musicae",date:"1496",y:1496,place:"Milan",q:"Gaffurius Practica musicae",
   ctx:"Printed in Milan, where Gaffurius was maestro di cappella at the cathedral.",
   says:{cpt:"Book III gives eight rules of counterpoint, a widely copied formulation.",
         mens:"Book II is a full treatment of mensural notation and proportions.",
@@ -127,7 +128,7 @@ const T=[
  {id:"virdung",author:"Sebastian Virdung",title:"Musica getutscht",date:"1511",y:1511,place:"Basel",q:"Virdung Musica getutscht",
   ctx:"Printed in Basel; the first printed treatise devoted to instruments.",
   says:{organ:"Illustrates and classifies the instruments of its time and introduces tablatures for keyboard, lute and recorder."}},
- {id:"ornithoparchus",author:"Andreas Ornithoparchus",title:"Musicae activae micrologus",date:"1517",y:1517,place:"Leipzig",q:"Ornithoparchus Musicae activae micrologus",
+ {id:"ornithoparchus",tml:["16th/ORNMUS1", "16th/ORNMUS2", "16th/ORNMUS3", "16th/ORNMUS4"],author:"Andreas Ornithoparchus",title:"Musicae activae micrologus",date:"1517",y:1517,place:"Leipzig",q:"Ornithoparchus Musicae activae micrologus",
   direct:[["IMSLP","https://imslp.org/wiki/Musicae_activae_micrologus_(Ornithoparchus,_Andreas)"]],
   ctx:"Four books, each with its own dedication to a named person; the book on counterpoint is addressed to the organist Arnolt Schlick. Reprinted in 1519 and 1521, and translated into English by John Dowland (1609).",
   says:{solm:"Book I: plainchant, the hand, solmisation and mutation.",
@@ -145,10 +146,10 @@ const T=[
   ctx:"By a Venetian instrumentalist of the Doge's service.",
   says:{dimin:"Tables of diminutions on each interval and cadence, from simple to very elaborate.",
         perf:"The recorder player should imitate the human voice; articulation syllables are given."}},
- {id:"glarean",author:"Heinrich Glarean",title:"Dodecachordon",date:"1547",y:1547,place:"Basel",q:"Glarean Dodecachordon",
+ {id:"glarean",tml:["16th/GLADOD1", "16th/GLADOD2", "16th/GLADOD3"],author:"Heinrich Glarean",title:"Dodecachordon",date:"1547",y:1547,place:"Basel",q:"Glarean Dodecachordon",
   ctx:"Printed in Basel by Heinrich Petri; Glarean, a humanist in Basel and Freiburg, also published an edition of Boethius.",
   says:{modes:"Argues for twelve modes, adding Aeolian and Ionian, and illustrates them with polyphony by Josquin and others."}},
- {id:"coclico",author:"Adrianus Petit Coclico",title:"Compendium musices",date:"1552",y:1552,place:"Nuremberg",q:"Coclico Compendium musices",
+ {id:"coclico",tml:["16th/COCCOM"],author:"Adrianus Petit Coclico",title:"Compendium musices",date:"1552",y:1552,place:"Nuremberg",q:"Coclico Compendium musices",
   ctx:"By a singer who claimed to be a pupil of Josquin.",
   says:{dimin:"Teaches the ornate manner of singing (ornate canere) with worked examples.",
         perf:"Presents singing as an art of elegance learned from a master's practice."}},
@@ -216,16 +217,17 @@ const CONN=[
 const enc=encodeURIComponent;
 function repoLinks(t){
   const out=(t.direct||[]).map(([l,u])=>`<a class="direct" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`);
-  out.push(`<a href="https://chmtl.indiana.edu/tml/" target="_blank" rel="noopener">TML</a>`);
+  const roman=["I","II","III","IV","V","VI","VII"];
+  if(t.tml) t.tml.forEach((p,i)=>out.push(`<a class="direct" href="${TML_BASE+p}" target="_blank" rel="noopener">TML${t.tml.length>1?" "+(roman[i]||i+1):""} ↗</a>`));
   out.push(`<a href="https://imslp.org/index.php?search=${enc(t.q)}" target="_blank" rel="noopener">IMSLP search</a>`);
   out.push(`<a href="https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&version=1.2&query=${enc('(gallica all "'+t.q+'")')}" target="_blank" rel="noopener">Gallica search</a>`);
   out.push(`<a href="https://www.diamm.ac.uk/search/?q=${enc(t.q)}" target="_blank" rel="noopener">DIAMM search</a>`);
   return `<div class="links">${out.join("")}</div>`;
 }
 const byId=id=>T.find(t=>t.id===id);
-let state={view:"topics",topic:"improv",treatise:null,lanes:new Set(Object.keys(LANES)),q:""};
+let state={cent:"all",sq:"",kind:"all",view:"topics",topic:"improv",treatise:null,lanes:new Set(Object.keys(LANES)),q:""};
 
-const VIEWS={topics:"By topic",treatises:"Treatises",timeline:"Timeline",about:"About the project"};
+const VIEWS={topics:"By topic",treatises:"Treatises",sources:"All sources",timeline:"Timeline",about:"About"};
 function renderNav(){
   document.getElementById("nav").innerHTML=Object.entries(VIEWS).map(([k,v])=>
     `<button class="${state.view===k&&!state.treatise?'on':''}" data-v="${k}">${v}</button>`).join("");
@@ -263,6 +265,32 @@ function treatiseView(t){
   ${conns?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Connections</h3>${conns}`:""}
   ${near?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Around the same time</h3>${near}`:""}`;
 }
+
+const CENTS=["3rd-5th","6th-8th","9th-11th","12th","13th","14th","15th","16th","17th"];
+const workKey=o=>o.a+"|"+o.t.replace(/[,;.]?\s*(liber|book|tractatus|pars)\s+\w+\s*$/i,"").replace(/\s*\[[^\]]*\]\s*$/,"").trim();
+const LINKED={};T.forEach(t=>(t.tml||[]).forEach(p=>LINKED[p.split("/")[1]]=t.id));
+function sourcesView(){
+  const q=state.sq.toLowerCase();
+  const rows=TML.filter(o=>(state.cent==="all"||o.c===state.cent)&&(state.kind==="all"||o.k===state.kind)&&
+    (!q||(o.a+" "+o.t+" "+o.s+" "+o.id).toLowerCase().includes(q)));
+  const works=new Map();rows.forEach(o=>{const k=o.c+"|"+workKey(o);if(!works.has(k))works.set(k,[]);works.get(k).push(o)});
+  const byAuthor=new Map();works.forEach((v,k)=>{const a=v[0].a;if(!byAuthor.has(a))byAuthor.set(a,[]);byAuthor.get(a).push(v)});
+  const cc=["all",...CENTS].map(c=>`<button class="chip ${state.cent===c?'on':''}" data-cent="${c}">${c==="all"?"All centuries":c}</button>`).join("");
+  const kc=[["all","All"],["text","Printed editions"],["ms","Manuscript transcriptions"]].map(([k,l])=>`<button class="chip ${state.kind===k?'on':''}" data-kind="${k}">${l}</button>`).join("");
+  let body="";
+  [...byAuthor.entries()].slice(0,400).forEach(([a,ws])=>{
+    body+=`<div class="card"><h3>${a}</h3>`+ws.map(v=>{
+      const o=v[0],cur=v.map(x=>LINKED[x.id]).find(Boolean);
+      const files=v.map(x=>`<a class="${x.k==='ms'?'':'direct'}" href="${TML_BASE}${x.c}/${x.id}" target="_blank" rel="noopener" title="${x.s.replace(/"/g,'&quot;')}">${x.t===o.t&&v.length===1?x.id:x.t.replace(/^.*?[,;]?\s*(?=\b(liber|book)\b)/i,"")} ↗</a>`).join("");
+      return `<div style="margin-top:10px"><div class="loc">${o.c} c.${v.some(x=>x.k==="ms")?" · MS":""}</div>
+        <div><i>${workKey(o).split("|")[1]||o.t}</i>${cur?` · <a href="#" data-open="${cur}">in Concordantia →</a>`:""}</div>
+        <div class="meta" style="margin:2px 0 0">${o.s}</div><div class="links" style="margin-top:6px">${files}</div></div>`}).join("")+`</div>`});
+  return `<p class="lede">The whole Thesaurus Musicarum Latinarum: ${TML.length} texts, from Augustine to the 17th century, each linked to its TML page.</p>
+  <input type="search" id="sq" placeholder="Search author, title, library, shelfmark…" value="${state.sq}">
+  <div class="chips">${cc}</div><div class="chips" style="margin-top:-8px">${kc}</div>
+  <p class="meta">${rows.length} texts · ${works.size} works · ${byAuthor.size} authors${byAuthor.size>400?" (first 400 authors shown; narrow the search)":""}</p>${body}
+  <p class="meta">TML is being restored at Indiana University; links go to its provisional site for now.</p>`;
+}
 function timelineView(){
   const lanes=Object.entries(LANES).map(([k,[l,c]])=>`<button class="chip ${state.lanes.has(k)?'on':''}" data-lane="${k}"><span class="lane" style="--c:var(${c})"></span>${l}</button>`).join("");
   const items=[...T.map(t=>({lane:"treatise",y:t.y,date:t.date,title:`${t.author}, <i>${t.title}</i>`,n:t.place,id:t.id})),...CONTEXT]
@@ -284,19 +312,22 @@ function aboutView(){
    <li><b>Connections</b> between treatises and people: dedications, translations, editions, polemics.</li>
    <li><b>Next:</b> real excerpts in Latin with translation beside each summary; direct links to each copy rather than searches; more topics and treatises.</li>
   </ul>
-  <p style="color:var(--muted);font-size:16px">In this first version, solid-bordered links are direct; the others open a search in the repository. Summaries are editorial and still to be checked against the sources.</p></div>`;
+  <p style="color:var(--muted);font-size:16px">Solid-bordered links go straight to the text; the others open a search in the repository. The full TML catalogue is under All sources. Summaries are editorial and still to be checked against the sources.</p></div>`;
 }
 function render(){
   renderNav();
   const app=document.getElementById("app");
   if(state.treatise) app.innerHTML=treatiseView(byId(state.treatise));
-  else app.innerHTML={topics:topicView,treatises:treatiseList,timeline:timelineView,about:aboutView}[state.view]();
+  else app.innerHTML={topics:topicView,treatises:treatiseList,sources:sourcesView,timeline:timelineView,about:aboutView}[state.view]();
   app.innerHTML+=`<div class="foot">© 2026 Václav Hřebec · <a href="../" style="color:inherit">vaclavhrebec.github.io</a> · <a href="../atlas/" style="color:inherit">Atlas of Musical Style</a> · <a href="../fiorire/" style="color:inherit">Fiorire</a> · Texts and images remain with their repositories.</div>`;
   app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{state.topic=b.dataset.t;render()});
   app.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=b.dataset.open;render();scrollTo(0,0)});
   app.querySelectorAll("[data-topic]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=null;state.view="topics";state.topic=b.dataset.topic;render();scrollTo(0,0)});
   app.querySelectorAll("[data-lane]").forEach(b=>b.onclick=()=>{const k=b.dataset.lane;state.lanes.has(k)?state.lanes.delete(k):state.lanes.add(k);render()});
   const back=document.getElementById("back"); if(back) back.onclick=()=>{state.treatise=null;render()};
+  app.querySelectorAll("[data-cent]").forEach(b=>b.onclick=()=>{state.cent=b.dataset.cent;render()});
+  app.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{state.kind=b.dataset.kind;render()});
+  const sq=document.getElementById("sq"); if(sq){let tm;sq.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{state.sq=sq.value;render();const n=document.getElementById("sq");n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)}}
   const q=document.getElementById("q"); if(q){q.oninput=()=>{state.q=q.value;const p=q.selectionStart;render();const n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)}}
 }
 render();
