@@ -296,7 +296,7 @@
     <div class="nstaves" id="nStaves"></div>
   </section>
 
-  <section class="panel texts" id="texts" aria-label="The text to sing">
+  <section class="panel texts" id="texts" aria-label="The text to sing" hidden style="display:none">
     <h2>Sing a text</h2>
     <p class="lead">Choose a sentence and sing it while your hands show two more voices: the voice sings each new note on the next syllable. Without a sentence it sings the solmisation syllable of each place.</p>
     <div class="parts" id="parts" role="group" aria-label="Part of the Mass"></div>
@@ -339,7 +339,7 @@
         <option value="12">an octave</option>
       </select>
     </div>
-    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false" title="Sung by Chimera, a physical model of the human voice">Voice (Chimera)</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
+    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
     <div class="group" title="Raise the palm into the top third of the picture for C♯, F♯, G♯; lower it into the bottom third for E♭, B♭, A♭. D never changes."><span class="lbl">Musica ficta</span><div class="seg" role="group" aria-label="Musica ficta by height"><button data-ficta="1" aria-pressed="true">By height</button><button data-ficta="0" aria-pressed="false">Off</button></div></div>
     <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
     <div class="group handtools">
@@ -369,7 +369,6 @@
       <p>If the app mixes up two places, press <i>Teach my hand</i> and show each position once, or <i>Tricky places</i> to practise the look-alikes. When a single note is read wrongly while you play, turn on <i>Correct a note</i>, keep your hand where it is and tap the right place on the painted hand. The app then knows your hand instead of an average one and remembers it on this device.</p>
       <h2>Musica ficta and the text</h2>
       <p>With <i>Musica ficta: By height</i>, the camera picture is cut into three bands. Raise your palm into the top band and C, F and G sound as C♯, F♯ and G♯; lower it into the bottom band and E, B and A sound as E♭, B♭ and A♭. D never changes: the twelve keys of a meantone keyboard allow one alteration per note.</p>
-      <p>Under <i>Sing a text</i>, choose a sentence of the Mass: the voice, sung by Chimera, takes the next syllable with each new note of each hand. Press <i>Follow my singing</i> and sing the sentence yourself: the app listens and keeps both voices on the word you have reached, finishing a word and moving on to yours as soon as it can – three voices on one text.</p>
     </div>
     <div>
       <h2>The gamut</h2>
@@ -576,6 +575,7 @@ let ctx = null, master = null;
 const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L', ficta: 1};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
+if (prefs.snd === 'voice') prefs.snd = 'organ';   // the singing of syllables has been taken out
 const EMBED = document.documentElement.dataset.embed === '1';
 if (!prefs.camPicked) prefs.cam = EMBED ? 'user' : 'environment';  // the back camera (in Cantare the front one, facing the singer), unless the person chose themselves
 if (EMBED) { try { const r = Number(new URLSearchParams(location.search).get('ref')); if (r >= 100 && r <= 1000) prefs.ref = r; } catch (e) {} }
