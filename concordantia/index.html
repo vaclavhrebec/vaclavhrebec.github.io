@@ -64,6 +64,13 @@ input[type=search]{width:100%;font:16px var(--sans);padding:10px 12px;border:1px
 h2{font-weight:400;font-size:28px;margin:6px 0 4px}
 .about p{max-width:680px}
 .about li{margin-bottom:6px}
+.q{margin:10px 0 0;padding:8px 0 8px 14px;border-left:2px solid var(--line)}
+.q blockquote{margin:0;font-style:italic;font-size:17px}
+.q .w{font-family:var(--sans);font-size:11.5px;color:var(--muted);margin-bottom:3px}
+.q .w b{color:var(--accent);font-weight:600}
+.more{font-family:var(--sans);font-size:13px;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:8px}
+.trow{padding:12px 0;border-top:1px solid var(--line)}
+.trow:first-child{border-top:0}
 </style>
 </head>
 <body>
@@ -80,7 +87,9 @@ const TOPICS={
   solm:"Solmisation & the hand", modes:"Modes", mens:"Mensural notation", cpt:"Counterpoint",
   improv:"Improvised counterpoint", ficta:"Musica ficta", tuning:"Tuning & temperament",
   organ:"Organ & instruments", dimin:"Diminution", accent:"Accent & liturgical reading",
-  perf:"Singing & performance", texts:"Text and music", spec:"Musica speculativa"
+  perf:"Singing & performance", texts:"Text and music", spec:"Musica speculativa",
+  cons:"Consonance & dissonance", polyph:"Organum & early polyphony", chant:"Plainchant & psalmody",
+  metre:"Rhythm & metre", effects:"Effects of music & medicine"
 };
 const LANES={treatise:["Music treatise","--l-treatise"],ms:["Manuscript / print","--l-ms"],sci:["Science, medicine, letters","--l-sci"],event:["Event","--l-event"]};
 
@@ -233,15 +242,23 @@ function renderNav(){
     `<button class="${state.view===k&&!state.treatise?'on':''}" data-v="${k}">${v}</button>`).join("");
   document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;state.treatise=null;render();scrollTo(0,0)});
 }
+
+function curatedQuotes(t,topic){
+  if(!t.tml) return "";
+  const k=t.id+"|"+topic, open=state.openq.has(k);
+  const body=open?t.tml.map(p=>{const o=META[p];const qq=quotes(p,topic);return qq?`<div class="loc" style="margin-top:10px">${o?bookLabel(o)||o.t:p}</div>`+qq:""}).join(""):"";
+  return body+`<button class="more" data-q="${k}">${open?"Hide passages":"Latin passages from the text"}</button>`;
+}
 function topicView(){
   const chips=Object.entries(TOPICS).map(([k,v])=>`<button class="chip ${state.topic===k?'on':''}" data-t="${k}">${v}</button>`).join("");
   const hits=T.filter(t=>t.says[state.topic]).sort((a,b)=>a.y-b.y);
-  return `<p class="lede">Choose a topic: every treatise that speaks to it appears in chronological order, with where in the work it says so.</p>
+  return `<p class="lede">Choose a topic, then a treatise: you see what it says about the topic, in its own words, with the folio or page and the chapter.</p>
   <div class="chips">${chips}</div>
-  <h2>${TOPICS[state.topic]}</h2><p class="meta">${hits.length} treatises</p>
+  <h2>${TOPICS[state.topic]}</h2><p class="meta">${hits.length?hits.length+" treatises described in detail":"No detailed description yet"}</p>
   ${hits.map(t=>`<div class="card"><div class="loc">${t.date} · ${t.place}</div>
     <h3><a href="#" data-open="${t.id}">${t.author}, <i>${t.title}</i></a></h3>
-    <p style="margin:8px 0 0">${t.says[state.topic]}</p>${repoLinks(t)}</div>`).join("")}`;
+    <p style="margin:8px 0 0">${t.says[state.topic]}</p>${curatedQuotes(t,state.topic)}${repoLinks(t)}</div>`).join("")}
+  ${tmlTopicList(state.topic)}`;
 }
 function treatiseList(){
   const q=state.q.toLowerCase();
@@ -261,7 +278,7 @@ function treatiseView(t){
   <h2><i>${t.title}</i></h2><div class="meta" style="font-size:15px">${t.author}</div>
   <div class="ctx">${t.ctx}</div>${repoLinks(t)}
   <h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">What it says, by topic</h3>
-  ${Object.entries(t.says).map(([k,v])=>`<div class="card"><a href="#" class="loc" data-topic="${k}" style="text-decoration:none">${TOPICS[k]} →</a><p style="margin:6px 0 0">${v}</p></div>`).join("")}
+  ${Object.entries(t.says).map(([k,v])=>`<div class="card"><a href="#" class="loc" data-topic="${k}" style="text-decoration:none">${TOPICS[k]} →</a><p style="margin:6px 0 0">${v}</p>${curatedQuotes(t,k)}</div>`).join("")}
   ${conns?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Connections</h3>${conns}`:""}
   ${near?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Around the same time</h3>${near}`:""}`;
 }
@@ -284,12 +301,45 @@ function sourcesView(){
       const files=v.map(x=>`<a class="${x.k==='ms'?'':'direct'}" href="${TML_BASE}${x.c}/${x.id}" target="_blank" rel="noopener" title="${x.s.replace(/"/g,'&quot;')}">${x.t===o.t&&v.length===1?x.id:x.t.replace(/^.*?[,;]?\s*(?=\b(liber|book)\b)/i,"")} ↗</a>`).join("");
       return `<div style="margin-top:10px"><div class="loc">${o.c} c.${v.some(x=>x.k==="ms")?" · MS":""}</div>
         <div><i>${workKey(o).split("|")[1]||o.t}</i>${cur?` · <a href="#" data-open="${cur}">in Concordantia →</a>`:""}</div>
-        <div class="meta" style="margin:2px 0 0">${o.s}</div><div class="links" style="margin-top:6px">${files}</div></div>`}).join("")+`</div>`});
+        <div class="meta" style="margin:2px 0 0">${o.s.replace(/, null\.$/,".")}</div><div class="links" style="margin-top:6px">${files}</div>
+        <div style="margin-top:6px">${[...new Set(v.flatMap(x=>Object.keys((IDX||{})[x.c+"/"+x.id]||{})))].map(k=>`<a href="#" class="pill" data-topic="${k}" style="text-decoration:none">${TOPICS[k]}</a>`).join(" ")}</div></div>`}).join("")+`</div>`});
   return `<p class="lede">The whole Thesaurus Musicarum Latinarum: ${TML.length} texts, from Augustine to the 17th century, each linked to its TML page.</p>
   <input type="search" id="sq" placeholder="Search author, title, library, shelfmark…" value="${state.sq}">
   <div class="chips">${cc}</div><div class="chips" style="margin-top:-8px">${kc}</div>
   <p class="meta">${rows.length} texts · ${works.size} works · ${byAuthor.size} authors${byAuthor.size>400?" (first 400 authors shown; narrow the search)":""}</p>${body}
   <p class="meta">TML is being restored at Indiana University; links go to its provisional site for now.</p>`;
+}
+
+/* passages found in the TML texts (data/<century>.json), and which texts treat which topic (data/index.json) */
+let IDX=null; const DATA={}; const LOADING={};
+fetch("data/index.json").then(r=>r.json()).then(j=>{IDX=j;render()}).catch(()=>{});
+function loadCent(c){ if(DATA[c]||LOADING[c]) return; LOADING[c]=1;
+  fetch("data/"+c+".json").then(r=>r.json()).then(j=>{DATA[c]=j;render()}).catch(()=>{LOADING[c]=0}); }
+const META={}; TML.forEach(o=>META[o.c+"/"+o.id]=o);
+function quotes(key,topic){
+  const [c,id]=key.split("/"); if(!DATA[c]){loadCent(c);return `<div class="meta">Loading passages…</div>`}
+  const q=(DATA[c][id]||{})[topic]; if(!q||!q.length) return "";
+  const o=META[key];
+  return q.map(([pg,hd,tx])=>`<div class="q"><div class="w"><b>${pg||"—"}</b>${hd?" · "+hd:""}</div><blockquote>${tx}</blockquote></div>`).join("")+
+   `<div class="links"><a class="direct" href="${TML_BASE+key}" target="_blank" rel="noopener">Read in context: TML ${o?o.id:id} ↗</a></div>`;
+}
+state.openq=new Set();
+function bookLabel(o){const m=o.t.match(/\b(liber|book|pars|tractatus)\s+(primus|secundus|tertius|quartus|quintus|sextus|septimus|octavus|nonus|decimus|[IVX]+|\d+)\b/i);return m?m[0]:o.t}
+function tmlTopicList(topic){
+  if(!IDX) return `<p class="meta">Loading the Thesaurus…</p>`;
+  const curated=new Set(T.flatMap(t=>t.tml||[]));
+  const keys=Object.keys(IDX).filter(k=>IDX[k][topic]&&!curated.has(k));
+  const order=k=>CENTS.indexOf(k.split("/")[0]);
+  keys.sort((a,b)=>order(a)-order(b)||IDX[b][topic]-IDX[a][topic]);
+  let html="",cur=null;
+  keys.forEach(k=>{const o=META[k]; if(!o) return; const c=k.split("/")[0];
+    if(c!==cur){cur=c;html+=`<div class="cent" style="margin-left:0">${c} century</div>`}
+    const open=state.openq.has(k+"|"+topic);
+    html+=`<div class="trow"><div><b>${o.a}</b> — <i>${o.t}</i></div><div class="meta" style="margin:2px 0 0">${o.s.replace(/, null\.$/,".")}</div>
+      ${open?quotes(k,topic):""}<button class="more" data-q="${k}|${topic}">${open?"Hide passages":"Show passages"}</button></div>`});
+  return `<h3 style="font-weight:400;font-size:22px;margin:30px 0 4px">In the Thesaurus Musicarum Latinarum</h3>
+   <p class="meta">${keys.length} further texts treat this topic. Passages are found by the Latin vocabulary of the topic, with folio or page and the chapter they stand in; always read them in context.</p>
+   <div class="card">${html||"<p>None found.</p>"}</div>`;
 }
 function timelineView(){
   const lanes=Object.entries(LANES).map(([k,[l,c]])=>`<button class="chip ${state.lanes.has(k)?'on':''}" data-lane="${k}"><span class="lane" style="--c:var(${c})"></span>${l}</button>`).join("");
@@ -310,7 +360,8 @@ function aboutView(){
    <li><b>Every treatise</b> links to its digitised sources (TML, Gallica, IMSLP, DIAMM) and carries a short historical context.</li>
    <li><b>Timeline</b> of treatises next to manuscripts, prints, science, medicine and events.</li>
    <li><b>Connections</b> between treatises and people: dedications, translations, editions, polemics.</li>
-   <li><b>Next:</b> real excerpts in Latin with translation beside each summary; direct links to each copy rather than searches; more topics and treatises.</li>
+   <li><b>Passages:</b> under each topic, every TML text that treats it, with up to three Latin passages found by the topic's vocabulary, each with its folio or page and the chapter it stands in, and a link to read it in context. The search is automatic, so a passage can be off the mark; the context link is the check.</li>
+   <li><b>Next:</b> translations beside the Latin; direct links to each digitised copy rather than searches; the primary sources of the <i>Liber de arte contrapuncti</i>.</li>
   </ul>
   <p style="color:var(--muted);font-size:16px">Solid-bordered links go straight to the text; the others open a search in the repository. The full TML catalogue is under All sources. Summaries are editorial and still to be checked against the sources.</p></div>`;
 }
@@ -325,6 +376,7 @@ function render(){
   app.querySelectorAll("[data-topic]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=null;state.view="topics";state.topic=b.dataset.topic;render();scrollTo(0,0)});
   app.querySelectorAll("[data-lane]").forEach(b=>b.onclick=()=>{const k=b.dataset.lane;state.lanes.has(k)?state.lanes.delete(k):state.lanes.add(k);render()});
   const back=document.getElementById("back"); if(back) back.onclick=()=>{state.treatise=null;render()};
+  app.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const k=b.dataset.q;state.openq.has(k)?state.openq.delete(k):state.openq.add(k);render()});
   app.querySelectorAll("[data-cent]").forEach(b=>b.onclick=()=>{state.cent=b.dataset.cent;render()});
   app.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{state.kind=b.dataset.kind;render()});
   const sq=document.getElementById("sq"); if(sq){let tm;sq.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{state.sq=sq.value;render();const n=document.getElementById("sq");n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)}}
