@@ -5,7 +5,7 @@
 :root {
   --fg: var(--ink); --muted: var(--soft); --card: var(--surface); --accent-ink: #fff;
   --bg: #e9dcc4; --surface: #f1e6d1; --raised: #e2d3b7; --line: #cdbb9a; --ink: #2a2017; --soft: #6c5c48;
-  --accent: #9e1b17; --accent-ink: #ffffff; --note: #21180f; --staff: #a8231d; --hl: #e08a00; --sel: #1a6be0; --shadow: 0 6px 24px rgba(20, 10, 10, .10);
+  --accent: #ff5160; --accent-ink: #ffffff; --note: #21180f; --staff: #ef4b59; --hl: #e08a00; --sel: #1a6be0; --shadow: 0 6px 24px rgba(20, 10, 10, .10);
   --serif: "Fondamento", "Palatino Linotype", Palatino, Georgia, serif;
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
   color-scheme: light;
