@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="copyright" content="© 2026 Václav Hřebec. All rights reserved. Online since 2026-11-09.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Václav Hřebec</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 3 27 16 16 29 5 16Z' fill='%23c8102e'/%3E%3C/svg%3E">
@@ -539,7 +540,7 @@
   </section>
 
   <footer>
-    <span>© <span id="yr"></span> Václav Hřebec · <span data-i18n>Photos</span> © Edoardo Gatta, Marie Štefanová, Valentin Richter</span>
+    <span>© 2026 Václav Hřebec · <span data-i18n>All rights reserved</span> · <span data-i18n>Online since 9 November 2026</span> · <span data-i18n>Photos</span> © Edoardo Gatta, Marie Štefanová, Valentin Richter</span>
     <button id="theme" type="button" data-i18n>Light / dark</button>
     <p class="quip" id="quip" data-i18n>Built on a cantus firmus.</p>
     <script>(function(){ const q = ["This page is tuned in quarter-comma meantone. Please avoid G♯ major.", "Best viewed with a pure major third.", "Built on a cantus firmus.", "Tactus: one semibreve per click.", "The wolf fifth lives elsewhere."]; document.getElementById('quip').textContent = q[Math.floor(Math.random() * q.length)]; })();</script>
@@ -550,7 +551,6 @@
 <dialog id="vd" aria-label="Video"><div class="vd-frame"></div><button type="button" class="vd-close" aria-label="Close video">&#215;</button></dialog>
 
 <script>
-  document.getElementById('yr').textContent = new Date().getFullYear();
   const root = document.documentElement;
   try { const t = localStorage.getItem('theme'); if (t) root.dataset.theme = t; } catch (e) {}
   document.getElementById('theme').addEventListener('click', () => {
@@ -647,6 +647,8 @@
    anything without a translation simply stays in English. */
 const T = {
 de: {
+  "All rights reserved": "Alle Rechte vorbehalten",
+  "Online since 9 November 2026": "Online seit dem 9. November 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Diese Seite ist mitteltönig gestimmt. Bitte meiden Sie Gis-Dur.",
   "Best viewed with a pure major third.": "Am besten mit einer reinen großen Terz zu betrachten.",
   "Built on a cantus firmus.": "Über einem Cantus firmus gebaut.",
@@ -737,6 +739,8 @@ de: {
   "22–28 February 2027 · Reformed Church, Rheinfelden. A full week dedicated to the music of the 15th and 16th centuries: vocal and instrumental polyphony, cantare super librum, organ and lute improvisation. Course fee CHF 270 (reduced CHF 180).": "22.–28. Februar 2027 · Reformierte Kirche, Rheinfelden. Eine ganze Woche, der Musik des 15. und 16. Jahrhunderts gewidmet: vokale und instrumentale Polyphonie, cantare super librum, Improvisation an Orgel und Laute. Kursgebühr CHF 270 (reduziert CHF 180)."
 },
 fr: {
+  "All rights reserved": "Tous droits réservés",
+  "Online since 9 November 2026": "En ligne depuis le 9 novembre 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Cette page est accordée au tempérament mésotonique. Évitez sol dièse majeur, s’il vous plaît.",
   "Best viewed with a pure major third.": "À consulter de préférence avec une tierce majeure pure.",
   "Built on a cantus firmus.": "Construit sur un cantus firmus.",
@@ -838,6 +842,8 @@ fr: {
   "Open the atlas": "Ouvrir l’atlas"
 },
 cs: {
+  "All rights reserved": "Všechna práva vyhrazena",
+  "Online since 9 November 2026": "Online od 9. listopadu 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Tato stránka je laděna středotónově. Vyhněte se prosím Gis dur.",
   "Best viewed with a pure major third.": "Nejlépe se prohlíží s čistou velkou tercií.",
   "Built on a cantus firmus.": "Postaveno na cantu firmu.",
