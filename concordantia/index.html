@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Concordantia — a topical concordance of music treatises</title>
-<meta name="description" content="Music treatises organised by topic: what Boethius, Guido, Tinctoris, Ornithoparchus, Zarlino and others say on the same question, with sources and historical context.">
+<meta name="description" content="Music treatises organised in a tree of topics, from Augustine to Riemann: what each treatise says on improvisation, diminution, ornaments, basso continuo, modes, counterpoint and more, with Latin passages, folio and chapter, and links to the sources.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -21,188 +21,93 @@
 }}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.5}
+a{color:var(--accent)}
 header{padding:28px 20px 8px;max-width:1000px;margin:0 auto}
 h1{font-weight:400;font-size:clamp(34px,7vw,54px);margin:0;letter-spacing:.02em}
 h1 small{display:block;font-size:17px;font-style:italic;color:var(--muted);letter-spacing:0;margin-top:2px}
 .sketch{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px}
+.sketch a{color:inherit}
 nav{position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
 nav .in{max-width:1000px;margin:0 auto;display:flex;gap:4px;padding:8px 14px;overflow-x:auto}
-nav button{font-family:var(--sans);font-size:14px;border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
-nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav a{font-family:var(--sans);font-size:14px;color:var(--muted);padding:8px 12px;border-radius:6px;white-space:nowrap;text-decoration:none}
+nav a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
 main{max-width:1000px;margin:0 auto;padding:18px 20px 60px}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 18px}
-.chip{font-family:var(--sans);font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 11px;border-radius:999px;cursor:pointer}
-.chip.on{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+h2{font-weight:400;font-size:30px;margin:4px 0 2px;line-height:1.2}
+h3.sec{font-weight:400;font-size:22px;margin:28px 0 8px}
 .lede{color:var(--muted);font-style:italic;margin:0 0 14px}
-.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px}
-.card h3{margin:0;font-weight:600;font-size:21px;line-height:1.25}
-.card h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
 .meta{font-family:var(--sans);font-size:12.5px;color:var(--muted);margin:3px 0 8px}
 .loc{font-family:var(--sans);font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:10px}
+.card h3{margin:0;font-weight:600;font-size:20px;line-height:1.25}
+.card h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+.note{margin:6px 0 0}
+input[type=search]{width:100%;font:16px var(--sans);padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--paper);color:var(--ink);margin-bottom:14px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin:8px 0 6px}
+.tile{display:block;text-decoration:none;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.tile:hover{border-color:var(--accent)}
+.tile b{display:block;font-weight:600;font-size:18px;line-height:1.25}
+.tile span{font-family:var(--sans);font-size:11.5px;color:var(--muted)}
+.crumbs{font-family:var(--sans);font-size:13px;color:var(--muted);margin:0 0 10px;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.crumbs a{color:var(--accent);text-decoration:none;background:var(--accent-soft);padding:3px 9px;border-radius:999px}
+.crumbs i{font-style:normal;opacity:.6}
+.aka{font-family:var(--sans);font-size:12px;color:var(--muted);margin:2px 0 6px}
 .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .links a{font-family:var(--sans);font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--line);padding:3px 8px;border-radius:5px}
 .links a.direct{border-color:var(--accent)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
-.grid .card{margin:0;cursor:pointer}
-.grid .card:hover{border-color:var(--accent)}
-input[type=search]{width:100%;font:16px var(--sans);padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin-bottom:12px}
-.tl{position:relative;margin-left:8px;border-left:2px solid var(--line);padding-left:18px}
-.tl .row{position:relative;margin:0 0 14px}
-.tl .row::before{content:"";position:absolute;left:-25px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--c)}
-.tl .yr{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--c)}
-.tl .t{font-size:18px}
-.tl .t a{color:inherit}
-.tl .n{font-size:15.5px;color:var(--muted)}
-.cent{font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px -18px;padding-left:0}
-.lane{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--c)}
-.back{font-family:var(--sans);font-size:13px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;margin-bottom:12px}
-.ctx{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:10px 0}
-.conn{font-size:16px;margin:6px 0}
-.conn b{font-weight:600}
-.pill{font-family:var(--sans);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-right:4px}
-.foot{font-family:var(--sans);font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:30px;padding-top:12px}
-h2{font-weight:400;font-size:28px;margin:6px 0 4px}
-.about p{max-width:680px}
-.about li{margin-bottom:6px}
-.q{margin:10px 0 0;padding:8px 0 8px 14px;border-left:2px solid var(--line)}
+.pill{font-family:var(--sans);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:2px 7px;border-radius:4px;text-decoration:none;display:inline-block;margin:2px 3px 2px 0}
+.q{margin:10px 0 0;padding:6px 0 6px 14px;border-left:2px solid var(--line)}
 .q blockquote{margin:0;font-style:italic;font-size:17px}
 .q .w{font-family:var(--sans);font-size:11.5px;color:var(--muted);margin-bottom:3px}
 .q .w b{color:var(--accent);font-weight:600}
 .more{font-family:var(--sans);font-size:13px;color:var(--accent);background:none;border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer;margin-top:8px}
 .trow{padding:12px 0;border-top:1px solid var(--line)}
 .trow:first-child{border-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+.chip{font-family:var(--sans);font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 11px;border-radius:999px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.tl{position:relative;margin-left:8px;border-left:2px solid var(--line);padding-left:18px}
+.tl .row{position:relative;margin:0 0 12px}
+.tl .row::before{content:"";position:absolute;left:-25px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tl .yr{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--c)}
+.tl .t a{color:inherit}
+.tl .n{font-size:15.5px;color:var(--muted)}
+.cent{font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px}
+.lane{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--c)}
+.ctx{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:10px 0}
+.res{display:block;text-decoration:none;color:var(--ink);padding:10px 0;border-top:1px solid var(--line)}
+.res:first-child{border-top:0}
+.res .p{font-family:var(--sans);font-size:11.5px;color:var(--muted)}
+.res b{font-weight:600}
+.foot{font-family:var(--sans);font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:30px;padding-top:12px}
+.foot a{color:inherit}
+.about p,.about li{max-width:700px}
+.about li{margin-bottom:6px}
 </style>
 </head>
 <body>
 <header>
   <h1>Concordantia<small>A topical concordance of music treatises, with their sources and their world</small></h1>
-  <div class="sketch"><a href="../" style="color:inherit">← vaclavhrebec.github.io</a> · first version · summaries are editorial paraphrase, not quotations</div>
+  <div class="sketch"><a href="../">← vaclavhrebec.github.io</a> · summaries are editorial paraphrase; Latin passages are quoted from the Thesaurus Musicarum Latinarum</div>
 </header>
 <nav><div class="in" id="nav"></div></nav>
 <main id="app"></main>
 
 <script src="tml.js"></script>
+<script src="tree.js"></script>
 <script>
-const TOPICS={
-  solm:"Solmisation & the hand", modes:"Modes", mens:"Mensural notation", cpt:"Counterpoint",
-  improv:"Improvised counterpoint", ficta:"Musica ficta", tuning:"Tuning & temperament",
-  organ:"Organ & instruments", dimin:"Diminution", accent:"Accent & liturgical reading",
-  perf:"Singing & performance", texts:"Text and music", spec:"Musica speculativa",
-  cons:"Consonance & dissonance", polyph:"Organum & early polyphony", chant:"Plainchant & psalmody",
-  metre:"Rhythm & metre", effects:"Effects of music & medicine"
-};
-const LANES={treatise:["Music treatise","--l-treatise"],ms:["Manuscript / print","--l-ms"],sci:["Science, medicine, letters","--l-sci"],event:["Event","--l-event"]};
-
-/* q = search string for the repositories; direct = verified deep links */
-const T=[
- {id:"boethius",tml:["6th-8th/BOEDIM1", "6th-8th/BOEDIM2", "6th-8th/BOEDIM3", "6th-8th/BOEDIM4", "6th-8th/BOEDIM5"],author:"Boethius",title:"De institutione musica",date:"c. 500",y:500,place:"Ravenna / Rome",q:"Boethius De institutione musica",
-  ctx:"Written for the Latin West at the end of antiquity; for a millennium the authority on music as a mathematical art of the quadrivium.",
-  says:{spec:"Divides music into mundana (the cosmos), humana (body and soul) and instrumentalis (sounding music); the true musicus judges by reason, ranking above the mere performer.",
-        tuning:"Derives the consonances from the ratios 2:1, 3:2 and 4:3 and teaches the division of the monochord in the Pythagorean tradition."}},
- {id:"guido-micr",tml:["9th-11th/GUIMIC"],author:"Guido of Arezzo",title:"Micrologus",date:"c. 1026",y:1026,place:"Arezzo",q:"Guido Micrologus",
-  ctx:"A short practical manual by the monk who also devised staff lines in his antiphoner; among the most copied medieval music books.",
-  says:{modes:"Explains the modes through their finals and their authentic and plagal forms, and how a melody's ending defines it.",
-        cpt:"Gives rules for organum (diaphonia), including how the voices should come together at the cadence (occursus)."}},
- {id:"guido-ep",tml:["9th-11th/GUIEP"],author:"Guido of Arezzo",title:"Epistola de ignoto cantu",date:"c. 1030",y:1030,place:"Pomposa / Arezzo",q:"Guido Epistola de ignoto cantu",
-  ctx:"A letter to the monk Michael describing Guido's method of teaching boys to sing unknown chants quickly.",
-  says:{solm:"Uses the hymn Ut queant laxis, whose phrases begin on successive steps, so that singers can fix the sound of each step by its syllable."}},
- {id:"franco",tml:["13th/FRAACM"],author:"Franco of Cologne",title:"Ars cantus mensurabilis",date:"c. 1280",y:1280,place:"Paris / Cologne",q:"Franco Ars cantus mensurabilis",
-  ctx:"Codifies the notation of the Notre-Dame and motet repertory.",
-  says:{mens:"Lets the shape of a note, not only its context, define its duration; builds the system on ternary perfection and gives rules for ligatures.",
-        cpt:"Classifies concords as perfect, imperfect and intermediate, and treats discant voice by voice."}},
- {id:"vitry",tml:["14th/VITARN"],author:"attr. Philippe de Vitry",title:"Ars nova",date:"c. 1320",y:1320,place:"Paris",q:"Vitry Ars nova",
-  ctx:"Gave its name to a whole period; survives in several differing redactions.",
-  says:{mens:"Recognises imperfect (duple) time and prolation alongside perfect, the minim as a value, and red notes for changes of mensuration."}},
- {id:"jacobus",tml:["14th/JACSP1A", "14th/JACSM7"],author:"Jacobus of Liège",title:"Speculum musicae",date:"c. 1330",y:1330,place:"Liège / Paris",q:"Jacobus Speculum musicae",
-  ctx:"The largest medieval treatise on music, in seven books.",
-  says:{spec:"An encyclopedic survey of speculative music in the Boethian tradition.",
-        mens:"Its last book defends the older ars antiqua against the innovations of the moderns."}},
- {id:"prosdocimo",tml:["15th/PROCON"],author:"Prosdocimo de' Beldomandi",title:"Contrapunctus",date:"1412",y:1412,place:"Padua",q:"Prosdocimo Contrapunctus",
-  ctx:"By a Paduan professor of astronomy and mathematics.",
-  says:{cpt:"Teaches note-against-note counterpoint and forbids successive perfect consonances of the same kind.",
-        ficta:"Allows ficta to make perfect intervals perfect and to approach them from the nearest imperfect interval."}},
- {id:"tinctoris",tml:["15th/TINCON1", "15th/TINCON2", "15th/TINCON3"],author:"Johannes Tinctoris",title:"Liber de arte contrapuncti",date:"1477",y:1477,place:"Naples",q:"Tinctoris Liber de arte contrapuncti",
-  ctx:"Written at the Aragonese court in Naples and dedicated to King Ferrante; the young Gaffurius met Tinctoris there shortly after.",
-  says:{cpt:"Book III closes with eight general rules of counterpoint, including the demand for variety.",
-        improv:"Book II distinguishes counterpoint sung over the book (super librum, mentally) from written counterpoint (res facta), and discusses what each permits."}},
- {id:"gaffurius",tml:["15th/GAFPM1", "15th/GAFPM2", "15th/GAFPM3", "15th/GAFPM4"],author:"Franchinus Gaffurius",title:"Practica musicae",date:"1496",y:1496,place:"Milan",q:"Gaffurius Practica musicae",
-  ctx:"Printed in Milan, where Gaffurius was maestro di cappella at the cathedral.",
-  says:{cpt:"Book III gives eight rules of counterpoint, a widely copied formulation.",
-        mens:"Book II is a full treatment of mensural notation and proportions.",
-        modes:"Book I treats plainchant and the modes."}},
- {id:"schlick",author:"Arnolt Schlick",title:"Spiegel der Orgelmacher und Organisten",date:"1511",y:1511,place:"Speyer / Mainz",q:"Schlick Spiegel der Orgelmacher",
-  ctx:"By the blind organist of the Elector Palatine at Heidelberg; the first German book on the organ.",
-  says:{organ:"Advises how an organ should be planned, built and judged: compass, registers, keyboards and placement in the church.",
-        tuning:"Describes a tuning with tempered fifths so that thirds sound well, and discusses organ pitch."}},
- {id:"virdung",author:"Sebastian Virdung",title:"Musica getutscht",date:"1511",y:1511,place:"Basel",q:"Virdung Musica getutscht",
-  ctx:"Printed in Basel; the first printed treatise devoted to instruments.",
-  says:{organ:"Illustrates and classifies the instruments of its time and introduces tablatures for keyboard, lute and recorder."}},
- {id:"ornithoparchus",tml:["16th/ORNMUS1", "16th/ORNMUS2", "16th/ORNMUS3", "16th/ORNMUS4"],author:"Andreas Ornithoparchus",title:"Musicae activae micrologus",date:"1517",y:1517,place:"Leipzig",q:"Ornithoparchus Musicae activae micrologus",
-  direct:[["IMSLP","https://imslp.org/wiki/Musicae_activae_micrologus_(Ornithoparchus,_Andreas)"]],
-  ctx:"Four books, each with its own dedication to a named person; the book on counterpoint is addressed to the organist Arnolt Schlick. Reprinted in 1519 and 1521, and translated into English by John Dowland (1609).",
-  says:{solm:"Book I: plainchant, the hand, solmisation and mutation.",
-        modes:"Book I also treats the tones (modes).",
-        mens:"Book II: mensural music, with a list of admired composers.",
-        accent:"Book III: the accentus ecclesiasticus, how lessons, epistles and gospels are read aloud in chant.",
-        cpt:"Book IV: the rules of counterpoint.",
-        perf:"Book IV also comments on the singing habits of different nations and on how a singer should behave.",
-        spec:"Upholds the Boethian harmony of the spheres."}},
- {id:"aron",author:"Pietro Aron",title:"Toscanello in musica",date:"1523",y:1523,place:"Venice",q:"Aron Toscanello",
-  ctx:"Written in Italian for practising musicians rather than scholars.",
-  says:{cpt:"Observes that modern composers conceive all the voices together rather than one after another.",
-        tuning:"Describes a keyboard temperament with pure major thirds, an early meantone."}},
- {id:"ganassi",author:"Silvestro Ganassi",title:"Opera intitulata Fontegara",date:"1535",y:1535,place:"Venice",q:"Ganassi Fontegara",
-  ctx:"By a Venetian instrumentalist of the Doge's service.",
-  says:{dimin:"Tables of diminutions on each interval and cadence, from simple to very elaborate.",
-        perf:"The recorder player should imitate the human voice; articulation syllables are given."}},
- {id:"glarean",tml:["16th/GLADOD1", "16th/GLADOD2", "16th/GLADOD3"],author:"Heinrich Glarean",title:"Dodecachordon",date:"1547",y:1547,place:"Basel",q:"Glarean Dodecachordon",
-  ctx:"Printed in Basel by Heinrich Petri; Glarean, a humanist in Basel and Freiburg, also published an edition of Boethius.",
-  says:{modes:"Argues for twelve modes, adding Aeolian and Ionian, and illustrates them with polyphony by Josquin and others."}},
- {id:"coclico",tml:["16th/COCCOM"],author:"Adrianus Petit Coclico",title:"Compendium musices",date:"1552",y:1552,place:"Nuremberg",q:"Coclico Compendium musices",
-  ctx:"By a singer who claimed to be a pupil of Josquin.",
-  says:{dimin:"Teaches the ornate manner of singing (ornate canere) with worked examples.",
-        perf:"Presents singing as an art of elegance learned from a master's practice."}},
- {id:"ortiz",author:"Diego Ortiz",title:"Trattado de glosas",date:"1553",y:1553,place:"Rome",q:"Ortiz Trattado de glosas",
-  ctx:"Printed in Rome in Spanish and Italian editions; Ortiz later served the Spanish viceroy in Naples.",
-  says:{dimin:"Glosas for the viol on cadences and intervals, then whole pieces ornamented.",
-        improv:"Recercadas for viol over a plainsong and over repeated bass patterns, models for improvising with a keyboard."}},
- {id:"lusitano",author:"Vicente Lusitano",title:"Introduttione facilissima",date:"1553",y:1553,place:"Rome",q:"Lusitano Introduttione facilissima",
-  ctx:"Two years after his public debate in Rome with Vicentino on the genera, which Lusitano won.",
-  says:{improv:"A practical method for counterpoint over plainchant, built on stock melodic patterns for each interval."}},
- {id:"vicentino",author:"Nicola Vicentino",title:"L'antica musica ridotta alla moderna prattica",date:"1555",y:1555,place:"Rome",q:"Vicentino antica musica",
-  ctx:"Written after losing the 1551 debate with Lusitano.",
-  says:{tuning:"Revives the chromatic and enharmonic genera and describes his archicembalo with 31 steps to the octave.",
-        texts:"The music should express the words and their passions."}},
- {id:"zarlino",author:"Gioseffo Zarlino",title:"Le istitutioni harmoniche",date:"1558",y:1558,place:"Venice",q:"Zarlino istitutioni harmoniche",
-  ctx:"By the maestro di cappella of St Mark's; the century's central synthesis.",
-  says:{cpt:"Part III: rules of counterpoint, invertible counterpoint and imitation.",
-        modes:"Part IV: twelve modes, renumbered to begin on C in the 1573 edition.",
-        tuning:"Defends the syntonic diatonic and the senario (numbers 1 to 6) as the source of consonance.",
-        texts:"Part IV gives rules for placing syllables under notes."}},
- {id:"santamaria",author:"Tomás de Santa María",title:"Arte de tañer fantasía",date:"1565",y:1565,place:"Valladolid",q:"Santa Maria Arte de taner fantasia",
-  ctx:"A Dominican's method for keyboard and vihuela players.",
-  says:{improv:"Teaches the improvised keyboard fantasia from simple progressions to imitation.",
-        perf:"Fingering, ornaments (redobles, quiebros) and unequal playing of passages.",organ:"Written with the clavichord and organ in mind."}},
- {id:"zacconi",author:"Lodovico Zacconi",title:"Prattica di musica",date:"1592",y:1592,place:"Venice",q:"Zacconi Prattica di musica",
-  ctx:"By a singer who had served at the courts of Graz and Munich.",
-  says:{dimin:"Passaggi for singers, with advice on their use.",mens:"Long discussion of mensural signs and proportions."}},
- {id:"morley",author:"Thomas Morley",title:"A Plaine and Easie Introduction to Practicall Musicke",date:"1597",y:1597,place:"London",q:"Morley Plaine and Easie Introduction",
-  ctx:"Written as a dialogue between a master and pupils.",
-  says:{improv:"Describes the English practice of extempore descant over a plainsong.",cpt:"Teaches composition from two to six voices."}},
- {id:"dowland",author:"John Dowland (transl.)",title:"Andreas Ornithoparcus his Micrologus",date:"1609",y:1609,place:"London",q:"Ornithoparcus his Micrologus Dowland",
-  ctx:"The lutenist's English translation of Ornithoparchus, almost a century after the original.",
-  says:{perf:"Brings Ornithoparchus' remarks on national singing styles into English."}},
- {id:"praetorius",author:"Michael Praetorius",title:"Syntagma musicum II: De Organographia",date:"1619",y:1619,place:"Wolfenbüttel",q:"Praetorius Syntagma musicum Organographia",
-  ctx:"Second volume of a three-volume encyclopedia; the woodcut Theatrum instrumentorum followed in 1620.",
-  says:{organ:"Surveys instruments of his day with their ranges, and describes many organs.",tuning:"Discusses tuning and temperament for keyboards."}}
-];
-
+/* ---------- data ---------- */
+const NODES={}, PARENT={};
+(function index(list,parent){list.forEach(n=>{NODES[n.id]=n;PARENT[n.id]=parent;index(n.c,n.id)})})(TREE,null);
+const META={}; TML.forEach(o=>META[o.c+"/"+o.id]=o);
+const FILE2WORK={}; Object.entries(WORKS).forEach(([id,w])=>w.tml.forEach(k=>FILE2WORK[k]=id));
+const CENTS=["3rd-5th","6th-8th","9th-11th","12th","13th","14th","15th","16th","17th"];
+const WORKREFS={}; Object.values(NODES).forEach(n=>n.s.forEach(([w,note])=>{(WORKREFS[w]=WORKREFS[w]||[]).push([n.id,note])}));
+const LANES={treatise:["Treatise","--l-treatise"],ms:["Manuscript / print","--l-ms"],sci:["Science, medicine, letters","--l-sci"],event:["Event","--l-event"]};
 const CONTEXT=[
- {lane:"ms",y:1400,date:"c. 1400",title:"Faenza Codex",n:"Keyboard intabulations of sacred and secular pieces.",q:"Faenza"},
- {lane:"ms",y:1410,date:"c. 1410–15",title:"Squarcialupi Codex",n:"Illuminated anthology of Trecento music, Florence.",q:"Squarcialupi"},
+ {lane:"ms",y:1400,date:"c. 1400",title:"Faenza Codex",n:"Keyboard intabulations of sacred and secular pieces."},
+ {lane:"ms",y:1410,date:"c. 1410–15",title:"Squarcialupi Codex",n:"Illuminated anthology of Trecento music, Florence."},
  {lane:"event",y:1453,date:"1453",title:"Fall of Constantinople",n:"Greek scholars and manuscripts move west."},
- {lane:"ms",y:1460,date:"c. 1460–70",title:"Buxheim Organ Book",n:"Largest keyboard source of the 15th century.",q:"Buxheim"},
- {lane:"sci",y:1489,date:"1489",title:"Marsilio Ficino, De vita libri tres",n:"Medicine and astrology; music to temper the spirits."},
+ {lane:"ms",y:1460,date:"c. 1460–70",title:"Buxheim Organ Book",n:"Largest keyboard source of the 15th century."},
  {lane:"ms",y:1501,date:"1501",title:"Petrucci, Harmonice musices Odhecaton",n:"First polyphony printed with movable type, Venice."},
  {lane:"sci",y:1516,date:"1516",title:"Erasmus, Novum Instrumentum",n:"Greek New Testament printed by Froben in Basel."},
  {lane:"event",y:1517,date:"1517",title:"Luther's 95 theses",n:"The same year Ornithoparchus prints his Micrologus in Leipzig."},
@@ -211,177 +116,248 @@ const CONTEXT=[
  {lane:"event",y:1545,date:"1545–63",title:"Council of Trent",n:"Reform of liturgy and chant."},
  {lane:"event",y:1551,date:"1551",title:"Vicentino–Lusitano debate",n:"Public dispute in Rome on the genera of contemporary music."},
  {lane:"event",y:1600,date:"1600–07",title:"Artusi–Monteverdi controversy",n:"Seconda pratica against the rules of counterpoint."},
- {lane:"sci",y:1619,date:"1619",title:"Kepler, Harmonices mundi",n:"Planetary motion described as harmony."}
+ {lane:"event",y:1618,date:"1618–48",title:"Thirty Years' War",n:"Devastation of German musical life; Schütz's small sacred concertos."},
+ {lane:"sci",y:1687,date:"1687",title:"Newton, Principia",n:"Mathematical natural philosophy."},
+ {lane:"event",y:1789,date:"1789",title:"French Revolution",n:"The Paris Conservatoire follows in 1795."}
 ];
-
 const CONN=[
- ["ornithoparchus","schlick","dedication","The book on counterpoint is addressed to Schlick, 'organist to the Count Palatine'."],
+ ["ornithoparchus","schlick","dedication","Book IV opens with the dedication to Schlick, 'organist to the Count Palatine'."],
  ["dowland","ornithoparchus","translation","English translation, London 1609."],
  ["glarean","boethius","edition","Glarean edited Boethius' writings on music."],
  ["lusitano","vicentino","debate","Public debate on the genera, Rome 1551."],
  ["gaffurius","tinctoris","acquaintance","Gaffurius met Tinctoris in Naples."],
- ["guido-ep","guido-micr","same author",""]
+ ["burzio","ramos","polemic","Burzio defends Guido against Ramos."],
+ ["artusi","monteverdi","polemic","Artusi's attack and the Monteverdis' reply."],
+ ["buttstett","mattheson-orch","polemic","The quarrel over solmisation."],
+ ["galilei","zarlino","polemic","Galilei, Zarlino's pupil, attacks his teacher."],
+ ["playford","caccini","translation","An English version of Caccini's preface."],
+ ["rameau-diss","campion","critique","Rameau weighs the règle de l'octave."]
 ];
 
+/* ---------- helpers ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const norm=s=>String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/ß/g,"ss").replace(/æ/g,"ae").replace(/œ/g,"oe");
 const enc=encodeURIComponent;
-function repoLinks(t){
-  const out=(t.direct||[]).map(([l,u])=>`<a class="direct" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`);
-  const roman=["I","II","III","IV","V","VI","VII"];
-  if(t.tml) t.tml.forEach((p,i)=>out.push(`<a class="direct" href="${TML_BASE+p}" target="_blank" rel="noopener">TML${t.tml.length>1?" "+(roman[i]||i+1):""} ↗</a>`));
-  out.push(`<a href="https://imslp.org/index.php?search=${enc(t.q)}" target="_blank" rel="noopener">IMSLP search</a>`);
-  out.push(`<a href="https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&version=1.2&query=${enc('(gallica all "'+t.q+'")')}" target="_blank" rel="noopener">Gallica search</a>`);
-  out.push(`<a href="https://www.diamm.ac.uk/search/?q=${enc(t.q)}" target="_blank" rel="noopener">DIAMM search</a>`);
+const TML_LINK=k=>TML_BASE+k;
+function path(id){const p=[];while(id){p.unshift(id);id=PARENT[id]}return p}
+function descendants(id){const out=[];(function d(n){n.c.forEach(c=>{out.push(c.id);d(c)})})(NODES[id]);return out}
+function countSub(n){return descendants(n.id).length}
+function workLine(id){const w=WORKS[id];return w?`${esc(w.a)}, <i>${esc(w.t)}</i> (${esc(w.d)})`:id}
+function bookLabel(o){const m=o.t.match(/\b(liber|book|pars|partes|tractatus)\s+(primus|secundus|tertius|tercius|quartus|quintus|sextus|septimus|octavus|nonus|decimus|[IVX]+(\s+et\s+[IVX]+)?|\d+)\b/i);return m?m[0]:o.t}
+function repoLinks(w){
+  const roman=["I","II","III","IV","V","VI","VII","VIII","IX","X"];
+  const out=w.tml.map((k,i)=>`<a class="direct" href="${TML_LINK(k)}" target="_blank" rel="noopener">TML${w.tml.length>1?" "+(roman[i]||i+1):""} ↗</a>`);
+  const q=w.q;
+  out.push(`<a href="https://imslp.org/index.php?search=${enc(q)}" target="_blank" rel="noopener">IMSLP</a>`);
+  out.push(`<a href="https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&version=1.2&query=${enc('(gallica all "'+q+'")')}" target="_blank" rel="noopener">Gallica</a>`);
+  out.push(`<a href="https://www.digitale-sammlungen.de/en/search?query=${enc(q)}" target="_blank" rel="noopener">MDZ</a>`);
+  out.push(`<a href="https://www.e-rara.ch/search/quick?query=${enc(q)}" target="_blank" rel="noopener">e-rara</a>`);
+  if(w.y<1600) out.push(`<a href="https://www.diamm.ac.uk/search/?q=${enc(q)}" target="_blank" rel="noopener">DIAMM</a>`);
   return `<div class="links">${out.join("")}</div>`;
 }
-const byId=id=>T.find(t=>t.id===id);
-let state={cent:"all",sq:"",kind:"all",view:"topics",topic:"improv",treatise:null,lanes:new Set(Object.keys(LANES)),q:""};
 
-const VIEWS={topics:"By topic",treatises:"Treatises",sources:"All sources",timeline:"Timeline",about:"About"};
-function renderNav(){
-  document.getElementById("nav").innerHTML=Object.entries(VIEWS).map(([k,v])=>
-    `<button class="${state.view===k&&!state.treatise?'on':''}" data-v="${k}">${v}</button>`).join("");
-  document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;state.treatise=null;render();scrollTo(0,0)});
+/* ---------- passages (lazy) ---------- */
+let IDX=null; const DATA={}, LOADING={}; const OPEN=new Set();
+fetch("data/index.json").then(r=>r.json()).then(j=>{IDX=j;render()}).catch(()=>{});
+function loadCent(c){if(DATA[c]||LOADING[c])return;LOADING[c]=1;fetch("data/"+c+".json").then(r=>r.json()).then(j=>{DATA[c]=j;render()}).catch(()=>{LOADING[c]=0})}
+function quotes(key,node){
+  const [c,id]=key.split("/"); if(!DATA[c]){loadCent(c);return `<div class="meta">Loading passages…</div>`}
+  const q=(DATA[c][id]||{})[node]; if(!q||!q.length) return `<div class="meta">No passage on this topic in this part.</div>`;
+  return q.map(([pg,hd,tx])=>`<div class="q"><div class="w"><b>${esc(pg||"—")}</b>${hd?" · "+esc(hd):""}</div><blockquote>${esc(tx)}</blockquote></div>`).join("")+
+   `<div class="links"><a class="direct" href="${TML_LINK(key)}" target="_blank" rel="noopener">Read in context ↗</a></div>`;
 }
-
-function curatedQuotes(t,topic){
-  if(!t.tml) return "";
-  const k=t.id+"|"+topic, open=state.openq.has(k);
-  const body=open?t.tml.map(p=>{const o=META[p];const qq=quotes(p,topic);return qq?`<div class="loc" style="margin-top:10px">${o?bookLabel(o)||o.t:p}</div>`+qq:""}).join(""):"";
-  return body+`<button class="more" data-q="${k}">${open?"Hide passages":"Latin passages from the text"}</button>`;
-}
-function topicView(){
-  const chips=Object.entries(TOPICS).map(([k,v])=>`<button class="chip ${state.topic===k?'on':''}" data-t="${k}">${v}</button>`).join("");
-  const hits=T.filter(t=>t.says[state.topic]).sort((a,b)=>a.y-b.y);
-  return `<p class="lede">Choose a topic, then a treatise: you see what it says about the topic, in its own words, with the folio or page and the chapter.</p>
-  <div class="chips">${chips}</div>
-  <h2>${TOPICS[state.topic]}</h2><p class="meta">${hits.length?hits.length+" treatises described in detail":"No detailed description yet"}</p>
-  ${hits.map(t=>`<div class="card"><div class="loc">${t.date} · ${t.place}</div>
-    <h3><a href="#" data-open="${t.id}">${t.author}, <i>${t.title}</i></a></h3>
-    <p style="margin:8px 0 0">${t.says[state.topic]}</p>${curatedQuotes(t,state.topic)}${repoLinks(t)}</div>`).join("")}
-  ${tmlTopicList(state.topic)}`;
-}
-function treatiseList(){
-  const q=state.q.toLowerCase();
-  const list=T.filter(t=>!q||(t.author+t.title+t.place).toLowerCase().includes(q)).sort((a,b)=>a.y-b.y);
-  return `<input type="search" id="q" placeholder="Search author, title, place…" value="${state.q}">
-  <div class="grid">${list.map(t=>`<div class="card" data-open="${t.id}"><div class="loc">${t.date}</div>
-    <h3>${t.title}</h3><div class="meta">${t.author} · ${t.place}</div>
-    <div>${Object.keys(t.says).map(k=>`<span class="pill">${TOPICS[k]}</span>`).join(" ")}</div></div>`).join("")}</div>`;
-}
-function treatiseView(t){
-  const conns=CONN.filter(c=>c[0]===t.id||c[1]===t.id).map(c=>{
-    const other=byId(c[0]===t.id?c[1]:c[0]);
-    return `<div class="conn"><span class="pill">${c[2]}</span> <a href="#" data-open="${other.id}">${other.author}, <i>${other.title}</i></a>${c[3]?` — ${c[3]}`:""}</div>`}).join("");
-  const near=CONTEXT.filter(c=>Math.abs(c.y-t.y)<=12).map(c=>`<div class="conn"><span class="lane" style="--c:var(${LANES[c.lane][1]})"></span>${c.date} · ${c.title} <span style="color:var(--muted)">— ${c.n}</span></div>`).join("");
-  return `<button class="back" id="back">← back</button>
-  <div class="loc">${t.date} · ${t.place}</div>
-  <h2><i>${t.title}</i></h2><div class="meta" style="font-size:15px">${t.author}</div>
-  <div class="ctx">${t.ctx}</div>${repoLinks(t)}
-  <h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">What it says, by topic</h3>
-  ${Object.entries(t.says).map(([k,v])=>`<div class="card"><a href="#" class="loc" data-topic="${k}" style="text-decoration:none">${TOPICS[k]} →</a><p style="margin:6px 0 0">${v}</p>${curatedQuotes(t,k)}</div>`).join("")}
-  ${conns?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Connections</h3>${conns}`:""}
-  ${near?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Around the same time</h3>${near}`:""}`;
-}
-
-const CENTS=["3rd-5th","6th-8th","9th-11th","12th","13th","14th","15th","16th","17th"];
-const workKey=o=>o.a+"|"+o.t.replace(/[,;.]?\s*(liber|book|tractatus|pars)\s+\w+\s*$/i,"").replace(/\s*\[[^\]]*\]\s*$/,"").trim();
-const LINKED={};T.forEach(t=>(t.tml||[]).forEach(p=>LINKED[p.split("/")[1]]=t.id));
-function sourcesView(){
-  const q=state.sq.toLowerCase();
-  const rows=TML.filter(o=>(state.cent==="all"||o.c===state.cent)&&(state.kind==="all"||o.k===state.kind)&&
-    (!q||(o.a+" "+o.t+" "+o.s+" "+o.id).toLowerCase().includes(q)));
-  const works=new Map();rows.forEach(o=>{const k=o.c+"|"+workKey(o);if(!works.has(k))works.set(k,[]);works.get(k).push(o)});
-  const byAuthor=new Map();works.forEach((v,k)=>{const a=v[0].a;if(!byAuthor.has(a))byAuthor.set(a,[]);byAuthor.get(a).push(v)});
-  const cc=["all",...CENTS].map(c=>`<button class="chip ${state.cent===c?'on':''}" data-cent="${c}">${c==="all"?"All centuries":c}</button>`).join("");
-  const kc=[["all","All"],["text","Printed editions"],["ms","Manuscript transcriptions"]].map(([k,l])=>`<button class="chip ${state.kind===k?'on':''}" data-kind="${k}">${l}</button>`).join("");
+/* nodes of this subtree that have passages in a given TML file */
+function hitsIn(key,ids){const h=(IDX||{})[key]||{};return ids.filter(i=>h[i])}
+function toggleBtn(k,label){const open=OPEN.has(k);return `<button class="more" data-open="${esc(k)}">${open?"Hide passages":label}</button>`}
+function workPassages(wid,nodeIds,tag){
+  const w=WORKS[wid]; if(!w||!w.tml.length||!IDX) return "";
+  const per=w.tml.map(k=>[k,hitsIn(k,nodeIds)]).filter(x=>x[1].length);
+  if(!per.length) return "";
+  const k="w|"+wid+"|"+tag, open=OPEN.has(k);
   let body="";
-  [...byAuthor.entries()].slice(0,400).forEach(([a,ws])=>{
-    body+=`<div class="card"><h3>${a}</h3>`+ws.map(v=>{
-      const o=v[0],cur=v.map(x=>LINKED[x.id]).find(Boolean);
-      const files=v.map(x=>`<a class="${x.k==='ms'?'':'direct'}" href="${TML_BASE}${x.c}/${x.id}" target="_blank" rel="noopener" title="${x.s.replace(/"/g,'&quot;')}">${x.t===o.t&&v.length===1?x.id:x.t.replace(/^.*?[,;]?\s*(?=\b(liber|book)\b)/i,"")} ↗</a>`).join("");
+  if(open) body=per.map(([key,ns])=>ns.map(n=>`<div class="loc" style="margin-top:12px">${esc(bookLabel(META[key]||{t:key}))}${n!==tag?" · "+esc(NODES[n].l):""}</div>`+quotes(key,n)).join("")).join("");
+  return body+toggleBtn(k,"Latin passages from the text");
+}
+
+/* ---------- search ---------- */
+const HAY={};
+Object.values(NODES).forEach(n=>{
+  HAY[n.id]={l:norm(n.l),a:norm(n.a),d:norm(n.d),s:norm(n.s.map(([w,note])=>{const x=WORKS[w]||{};return (x.a||"")+" "+(x.t||"")+" "+note}).join(" "))};
+});
+function search(q){
+  const toks=norm(q).split(/[^a-z0-9]+/).filter(t=>t.length>1); if(!toks.length) return {nodes:[],works:[]};
+  const nodes=[];
+  Object.entries(HAY).forEach(([id,h])=>{
+    let score=0,all=true;
+    toks.forEach(t=>{const s=(h.l.includes(t)?8:0)+(h.a.includes(t)?5:0)+(h.d.includes(t)?2:0)+(h.s.includes(t)?1:0);if(!s)all=false;score+=s});
+    if(all) nodes.push([score+(path(id).length===1?1:0),id]);
+  });
+  nodes.sort((a,b)=>b[0]-a[0]);
+  const works=Object.entries(WORKS).filter(([id,w])=>{const h=norm(w.a+" "+w.t+" "+w.p+" "+w.d);return toks.every(t=>h.includes(t))}).sort((a,b)=>a[1].y-b[1].y);
+  return {nodes:nodes.slice(0,40).map(x=>x[1]),works:works.slice(0,40)};
+}
+
+/* ---------- routing ---------- */
+let STATE={q:"",sq:"",cent:"all",kind:"all",lanes:new Set(Object.keys(LANES)),wq:""};
+function route(){const h=location.hash.slice(1);
+  if(h.startsWith("t-")&&NODES[h.slice(2)]) return {v:"topics",node:h.slice(2)};
+  if(h.startsWith("w-")&&WORKS[h.slice(2)]) return {v:"work",work:h.slice(2)};
+  if(["treatises","sources","timeline","about"].includes(h)) return {v:h};
+  return {v:"topics",node:null};
+}
+const VIEWS=[["topics","Topics",""],["treatises","Treatises","treatises"],["sources","All TML sources","sources"],["timeline","Timeline","timeline"],["about","About","about"]];
+
+/* ---------- views ---------- */
+function topicsView(r){
+  let html=`<input type="search" id="q" placeholder="Search any topic, in any language: Oktavregel, sortisatio, diminution 16th century, Quantz…" value="${esc(STATE.q)}">`;
+  if(STATE.q.trim().length>1){
+    const {nodes,works}=search(STATE.q);
+    html+=`<div class="meta">${nodes.length} topics · ${works.length} treatises</div>`;
+    html+=`<div class="card">${nodes.map(id=>{const n=NODES[id];return `<a class="res" href="#t-${id}"><div class="p">${path(id).slice(0,-1).map(p=>esc(NODES[p].l)).join(" › ")||"Topic"}</div><b>${esc(n.l)}</b><div class="meta" style="margin:0">${esc(n.d)}</div></a>`}).join("")||"<p>No topic found.</p>"}</div>`;
+    if(works.length) html+=`<h3 class="sec">Treatises</h3><div class="card">${works.map(([id,w])=>`<a class="res" href="#w-${id}"><b>${esc(w.a)}</b>, <i>${esc(w.t)}</i><div class="p">${esc(w.d)} · ${esc(w.p)}</div></a>`).join("")}</div>`;
+    return html;
+  }
+  if(!r.node){
+    html+=`<p class="lede">Tap a topic to go down the tree; the path stays at the top so you can climb back.</p>`;
+    html+=`<div class="tiles">${TREE.map(n=>`<a class="tile" href="#t-${n.id}"><b>${esc(n.l)}</b><span>${countSub(n)} subtopics</span></a>`).join("")}</div>`;
+    return html;
+  }
+  const n=NODES[r.node], p=path(n.id);
+  html+=`<div class="crumbs"><a href="#">All topics</a>${p.slice(0,-1).map(id=>`<i>›</i><a href="#t-${id}">${esc(NODES[id].l)}</a>`).join("")}</div>`;
+  html+=`<h2>${esc(n.l)}</h2><div class="aka">${esc(n.a)}</div><p class="lede" style="margin-bottom:6px">${esc(n.d)}</p>`;
+  if(n.c.length) html+=`<div class="tiles">${n.c.map(c=>`<a class="tile" href="#t-${c.id}"><b>${esc(c.l)}</b><span>${[c.c.length?countSub(c)+" subtopics":"",c.s.length?c.s.length+(c.s.length===1?" source":" sources"):""].filter(Boolean).join(" · ")}</span></a>`).join("")}</div>`;
+  const sub=[n.id,...descendants(n.id)];
+  if(n.s.length){
+    html+=`<h3 class="sec">What the treatises say</h3>`;
+    html+=n.s.slice().sort((a,b)=>(WORKS[a[0]].y-WORKS[b[0]].y)).map(([wid,note])=>{const w=WORKS[wid];return `<div class="card">
+      <div class="loc">${esc(w.d)} · ${esc(w.p)}</div><h3><a href="#w-${wid}">${esc(w.a)}, <i>${esc(w.t)}</i></a></h3>
+      <p class="note">${esc(note)}</p>${workPassages(wid,sub.filter(i=>NODES[i].hasq),n.id)}${repoLinks(w)}</div>`}).join("");
+  }
+  // sources of the subtopics
+  const seen=new Set(n.s.map(x=>x[0])); const below=[];
+  descendants(n.id).forEach(id=>NODES[id].s.forEach(([w,note])=>{if(!seen.has(w)){seen.add(w);below.push([w,id,note])}}));
+  if(below.length){
+    below.sort((a,b)=>WORKS[a[0]].y-WORKS[b[0]].y);
+    html+=`<h3 class="sec">${n.s.length?"Also in the subtopics":"Treatises in this branch"}</h3><div class="card">${below.map(([w,id,note])=>`<div class="trow">
+      <a href="#w-${w}" style="color:inherit;text-decoration:none"><b>${esc(WORKS[w].a)}</b>, <i>${esc(WORKS[w].t)}</i></a> <span class="meta">${esc(WORKS[w].d)}</span>
+      <div class="meta" style="margin:2px 0 0">${esc(note)} → <a href="#t-${id}">${esc(NODES[id].l)}</a></div></div>`).join("")}</div>`;
+  }
+  html+=tmlList(n,sub);
+  return html;
+}
+function tmlList(n,sub){
+  const qids=sub.filter(i=>NODES[i].hasq); if(!qids.length) return "";
+  if(!IDX) return `<p class="meta">Loading the Thesaurus…</p>`;
+  const cited=new Set(); [n.id,...descendants(n.id)].forEach(id=>NODES[id].s.forEach(([w])=>(WORKS[w]&&WORKS[w].tml||[]).forEach(k=>cited.add(k))));
+  const rows=Object.keys(IDX).map(k=>[k,hitsIn(k,qids)]).filter(x=>x[1].length&&!cited.has(x[0]));
+  const ord=k=>CENTS.indexOf(k.split("/")[0]);
+  rows.sort((a,b)=>ord(a[0])-ord(b[0])||(IDX[b[0]][b[1][0]]-IDX[a[0]][a[1][0]]));
+  const LIMIT=STATE["lim-"+n.id]||60; let html="",cur=null;
+  rows.slice(0,LIMIT).forEach(([k,ns])=>{const o=META[k];if(!o)return;const c=k.split("/")[0];
+    if(c!==cur){cur=c;html+=`<div class="cent">${c} century</div>`}
+    const key="t|"+k+"|"+n.id, open=OPEN.has(key);
+    html+=`<div class="trow"><div><b>${esc(o.a)}</b> — <i>${esc(o.t)}</i></div>
+      <div class="meta" style="margin:2px 0 0">${esc(o.s.replace(/, null\.$/,"."))}</div>
+      ${ns.filter(i=>i!==n.id).length?`<div>${ns.filter(i=>i!==n.id).map(i=>`<a class="pill" href="#t-${i}">${esc(NODES[i].l)}</a>`).join("")}</div>`:""}
+      ${open?ns.map(i=>(ns.length>1?`<div class="loc" style="margin-top:10px">${esc(NODES[i].l)}</div>`:"")+quotes(k,i)).join(""):""}
+      ${toggleBtn(key,"Show passages")}</div>`});
+  return `<h3 class="sec">Further texts in the Thesaurus Musicarum Latinarum</h3>
+   <p class="meta">${rows.length} texts. Passages are found by the Latin vocabulary of the topic and shown with folio or page and chapter; read them in context to judge them.</p>
+   <div class="card">${html||"<p>None found.</p>"}${rows.length>LIMIT?`<button class="more" data-more="${n.id}">Show more (${rows.length-LIMIT})</button>`:""}</div>`;
+}
+function workView(id){
+  const w=WORKS[id], refs=WORKREFS[id]||[];
+  let html=`<div class="crumbs"><a href="#treatises">Treatises</a></div><div class="loc">${esc(w.d)} · ${esc(w.p)}</div>
+   <h2><i>${esc(w.t)}</i></h2><div class="meta" style="font-size:15px">${esc(w.a)}</div><div class="ctx">${esc(w.ctx)}</div>${repoLinks(w)}`;
+  if(refs.length){
+    html+=`<h3 class="sec">Topics</h3>`+refs.map(([nid,note])=>`<div class="card"><div class="crumbs" style="margin:0 0 4px">${path(nid).map(p=>`<a href="#t-${p}">${esc(NODES[p].l)}</a>`).join("<i>›</i>")}</div>
+      <p class="note">${esc(note)}</p>${workPassages(id,[nid,...descendants(nid)].filter(i=>NODES[i].hasq),nid)}</div>`).join("");
+  }
+  if(w.tml.length&&IDX){
+    const listed=new Set(refs.flatMap(([nid])=>[nid,...descendants(nid)]));
+    const other={}; w.tml.forEach(k=>Object.keys(IDX[k]||{}).forEach(nid=>{if(!listed.has(nid))(other[nid]=other[nid]||[]).push(k)}));
+    const ks=Object.keys(other);
+    if(ks.length) html+=`<h3 class="sec">Further topics found in the text</h3>`+ks.map(nid=>{const key="x|"+id+"|"+nid,open=OPEN.has(key);
+      return `<div class="card"><div class="crumbs" style="margin:0">${path(nid).map(p=>`<a href="#t-${p}">${esc(NODES[p].l)}</a>`).join("<i>›</i>")}</div>
+       ${open?other[nid].map(k=>`<div class="loc" style="margin-top:10px">${esc(bookLabel(META[k]))}</div>`+quotes(k,nid)).join(""):""}${toggleBtn(key,"Show passages")}</div>`}).join("");
+  }
+  const conns=CONN.filter(c=>c[0]===id||c[1]===id).map(c=>{const o=c[0]===id?c[1]:c[0];return `<div class="trow"><span class="pill">${esc(c[2])}</span> <a href="#w-${o}">${workLine(o)}</a> — ${esc(c[3])}</div>`}).join("");
+  if(conns) html+=`<h3 class="sec">Connections</h3><div class="card">${conns}</div>`;
+  const near=CONTEXT.filter(c=>Math.abs(c.y-w.y)<=12).map(c=>`<div class="trow"><span class="lane" style="--c:var(${LANES[c.lane][1]})"></span>${esc(c.date)} · ${esc(c.title)} <span class="meta">— ${esc(c.n)}</span></div>`).join("");
+  if(near) html+=`<h3 class="sec">Around the same time</h3><div class="card">${near}</div>`;
+  return html;
+}
+function treatisesView(){
+  const q=norm(STATE.wq);
+  const list=Object.entries(WORKS).filter(([id,w])=>!q||norm(w.a+" "+w.t+" "+w.p+" "+w.d).includes(q)).sort((a,b)=>a[1].y-b[1].y);
+  return `<p class="lede">${Object.keys(WORKS).length} treatises placed in the topic tree, from Augustine to Riemann. Every other TML text is under All TML sources.</p>
+   <input type="search" id="wq" placeholder="Search author, title, place…" value="${esc(STATE.wq)}">
+   <div class="card">${list.map(([id,w])=>`<a class="res" href="#w-${id}"><div class="p">${esc(w.d)} · ${esc(w.p)}</div><b>${esc(w.a)}</b>, <i>${esc(w.t)}</i>
+     <div>${(WORKREFS[id]||[]).slice(0,6).map(([n])=>`<span class="pill">${esc(NODES[n].l)}</span>`).join("")}</div></a>`).join("")}</div>`;
+}
+function sourcesView(){
+  const q=norm(STATE.sq);
+  const rows=TML.filter(o=>(STATE.cent==="all"||o.c===STATE.cent)&&(STATE.kind==="all"||o.k===STATE.kind)&&(!q||norm(o.a+" "+o.t+" "+o.s+" "+o.id).includes(q)));
+  const workKey=o=>o.a+"|"+o.t.replace(/[,;.]?\s*(liber|book|tractatus|pars)\s+\w+\s*$/i,"").replace(/\s*\[[^\]]*\]\s*$/,"").trim();
+  const works=new Map();rows.forEach(o=>{const k=o.c+"|"+workKey(o);if(!works.has(k))works.set(k,[]);works.get(k).push(o)});
+  const byAuthor=new Map();works.forEach(v=>{const a=v[0].a;if(!byAuthor.has(a))byAuthor.set(a,[]);byAuthor.get(a).push(v)});
+  const cc=["all",...CENTS].map(c=>`<button class="chip ${STATE.cent===c?'on':''}" data-cent="${c}">${c==="all"?"All centuries":c}</button>`).join("");
+  const kc=[["all","All"],["text","Printed editions"],["ms","Manuscript transcriptions"]].map(([k,l])=>`<button class="chip ${STATE.kind===k?'on':''}" data-kind="${k}">${l}</button>`).join("");
+  let body="";
+  [...byAuthor.entries()].slice(0,300).forEach(([a,ws])=>{
+    body+=`<div class="card"><h3>${esc(a)}</h3>`+ws.map(v=>{const o=v[0],wid=v.map(x=>FILE2WORK[x.c+"/"+x.id]).find(Boolean);
+      const files=v.map(x=>`<a class="${x.k==='ms'?'':'direct'}" href="${TML_LINK(x.c+"/"+x.id)}" target="_blank" rel="noopener">${esc(v.length===1?x.id:bookLabel(x))} ↗</a>`).join("");
+      const tops=[...new Set(v.flatMap(x=>Object.keys((IDX||{})[x.c+"/"+x.id]||{})))].slice(0,10);
       return `<div style="margin-top:10px"><div class="loc">${o.c} c.${v.some(x=>x.k==="ms")?" · MS":""}</div>
-        <div><i>${workKey(o).split("|")[1]||o.t}</i>${cur?` · <a href="#" data-open="${cur}">in Concordantia →</a>`:""}</div>
-        <div class="meta" style="margin:2px 0 0">${o.s.replace(/, null\.$/,".")}</div><div class="links" style="margin-top:6px">${files}</div>
-        <div style="margin-top:6px">${[...new Set(v.flatMap(x=>Object.keys((IDX||{})[x.c+"/"+x.id]||{})))].map(k=>`<a href="#" class="pill" data-topic="${k}" style="text-decoration:none">${TOPICS[k]}</a>`).join(" ")}</div></div>`}).join("")+`</div>`});
-  return `<p class="lede">The whole Thesaurus Musicarum Latinarum: ${TML.length} texts, from Augustine to the 17th century, each linked to its TML page.</p>
-  <input type="search" id="sq" placeholder="Search author, title, library, shelfmark…" value="${state.sq}">
+        <div><i>${esc(workKey(o).split("|")[1]||o.t)}</i>${wid?` · <a href="#w-${wid}">in the tree →</a>`:""}</div>
+        <div class="meta" style="margin:2px 0 0">${esc(o.s.replace(/, null\.$/,"."))}</div><div class="links" style="margin-top:6px">${files}</div>
+        <div style="margin-top:4px">${tops.map(k=>`<a class="pill" href="#t-${k}">${esc(NODES[k].l)}</a>`).join("")}</div></div>`}).join("")+`</div>`});
+  return `<p class="lede">The whole Thesaurus Musicarum Latinarum: ${TML.length} texts from Augustine to the 17th century, each linked to its TML page and tagged with the topics found in it.</p>
+  <input type="search" id="sq" placeholder="Search author, title, library, shelfmark…" value="${esc(STATE.sq)}">
   <div class="chips">${cc}</div><div class="chips" style="margin-top:-8px">${kc}</div>
-  <p class="meta">${rows.length} texts · ${works.size} works · ${byAuthor.size} authors${byAuthor.size>400?" (first 400 authors shown; narrow the search)":""}</p>${body}
+  <p class="meta">${rows.length} texts · ${works.size} works · ${byAuthor.size} authors${byAuthor.size>300?" (first 300 authors shown; narrow the search)":""}</p>${body}
   <p class="meta">TML is being restored at Indiana University; links go to its provisional site for now.</p>`;
 }
-
-/* passages found in the TML texts (data/<century>.json), and which texts treat which topic (data/index.json) */
-let IDX=null; const DATA={}; const LOADING={};
-fetch("data/index.json").then(r=>r.json()).then(j=>{IDX=j;render()}).catch(()=>{});
-function loadCent(c){ if(DATA[c]||LOADING[c]) return; LOADING[c]=1;
-  fetch("data/"+c+".json").then(r=>r.json()).then(j=>{DATA[c]=j;render()}).catch(()=>{LOADING[c]=0}); }
-const META={}; TML.forEach(o=>META[o.c+"/"+o.id]=o);
-function quotes(key,topic){
-  const [c,id]=key.split("/"); if(!DATA[c]){loadCent(c);return `<div class="meta">Loading passages…</div>`}
-  const q=(DATA[c][id]||{})[topic]; if(!q||!q.length) return "";
-  const o=META[key];
-  return q.map(([pg,hd,tx])=>`<div class="q"><div class="w"><b>${pg||"—"}</b>${hd?" · "+hd:""}</div><blockquote>${tx}</blockquote></div>`).join("")+
-   `<div class="links"><a class="direct" href="${TML_BASE+key}" target="_blank" rel="noopener">Read in context: TML ${o?o.id:id} ↗</a></div>`;
-}
-state.openq=new Set();
-function bookLabel(o){const m=o.t.match(/\b(liber|book|pars|tractatus)\s+(primus|secundus|tertius|quartus|quintus|sextus|septimus|octavus|nonus|decimus|[IVX]+|\d+)\b/i);return m?m[0]:o.t}
-function tmlTopicList(topic){
-  if(!IDX) return `<p class="meta">Loading the Thesaurus…</p>`;
-  const curated=new Set(T.flatMap(t=>t.tml||[]));
-  const keys=Object.keys(IDX).filter(k=>IDX[k][topic]&&!curated.has(k));
-  const order=k=>CENTS.indexOf(k.split("/")[0]);
-  keys.sort((a,b)=>order(a)-order(b)||IDX[b][topic]-IDX[a][topic]);
-  let html="",cur=null;
-  keys.forEach(k=>{const o=META[k]; if(!o) return; const c=k.split("/")[0];
-    if(c!==cur){cur=c;html+=`<div class="cent" style="margin-left:0">${c} century</div>`}
-    const open=state.openq.has(k+"|"+topic);
-    html+=`<div class="trow"><div><b>${o.a}</b> — <i>${o.t}</i></div><div class="meta" style="margin:2px 0 0">${o.s.replace(/, null\.$/,".")}</div>
-      ${open?quotes(k,topic):""}<button class="more" data-q="${k}|${topic}">${open?"Hide passages":"Show passages"}</button></div>`});
-  return `<h3 style="font-weight:400;font-size:22px;margin:30px 0 4px">In the Thesaurus Musicarum Latinarum</h3>
-   <p class="meta">${keys.length} further texts treat this topic. Passages are found by the Latin vocabulary of the topic, with folio or page and the chapter they stand in; always read them in context.</p>
-   <div class="card">${html||"<p>None found.</p>"}</div>`;
-}
 function timelineView(){
-  const lanes=Object.entries(LANES).map(([k,[l,c]])=>`<button class="chip ${state.lanes.has(k)?'on':''}" data-lane="${k}"><span class="lane" style="--c:var(${c})"></span>${l}</button>`).join("");
-  const items=[...T.map(t=>({lane:"treatise",y:t.y,date:t.date,title:`${t.author}, <i>${t.title}</i>`,n:t.place,id:t.id})),...CONTEXT]
-    .filter(i=>state.lanes.has(i.lane)).sort((a,b)=>a.y-b.y);
+  const lanes=Object.entries(LANES).map(([k,[l,c]])=>`<button class="chip ${STATE.lanes.has(k)?'on':''}" data-lane="${k}"><span class="lane" style="--c:var(${c})"></span>${l}</button>`).join("");
+  const items=[...Object.entries(WORKS).map(([id,w])=>({lane:"treatise",y:w.y,date:w.d,title:`<a href="#w-${id}">${esc(w.a)}, <i>${esc(w.t)}</i></a>`,n:w.p})),
+    ...CONTEXT.map(c=>({...c,title:esc(c.title),n:c.n}))].filter(i=>STATE.lanes.has(i.lane)).sort((a,b)=>a.y-b.y);
   let html="",cent=null;
   items.forEach(i=>{const c=Math.floor(i.y/100)+1;
-    if(c!==cent){cent=c;html+=`<div class="cent">${["","","","","","","6th","","","","","11th","","13th","14th","15th","16th","17th"][c]||c+"th"} century</div>`}
-    html+=`<div class="row" style="--c:var(${LANES[i.lane][1]})"><div class="yr">${i.date}</div>
-      <div class="t">${i.id?`<a href="#" data-open="${i.id}">${i.title}</a>`:i.title}</div><div class="n">${i.n}</div></div>`});
-  return `<p class="lede">Treatises set among manuscripts, prints, science, medicine and events.</p><div class="chips">${lanes}</div><div class="tl">${html}</div>`;
+    if(c!==cent){cent=c;html+=`<div class="cent" style="margin-left:-18px">${c===1?"1st":c===2?"2nd":c===3?"3rd":c+"th"} century</div>`}
+    html+=`<div class="row" style="--c:var(${LANES[i.lane][1]})"><div class="yr">${esc(i.date)}</div><div class="t">${i.title}</div><div class="n">${esc(i.n)}</div></div>`});
+  return `<p class="lede">Treatises among manuscripts, prints, science, medicine and events.</p><div class="chips">${lanes}</div><div class="tl">${html}</div>`;
 }
 function aboutView(){
+  const nNodes=Object.keys(NODES).length;
   return `<div class="about"><h2>About Concordantia</h2>
-  <p>A reference site that organises music treatises by topic, so that one can read what different authors say about the same question, each within the context of its own treatise and its own time.</p>
+  <p>Concordantia organises music treatises by topic, as a tree you can climb down as far as you need: from Improvisation to Cantare super librum to Sortisatio, or from Basso continuo to National styles to Hamburg and Dresden, 1700–1740.</p>
   <ul>
-   <li><b>Texts:</b> the Thesaurus Musicarum Latinarum as the main source of Latin texts, segmented by book and chapter and tagged by topic; vernacular treatises from Gallica, IMSLP, e-rara, MDZ and other digitised collections.</li>
-   <li><b>Every treatise</b> links to its digitised sources (TML, Gallica, IMSLP, DIAMM) and carries a short historical context.</li>
-   <li><b>Timeline</b> of treatises next to manuscripts, prints, science, medicine and events.</li>
-   <li><b>Connections</b> between treatises and people: dedications, translations, editions, polemics.</li>
-   <li><b>Passages:</b> under each topic, every TML text that treats it, with up to three Latin passages found by the topic's vocabulary, each with its folio or page and the chapter it stands in, and a link to read it in context. The search is automatic, so a passage can be off the mark; the context link is the check.</li>
-   <li><b>Next:</b> translations beside the Latin; direct links to each digitised copy rather than searches; the primary sources of the <i>Liber de arte contrapuncti</i>.</li>
+   <li><b>${nNodes} topics</b>, each with names in several languages, so that the search finds Oktavregel, règle de l'octave and rule of the octave alike.</li>
+   <li><b>${Object.keys(WORKS).length} treatises</b> from the 4th to the 19th century, each with where in the work it treats the topic, its context and links to TML, IMSLP, Gallica, MDZ, e-rara and DIAMM.</li>
+   <li><b>Latin passages</b> from all ${TML.length} texts of the Thesaurus Musicarum Latinarum, found by each topic's vocabulary and shown with folio or page and chapter. The search is automatic, so a passage can be off the mark; the link to the text in context is the check.</li>
+   <li><b>Timeline</b> and <b>connections</b>: dedications, translations, polemics, and what else happened at the time.</li>
   </ul>
-  <p style="color:var(--muted);font-size:16px">Solid-bordered links go straight to the text; the others open a search in the repository. The full TML catalogue is under All sources. Summaries are editorial and still to be checked against the sources.</p></div>`;
+  <p class="meta">Summaries and locations are editorial and still being checked against the sources. Corrections are welcome through the feedback button.</p></div>`;
 }
+
+/* ---------- render ---------- */
 function render(){
-  renderNav();
+  const r=route();
+  document.getElementById("nav").innerHTML=VIEWS.map(([v,l,h])=>`<a href="#${h}" class="${(r.v===v||(r.v==="work"&&v==="treatises"))?'on':''}">${l}</a>`).join("");
   const app=document.getElementById("app");
-  if(state.treatise) app.innerHTML=treatiseView(byId(state.treatise));
-  else app.innerHTML={topics:topicView,treatises:treatiseList,sources:sourcesView,timeline:timelineView,about:aboutView}[state.view]();
-  app.innerHTML+=`<div class="foot">© 2026 Václav Hřebec · <a href="../" style="color:inherit">vaclavhrebec.github.io</a> · <a href="../atlas/" style="color:inherit">Atlas of Musical Style</a> · <a href="../fiorire/" style="color:inherit">Fiorire</a> · Texts and images remain with their repositories.</div>`;
-  app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{state.topic=b.dataset.t;render()});
-  app.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=b.dataset.open;render();scrollTo(0,0)});
-  app.querySelectorAll("[data-topic]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=null;state.view="topics";state.topic=b.dataset.topic;render();scrollTo(0,0)});
-  app.querySelectorAll("[data-lane]").forEach(b=>b.onclick=()=>{const k=b.dataset.lane;state.lanes.has(k)?state.lanes.delete(k):state.lanes.add(k);render()});
-  const back=document.getElementById("back"); if(back) back.onclick=()=>{state.treatise=null;render()};
-  app.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{const k=b.dataset.q;state.openq.has(k)?state.openq.delete(k):state.openq.add(k);render()});
-  app.querySelectorAll("[data-cent]").forEach(b=>b.onclick=()=>{state.cent=b.dataset.cent;render()});
-  app.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{state.kind=b.dataset.kind;render()});
-  const sq=document.getElementById("sq"); if(sq){let tm;sq.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{state.sq=sq.value;render();const n=document.getElementById("sq");n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)}}
-  const q=document.getElementById("q"); if(q){q.oninput=()=>{state.q=q.value;const p=q.selectionStart;render();const n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)}}
+  const html=r.v==="topics"?topicsView(r):r.v==="work"?workView(r.work):r.v==="treatises"?treatisesView():r.v==="sources"?sourcesView():r.v==="timeline"?timelineView():aboutView();
+  app.innerHTML=html+`<div class="foot">© 2026 Václav Hřebec · <a href="../">vaclavhrebec.github.io</a> · <a href="../atlas/">Atlas of Musical Style</a> · <a href="../fiorire/">Fiorire</a> · Texts and images remain with their repositories.</div>`;
+  app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{const k=b.dataset.open;OPEN.has(k)?OPEN.delete(k):OPEN.add(k);render()});
+  app.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>{const k="lim-"+b.dataset.more;STATE[k]=(STATE[k]||60)+100;render()});
+  app.querySelectorAll("[data-cent]").forEach(b=>b.onclick=()=>{STATE.cent=b.dataset.cent;render()});
+  app.querySelectorAll("[data-kind]").forEach(b=>b.onclick=()=>{STATE.kind=b.dataset.kind;render()});
+  app.querySelectorAll("[data-lane]").forEach(b=>b.onclick=()=>{const k=b.dataset.lane;STATE.lanes.has(k)?STATE.lanes.delete(k):STATE.lanes.add(k);render()});
+  [["q",250],["sq",300],["wq",150]].forEach(([id,ms])=>{const el=document.getElementById(id);if(!el)return;let tm;
+    el.oninput=()=>{clearTimeout(tm);tm=setTimeout(()=>{STATE[id]=el.value;render();const n=document.getElementById(id);n.focus();n.setSelectionRange(n.value.length,n.value.length)},ms)}});
 }
+let lastHash=location.hash;
+window.addEventListener("hashchange",()=>{if(location.hash.startsWith("#t-")||location.hash==="")STATE.q="";render();if(location.hash!==lastHash)scrollTo(0,0);lastHash=location.hash});
 render();
 </script>
 <script src="../gym/feedback.js" data-topic="Concordantia" defer></script>
