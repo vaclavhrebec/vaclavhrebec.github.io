@@ -97,7 +97,7 @@ function applyTheme() {
   /* the button shows where it leads: the sun in the dark, the moon in the light */
   const b = document.getElementById('toggleTheme');
   if (b) { const dark = prefs.theme === 'dark'; b.innerHTML = dark ? SUN : MOON; const t = tr(dark ? 'Light mode' : 'Dark mode'); b.title = t; b.setAttribute('aria-label', t); }
-  document.querySelector('meta[name=theme-color]').content = prefs.theme === 'dark' ? '#0f1218' : prefs.theme === 'vellum' ? '#e6d7b3' : '#e9dcc4';
+  document.querySelector('meta[name=theme-color]').content = prefs.theme === 'dark' ? '#0f1218' : prefs.theme === 'vellum' ? '#e6d7b3' : '#c2a07a';
 }
 
 /* ------------------------------------------------------------------ library */
