@@ -1,6 +1,6 @@
-/* Easter egg: Du Fay congratulates after 20 minutes of music actually played (#dufay to test) */
+/* Easter egg: Du Fay congratulates after 30 minutes of music actually played (#dufay to test) */
 /*!
- * Dufay Easter egg — after 20 minutes of music actually played, Guillaume Du Fay
+ * Dufay Easter egg — after 30 minutes of music actually played, Guillaume Du Fay
  * (from Martin le Franc, Le Champion des Dames, c. 1451) walks on,
  * congratulates the student, and walks off.
  *
@@ -14,8 +14,8 @@
 (function () {
   "use strict";
   var cfg = Object.assign({
-    minutes: 20,
-    message: "Good job, you have practiced already for 20 minutes. Keep going!",
+    minutes: 30,
+    message: "Good job, you have practiced already for 30 minutes. Keep going!",
     oncePerDay: true
   }, window.DUFAY_EGG || {});
 
