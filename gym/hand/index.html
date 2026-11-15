@@ -419,7 +419,8 @@ function places(P){
      its two middle joints and its tip. The nearest joint decides, so the area belonging to a note is always the area around its joint. */
   const out = [];
   out[0] = P[4]; out[1] = P[3]; out[2] = P[2];
-  out[3] = P[5]; out[4] = P[9]; out[5] = P[13]; out[6] = P[17];
+  const base = (m, p) => lerp(P[m], P[p], 0.3);   // the crease where the finger leaves the palm: a little above the knuckle, towards the finger
+  out[3] = base(5, 6); out[4] = base(9, 10); out[5] = base(13, 14); out[6] = base(17, 18);
   out[7] = P[18]; out[8] = P[19]; out[9] = P[20];
   out[10] = P[16]; out[11] = P[12]; out[12] = P[8];
   out[13] = P[7]; out[14] = P[6]; out[15] = P[10]; out[16] = P[14]; out[17] = P[15]; out[18] = P[11];
@@ -844,7 +845,7 @@ function handSVG(side){
   // creases across each joint: the notes lie on them
   for (const [J, w] of [[[5, 6, 7], 15], [[9, 10, 11], 16], [[13, 14, 15], 15], [[17, 18, 19], 12], [[2, 3], 17]]) {
     for (let k = 0; k < J.length; k++) {
-      const c = P[J[k]], q = P[J[Math.min(k + 1, J.length - 1)]], r = P[J[Math.max(k - 1, 0)]];
+      const c = k === 0 && J.length > 2 ? lerp(P[J[0]], P[J[1]], 0.3) : P[J[k]], q = P[J[Math.min(k + 1, J.length - 1)]], r = P[J[Math.max(k - 1, 0)]];
       const dx = q.x - r.x, dy = q.y - r.y, n = Math.hypot(dx, dy) || 1;
       path('M' + pt({x: c.x - dy / n * w * .7, y: c.y + dx / n * w * .7}) + ' L' + pt({x: c.x + dy / n * w * .7, y: c.y - dx / n * w * .7}), 'crease');
     }
