@@ -35,7 +35,11 @@ if (!prefs.voiceDefault) { prefs.timbre = 'voice'; prefs.voiceDefault = true; tr
 if (!prefs.palmDefault) { prefs.handStyle = 'palm'; prefs.palmDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 setSpacing(prefs.spacing);
 snd.setSound(prefs.sound || {});
-setLang(prefs.lang || guessLang());
+{ /* the language is shared with the other pages of the site: ?lang=, then the site-wide choice, then this app's own */
+  let shared = ''; try { shared = new URL(location.href).searchParams.get('lang') || localStorage.getItem('lang') || ''; } catch (e) { /* none */ }
+  if (LANGS.some(x => x[0] === shared)) prefs.lang = shared;
+  setLang(prefs.lang || guessLang());
+}
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
 const S = {
@@ -2224,7 +2228,7 @@ function applyLang() {
 (function langPicker() {
   const sel = $('#lang');
   LANGS.forEach(([k, short, name]) => sel.append(el('option', { value: k, title: name, selected: k === getLang() }, short)));
-  sel.addEventListener('change', () => { prefs.lang = sel.value; setLang(prefs.lang); savePrefs(); applyLang(); });
+  sel.addEventListener('change', () => { prefs.lang = sel.value; setLang(prefs.lang); try { localStorage.setItem('lang', prefs.lang); } catch (e) { /* none */ } savePrefs(); applyLang(); });
 })();
 
 let rt = 0, lastW = 0;
