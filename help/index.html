@@ -20,38 +20,59 @@ h1{font-weight:400;font-size:2.1rem;margin:1.6rem 0 .2rem}.sub{color:var(--muted
 section{scroll-margin-top:4.5rem;margin:2rem 0}h2{font-weight:400;font-size:1.5rem;border-bottom:1px solid var(--line);padding-bottom:.3rem}h4{margin:1.2rem 0 .3rem;color:var(--acc);font-size:1rem;letter-spacing:.02em}
 a{color:var(--acc)}code{font:.88em ui-monospace,Menlo,monospace;background:color-mix(in srgb,var(--fg) 8%,transparent);padding:.05em .35em;border-radius:4px}
 li{margin:.35rem 0}
-.m{display:none}h1 .m{display:none}html[lang=en] .m.en,html[lang=de] .m.de,html[lang=fr] .m.fr,html[lang=cs] .m.en{display:block}h1 .m{display:none!important}html[lang=en] h1 .m.en,html[lang=de] h1 .m.de,html[lang=fr] h1 .m.fr,html[lang=cs] h1 .m.en{display:inline!important}
+.only .toc,.only section{display:none}.only section.cur{display:block}.whole{display:none;margin:0 0 1rem;font:.9rem system-ui,sans-serif}.only .whole{display:block}.whole .m{display:none}html[lang=en] .whole .m.en,html[lang=de] .whole .m.de,html[lang=fr] .whole .m.fr,html[lang=cs] .whole .m.en{display:inline}.m{display:none}h1 .m{display:none}html[lang=en] .m.en,html[lang=de] .m.de,html[lang=fr] .m.fr,html[lang=cs] .m.en{display:block}h1 .m{display:none!important}html[lang=en] h1 .m.en,html[lang=de] h1 .m.de,html[lang=fr] h1 .m.fr,html[lang=cs] h1 .m.en{display:inline!important}
 </style>
 </head>
 <body>
 <div class="wrap">
 <nav class="sitenav" aria-label="Václav Hřebec's website"><a href="../">&#8592; Václav Hřebec</a><span aria-hidden="true">&middot;</span><a href="../gym/">The Ultimate Counterpoint Gym</a><span aria-hidden="true">&middot;</span><a href="../ear/">Ear Trainer</a><span aria-hidden="true">&middot;</span><a href="../atlas/">Atlas</a><span aria-hidden="true">&middot;</span><a href="../concordantia/">Concordantia</a><span aria-hidden="true">&middot;</span><a href="../fiorire/">Fiorire</a></nav>
 <h1><span class="m en" data-no-lang>User manual</span><span class="m de" data-no-lang>Handbuch</span><span class="m fr" data-no-lang>Mode d’emploi</span></h1>
-<div class="m en" data-no-lang><p class="sub">How to use the Gym, the Ear Trainer, the Atlas, Concordantia and Fiorire</p><nav class="toc" aria-label="Contents"><a href="#start">Where to find what</a><a href="#cantare">Cantare super librum</a><a href="#canon">Improvising canons</a><a href="#hand">Guidonian hand</a><a href="#ear">The Ultimate Ear Trainer</a><a href="#atlas">Atlas of Musical Style</a><a href="#conc">Concordantia</a><a href="#fiorire">Fiorire · The art of diminution</a><a href="#about">Languages, privacy, contact</a></nav><section id="start"><h2>Where to find what</h2><p>Everything lives on <b>vaclavhrebec.github.io</b>. From the homepage, <b>Projects</b> leads to each tool; every tool has a link <b>← Václav Hřebec</b> at the top left to come back. The language buttons (<b>EN · DE · FR · CZ</b>) sit in the same top bar; your choice is remembered on all pages. The sun/moon button switches light and dark.</p>
+<p class="whole"><a href="#start"><span class="m en" data-no-lang>← The whole manual</span><span class="m de" data-no-lang>← Das ganze Handbuch</span><span class="m fr" data-no-lang>← Le mode d’emploi complet</span></a></p><div class="m en" data-no-lang><p class="sub">How to use the Gym, the Ear Trainer, the Atlas, Concordantia and Fiorire</p><nav class="toc" aria-label="Contents"><a href="#start">Where to find what</a><a href="#cantare">Cantare super librum</a><a href="#canon">Improvising canons</a><a href="#hand">Guidonian hand</a><a href="#ear">The Ultimate Ear Trainer</a><a href="#atlas">Atlas of Musical Style</a><a href="#conc">Concordantia</a><a href="#fiorire">Fiorire · The art of diminution</a><a href="#about">Languages, privacy, contact</a></nav><section id="start"><h2>Where to find what</h2><p>Everything lives on <b>vaclavhrebec.github.io</b>. From the homepage, <b>Projects</b> leads to each tool; every tool has a link <b>← Václav Hřebec</b> at the top left to come back. The language buttons (<b>EN · DE · FR · CZ</b>) sit in the same top bar; your choice is remembered on all pages. The sun/moon button switches light and dark.</p>
 <ul><li><b>The Ultimate Counterpoint Gym</b> (<code>/gym/</code>): three rooms: <a href="#cantare">Cantare super librum</a>, <a href="#canon">Improvising canons</a>, <a href="#hand">Guidonian hand</a>.</li>
 <li><b>The Ultimate Ear Trainer</b> (<code>/ear/</code>): <a href="#ear">eleven rooms of ear training</a>.</li>
 <li><b>Atlas of Musical Style</b> (<code>/atlas/</code>): <a href="#atlas">a map of styles, elements, composers and treatises</a>.</li>
 <li><b>Concordantia</b> (<code>/concordantia/</code>): <a href="#conc">treatises sorted by topic</a>.</li>
 <li><b>Fiorire · The art of diminution</b> (<code>/fiorire/</code>): <a href="#fiorire">ornament a polyphonic piece</a>.</li></ul>
-<p>Every page has a small <b>?</b> in its bar or footer that opens this manual at the right place. On a phone, turn the phone sideways for the staves and the choir book.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>A viewer and editor for plainchant and mensural melodies in their original notation, to <b>sing and improvise against</b>. Open it from the Gym or at <code>/gym/cantare/</code>.</p>
-<h4>Choosing a piece</h4>
-<ul><li><b>Library</b>: chant (GregoBase hymns, sequences, mass ordinary), hexachord drills, secular songs, Genevan and Lutheran psalms, polyphonic models, and over 200 <b>canons</b> from Josquin, Ockeghem and their contemporaries. Use the search field in the library.</li>
-<li><b>Open your own score</b> (MuseScore, MusicXML, MIDI), or start <b>a new melody on an empty staff</b>.</li>
-<li><b>Sing a new chant</b>: the microphone writes your singing down as notation; <b>Edit</b> corrects a note.</li></ul>
-<h4>Changing the melody</h4>
-<ul><li><b>Edit the melody</b>: click a place on the staff to add or change a note; choose the note value, rests, dots, flats.</li>
-<li><b>Transform</b>: <i>Clef and staff</i> (4, 5, 6 lines or Auto), <i>Pitch</i> (step, octave, advanced transposition by any interval), <i>Note values</i> (double or halve every value) and <i>Talea</i> (18 rhythmic patterns for isorhythm, including the six rhythmic modes).</li></ul>
-<h4>Listening and practising</h4>
-<ul><li><b>Play</b> starts the piece; <b>Loop</b> repeats it; type the tempo in <i>semibreves per minute</i> or tap it twice or more. Choose which note value is the <i>tactus</i> and the tactus signal (hand, baton, pendulum, click).</li>
-<li><b>Sound</b>: organ, voice and others. <b>Hear notes while editing</b> plays each note you enter.</li>
-<li>For every voice you may <b>hide</b> it, <b>mute</b> it, or press <b>Do not follow</b> so that its notes do not light up: you follow it yourself.</li>
-<li><b>Microphone</b>: your own singing is recorded together with the music (use headphones) and can be played back.</li>
-<li><b>Choir book / score</b>: the Italian or German choir-book arrangement, or the score; a <b>long line</b> view rolls the piece by while it plays. The arrows turn the leaves.</li></ul>
-<h4>Saving, sharing, printing</h4>
-<ul><li><b>Share</b> copies a link that opens exactly this melody. <b>Keep</b> stores it among <i>Your melodies</i> in this browser.</li>
-<li><b>PDF</b> saves the whole piece on A4 pages. <b>View</b> offers zoom, theme and a <b>focus mode</b> that puts everything but the music away (leave it with <i>Leave focus</i>).</li>
-<li><b>Submit this melody to the collection</b> sends a copy to Václav; there is a window for a short message to him.</li>
-<li>The language is chosen in the <i>Language</i> menu of the toolbar.</li></ul></section><section id="canon"><h2>Improvising canons</h2><p>Sing the <b>dux</b> and hear yourself answered by the <b>comes</b> at a fixed interval, as in a Renaissance canon. At <code>/gym/canon/</code>.</p>
+<p>Every page has a small <b>?</b> in its bar or footer that opens this manual at the right place. On a phone, turn the phone sideways for the staves and the choir book.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>A viewer and editor for plainchant and mensural music in its original notation, to <b>sing and improvise against</b>. Open it from the Gym or at <code>/gym/cantare/</code>. This section lists every function and where it is.</p>
+<h4>The top bar</h4>
+<ul><li><b>Gym</b> (top left) returns to the Gym; <b>← Václav Hřebec</b> to the homepage.</li>
+<li><b>Language</b> (globe): English, German, French, Czech; <b>sun/moon</b> switches light and dark; <b>full screen</b> (where the device allows it).</li></ul>
+<h4>The toolbar under it, from left to right</h4>
+<ul><li><b>Library</b>: opens the shelves. Chant (GregoBase hymns, sequences, mass ordinary, Du Mont’s Messe royale), hexachord drills, secular songs, Genevan and Lutheran psalms, polyphonic models (gymels, chansons, masses, Folia) and over 200 <b>canons</b> by Josquin, Ockeghem and their contemporaries; also <i>Your melodies</i>, kept in this browser. A search field finds a piece by title or composer.</li>
+<li><b>Edit</b>: opens the editing strip (see below).</li>
+<li><b>Transform</b>: clef and staff, pitch, transposition, note values, mensuration and talea (see below).</li>
+<li><b>New</b>: a melody on an empty staff. Give it a name (and yours), optionally a text with hyphens between syllables, then <i>Start writing</i>; <i>Sing a chant instead</i> switches to singing. You may tick that a copy goes to Václav.</li>
+<li><b>Open</b>: <i>Choose a file…</i> to read your own score: MuseScore, MusicXML or MIDI.</li>
+<li><b>Sing in</b>: the microphone writes your singing as notation. <i>Start singing</i>, then name it; optionally type the Latin text (it is divided into syllables for you), <i>keep the pitch I sang</i> (otherwise the chant is moved to where the modes lie), or let the browser also listen for the words (experimental). The chant is saved under <i>Your melodies</i>; <i>Edit</i> corrects a note.</li>
+<li><b>Add voice</b>: adds a voice (Cantus, Altus, Tenor or Bassus) to the piece: <i>Write it</i> in the editor or <i>Sing it</i> into the microphone.</li>
+<li><b>Guidonian hand</b>: shows the hand with the camera inside Cantare, so you can show the notes of the melody on your hand.</li>
+<li><b>Microphone</b>: records your voice with the music (headphones!); while the music plays, what you sing is written out in red on a staff of its own, down to fusae. A switch limits it to the notes of the scale; <i>Latency</i> compensates the delay of your device: press the clap test (eight clicks, clap with each) and it is measured for you.</li>
+<li><b>Share</b>: copy a link that opens this exact melody, or send it on.</li>
+<li><b>PDF</b>: the whole piece on A4 pages.</li></ul>
+<h4>Edit</h4>
+<ul><li>Click a note to select it; <b>previous / next note</b> move the selection; <b>higher / lower</b> change the pitch by a step.</li>
+<li>Note values: <b>Maxima, Longa, Brevis, Semibrevis, Minima, Semiminima, Fusa</b>; <b>Rest</b> makes it a rest; <b>Dot</b> dots it; <b>Flat, Natural, Sharp</b> set the accidental.</li>
+<li><b>Add a note after this one</b>; <b>Delete</b>; <b>Undo / Redo</b>; <b>Text under the notes</b> sets the words (hyphens between syllables).</li></ul>
+<h4>Transform</h4>
+<ul><li><b>Clef and staff</b>: choose the clef and 4, 5 or 6 lines (Auto: four for plainchant, five for mensural music).</li>
+<li><b>Pitch</b>: <i>Step −/+</i> and <i>Octave</i> move the melody; <i>Reset</i>; the two key buttons move the whole melody to the next or previous key on C D E F G A B♭, adding accidentals where needed. <i>Advanced transposition</i>: direction (up/down), quality and interval, then <i>Transpose</i>.</li>
+<li><b>Note values</b>: double every value (brevis becomes longa) or halve it.</li>
+<li><b>Mensuration</b>: tempus perfectum, imperfectum, and their diminished forms (alla breve).</li>
+<li><b>Talea</b>: 18 rhythmic patterns for isorhythm, among them the six rhythmic modes and their ordines; <i>None</i> removes it.</li></ul>
+<h4>Voices of a piece</h4>
+<p>Each voice has buttons to <b>hide</b> it, <b>mute</b> it, or <b>Do not follow</b> (its notes do not light up while playing: you follow it yourself, from the notation). With a polyphonic model, hide the voice you want to improvise and sing it against the others.</p>
+<h4>The bar at the bottom</h4>
+<ul><li><b>Back to the beginning</b>, <b>Play / Pause</b>, <b>Loop</b>; the arrows <b>previous / next leaf</b> turn the pages of a long piece.</li>
+<li><b>Semibreves per minute</b>: type the tempo; <b>Tap</b> it two or more times to set it by tapping. The buttons <i>Minima / Semibrevis / Brevis / Longa = tactus</i> choose which value is the beat.</li>
+<li><b>Pitch a′</b> in Hz (440 by default; 415 or 466 for historical pitches).</li>
+<li><b>Sound</b>: organ, voice (sung by Chimera) and more. <b>Tactus</b>: hand, baton, pendulum and click. <b>Hear notes while editing</b>.</li>
+<li><b>One line</b>: the whole piece on one long line that rolls by while it plays; the clefs stay at the left.</li>
+<li><b>View</b>: <i>Layout</i> (score, or choir book: Italian, with Cantus and Tenor on the left page and Altus and Bassus on the right; or German, with Cantus and Bassus left, Altus and Tenor right), <i>Zoom</i> (also the − and + beside the title), <i>Spacing</i>, theme (dark or light).</li>
+<li><b>Focus mode</b> (“Only the music”) puts everything else away; <i>Leave focus</i> returns.</li>
+<li><b>Copy a link</b> that opens this exact melody; <b>Keep</b> stores it among <i>Your melodies</i> in this browser, to change and send later.</li>
+<li><b>Description</b> shows the source and notes of the piece (for chant: GregoBase, with a link). <b>Submit this melody to the collection</b> sends a copy to Václav, with a window for a short message to him.</li>
+<li><b>Feedback &amp; wishes</b>, <b>Share</b> and <b>Support</b> sit at the very bottom.</li></ul>
+<p>Cantare can be installed on the home screen of a phone and works offline once loaded.</p></section><section id="canon"><h2>Improvising canons</h2><p>Sing the <b>dux</b> and hear yourself answered by the <b>comes</b> at a fixed interval, as in a Renaissance canon. At <code>/gym/canon/</code>.</p>
 <ol><li><b>Number of voices</b>, then choose a canon: each card shows when every voice enters (left to right) and how high it sings (up and down). Your voice, the dux, is marked.</li>
 <li><b>Entry and tempo</b>: choose after which note value the comes enters and the tempo of the minim (type it, or tap it a few times). The metronome can be on or off; the tactus hand may be a hand, a hand with baton, or none.</li>
 <li><b>Sound, starting note and latency</b>: choose how the following voices sound, the tuning (pure fifths and fourths, or equal), the pitch of a′, and a starting note. Every device needs a little time between sound and your voice coming back: use the <b>clap test</b> and raise the latency until the comes enters exactly with the metronome. Headphones are best; tick “speakers” if you cannot use them.</li>
@@ -63,7 +84,7 @@ li{margin:.35rem 0}
 <li>No camera? <b>Tap the notes on the painted hand</b> to hear them. <i>Which hand</i> chooses the left or the right hand.</li>
 <li><b>Two hands</b>: turn the phone sideways and show both palms; each hand is a voice of its own.</li>
 <li><b>Write down</b> records every note you show, one staff per hand; the result goes to <b>PDF, MusicXML, MIDI or MEI</b>.</li>
-<li><b>Transposition</b> and <b>octave</b>, and the names <b>b mi / b fa</b> (B natural or flat), set how the hand sounds. <i>Musica ficta by height</i> names the places that carry a flat or sharp.</li>
+<li>Choose a <b>text to sing</b> under <i>Sing a text</i> (a part of the Mass or a sentence): with <i>Voice (Chimera)</i> as the sound, the voice takes the next syllable with each new note of each hand; <i>Follow my singing</i> lets the page listen to you and keep the voices on the word you have reached. Without a text the voice sings every note on one open vowel, not syllables; <i>Organ</i> and <i>Silent</i> are the other sounds.</li><li><b>Transposition</b> and <b>octave</b>, and the names <b>b mi / b fa</b> (B natural or flat), set how the hand sounds. <i>Musica ficta by height</i> names the places that carry a flat or sharp.</li>
 <li><b>Teach my hand</b>: if the camera mixes up two places, show each position once, or open <i>Tricky places</i>; with <i>Correct a note</i> tap the right place on the painted hand. <b>Save my hand</b> stores the result as a file for another device; <b>Load a hand</b> reads it back; <b>Forget my hand</b> returns to the average hand.</li>
 </ul>
 <p>Your camera image stays on your device and is never sent anywhere.</p></section><section id="ear"><h2>The Ultimate Ear Trainer</h2><p>At <code>/ear/</code>. The home page offers eleven rooms: <b>Intervals, Intonation, Key signatures, Rhythm, Chords, Scales and modes, Sing the next note, Melodic dictation, Cadences and progressions, Metre, Tuning systems</b>. Choose a room and follow the instruction on the screen: you hear something, then answer by tapping, singing or writing.</p>
@@ -95,25 +116,46 @@ li{margin:.35rem 0}
 <li><b>Atlas des musikalischen Stils</b> (<code>/atlas/</code>): <a href="#atlas">eine Karte von Stilen, Elementen, Komponisten und Traktaten</a>.</li>
 <li><b>Concordantia</b> (<code>/concordantia/</code>): <a href="#conc">Traktate nach Themen geordnet</a>.</li>
 <li><b>Fiorire · Die Kunst der Diminution</b> (<code>/fiorire/</code>): <a href="#fiorire">ein mehrstimmiges Stück verzieren</a>.</li></ul>
-<p>Auf jeder Seite öffnet ein kleines <b>?</b> in der Leiste oder in der Fußzeile dieses Handbuch an der passenden Stelle. Auf dem Telefon das Gerät für Notenzeilen und Chorbuch quer halten.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>Ein Betrachter und Editor für Choral und Mensuralmelodien in Originalnotation, zum <b>Singen und Improvisieren</b>. Zu öffnen im Gym oder unter <code>/gym/cantare/</code>.</p>
-<h4>Ein Stück wählen</h4>
-<ul><li><b>Bibliothek</b>: Choral (Hymnen, Sequenzen und Ordinarium aus GregoBase), Hexachord-Übungen, weltliche Lieder, Genfer und lutherische Psalmen, mehrstimmige Vorlagen und über 200 <b>Kanons</b> von Josquin, Ockeghem und ihren Zeitgenossen. Das Suchfeld der Bibliothek hilft beim Finden.</li>
-<li><b>Eigene Partitur öffnen</b> (MuseScore, MusicXML, MIDI) oder <b>eine neue Melodie auf leerem System</b> beginnen.</li>
-<li><b>Neuen Choral singen</b>: Das Mikrofon schreibt deinen Gesang als Notation auf; <b>Bearbeiten</b> korrigiert eine Note.</li></ul>
-<h4>Die Melodie verändern</h4>
-<ul><li><b>Melodie bearbeiten</b>: Klicke eine Stelle im System an, um eine Note einzufügen oder zu ändern; Notenwert, Pausen, Punkte und b wählbar.</li>
-<li><b>Verwandeln</b>: <i>Schlüssel und System</i> (4, 5, 6 Linien oder Auto), <i>Tonhöhe</i> (Schritt, Oktave, erweiterte Transposition um ein beliebiges Intervall), <i>Notenwerte</i> (alle Werte verdoppeln oder halbieren) und <i>Talea</i> (18 rhythmische Muster für Isorhythmie, darunter die sechs Rhythmischen Modi).</li></ul>
-<h4>Hören und üben</h4>
-<ul><li><b>Play</b> startet das Stück; <b>Schleife</b> wiederholt es; das Tempo in <i>Semibreven pro Minute</i> eintippen oder zwei- und mehrmals antippen. Wähle, welcher Notenwert der <i>Tactus</i> ist und wie er angezeigt wird (Hand, Taktstock, Pendel, Klick).</li>
-<li><b>Klang</b>: Orgel, Stimme und weitere. <b>Töne beim Bearbeiten hören</b> spielt jede eingegebene Note.</li>
-<li>Jede Stimme kann <b>ausgeblendet</b>, <b>stummgeschaltet</b> oder mit <b>Do not follow</b> markiert werden, damit ihre Noten nicht aufleuchten: Du folgst ihr selbst.</li>
-<li><b>Mikrofon</b>: Dein Gesang wird zusammen mit der Musik aufgenommen (Kopfhörer!) und kann abgespielt werden.</li>
-<li><b>Chorbuch / Partitur</b>: italienische oder deutsche Chorbuch-Anordnung oder Partitur; die <b>lange Zeile</b> rollt das Stück beim Spielen vorbei. Mit den Pfeilen blätterst du.</li></ul>
-<h4>Speichern, teilen, drucken</h4>
-<ul><li><b>Teilen</b> kopiert einen Link, der genau diese Melodie öffnet. <b>Behalten</b> legt sie unter <i>Your melodies</i> in diesem Browser ab.</li>
-<li><b>PDF</b> sichert das ganze Stück auf A4-Seiten. <b>Ansicht</b> bietet Zoom, Farbschema und einen <b>Fokusmodus</b>, der alles außer der Musik wegräumt (Ende mit <i>Leave focus</i>).</li>
-<li><b>Submit this melody to the collection</b> schickt Václav eine Kopie; dafür gibt es ein Fenster für eine kurze Nachricht an ihn.</li>
-<li>Die Sprache wählst du im Menü <i>Sprache</i> der Werkzeugleiste.</li></ul></section><section id="canon"><h2>Kanons improvisieren</h2><p>Sing den <b>Dux</b> und höre dich vom <b>Comes</b> in festem Abstand beantwortet, wie im Kanon der Renaissance. Unter <code>/gym/canon/</code>.</p>
+<p>Auf jeder Seite öffnet ein kleines <b>?</b> in der Leiste oder in der Fußzeile dieses Handbuch an der passenden Stelle. Auf dem Telefon das Gerät für Notenzeilen und Chorbuch quer halten.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>Ein Betrachter und Editor für Choral und Mensuralmusik in Originalnotation, zum <b>Singen und Improvisieren</b>. Zu öffnen im Gym oder unter <code>/gym/cantare/</code>. Dieser Abschnitt nennt jede Funktion und wo sie zu finden ist.</p>
+<h4>Die obere Leiste</h4>
+<ul><li><b>Gym</b> (oben links) führt zurück ins Gym; <b>← Václav Hřebec</b> zur Startseite.</li>
+<li><b>Sprache</b> (Globus): Englisch, Deutsch, Französisch, Tschechisch; <b>Sonne/Mond</b> wechselt hell und dunkel; <b>Vollbild</b> (wo das Gerät es erlaubt).</li></ul>
+<h4>Die Werkzeugleiste darunter, von links nach rechts</h4>
+<ul><li><b>Library</b> (Bibliothek): öffnet die Regale. Choral (Hymnen, Sequenzen und Ordinarium aus GregoBase, Du Monts Messe royale), Hexachord-Übungen, weltliche Lieder, Genfer und lutherische Psalmen, mehrstimmige Vorlagen (Gymel, Chansons, Messen, Folia) und über 200 <b>Kanons</b> von Josquin, Ockeghem und ihren Zeitgenossen; dazu <i>Your melodies</i>, im Browser gespeichert. Ein Suchfeld findet Stücke nach Titel oder Komponist.</li>
+<li><b>Edit</b>: öffnet die Bearbeitungsleiste (siehe unten).</li>
+<li><b>Transform</b>: Schlüssel und System, Tonhöhe, Transposition, Notenwerte, Mensur und Talea (siehe unten).</li>
+<li><b>New</b>: eine Melodie auf leerem System. Gib ihr einen Namen (und deinen), optional einen Text mit Bindestrichen zwischen den Silben, dann <i>Start writing</i>; <i>Sing a chant instead</i> wechselt zum Singen. Du kannst ankreuzen, dass eine Kopie an Václav geht.</li>
+<li><b>Open</b>: <i>Choose a file…</i> liest deine eigene Partitur: MuseScore, MusicXML oder MIDI.</li>
+<li><b>Sing in</b>: Das Mikrofon schreibt deinen Gesang als Notation auf. <i>Start singing</i>, dann benennen; optional den lateinischen Text eintippen (er wird für dich in Silben geteilt), <i>die gesungene Tonhöhe behalten</i> (sonst wird der Choral dorthin gerückt, wo die Modi liegen) oder den Browser auch auf die Worte hören lassen (experimentell). Der Choral wird unter <i>Your melodies</i> gespeichert; <i>Edit</i> korrigiert eine Note.</li>
+<li><b>Add voice</b>: fügt dem Stück eine Stimme hinzu (Cantus, Altus, Tenor oder Bassus): <i>Write it</i> im Editor oder <i>Sing it</i> ins Mikrofon.</li>
+<li><b>Guidonische Hand</b>: zeigt die Hand mit der Kamera direkt in Cantare, damit du die Töne der Melodie auf deiner Hand zeigen kannst.</li>
+<li><b>Mikrofon</b>: nimmt deine Stimme mit der Musik auf (Kopfhörer!); solange die Musik läuft, wird, was du singst, rot auf einem eigenen System aufgeschrieben, bis zu Fusen. Ein Schalter beschränkt es auf die Töne der Skala; <i>Latency</i> gleicht die Verzögerung deines Geräts aus: Starte den Klatschtest (acht Klicks, bei jedem klatschen), und sie wird für dich gemessen.</li>
+<li><b>Share</b>: einen Link kopieren, der genau diese Melodie öffnet, oder weitergeben.</li>
+<li><b>PDF</b>: das ganze Stück auf A4-Seiten.</li></ul>
+<h4>Edit</h4>
+<ul><li>Eine Note anklicken, um sie zu wählen; <b>previous / next note</b> verschieben die Auswahl; <b>higher / lower</b> ändern die Tonhöhe um eine Stufe.</li>
+<li>Notenwerte: <b>Maxima, Longa, Brevis, Semibrevis, Minima, Semiminima, Fusa</b>; <b>Rest</b> macht sie zur Pause; <b>Dot</b> punktiert; <b>Flat, Natural, Sharp</b> setzen das Vorzeichen.</li>
+<li><b>Add a note after this one</b>; <b>Delete</b>; <b>Undo / Redo</b>; <b>Text under the notes</b> setzt den Text (Bindestriche zwischen Silben).</li></ul>
+<h4>Transform</h4>
+<ul><li><b>Clef and staff</b>: Schlüssel wählen und 4, 5 oder 6 Linien (Auto: vier für Choral, fünf für Mensuralmusik).</li>
+<li><b>Pitch</b>: <i>Step −/+</i> und <i>Octave</i> verschieben die Melodie; <i>Reset</i>; die zwei Tonart-Knöpfe rücken die ganze Melodie in die nächste oder vorige Tonart auf C D E F G A B♭ und setzen Vorzeichen, wo nötig. <i>Advanced transposition</i>: Richtung (auf/ab), Qualität und Intervall, dann <i>Transpose</i>.</li>
+<li><b>Note values</b>: jeden Wert verdoppeln (Brevis wird Longa) oder halbieren.</li>
+<li><b>Mensuration</b>: Tempus perfectum, imperfectum und ihre verkleinerten Formen (alla breve).</li>
+<li><b>Talea</b>: 18 rhythmische Muster für Isorhythmie, darunter die sechs Rhythmischen Modi und ihre Ordines; <i>None</i> hebt sie auf.</li></ul>
+<h4>Die Stimmen eines Stücks</h4>
+<p>Jede Stimme hat Knöpfe, um sie <b>auszublenden</b>, <b>stummzuschalten</b> oder <b>Do not follow</b> zu wählen (ihre Noten leuchten beim Spielen nicht auf: Du folgst ihr selbst, nach der Notation). Bei einer mehrstimmigen Vorlage blende die Stimme aus, die du improvisieren willst, und singe sie gegen die anderen.</p>
+<h4>Die Leiste unten</h4>
+<ul><li><b>Zurück zum Anfang</b>, <b>Play / Pause</b>, <b>Schleife</b>; die Pfeile <b>vorheriges / nächstes Blatt</b> blättern in einem langen Stück.</li>
+<li><b>Semibreven pro Minute</b>: Tempo eintippen; <b>Tap</b> zwei- oder mehrmals antippen, um es zu klopfen. Die Knöpfe <i>Minima / Semibrevis / Brevis / Longa = Tactus</i> bestimmen, welcher Wert der Schlag ist.</li>
+<li><b>Tonhöhe a′</b> in Hz (standardmäßig 440; 415 oder 466 für historische Stimmtöne).</li>
+<li><b>Klang</b>: Orgel, Stimme (von Chimera gesungen) und mehr. <b>Tactus</b>: Hand, Taktstock, Pendel und Klick. <b>Hear notes while editing</b>.</li>
+<li><b>One line</b>: das ganze Stück auf einer langen Zeile, die beim Spielen vorbeirollt; die Schlüssel bleiben links.</li>
+<li><b>View</b>: <i>Layout</i> (Partitur oder Chorbuch: italienisch, mit Cantus und Tenor auf der linken, Altus und Bassus auf der rechten Seite; oder deutsch, mit Cantus und Bassus links, Altus und Tenor rechts), <i>Zoom</i> (auch − und + neben dem Titel), <i>Spacing</i>, Farbschema (dunkel oder hell).</li>
+<li><b>Fokusmodus</b> („Only the music“) räumt alles andere weg; <i>Leave focus</i> bringt es zurück.</li>
+<li><b>Link kopieren</b>, der genau diese Melodie öffnet; <b>Keep</b> legt sie unter <i>Your melodies</i> in diesem Browser ab, zum späteren Ändern und Senden.</li>
+<li><b>Description</b> zeigt Quelle und Anmerkungen zum Stück (bei Choral: GregoBase, mit Link). <b>Submit this melody to the collection</b> schickt Václav eine Kopie, mit einem Fenster für eine kurze Nachricht an ihn.</li>
+<li><b>Feedback &amp; Wünsche</b>, <b>Teilen</b> und <b>Unterstützen</b> stehen ganz unten.</li></ul>
+<p>Cantare lässt sich auf dem Startbildschirm eines Telefons installieren und läuft nach dem Laden offline.</p></section><section id="canon"><h2>Kanons improvisieren</h2><p>Sing den <b>Dux</b> und höre dich vom <b>Comes</b> in festem Abstand beantwortet, wie im Kanon der Renaissance. Unter <code>/gym/canon/</code>.</p>
 <ol><li><b>Anzahl der Stimmen</b>, dann einen Kanon wählen: Jede Karte zeigt, wann jede Stimme einsetzt (von links nach rechts) und wie hoch sie singt (auf und ab). Deine Stimme, der Dux, ist markiert.</li>
 <li><b>Einsatz und Tempo</b>: Wähle, nach welchem Notenwert der Comes einsetzt, und das Tempo der Minima (eintippen oder ein paarmal antippen). Das Metronom kann an oder aus sein; die Tactus-Hand kann Hand, Hand mit Taktstock oder keine sein.</li>
 <li><b>Klang, Startton und Latenz</b>: Klang der folgenden Stimmen, Stimmung (reine Quinten und Quarten oder gleichstufig), Höhe von a′ und Startton. Jedes Gerät braucht etwas Zeit, bis der Klang wieder in deine Stimme zurückkommt: Mach den <b>Klatschtest</b> und erhöhe die Latenz, bis der Comes genau mit dem Metronom einsetzt. Kopfhörer sind am besten; ohne Kopfhörer „Lautsprecher“ ankreuzen.</li>
@@ -125,7 +167,7 @@ li{margin:.35rem 0}
 <li>Keine Kamera? <b>Tippe die Noten auf der gemalten Hand an</b>, um sie zu hören. <i>Welche Hand</i> wählt die linke oder die rechte Hand.</li>
 <li><b>Zwei Hände</b>: Telefon quer halten und beide Handflächen zeigen; jede Hand ist eine eigene Stimme.</li>
 <li><b>Aufschreiben</b> hält jede gezeigte Note fest, ein System pro Hand; das Ergebnis geht als <b>PDF, MusicXML, MIDI oder MEI</b> heraus.</li>
-<li><b>Transposition</b>, <b>Oktave</b> und die Namen <b>b mi / b fa</b> (H oder B) bestimmen, wie die Hand klingt. <i>Musica ficta nach Höhe</i> nennt die Stellen mit b oder Kreuz.</li>
+<li>Wähle unter <i>Einen Text singen</i> einen <b>Text</b> (Messteil oder Satz): Mit <i>Voice (Chimera)</i> als Klang nimmt die Stimme mit jeder neuen Note jeder Hand die nächste Silbe; <i>Meinem Gesang folgen</i> lässt die Seite dir zuhören und die Stimmen beim erreichten Wort halten. Ohne Text singt die Stimme jede Note auf einem offenen Vokal, nicht auf Silben; <i>Orgel</i> und <i>Stumm</i> sind die anderen Klänge.</li><li><b>Transposition</b>, <b>Oktave</b> und die Namen <b>b mi / b fa</b> (H oder B) bestimmen, wie die Hand klingt. <i>Musica ficta nach Höhe</i> nennt die Stellen mit b oder Kreuz.</li>
 <li><b>Meine Hand einlernen</b>: Verwechselt die Kamera zwei Stellen, zeige jede Position einmal oder öffne <i>Knifflige Stellen</i>; mit <i>Eine Note korrigieren</i> tippst du die richtige Stelle auf der gemalten Hand an. <b>Meine Hand speichern</b> legt das Ergebnis als Datei für ein anderes Gerät ab; <b>Eine Hand laden</b> liest sie wieder ein; <b>Meine Hand vergessen</b> kehrt zur Durchschnittshand zurück.</li>
 </ul>
 <p>Dein Kamerabild bleibt auf deinem Gerät und wird nirgends hingeschickt.</p></section><section id="ear"><h2>The Ultimate Ear Trainer</h2><p>Unter <code>/ear/</code>. Die Startseite bietet elf Räume: <b>Intervalle, Intonation, Vorzeichen, Rhythmus, Akkorde, Skalen und Modi, Nächsten Ton singen, Melodiediktat, Kadenzen und Progressionen, Metrum, Stimmungssysteme</b>. Wähle einen Raum und folge der Anweisung auf dem Bildschirm: Du hörst etwas und antwortest durch Tippen, Singen oder Schreiben.</p>
@@ -158,25 +200,46 @@ li{margin:.35rem 0}
 <li><b>Atlas du style musical</b> (<code>/atlas/</code>) : <a href="#atlas">une carte des styles, éléments, compositeurs et traités</a>.</li>
 <li><b>Concordantia</b> (<code>/concordantia/</code>) : <a href="#conc">les traités classés par sujet</a>.</li>
 <li><b>Fiorire · L’art de la diminution</b> (<code>/fiorire/</code>) : <a href="#fiorire">orner une pièce polyphonique</a>.</li></ul>
-<p>Sur chaque page, un petit <b>?</b> dans la barre ou le pied de page ouvre ce mode d’emploi au bon endroit. Sur téléphone, tenez l’appareil à l’horizontale pour les portées et le livre de chœur.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>Un visionneur et éditeur de mélodies de plain-chant et de musique mesurée en notation originale, pour <b>chanter et improviser par-dessus</b>. À ouvrir depuis le gym ou à <code>/gym/cantare/</code>.</p>
-<h4>Choisir une pièce</h4>
-<ul><li><b>Bibliothèque</b> : plain-chant (hymnes, séquences et ordinaire de GregoBase), exercices d’hexacorde, chansons profanes, psaumes genevois et luthériens, modèles polyphoniques et plus de 200 <b>canons</b> de Josquin, Ockeghem et leurs contemporains. Le champ de recherche aide à trouver.</li>
-<li><b>Ouvrir votre partition</b> (MuseScore, MusicXML, MIDI) ou commencer <b>une mélodie sur une portée vide</b>.</li>
-<li><b>Chanter un nouveau chant</b> : le microphone note votre chant ; <b>Modifier</b> corrige une note.</li></ul>
-<h4>Transformer la mélodie</h4>
-<ul><li><b>Modifier la mélodie</b> : cliquez sur la portée pour ajouter ou changer une note ; valeur, silences, points et bémols au choix.</li>
-<li><b>Transformer</b> : <i>Clef et portée</i> (4, 5, 6 lignes ou Auto), <i>Hauteur</i> (degré, octave, transposition avancée par n’importe quel intervalle), <i>Valeurs</i> (doubler ou diviser par deux) et <i>Talea</i> (18 motifs rythmiques pour l’isorythmie, dont les six modes rythmiques).</li></ul>
-<h4>Écouter et s’exercer</h4>
-<ul><li><b>Lecture</b> lance la pièce ; <b>Boucle</b> la répète ; saisissez le tempo en <i>semibrèves par minute</i> ou tapez-le deux fois ou plus. Choisissez la valeur du <i>tactus</i> et son signal (main, bâton, pendule, clic).</li>
-<li><b>Son</b> : orgue, voix et autres. <b>Entendre les notes en modifiant</b> joue chaque note saisie.</li>
-<li>Chaque voix peut être <b>masquée</b>, <b>coupée</b> ou marquée <b>Do not follow</b> pour que ses notes ne s’illuminent pas : vous la suivez vous-même.</li>
-<li><b>Microphone</b> : votre chant est enregistré avec la musique (casque !) et peut être réécouté.</li>
-<li><b>Livre de chœur / partition</b> : disposition italienne ou allemande, ou partition ; la <b>ligne continue</b> fait défiler la pièce pendant la lecture. Les flèches tournent les feuillets.</li></ul>
-<h4>Enregistrer, partager, imprimer</h4>
-<ul><li><b>Partager</b> copie un lien qui ouvre exactement cette mélodie. <b>Garder</b> la range dans <i>Your melodies</i> de ce navigateur.</li>
-<li><b>PDF</b> enregistre toute la pièce sur pages A4. <b>Affichage</b> offre zoom, thème et un <b>mode concentration</b> qui range tout sauf la musique (sortie par <i>Leave focus</i>).</li>
-<li><b>Submit this melody to the collection</b> envoie une copie à Václav ; une fenêtre permet de lui écrire un court message.</li>
-<li>La langue se choisit dans le menu <i>Langue</i> de la barre d’outils.</li></ul></section><section id="canon"><h2>Canons improvisés</h2><p>Chantez le <b>dux</b> et entendez-vous répondre par le <b>comes</b> à intervalle fixe, comme dans un canon de la Renaissance. À <code>/gym/canon/</code>.</p>
+<p>Sur chaque page, un petit <b>?</b> dans la barre ou le pied de page ouvre ce mode d’emploi au bon endroit. Sur téléphone, tenez l’appareil à l’horizontale pour les portées et le livre de chœur.</p></section><section id="cantare"><h2>Cantare super librum</h2><p>Un visionneur et éditeur de plain-chant et de musique mesurée en notation originale, pour <b>chanter et improviser par-dessus</b>. À ouvrir depuis le gym ou à <code>/gym/cantare/</code>. Cette section liste chaque fonction et où la trouver.</p>
+<h4>La barre du haut</h4>
+<ul><li><b>Gym</b> (en haut à gauche) ramène au gym ; <b>← Václav Hřebec</b> à l’accueil.</li>
+<li><b>Langue</b> (globe) : anglais, allemand, français, tchèque ; <b>soleil/lune</b> alterne clair et sombre ; <b>plein écran</b> (si l’appareil le permet).</li></ul>
+<h4>La barre d’outils dessous, de gauche à droite</h4>
+<ul><li><b>Library</b> (bibliothèque) : ouvre les rayons. Plain-chant (hymnes, séquences et ordinaire de GregoBase, Messe royale de Du Mont), exercices d’hexacorde, chansons profanes, psaumes genevois et luthériens, modèles polyphoniques (gymels, chansons, messes, Folia) et plus de 200 <b>canons</b> de Josquin, Ockeghem et leurs contemporains ; aussi <i>Your melodies</i>, gardées dans ce navigateur. Un champ de recherche trouve une pièce par titre ou compositeur.</li>
+<li><b>Edit</b> : ouvre la barre d’édition (voir plus bas).</li>
+<li><b>Transform</b> : clef et portée, hauteur, transposition, valeurs, mensuration et talea (voir plus bas).</li>
+<li><b>New</b> : une mélodie sur une portée vide. Donnez-lui un nom (et le vôtre), éventuellement un texte avec des traits d’union entre les syllabes, puis <i>Start writing</i> ; <i>Sing a chant instead</i> passe au chant. Vous pouvez cocher l’envoi d’une copie à Václav.</li>
+<li><b>Open</b> : <i>Choose a file…</i> lit votre propre partition : MuseScore, MusicXML ou MIDI.</li>
+<li><b>Sing in</b> : le microphone note votre chant en notation. <i>Start singing</i>, puis nommez-le ; éventuellement tapez le texte latin (il est découpé en syllabes pour vous), <i>gardez la hauteur chantée</i> (sinon le chant est déplacé là où se trouvent les modes) ou laissez le navigateur écouter aussi les mots (expérimental). Le chant est enregistré sous <i>Your melodies</i> ; <i>Edit</i> corrige une note.</li>
+<li><b>Add voice</b> : ajoute une voix à la pièce (Cantus, Altus, Tenor ou Bassus) : <i>Write it</i> dans l’éditeur ou <i>Sing it</i> au microphone.</li>
+<li><b>Main guidonienne</b> : montre la main avec la caméra dans Cantare même, pour montrer les notes de la mélodie sur votre main.</li>
+<li><b>Microphone</b> : enregistre votre voix avec la musique (casque !) ; pendant la lecture, ce que vous chantez s’écrit en rouge sur une portée à part, jusqu’aux fusae. Un interrupteur le limite aux notes de la gamme ; <i>Latency</i> compense le retard de votre appareil : lancez le test d’applaudissement (huit clics, applaudissez à chacun) et elle est mesurée pour vous.</li>
+<li><b>Share</b> : copier un lien qui ouvre exactement cette mélodie, ou la transmettre.</li>
+<li><b>PDF</b> : toute la pièce sur pages A4.</li></ul>
+<h4>Edit</h4>
+<ul><li>Cliquez sur une note pour la choisir ; <b>previous / next note</b> déplacent la sélection ; <b>higher / lower</b> changent la hauteur d’un degré.</li>
+<li>Valeurs : <b>Maxima, Longa, Brevis, Semibrevis, Minima, Semiminima, Fusa</b> ; <b>Rest</b> en fait un silence ; <b>Dot</b> la pointe ; <b>Flat, Natural, Sharp</b> posent l’altération.</li>
+<li><b>Add a note after this one</b> ; <b>Delete</b> ; <b>Undo / Redo</b> ; <b>Text under the notes</b> règle les paroles (traits d’union entre syllabes).</li></ul>
+<h4>Transform</h4>
+<ul><li><b>Clef and staff</b> : choisissez la clef et 4, 5 ou 6 lignes (Auto : quatre pour le plain-chant, cinq pour la musique mesurée).</li>
+<li><b>Pitch</b> : <i>Step −/+</i> et <i>Octave</i> déplacent la mélodie ; <i>Reset</i> ; les deux boutons de ton transposent toute la mélodie vers le ton suivant ou précédent sur C D E F G A B♭, avec les altérations nécessaires. <i>Advanced transposition</i> : direction (haut/bas), qualité et intervalle, puis <i>Transpose</i>.</li>
+<li><b>Note values</b> : doubler chaque valeur (la brevis devient longa) ou la diviser par deux.</li>
+<li><b>Mensuration</b> : tempus perfectum, imperfectum et leurs formes diminuées (alla breve).</li>
+<li><b>Talea</b> : 18 motifs rythmiques pour l’isorythmie, dont les six modes rythmiques et leurs ordines ; <i>None</i> la retire.</li></ul>
+<h4>Les voix d’une pièce</h4>
+<p>Chaque voix a des boutons pour la <b>masquer</b>, la <b>couper</b> ou choisir <b>Do not follow</b> (ses notes ne s’illuminent pas à la lecture : vous la suivez vous-même, d’après la notation). Avec un modèle polyphonique, masquez la voix que vous voulez improviser et chantez-la contre les autres.</p>
+<h4>La barre du bas</h4>
+<ul><li><b>Retour au début</b>, <b>Play / Pause</b>, <b>Boucle</b> ; les flèches <b>feuillet précédent / suivant</b> tournent les pages d’une longue pièce.</li>
+<li><b>Semibrèves par minute</b> : saisissez le tempo ; <b>Tap</b> deux fois ou plus pour le régler en tapant. Les boutons <i>Minime / Semibrève / Brève / Longue = tactus</i> choisissent la valeur du temps.</li>
+<li><b>Hauteur a′</b> en Hz (440 par défaut ; 415 ou 466 pour les diapasons historiques).</li>
+<li><b>Son</b> : orgue, voix (chantée par Chimera) et plus. <b>Tactus</b> : main, bâton, pendule et clic. <b>Hear notes while editing</b>.</li>
+<li><b>One line</b> : toute la pièce sur une longue ligne qui défile pendant la lecture ; les clefs restent à gauche.</li>
+<li><b>View</b> : <i>Layout</i> (partition, ou livre de chœur : italien, avec Cantus et Tenor sur la page de gauche et Altus et Bassus à droite ; ou allemand, avec Cantus et Bassus à gauche, Altus et Tenor à droite), <i>Zoom</i> (aussi − et + à côté du titre), <i>Spacing</i>, thème (sombre ou clair).</li>
+<li><b>Mode concentration</b> (« Only the music ») range tout le reste ; <i>Leave focus</i> le ramène.</li>
+<li><b>Copier un lien</b> qui ouvre exactement cette mélodie ; <b>Keep</b> la range dans <i>Your melodies</i> de ce navigateur, pour la modifier et l’envoyer plus tard.</li>
+<li><b>Description</b> montre la source et les notes de la pièce (pour le chant : GregoBase, avec lien). <b>Submit this melody to the collection</b> envoie une copie à Václav, avec une fenêtre pour lui écrire un court message.</li>
+<li><b>Avis et souhaits</b>, <b>Partager</b> et <b>Soutenir</b> se trouvent tout en bas.</li></ul>
+<p>Cantare peut être installé sur l’écran d’accueil d’un téléphone et fonctionne hors ligne une fois chargé.</p></section><section id="canon"><h2>Canons improvisés</h2><p>Chantez le <b>dux</b> et entendez-vous répondre par le <b>comes</b> à intervalle fixe, comme dans un canon de la Renaissance. À <code>/gym/canon/</code>.</p>
 <ol><li><b>Nombre de voix</b>, puis choisissez un canon : chaque carte montre quand chaque voix entre (de gauche à droite) et à quelle hauteur elle chante (haut et bas). Votre voix, le dux, est marquée.</li>
 <li><b>Entrée et tempo</b> : choisissez après quelle valeur le comes entre, et le tempo de la minime (saisi ou tapé quelques fois). Le métronome peut être activé ou non ; la main du tactus peut être une main, une main avec bâton, ou aucune.</li>
 <li><b>Son, note de départ et latence</b> : son des voix suivantes, accord (quintes et quartes pures, ou tempéré), hauteur du la′ et note de départ. Chaque appareil a besoin d’un peu de temps avant que le son revienne dans votre voix : faites le <b>test d’applaudissement</b> et augmentez la latence jusqu’à ce que le comes entre exactement avec le métronome. Le casque est idéal ; sans casque, cochez « haut-parleurs ».</li>
@@ -188,7 +251,7 @@ li{margin:.35rem 0}
 <li>Pas de caméra ? <b>Touchez les notes sur la main dessinée</b> pour les entendre. <i>Quelle main</i> choisit la main gauche ou la droite.</li>
 <li><b>Deux mains</b> : tenez le téléphone à l’horizontale et montrez les deux paumes ; chaque main est une voix.</li>
 <li><b>Noter</b> enregistre chaque note montrée, une portée par main ; le résultat s’exporte en <b>PDF, MusicXML, MIDI ou MEI</b>.</li>
-<li><b>Transposition</b>, <b>octave</b> et les noms <b>b mi / b fa</b> (si bécarre ou bémol) règlent le son de la main. <i>Musica ficta selon la hauteur</i> nomme les endroits avec bémol ou dièse.</li>
+<li>Choisissez sous <i>Chanter un texte</i> un <b>texte</b> (partie de messe ou phrase) : avec <i>Voice (Chimera)</i> comme son, la voix prend la syllabe suivante à chaque nouvelle note de chaque main ; <i>Suivre mon chant</i> laisse la page vous écouter et garder les voix sur le mot atteint. Sans texte, la voix chante chaque note sur une voyelle ouverte, pas sur des syllabes ; <i>Orgue</i> et <i>Silencieux</i> sont les autres sons.</li><li><b>Transposition</b>, <b>octave</b> et les noms <b>b mi / b fa</b> (si bécarre ou bémol) règlent le son de la main. <i>Musica ficta selon la hauteur</i> nomme les endroits avec bémol ou dièse.</li>
 <li><b>Apprendre ma main</b> : si la caméra confond deux endroits, montrez chaque position une fois ou ouvrez <i>Endroits délicats</i> ; avec <i>Corriger une note</i>, touchez le bon endroit sur la main dessinée. <b>Enregistrer ma main</b> sauvegarde le résultat dans un fichier pour un autre appareil ; <b>Charger une main</b> le relit ; <b>Oublier ma main</b> revient à la main moyenne.</li>
 </ul>
 <p>L’image de votre caméra reste sur votre appareil et n’est envoyée nulle part.</p></section><section id="ear"><h2>The Ultimate Ear Trainer</h2><p>À <code>/ear/</code>. L’accueil propose onze salles : <b>Intervalles, Justesse, Armures, Rythme, Accords, Gammes et modes, Chanter la note suivante, Dictée mélodique, Cadences et progressions, Mesure, Systèmes d’accord</b>. Choisissez une salle et suivez la consigne à l’écran : vous entendez quelque chose, puis répondez en touchant, chantant ou écrivant.</p>
@@ -219,6 +282,7 @@ li{margin:.35rem 0}
 </div>
 <script>try{var t=localStorage.getItem('theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <script src="../lang/dict.js"></script><script src="../lang/lang.js"></script>
-<script>document.addEventListener('langchange',function(){var h=location.hash;if(h){var e=document.querySelector(h.replace(/[^#\w-]/g,''));e&&e.scrollIntoView()}})</script>
+<script>(function(){function apply(){var h=location.hash.slice(1),secs=[].slice.call(document.querySelectorAll('section')),ok=h&&h!=='start'&&secs.some(function(x){return x.id===h});document.body.classList.toggle('only',!!ok);secs.forEach(function(x){x.classList.toggle('cur',x.id===h)});if(ok)window.scrollTo(0,0);else if(h){var v=secs.filter(function(x){return x.id===h&&x.offsetParent})[0];v?v.scrollIntoView():window.scrollTo(0,0)}else window.scrollTo(0,0)}
+addEventListener('hashchange',apply);document.addEventListener('langchange',apply);document.addEventListener('DOMContentLoaded',apply);apply()})()</script>
 </body>
 </html>

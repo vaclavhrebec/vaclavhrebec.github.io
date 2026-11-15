@@ -296,15 +296,15 @@
     <div class="nstaves" id="nStaves"></div>
   </section>
 
-  <section class="panel texts" id="texts" aria-label="The text to sing" hidden style="display:none">
+  <section class="panel texts" id="texts" aria-label="The text to sing">
     <h2>Sing a text</h2>
-    <p class="lead">Choose a sentence and sing it while your hands show two more voices: the voice sings each new note on the next syllable. Without a sentence it sings the solmisation syllable of each place.</p>
+    <p class="lead">Choose a sentence and sing it while your hands show two more voices: the voice sings each new note on the next syllable. Without a sentence it sings every note on one open vowel, with no syllables.</p>
     <div class="parts" id="parts" role="group" aria-label="Part of the Mass"></div>
     <div class="lines" id="lines" role="group" aria-label="Sentences"></div>
     <p class="sung" id="sung" aria-live="polite"><span class="none">No sentence chosen: ut, re, mi, fa, sol, la.</span></p>
     <div class="row">
       <button class="btn" id="followBtn" aria-pressed="false" title="Listens to you through the microphone and keeps the voices on the word you are singing">Follow my singing</button>
-      <button class="btn" id="clearText" title="Back to the solmisation syllables">No text</button>
+      <button class="btn" id="clearText" title="Back to one open vowel, without a text">No text</button>
       <span class="follow" id="followStatus" role="status"></span>
     </div>
   </section>
@@ -339,7 +339,7 @@
         <option value="12">an octave</option>
       </select>
     </div>
-    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
+    <div class="group"><span class="lbl">Sound</span><div class="seg" role="group" aria-label="Sound"><button data-snd="organ" aria-pressed="true">Organ</button><button data-snd="voice" aria-pressed="false" title="Sung by Chimera, a physical model of the human voice">Voice (Chimera)</button><button data-snd="off" aria-pressed="false">Silent</button></div></div>
     <div class="group" title="Raise the palm into the top third of the picture for C♯, F♯, G♯; lower it into the bottom third for E♭, B♭, A♭. D never changes."><span class="lbl">Musica ficta</span><div class="seg" role="group" aria-label="Musica ficta by height"><button data-ficta="1" aria-pressed="true">By height</button><button data-ficta="0" aria-pressed="false">Off</button></div></div>
     <label class="group"><span class="lbl">Volume</span><input type="range" id="vol" min="0" max="100" value="70"></label>
     <div class="group handtools">
@@ -576,7 +576,6 @@ let ctx = null, master = null;
 const prefs = {ref: 440, vol: 70, snd: 'organ', bfa: false, oct: 0, hands: 1, cam: 'environment', tdir: 1, tint: 0, side: 'L', ficta: 1};
 try { const c = JSON.parse(localStorage.getItem('cantus-firmus:v1') || 'null'); if (c && c.prefs && c.prefs.ref >= 100 && c.prefs.ref <= 1000) prefs.ref = c.prefs.ref; } catch (e) {}
 try { Object.assign(prefs, JSON.parse(localStorage.getItem('manus:v1') || '{}')); } catch (e) {}
-if (prefs.snd === 'voice') prefs.snd = 'organ';   // the singing of syllables has been taken out
 const EMBED = document.documentElement.dataset.embed === '1';
 if (!prefs.camPicked) prefs.cam = EMBED ? 'user' : 'environment';  // the back camera (in Cantare the front one, facing the singer), unless the person chose themselves
 if (EMBED) { try { const r = Number(new URLSearchParams(location.search).get('ref')); if (r >= 100 && r <= 1000) prefs.ref = r; } catch (e) {} }
@@ -692,11 +691,11 @@ function zoneOf(P, H, was){
 /* ---------- the voice: Chimera sings, one voice for each hand ----------
    With a sentence chosen, each new note takes the next syllable; when the singer is followed and the voice is ahead
    of them it holds its syllable (a melisma); when the singer is ahead it finishes its word and jumps to theirs.
-   Without a sentence each note is sung on the solmisation syllable of its place. */
+   Without a sentence every note is sung on one open vowel. */
 const TXT = {line: null, units: [], follow: false, heard: -1, k: [-1, -1, -1], sol: {}};
 const CH = [null, null, null];
 const unitOf = text => { const sy = latinWord([text])[0]; return chimera.units(sy); };
-['ut', 're', 'mi', 'fa', 'sol', 'la'].forEach(x => { TXT.sol[x] = null; });
+['a'].forEach(x => { TXT.sol[x] = null; });   // without a text the voice sings one open vowel, no syllables
 let bankAsked = false;
 function preloadVoice(){
   if (prefs.snd !== 'voice') return;
@@ -732,7 +731,7 @@ function chimOn(slot, midi, pos, same){
   const m = midi + shiftOf();
   let k = -1, u;
   if (TXT.line) { k = same && TXT.k[slot] >= 0 ? TXT.k[slot] : nextSyl(slot); u = TXT.units[k]; }
-  else u = TXT.sol[pos >= 0 ? sylOf(pos) : 'la'] || null;
+  else u = TXT.sol.a || null;
   if (!u) return false;
   try { chimera.ensure(); chimera.setVolume(volGain() * 1.25); } catch (e) { return false; }
   let h = CH[slot];
@@ -742,7 +741,7 @@ function chimOn(slot, midi, pos, same){
   else ok = glide ? h.glide(m) : h.say(u, m);
   if (!ok) { if (h) h.release(); CH[slot] = null; preloadVoice(); return false; }
   if (TXT.line) TXT.k[slot] = k;
-  sylShow(slot, TXT.line ? TXT.line.syl[k].text : (pos >= 0 ? sylOf(pos) : ''));
+  sylShow(slot, TXT.line ? TXT.line.syl[k].text : '');
   paintText();
   return true;
 }

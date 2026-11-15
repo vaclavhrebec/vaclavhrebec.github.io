@@ -37,7 +37,7 @@ setSpacing(prefs.spacing);
 snd.setSound(prefs.sound || {});
 { /* the language is shared with the other pages of the site: ?lang=, then the site-wide choice, then this app's own */
   let shared = ''; try { shared = new URL(location.href).searchParams.get('lang') || localStorage.getItem('lang') || ''; } catch (e) { /* none */ }
-  if (LANGS.some(x => x[0] === shared)) prefs.lang = shared;
+  if (LANGS.some(x => x[0] === shared)) { prefs.lang = shared; try { localStorage.setItem('lang', shared); } catch (e) { /* none */ } }
   setLang(prefs.lang || guessLang());
 }
 const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
