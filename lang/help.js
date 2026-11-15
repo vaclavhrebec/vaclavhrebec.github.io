@@ -3,7 +3,14 @@
   'use strict';
   var s = document.currentScript, topic = (s && s.dataset.help) || '', base = new URL('../help/', s.src).href;
   var T = { en: 'Help: user manual', de: 'Hilfe: Handbuch', fr: 'Aide : mode d’emploi', cs: 'Nápověda: příručka' };
-  function lang() { var l = ''; try { l = new URL(location.href).searchParams.get('lang') || ''; } catch (e) { /* none */ } if (T[l]) return l; l = ''; try { l = localStorage.getItem('lang') || ''; } catch (e) { /* none */ } return T[l] ? l : 'en'; }
+  /* the language currently shown: the page's own switch (select or buttons), else <html lang>, else ?lang=, else the stored choice */
+  function lang() {
+    var l = '', e = document.getElementById('lang'), b = document.querySelector('.lang button[aria-pressed="true"]');
+    if (e && e.value) l = e.value; else if (b && b.dataset.lang) l = b.dataset.lang; else l = document.documentElement.lang || '';
+    l = (l || '').slice(0, 2).toLowerCase(); if (T[l] && (l !== 'en' || e || b)) return l;
+    try { l = new URL(location.href).searchParams.get('lang') || ''; } catch (x) { l = ''; } if (T[l]) return l;
+    try { l = localStorage.getItem('lang') || ''; } catch (x) { l = ''; } return T[l] ? l : 'en';
+  }
   function go() {
     if (document.querySelector('a.helplink')) return;
     var a = document.createElement('a'); a.className = 'helplink ib'; a.href = base + (topic ? '#' + topic : ''); var HT = { en: 'Help', de: 'Hilfe', fr: 'Aide', cs: 'Nápověda' }; a.innerHTML = '<b>?</b><span>' + HT[lang()] + '</span>';
@@ -18,7 +25,10 @@
     else if ((host = document.querySelector('.sketch'))) { host.appendChild(document.createTextNode(' · ')); host.appendChild(a); }
     else if ((host = document.querySelector('footer'))) { host.appendChild(document.createTextNode(' · ')); host.appendChild(a); }
     else { a.style.cssText += ';position:fixed;right:.7rem;bottom:.7rem'; document.body.appendChild(a); }
-    document.addEventListener('langchange', function () { a.querySelector('span').textContent = HT[lang()]; a.title = T[lang()]; a.setAttribute('aria-label', T[lang()]); });
+    var shown = lang();
+    function refresh() { var l = lang(); if (l === shown) return; shown = l; var sp = a.querySelector('span'); if (sp) sp.textContent = HT[l]; a.title = T[l]; a.setAttribute('aria-label', T[l]); }
+    document.addEventListener('langchange', refresh); document.addEventListener('click', function () { setTimeout(refresh, 60); setTimeout(refresh, 400); }); document.addEventListener('change', function () { setTimeout(refresh, 60); });
+    setInterval(refresh, 700);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', go); else go();
 })();
