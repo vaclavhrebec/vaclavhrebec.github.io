@@ -416,15 +416,15 @@ const lerp = (p, q, t) => ({x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t, 
 const dist = (p, q) => Math.hypot(p.x - q.x, p.y - q.y);
 /* Where each place lies, worked out from the 21 landmarks of the hand as it is held right now. */
 function places(P){
-  const base = (m, p) => lerp(P[m], P[p], 0.3);   // the crease where the finger leaves the palm
-  const pad  = (t, d) => lerp(P[t], P[d], 0.22);  // the pad just below the fingertip
+  /* every place lies exactly on a joint or a fingertip of the hand: the base joint of each finger (where it leaves the palm),
+     its two middle joints and its tip. The nearest joint decides, so the area belonging to a note is always the area around its joint. */
   const out = [];
-  out[0] = P[4]; out[1] = P[3]; out[2] = lerp(P[2], P[3], 0.25);
-  out[3] = base(5, 6); out[4] = base(9, 10); out[5] = base(13, 14); out[6] = base(17, 18);
-  out[7] = P[18]; out[8] = P[19]; out[9] = pad(20, 19);
-  out[10] = pad(16, 15); out[11] = pad(12, 11); out[12] = pad(8, 7);
+  out[0] = P[4]; out[1] = P[3]; out[2] = P[2];
+  out[3] = P[5]; out[4] = P[9]; out[5] = P[13]; out[6] = P[17];
+  out[7] = P[18]; out[8] = P[19]; out[9] = P[20];
+  out[10] = P[16]; out[11] = P[12]; out[12] = P[8];
   out[13] = P[7]; out[14] = P[6]; out[15] = P[10]; out[16] = P[14]; out[17] = P[15]; out[18] = P[11];
-  out[19] = lerp(P[12], P[11], -0.35);             // just beyond the middle fingertip, on the nail
+  out[19] = lerp(P[12], P[11], -0.35);             // beyond the middle fingertip, on the nail
   return out;
 }
 /* How straight a finger is: 1 when stretched out, smaller as it curls. */
@@ -841,10 +841,11 @@ function handSVG(side){
   path(handOutline(P), '', {style: 'fill:var(--skin);stroke:var(--skin-ink);stroke-width:3px;stroke-linejoin:round'});
   // the main lines of the palm
   for (const d of ['M102 262 C132 292 126 352 150 402', 'M106 266 C140 270 180 282 214 304', 'M246 262 C214 250 170 236 132 236']) path(d, 'crease');
-  // creases across each joint
-  for (const [m, p, w] of [[5, 6, 15], [9, 10, 16], [13, 14, 15], [17, 18, 12], [2, 3, 17]]) {
-    for (const t of [0.3, 1]) {
-      const c = lerp(P[m], P[p], t), dx = P[p].x - P[m].x, dy = P[p].y - P[m].y, n = Math.hypot(dx, dy);
+  // creases across each joint: the notes lie on them
+  for (const [J, w] of [[[5, 6, 7], 15], [[9, 10, 11], 16], [[13, 14, 15], 15], [[17, 18, 19], 12], [[2, 3], 17]]) {
+    for (let k = 0; k < J.length; k++) {
+      const c = P[J[k]], q = P[J[Math.min(k + 1, J.length - 1)]], r = P[J[Math.max(k - 1, 0)]];
+      const dx = q.x - r.x, dy = q.y - r.y, n = Math.hypot(dx, dy) || 1;
       path('M' + pt({x: c.x - dy / n * w * .7, y: c.y + dx / n * w * .7}) + ' L' + pt({x: c.x + dy / n * w * .7, y: c.y - dx / n * w * .7}), 'crease');
     }
   }
