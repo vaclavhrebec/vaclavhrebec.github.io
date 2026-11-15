@@ -202,7 +202,9 @@ export function pieceFrom(item, trail) {
     const steps = voices[0].notes.filter(n => !n.rest).map(n => n.step);
     voices[0].clef = fitClef(steps, 4, voices[0].clef).id;
   }
-  return { ...base, kind, lines, voices, end: Math.max(...voices.map(v => v.end)) };
+  const out = { ...base, kind, lines, voices, end: Math.max(...voices.map(v => v.end)) };
+  if (item.poly && !item.noficta) autoFicta(out);
+  return out;
 }
 
 /* ---------- pitch ---------- */
@@ -216,6 +218,36 @@ export function alterationOf(n, bflat) {
 export function midiOf(n, bflat, shift = 0) {
   const s = n.step + shift;
   return 12 * (Math.floor(s / 7) + 1) + SEMITONES[((s % 7) + 7) % 7] + alterationOf(n, bflat);
+}
+
+
+/* Musica ficta by rule, for the polyphonic models: where two voices strike a tritone together (mi contra fa: B-flat against E, or B against F),
+   the note that is "mi" is lowered, as a singer would do, and marked as editorial (small flat above the note). It is applied only where nothing
+   is written there already, never to the last note of a voice, a cadential E–F or a long note, and never where it would make a new tritone. */
+export function autoFicta(piece) {
+  const bf = !!piece.bflat, V = piece.voices;
+  const sounding = (vi, t) => V[vi].notes.find(n => !n.rest && n.t <= t + 1e-6 && t < n.t + n.len - 1e-6);
+  const tri = (a, b) => Math.abs(midiOf(a, bf) - midiOf(b, bf)) % 12 === 6;
+  const deg = n => ((n.step % 7) + 7) % 7; /* 2 = E, 3 = F, 6 = B */
+  let count = 0;
+  V.forEach((v, vi) => v.notes.forEach((n, i) => {
+    if (n.rest || n.acc || n.ficta || n.len < 2 || n.t % 2 || n.len >= 8) return;
+    if (deg(n) !== 2 && deg(n) !== 6) return;
+    if (!v.notes.slice(i + 1).some(x => !x.rest)) return;
+    const nx = v.notes.slice(i + 1).find(x => !x.rest);
+    if (nx && deg(nx) === 3 && deg(n) === 2) return; /* E–F: a Phrygian step */
+    if (deg(n) === 6 && !(nx && deg(nx) === 5)) return; /* B natural is lowered only where the line turns down to A (not B–C, which wants the natural) */
+    const others = V.map((_, j) => (j === vi ? null : sounding(j, n.t))).filter(Boolean);
+    const bad = others.filter(m => tri(n, m));
+    if (!bad.length) return;
+    /* B-flat (signature) against E, or B (no signature flat) against F; the other note must itself be plain */
+    const ok = deg(n) === 2 ? bf && bad.every(m => deg(m) === 6 && !m.acc) : !bf && bad.every(m => deg(m) === 3 && !m.acc);
+    if (!ok) return;
+    const t = { ...n, acc: 'b' };
+    if (others.some(m => tri(t, m))) return;
+    n.acc = 'b'; n.ficta = true; n.auto = true; count++;
+  }));
+  return count;
 }
 
 export const hz = (midi, a4 = 440) => a4 * Math.pow(2, (midi - 69) / 12);

@@ -138,7 +138,7 @@ export const styleOf = piece => piece.kind === 'chant' ? 'chant' : piece.kind ==
 
 /* Columns: one for each moment at which any of the chosen voices begins a note. */
 export function buildColumns(piece, vidx) {
-  const style = styleOf(piece);
+  const style = styleOf(piece), flow = style === 'chant' && !piece.talea; /* a talea gives the chant notes real values: they are spaced by duration, not run together as ligatures */
   const times = [...new Set(vidx.flatMap(v => piece.voices[v].notes.map(n => Math.round(n.t * 1e4) / 1e4)))].sort((a, b) => a - b);
   const at = new Map(times.map((t, i) => [t, i]));
   const cols = times.map(t => ({ t, notes: Object.create(null), need: 0, ligature: false }));
@@ -156,7 +156,7 @@ export function buildColumns(piece, vidx) {
       if (e.n.text) textW = Math.max(textW, textWidth(e.n.text) + (e.n.hyphen ? .8 : .3));
     }
     c.textW = textW;
-    if (style === 'chant') {
+    if (flow) {
       const e = c.notes[vidx[0]];
       c.ligature = !!(hasText && k > 0 && e && !e.n.rest && !e.n.text && !cols[k - 1].restHere);
       c.need = c.ligature ? 1.18 : Math.max(need + .5, textW + .15);
@@ -168,7 +168,7 @@ export function buildColumns(piece, vidx) {
   });
   /* chant: the notes of one syllable are a ligature, written touching each other
      (a small space only between repeated notes on the same pitch); the syllable's text may widen the whole group */
-  if (style === 'chant') {
+  if (flow) {
     let head = 0;
     cols.forEach((c, k) => {
       if (!c.ligature) head = k;
