@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script src="/theme.js"></script>
 <meta name="copyright" content="© 2026 Václav Hřebec. All rights reserved. Online since 2026-11-15.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Concordantia — a topical concordance of music treatises</title>
@@ -10,16 +11,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#c2a07a; --paper:#ccad8a; --ink:#1f170f; --muted:#4a3a28; --line:#a5845d;
+  --bg:#c2a07a; --paper:#f1e6d1; --ink:#1f170f; --muted:#4a3a28; --line:#a88760;
   --accent:#8a2e1f; --accent-soft:#f1e1da;
   --l-treatise:#8a2e1f; --l-ms:#2f5d50; --l-sci:#3e4f86; --l-event:#8a6a1f;
   --serif:"Crimson Pro",Georgia,serif; --sans:Inter,system-ui,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root{
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#16140f; --paper:#1f1c16; --ink:#ece6da; --muted:#a59c8e; --line:#3a352c;
   --accent:#e08a6f; --accent-soft:#3a2620;
   --l-treatise:#e08a6f; --l-ms:#7fbfa9; --l-sci:#9aa9e6; --l-event:#d9b764;
 }}
+:root[data-theme="dark"]{
+  --bg:#16140f; --paper:#1f1c16; --ink:#ece6da; --muted:#a59c8e; --line:#3a352c;
+  --accent:#e08a6f; --accent-soft:#3a2620;
+  --l-treatise:#e08a6f; --l-ms:#7fbfa9; --l-sci:#9aa9e6; --l-event:#d9b764;
+}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.5}
 a{color:var(--accent)}
