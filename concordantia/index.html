@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concordantia — a topical concordance of music treatises</title>
+<meta name="description" content="Music treatises organised by topic: what Boethius, Guido, Tinctoris, Ornithoparchus, Zarlino and others say on the same question, with sources and historical context.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f2ea; --paper:#fffdf8; --ink:#231f1a; --muted:#6d655b; --line:#e2dacb;
+  --accent:#8a2e1f; --accent-soft:#f1e1da;
+  --l-treatise:#8a2e1f; --l-ms:#2f5d50; --l-sci:#3e4f86; --l-event:#8a6a1f;
+  --serif:"Crimson Pro",Georgia,serif; --sans:Inter,system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#16140f; --paper:#1f1c16; --ink:#ece6da; --muted:#a59c8e; --line:#3a352c;
+  --accent:#e08a6f; --accent-soft:#3a2620;
+  --l-treatise:#e08a6f; --l-ms:#7fbfa9; --l-sci:#9aa9e6; --l-event:#d9b764;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:18px;line-height:1.5}
+header{padding:28px 20px 8px;max-width:1000px;margin:0 auto}
+h1{font-weight:400;font-size:clamp(34px,7vw,54px);margin:0;letter-spacing:.02em}
+h1 small{display:block;font-size:17px;font-style:italic;color:var(--muted);letter-spacing:0;margin-top:2px}
+.sketch{font-family:var(--sans);font-size:12px;color:var(--muted);margin-top:10px}
+nav{position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+nav .in{max-width:1000px;margin:0 auto;display:flex;gap:4px;padding:8px 14px;overflow-x:auto}
+nav button{font-family:var(--sans);font-size:14px;border:0;background:none;color:var(--muted);padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+main{max-width:1000px;margin:0 auto;padding:18px 20px 60px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 18px}
+.chip{font-family:var(--sans);font-size:13px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 11px;border-radius:999px;cursor:pointer}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--paper)}
+.lede{color:var(--muted);font-style:italic;margin:0 0 14px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px}
+.card h3{margin:0;font-weight:600;font-size:21px;line-height:1.25}
+.card h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line)}
+.meta{font-family:var(--sans);font-size:12.5px;color:var(--muted);margin:3px 0 8px}
+.loc{font-family:var(--sans);font-size:12px;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.links a{font-family:var(--sans);font-size:12px;color:var(--accent);text-decoration:none;border:1px solid var(--line);padding:3px 8px;border-radius:5px}
+.links a.direct{border-color:var(--accent)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.grid .card{margin:0;cursor:pointer}
+.grid .card:hover{border-color:var(--accent)}
+input[type=search]{width:100%;font:16px var(--sans);padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink);margin-bottom:12px}
+.tl{position:relative;margin-left:8px;border-left:2px solid var(--line);padding-left:18px}
+.tl .row{position:relative;margin:0 0 14px}
+.tl .row::before{content:"";position:absolute;left:-25px;top:8px;width:10px;height:10px;border-radius:50%;background:var(--c)}
+.tl .yr{font-family:var(--sans);font-size:12px;font-weight:600;color:var(--c)}
+.tl .t{font-size:18px}
+.tl .t a{color:inherit}
+.tl .n{font-size:15.5px;color:var(--muted)}
+.cent{font-family:var(--sans);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px -18px;padding-left:0}
+.lane{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;background:var(--c)}
+.back{font-family:var(--sans);font-size:13px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;margin-bottom:12px}
+.ctx{border-left:3px solid var(--accent);padding:2px 0 2px 12px;margin:10px 0}
+.conn{font-size:16px;margin:6px 0}
+.conn b{font-weight:600}
+.pill{font-family:var(--sans);font-size:11px;background:var(--accent-soft);color:var(--accent);padding:2px 7px;border-radius:4px;margin-right:4px}
+.foot{font-family:var(--sans);font-size:12px;color:var(--muted);border-top:1px solid var(--line);margin-top:30px;padding-top:12px}
+h2{font-weight:400;font-size:28px;margin:6px 0 4px}
+.about p{max-width:680px}
+.about li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Concordantia<small>A topical concordance of music treatises, with their sources and their world</small></h1>
+  <div class="sketch"><a href="../" style="color:inherit">← vaclavhrebec.github.io</a> · first version · summaries are editorial paraphrase, not quotations</div>
+</header>
+<nav><div class="in" id="nav"></div></nav>
+<main id="app"></main>
+
+<script>
+const TOPICS={
+  solm:"Solmisation & the hand", modes:"Modes", mens:"Mensural notation", cpt:"Counterpoint",
+  improv:"Improvised counterpoint", ficta:"Musica ficta", tuning:"Tuning & temperament",
+  organ:"Organ & instruments", dimin:"Diminution", accent:"Accent & liturgical reading",
+  perf:"Singing & performance", texts:"Text and music", spec:"Musica speculativa"
+};
+const LANES={treatise:["Music treatise","--l-treatise"],ms:["Manuscript / print","--l-ms"],sci:["Science, medicine, letters","--l-sci"],event:["Event","--l-event"]};
+
+/* q = search string for the repositories; direct = verified deep links */
+const T=[
+ {id:"boethius",author:"Boethius",title:"De institutione musica",date:"c. 500",y:500,place:"Ravenna / Rome",q:"Boethius De institutione musica",
+  ctx:"Written for the Latin West at the end of antiquity; for a millennium the authority on music as a mathematical art of the quadrivium.",
+  says:{spec:"Divides music into mundana (the cosmos), humana (body and soul) and instrumentalis (sounding music); the true musicus judges by reason, ranking above the mere performer.",
+        tuning:"Derives the consonances from the ratios 2:1, 3:2 and 4:3 and teaches the division of the monochord in the Pythagorean tradition."}},
+ {id:"guido-micr",author:"Guido of Arezzo",title:"Micrologus",date:"c. 1026",y:1026,place:"Arezzo",q:"Guido Micrologus",
+  ctx:"A short practical manual by the monk who also devised staff lines in his antiphoner; among the most copied medieval music books.",
+  says:{modes:"Explains the modes through their finals and their authentic and plagal forms, and how a melody's ending defines it.",
+        cpt:"Gives rules for organum (diaphonia), including how the voices should come together at the cadence (occursus)."}},
+ {id:"guido-ep",author:"Guido of Arezzo",title:"Epistola de ignoto cantu",date:"c. 1030",y:1030,place:"Pomposa / Arezzo",q:"Guido Epistola de ignoto cantu",
+  ctx:"A letter to the monk Michael describing Guido's method of teaching boys to sing unknown chants quickly.",
+  says:{solm:"Uses the hymn Ut queant laxis, whose phrases begin on successive steps, so that singers can fix the sound of each step by its syllable."}},
+ {id:"franco",author:"Franco of Cologne",title:"Ars cantus mensurabilis",date:"c. 1280",y:1280,place:"Paris / Cologne",q:"Franco Ars cantus mensurabilis",
+  ctx:"Codifies the notation of the Notre-Dame and motet repertory.",
+  says:{mens:"Lets the shape of a note, not only its context, define its duration; builds the system on ternary perfection and gives rules for ligatures.",
+        cpt:"Classifies concords as perfect, imperfect and intermediate, and treats discant voice by voice."}},
+ {id:"vitry",author:"attr. Philippe de Vitry",title:"Ars nova",date:"c. 1320",y:1320,place:"Paris",q:"Vitry Ars nova",
+  ctx:"Gave its name to a whole period; survives in several differing redactions.",
+  says:{mens:"Recognises imperfect (duple) time and prolation alongside perfect, the minim as a value, and red notes for changes of mensuration."}},
+ {id:"jacobus",author:"Jacobus of Liège",title:"Speculum musicae",date:"c. 1330",y:1330,place:"Liège / Paris",q:"Jacobus Speculum musicae",
+  ctx:"The largest medieval treatise on music, in seven books.",
+  says:{spec:"An encyclopedic survey of speculative music in the Boethian tradition.",
+        mens:"Its last book defends the older ars antiqua against the innovations of the moderns."}},
+ {id:"prosdocimo",author:"Prosdocimo de' Beldomandi",title:"Contrapunctus",date:"1412",y:1412,place:"Padua",q:"Prosdocimo Contrapunctus",
+  ctx:"By a Paduan professor of astronomy and mathematics.",
+  says:{cpt:"Teaches note-against-note counterpoint and forbids successive perfect consonances of the same kind.",
+        ficta:"Allows ficta to make perfect intervals perfect and to approach them from the nearest imperfect interval."}},
+ {id:"tinctoris",author:"Johannes Tinctoris",title:"Liber de arte contrapuncti",date:"1477",y:1477,place:"Naples",q:"Tinctoris Liber de arte contrapuncti",
+  ctx:"Written at the Aragonese court in Naples and dedicated to King Ferrante; the young Gaffurius met Tinctoris there shortly after.",
+  says:{cpt:"Book III closes with eight general rules of counterpoint, including the demand for variety.",
+        improv:"Book II distinguishes counterpoint sung over the book (super librum, mentally) from written counterpoint (res facta), and discusses what each permits."}},
+ {id:"gaffurius",author:"Franchinus Gaffurius",title:"Practica musicae",date:"1496",y:1496,place:"Milan",q:"Gaffurius Practica musicae",
+  ctx:"Printed in Milan, where Gaffurius was maestro di cappella at the cathedral.",
+  says:{cpt:"Book III gives eight rules of counterpoint, a widely copied formulation.",
+        mens:"Book II is a full treatment of mensural notation and proportions.",
+        modes:"Book I treats plainchant and the modes."}},
+ {id:"schlick",author:"Arnolt Schlick",title:"Spiegel der Orgelmacher und Organisten",date:"1511",y:1511,place:"Speyer / Mainz",q:"Schlick Spiegel der Orgelmacher",
+  ctx:"By the blind organist of the Elector Palatine at Heidelberg; the first German book on the organ.",
+  says:{organ:"Advises how an organ should be planned, built and judged: compass, registers, keyboards and placement in the church.",
+        tuning:"Describes a tuning with tempered fifths so that thirds sound well, and discusses organ pitch."}},
+ {id:"virdung",author:"Sebastian Virdung",title:"Musica getutscht",date:"1511",y:1511,place:"Basel",q:"Virdung Musica getutscht",
+  ctx:"Printed in Basel; the first printed treatise devoted to instruments.",
+  says:{organ:"Illustrates and classifies the instruments of its time and introduces tablatures for keyboard, lute and recorder."}},
+ {id:"ornithoparchus",author:"Andreas Ornithoparchus",title:"Musicae activae micrologus",date:"1517",y:1517,place:"Leipzig",q:"Ornithoparchus Musicae activae micrologus",
+  direct:[["IMSLP","https://imslp.org/wiki/Musicae_activae_micrologus_(Ornithoparchus,_Andreas)"]],
+  ctx:"Four books, each with its own dedication to a named person; the book on counterpoint is addressed to the organist Arnolt Schlick. Reprinted in 1519 and 1521, and translated into English by John Dowland (1609).",
+  says:{solm:"Book I: plainchant, the hand, solmisation and mutation.",
+        modes:"Book I also treats the tones (modes).",
+        mens:"Book II: mensural music, with a list of admired composers.",
+        accent:"Book III: the accentus ecclesiasticus, how lessons, epistles and gospels are read aloud in chant.",
+        cpt:"Book IV: the rules of counterpoint.",
+        perf:"Book IV also comments on the singing habits of different nations and on how a singer should behave.",
+        spec:"Upholds the Boethian harmony of the spheres."}},
+ {id:"aron",author:"Pietro Aron",title:"Toscanello in musica",date:"1523",y:1523,place:"Venice",q:"Aron Toscanello",
+  ctx:"Written in Italian for practising musicians rather than scholars.",
+  says:{cpt:"Observes that modern composers conceive all the voices together rather than one after another.",
+        tuning:"Describes a keyboard temperament with pure major thirds, an early meantone."}},
+ {id:"ganassi",author:"Silvestro Ganassi",title:"Opera intitulata Fontegara",date:"1535",y:1535,place:"Venice",q:"Ganassi Fontegara",
+  ctx:"By a Venetian instrumentalist of the Doge's service.",
+  says:{dimin:"Tables of diminutions on each interval and cadence, from simple to very elaborate.",
+        perf:"The recorder player should imitate the human voice; articulation syllables are given."}},
+ {id:"glarean",author:"Heinrich Glarean",title:"Dodecachordon",date:"1547",y:1547,place:"Basel",q:"Glarean Dodecachordon",
+  ctx:"Printed in Basel by Heinrich Petri; Glarean, a humanist in Basel and Freiburg, also published an edition of Boethius.",
+  says:{modes:"Argues for twelve modes, adding Aeolian and Ionian, and illustrates them with polyphony by Josquin and others."}},
+ {id:"coclico",author:"Adrianus Petit Coclico",title:"Compendium musices",date:"1552",y:1552,place:"Nuremberg",q:"Coclico Compendium musices",
+  ctx:"By a singer who claimed to be a pupil of Josquin.",
+  says:{dimin:"Teaches the ornate manner of singing (ornate canere) with worked examples.",
+        perf:"Presents singing as an art of elegance learned from a master's practice."}},
+ {id:"ortiz",author:"Diego Ortiz",title:"Trattado de glosas",date:"1553",y:1553,place:"Rome",q:"Ortiz Trattado de glosas",
+  ctx:"Printed in Rome in Spanish and Italian editions; Ortiz later served the Spanish viceroy in Naples.",
+  says:{dimin:"Glosas for the viol on cadences and intervals, then whole pieces ornamented.",
+        improv:"Recercadas for viol over a plainsong and over repeated bass patterns, models for improvising with a keyboard."}},
+ {id:"lusitano",author:"Vicente Lusitano",title:"Introduttione facilissima",date:"1553",y:1553,place:"Rome",q:"Lusitano Introduttione facilissima",
+  ctx:"Two years after his public debate in Rome with Vicentino on the genera, which Lusitano won.",
+  says:{improv:"A practical method for counterpoint over plainchant, built on stock melodic patterns for each interval."}},
+ {id:"vicentino",author:"Nicola Vicentino",title:"L'antica musica ridotta alla moderna prattica",date:"1555",y:1555,place:"Rome",q:"Vicentino antica musica",
+  ctx:"Written after losing the 1551 debate with Lusitano.",
+  says:{tuning:"Revives the chromatic and enharmonic genera and describes his archicembalo with 31 steps to the octave.",
+        texts:"The music should express the words and their passions."}},
+ {id:"zarlino",author:"Gioseffo Zarlino",title:"Le istitutioni harmoniche",date:"1558",y:1558,place:"Venice",q:"Zarlino istitutioni harmoniche",
+  ctx:"By the maestro di cappella of St Mark's; the century's central synthesis.",
+  says:{cpt:"Part III: rules of counterpoint, invertible counterpoint and imitation.",
+        modes:"Part IV: twelve modes, renumbered to begin on C in the 1573 edition.",
+        tuning:"Defends the syntonic diatonic and the senario (numbers 1 to 6) as the source of consonance.",
+        texts:"Part IV gives rules for placing syllables under notes."}},
+ {id:"santamaria",author:"Tomás de Santa María",title:"Arte de tañer fantasía",date:"1565",y:1565,place:"Valladolid",q:"Santa Maria Arte de taner fantasia",
+  ctx:"A Dominican's method for keyboard and vihuela players.",
+  says:{improv:"Teaches the improvised keyboard fantasia from simple progressions to imitation.",
+        perf:"Fingering, ornaments (redobles, quiebros) and unequal playing of passages.",organ:"Written with the clavichord and organ in mind."}},
+ {id:"zacconi",author:"Lodovico Zacconi",title:"Prattica di musica",date:"1592",y:1592,place:"Venice",q:"Zacconi Prattica di musica",
+  ctx:"By a singer who had served at the courts of Graz and Munich.",
+  says:{dimin:"Passaggi for singers, with advice on their use.",mens:"Long discussion of mensural signs and proportions."}},
+ {id:"morley",author:"Thomas Morley",title:"A Plaine and Easie Introduction to Practicall Musicke",date:"1597",y:1597,place:"London",q:"Morley Plaine and Easie Introduction",
+  ctx:"Written as a dialogue between a master and pupils.",
+  says:{improv:"Describes the English practice of extempore descant over a plainsong.",cpt:"Teaches composition from two to six voices."}},
+ {id:"dowland",author:"John Dowland (transl.)",title:"Andreas Ornithoparcus his Micrologus",date:"1609",y:1609,place:"London",q:"Ornithoparcus his Micrologus Dowland",
+  ctx:"The lutenist's English translation of Ornithoparchus, almost a century after the original.",
+  says:{perf:"Brings Ornithoparchus' remarks on national singing styles into English."}},
+ {id:"praetorius",author:"Michael Praetorius",title:"Syntagma musicum II: De Organographia",date:"1619",y:1619,place:"Wolfenbüttel",q:"Praetorius Syntagma musicum Organographia",
+  ctx:"Second volume of a three-volume encyclopedia; the woodcut Theatrum instrumentorum followed in 1620.",
+  says:{organ:"Surveys instruments of his day with their ranges, and describes many organs.",tuning:"Discusses tuning and temperament for keyboards."}}
+];
+
+const CONTEXT=[
+ {lane:"ms",y:1400,date:"c. 1400",title:"Faenza Codex",n:"Keyboard intabulations of sacred and secular pieces.",q:"Faenza"},
+ {lane:"ms",y:1410,date:"c. 1410–15",title:"Squarcialupi Codex",n:"Illuminated anthology of Trecento music, Florence.",q:"Squarcialupi"},
+ {lane:"event",y:1453,date:"1453",title:"Fall of Constantinople",n:"Greek scholars and manuscripts move west."},
+ {lane:"ms",y:1460,date:"c. 1460–70",title:"Buxheim Organ Book",n:"Largest keyboard source of the 15th century.",q:"Buxheim"},
+ {lane:"sci",y:1489,date:"1489",title:"Marsilio Ficino, De vita libri tres",n:"Medicine and astrology; music to temper the spirits."},
+ {lane:"ms",y:1501,date:"1501",title:"Petrucci, Harmonice musices Odhecaton",n:"First polyphony printed with movable type, Venice."},
+ {lane:"sci",y:1516,date:"1516",title:"Erasmus, Novum Instrumentum",n:"Greek New Testament printed by Froben in Basel."},
+ {lane:"event",y:1517,date:"1517",title:"Luther's 95 theses",n:"The same year Ornithoparchus prints his Micrologus in Leipzig."},
+ {lane:"sci",y:1543,date:"1543",title:"Vesalius, De humani corporis fabrica",n:"Anatomy, printed by Oporinus in Basel."},
+ {lane:"sci",y:1543,date:"1543",title:"Copernicus, De revolutionibus",n:"Heliocentric astronomy, Nuremberg."},
+ {lane:"event",y:1545,date:"1545–63",title:"Council of Trent",n:"Reform of liturgy and chant."},
+ {lane:"event",y:1551,date:"1551",title:"Vicentino–Lusitano debate",n:"Public dispute in Rome on the genera of contemporary music."},
+ {lane:"event",y:1600,date:"1600–07",title:"Artusi–Monteverdi controversy",n:"Seconda pratica against the rules of counterpoint."},
+ {lane:"sci",y:1619,date:"1619",title:"Kepler, Harmonices mundi",n:"Planetary motion described as harmony."}
+];
+
+const CONN=[
+ ["ornithoparchus","schlick","dedication","The book on counterpoint is addressed to Schlick, 'organist to the Count Palatine'."],
+ ["dowland","ornithoparchus","translation","English translation, London 1609."],
+ ["glarean","boethius","edition","Glarean edited Boethius' writings on music."],
+ ["lusitano","vicentino","debate","Public debate on the genera, Rome 1551."],
+ ["gaffurius","tinctoris","acquaintance","Gaffurius met Tinctoris in Naples."],
+ ["guido-ep","guido-micr","same author",""]
+];
+
+const enc=encodeURIComponent;
+function repoLinks(t){
+  const out=(t.direct||[]).map(([l,u])=>`<a class="direct" href="${u}" target="_blank" rel="noopener">${l} ↗</a>`);
+  out.push(`<a href="https://chmtl.indiana.edu/tml/" target="_blank" rel="noopener">TML</a>`);
+  out.push(`<a href="https://imslp.org/index.php?search=${enc(t.q)}" target="_blank" rel="noopener">IMSLP search</a>`);
+  out.push(`<a href="https://gallica.bnf.fr/services/engine/search/sru?operation=searchRetrieve&version=1.2&query=${enc('(gallica all "'+t.q+'")')}" target="_blank" rel="noopener">Gallica search</a>`);
+  out.push(`<a href="https://www.diamm.ac.uk/search/?q=${enc(t.q)}" target="_blank" rel="noopener">DIAMM search</a>`);
+  return `<div class="links">${out.join("")}</div>`;
+}
+const byId=id=>T.find(t=>t.id===id);
+let state={view:"topics",topic:"improv",treatise:null,lanes:new Set(Object.keys(LANES)),q:""};
+
+const VIEWS={topics:"By topic",treatises:"Treatises",timeline:"Timeline",about:"About the project"};
+function renderNav(){
+  document.getElementById("nav").innerHTML=Object.entries(VIEWS).map(([k,v])=>
+    `<button class="${state.view===k&&!state.treatise?'on':''}" data-v="${k}">${v}</button>`).join("");
+  document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{state.view=b.dataset.v;state.treatise=null;render();scrollTo(0,0)});
+}
+function topicView(){
+  const chips=Object.entries(TOPICS).map(([k,v])=>`<button class="chip ${state.topic===k?'on':''}" data-t="${k}">${v}</button>`).join("");
+  const hits=T.filter(t=>t.says[state.topic]).sort((a,b)=>a.y-b.y);
+  return `<p class="lede">Choose a topic: every treatise that speaks to it appears in chronological order, with where in the work it says so.</p>
+  <div class="chips">${chips}</div>
+  <h2>${TOPICS[state.topic]}</h2><p class="meta">${hits.length} treatises</p>
+  ${hits.map(t=>`<div class="card"><div class="loc">${t.date} · ${t.place}</div>
+    <h3><a href="#" data-open="${t.id}">${t.author}, <i>${t.title}</i></a></h3>
+    <p style="margin:8px 0 0">${t.says[state.topic]}</p>${repoLinks(t)}</div>`).join("")}`;
+}
+function treatiseList(){
+  const q=state.q.toLowerCase();
+  const list=T.filter(t=>!q||(t.author+t.title+t.place).toLowerCase().includes(q)).sort((a,b)=>a.y-b.y);
+  return `<input type="search" id="q" placeholder="Search author, title, place…" value="${state.q}">
+  <div class="grid">${list.map(t=>`<div class="card" data-open="${t.id}"><div class="loc">${t.date}</div>
+    <h3>${t.title}</h3><div class="meta">${t.author} · ${t.place}</div>
+    <div>${Object.keys(t.says).map(k=>`<span class="pill">${TOPICS[k]}</span>`).join(" ")}</div></div>`).join("")}</div>`;
+}
+function treatiseView(t){
+  const conns=CONN.filter(c=>c[0]===t.id||c[1]===t.id).map(c=>{
+    const other=byId(c[0]===t.id?c[1]:c[0]);
+    return `<div class="conn"><span class="pill">${c[2]}</span> <a href="#" data-open="${other.id}">${other.author}, <i>${other.title}</i></a>${c[3]?` — ${c[3]}`:""}</div>`}).join("");
+  const near=CONTEXT.filter(c=>Math.abs(c.y-t.y)<=12).map(c=>`<div class="conn"><span class="lane" style="--c:var(${LANES[c.lane][1]})"></span>${c.date} · ${c.title} <span style="color:var(--muted)">— ${c.n}</span></div>`).join("");
+  return `<button class="back" id="back">← back</button>
+  <div class="loc">${t.date} · ${t.place}</div>
+  <h2><i>${t.title}</i></h2><div class="meta" style="font-size:15px">${t.author}</div>
+  <div class="ctx">${t.ctx}</div>${repoLinks(t)}
+  <h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">What it says, by topic</h3>
+  ${Object.entries(t.says).map(([k,v])=>`<div class="card"><a href="#" class="loc" data-topic="${k}" style="text-decoration:none">${TOPICS[k]} →</a><p style="margin:6px 0 0">${v}</p></div>`).join("")}
+  ${conns?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Connections</h3>${conns}`:""}
+  ${near?`<h3 style="font-weight:400;font-size:22px;margin:24px 0 8px">Around the same time</h3>${near}`:""}`;
+}
+function timelineView(){
+  const lanes=Object.entries(LANES).map(([k,[l,c]])=>`<button class="chip ${state.lanes.has(k)?'on':''}" data-lane="${k}"><span class="lane" style="--c:var(${c})"></span>${l}</button>`).join("");
+  const items=[...T.map(t=>({lane:"treatise",y:t.y,date:t.date,title:`${t.author}, <i>${t.title}</i>`,n:t.place,id:t.id})),...CONTEXT]
+    .filter(i=>state.lanes.has(i.lane)).sort((a,b)=>a.y-b.y);
+  let html="",cent=null;
+  items.forEach(i=>{const c=Math.floor(i.y/100)+1;
+    if(c!==cent){cent=c;html+=`<div class="cent">${["","","","","","","6th","","","","","11th","","13th","14th","15th","16th","17th"][c]||c+"th"} century</div>`}
+    html+=`<div class="row" style="--c:var(${LANES[i.lane][1]})"><div class="yr">${i.date}</div>
+      <div class="t">${i.id?`<a href="#" data-open="${i.id}">${i.title}</a>`:i.title}</div><div class="n">${i.n}</div></div>`});
+  return `<p class="lede">Treatises set among manuscripts, prints, science, medicine and events.</p><div class="chips">${lanes}</div><div class="tl">${html}</div>`;
+}
+function aboutView(){
+  return `<div class="about"><h2>About Concordantia</h2>
+  <p>A reference site that organises music treatises by topic, so that one can read what different authors say about the same question, each within the context of its own treatise and its own time.</p>
+  <ul>
+   <li><b>Texts:</b> the Thesaurus Musicarum Latinarum as the main source of Latin texts, segmented by book and chapter and tagged by topic; vernacular treatises from Gallica, IMSLP, e-rara, MDZ and other digitised collections.</li>
+   <li><b>Every treatise</b> links to its digitised sources (TML, Gallica, IMSLP, DIAMM) and carries a short historical context.</li>
+   <li><b>Timeline</b> of treatises next to manuscripts, prints, science, medicine and events.</li>
+   <li><b>Connections</b> between treatises and people: dedications, translations, editions, polemics.</li>
+   <li><b>Next:</b> real excerpts in Latin with translation beside each summary; direct links to each copy rather than searches; more topics and treatises.</li>
+  </ul>
+  <p style="color:var(--muted);font-size:16px">In this first version, solid-bordered links are direct; the others open a search in the repository. Summaries are editorial and still to be checked against the sources.</p></div>`;
+}
+function render(){
+  renderNav();
+  const app=document.getElementById("app");
+  if(state.treatise) app.innerHTML=treatiseView(byId(state.treatise));
+  else app.innerHTML={topics:topicView,treatises:treatiseList,timeline:timelineView,about:aboutView}[state.view]();
+  app.innerHTML+=`<div class="foot">© 2026 Václav Hřebec · <a href="../" style="color:inherit">vaclavhrebec.github.io</a> · <a href="../atlas/" style="color:inherit">Atlas of Musical Style</a> · <a href="../fiorire/" style="color:inherit">Fiorire</a> · Texts and images remain with their repositories.</div>`;
+  app.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{state.topic=b.dataset.t;render()});
+  app.querySelectorAll("[data-open]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=b.dataset.open;render();scrollTo(0,0)});
+  app.querySelectorAll("[data-topic]").forEach(b=>b.onclick=e=>{e.preventDefault();state.treatise=null;state.view="topics";state.topic=b.dataset.topic;render();scrollTo(0,0)});
+  app.querySelectorAll("[data-lane]").forEach(b=>b.onclick=()=>{const k=b.dataset.lane;state.lanes.has(k)?state.lanes.delete(k):state.lanes.add(k);render()});
+  const back=document.getElementById("back"); if(back) back.onclick=()=>{state.treatise=null;render()};
+  const q=document.getElementById("q"); if(q){q.oninput=()=>{state.q=q.value;const p=q.selectionStart;render();const n=document.getElementById("q");n.focus();n.setSelectionRange(p,p)}}
+}
+render();
+</script>
+<script src="../gym/feedback.js" data-topic="Concordantia" defer></script>
+
+<!-- Visitor statistics (GoatCounter: no cookies, no personal data) -->
+<script data-goatcounter="https://vaclavhrebec.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>

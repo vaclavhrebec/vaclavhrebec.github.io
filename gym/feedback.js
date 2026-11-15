@@ -11,7 +11,7 @@
 (function () {
   const TO = 'vaclavhrebec2000@gmail.com';
   const ENDPOINT = 'https://formsubmit.co/ajax/' + TO;
-  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'Atlas of Musical Style', 'Idea for a new room'];
+  const TOPICS = ['General', 'Cantare super librum', 'Improvising canons', 'Guidonian hand', 'The Ultimate Ear Trainer', 'Atlas of Musical Style', 'Concordantia', 'Idea for a new room'];
   /* translations: the page's <html lang> decides (en, de, fr, cs); topics are always sent in English */
   const L = {
     de: { 'Feedback & wishes': 'Feedback & Wünsche', 'Found a mistake, missing a chant, wishing for a new exercise? Tell me — every message helps the gym grow.': 'Einen Fehler gefunden, fehlt ein Choral, wünschen Sie sich eine neue Übung? Schreiben Sie mir – jede Nachricht hilft dem Projekt zu wachsen.',
