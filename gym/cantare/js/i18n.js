@@ -170,6 +170,9 @@ Object.assign(D.cs, {"e.g. My cantus firmus in the first mode": "např. Můj can
 Object.assign(D.de, { 'Loop: repeat the whole piece until stopped': 'Schleife: das ganze Stück wiederholen, bis es gestoppt wird', 'Tactus': 'Tactus' });
 Object.assign(D.fr, { 'Loop: repeat the whole piece until stopped': "Boucle : répéter toute la pièce jusqu'à l'arrêt", 'Tactus': 'Tactus' });
 Object.assign(D.cs, { 'Loop: repeat the whole piece until stopped': 'Smyčka: opakovat celou skladbu až do zastavení', 'Tactus': 'Taktus' });
+Object.assign(D.de, { 'Colour the sounding note: on, the note being played lights up; off, read it as a plain score': 'Klingende Note färben: an – die gespielte Note leuchtet auf; aus – wie eine normale Partitur lesen', 'Colour the sounding note': 'Klingende Note färben' });
+Object.assign(D.fr, { 'Colour the sounding note: on, the note being played lights up; off, read it as a plain score': "Colorer la note qui sonne : activé, la note jouée s'allume ; désactivé, lire comme une partition ordinaire", 'Colour the sounding note': 'Colorer la note qui sonne' });
+Object.assign(D.cs, { 'Colour the sounding note: on, the note being played lights up; off, read it as a plain score': 'Barvit znějící tón: zapnuto – hraný tón se rozsvítí; vypnuto – čtěte jako běžnou partituru', 'Colour the sounding note': 'Barvit znějící tón' });
 Object.assign(D.de, { 'Inspired by the': 'Angeregt von der Website', 'website and by an early stage of the': 'und von einer frühen Fassung der' });
 Object.assign(D.fr, { 'Inspired by the': 'Inspiré du site', 'website and by an early stage of the': "et d'une première version de l'application" });
 Object.assign(D.cs, { 'Inspired by the': 'Inspirováno webem', 'website and by an early stage of the': 'a ranou verzí aplikace' });

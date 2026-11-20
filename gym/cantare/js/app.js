@@ -24,7 +24,7 @@ const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 4
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
   micFlex: true, micDia: false, micNotate: true, micPhones: false, micCal: null, micLag: 0,
   /* the beat: which note value the tactus counts; loop; hear notes while editing; the organ's pipe settings */
-  unit: 'B', loop: false, audition: true, sound: {} };
+  unit: 'B', loop: false, follow: true, audition: true, sound: {} };
 try { Object.assign(prefs, JSON.parse(localStorage.getItem(STORE) || '{}')); } catch (e) { /* storage may be blocked */ }
 /* 13 Nov 2026: the engraved Bravura shapes became the default for everyone, once */
 if (!prefs.fontBravura) { prefs.font = 'bravura'; prefs.fontBravura = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
@@ -1465,6 +1465,9 @@ $('#tap').addEventListener('click', () => {
   if (taps.length >= 2) setTempo(60000 / ((taps[taps.length - 1] - taps[0]) / (taps.length - 1)) * beatMinims() / 2);
 });
 const syncLoop = () => $('#loopBtn').setAttribute('aria-pressed', String(prefs.loop));
+/* colouring the sounding note: on (a help to follow) or off (read it as a plain score); it applies in every view and mode */
+const syncFollow = () => { $('#hlBtn').setAttribute('aria-pressed', String(prefs.follow !== false)); document.body.classList.toggle('nohl', prefs.follow === false); };
+$('#hlBtn').addEventListener('click', () => { prefs.follow = prefs.follow === false; savePrefs(); syncFollow(); });
 $('#loopBtn').addEventListener('click', () => { prefs.loop = !prefs.loop; savePrefs(); syncLoop(); });
 $('#prevLeaf').addEventListener('click', () => { S.leaf = Math.max(0, S.leaf - 1); render(); });
 $('#nextLeaf').addEventListener('click', () => { S.leaf = Math.min(S.leaves.length - 1, S.leaf + 1); render(); });
@@ -2357,7 +2360,7 @@ new ResizeObserver(() => {
   applyTheme();
   translatePage();
   $('#tempo').value = prefs.tempo; showTempo();
-  buildUnits(); syncLoop(); syncHand();
+  buildUnits(); syncLoop(); syncFollow(); syncHand();
   /* the library starts closed; the Library button opens it */
   $('#library').dataset.open = 'false'; $('#studio').dataset.open = 'false'; syncLibBtn();
   await loadLibrary();

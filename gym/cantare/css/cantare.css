@@ -97,9 +97,9 @@ svg { display: block; }
 .system .hit { fill: transparent; stroke: none; cursor: pointer; }
 .system .muted { opacity: .45; }
 .system .note { transition: color .05s; }
-.system .note.on { color: var(--hl); }
+body:not(.nohl) .system .note.on { color: var(--hl); }
 .system .note.sel { color: var(--sel); }
-.system .note.on .hollow { stroke-width: .24; }
+body:not(.nohl) .system .note.on .hollow { stroke-width: .24; }
 
 /* choir book */
 .book { border-color: var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 0; max-width: 78rem; margin: 0 auto; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--raised); box-shadow: var(--shadow); color: var(--note); }
@@ -258,7 +258,7 @@ g.sung .hollow { stroke: #e0322b; }
 g.sung .stroke { stroke: #e0322b; }
 g.sung .staffline { stroke: #e0322b; opacity: .55; }
 g.sung .vname { fill: #e0322b; }
-g.sung .note.on .fill { fill: var(--accent); }
+body:not(.nohl) g.sung .note.on .fill { fill: var(--accent); }
 .row.wrap { flex-wrap: wrap; }
 .latrow input { width: 5.2em; height: 30px; padding: 0 6px; text-align: center; background: transparent; color: inherit; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 .paper.singing .sys { margin-bottom: 34px; }
@@ -400,6 +400,9 @@ html.focus .tactus-hand { z-index: 0; }
 .rewind.loop { margin-right: 0; margin-left: -4px; }
 .rewind.loop svg { fill: none; stroke-width: 2; }
 .rewind.loop[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.rewind.hlbtn { margin-right: 0; margin-left: -4px; }
+.rewind.hlbtn svg { stroke-width: 1.8; }
+.rewind.hlbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .tempo { flex-direction: row; align-items: center; gap: 6px; }
 .tempo input { width: 3.8rem; padding: 4px 6px; font-size: 15px; }
 .dock #tap { align-self: center; margin-bottom: 0; }
