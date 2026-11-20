@@ -36,6 +36,18 @@ WORKS.update({
 "tinctoris-inv":("Johannes Tinctoris","De inventione et usu musicae",1482,"c. 1481–83","Naples","A history of music, its singers and instruments, surviving only in extracts sent to Johannes Stokem; names Pietrobono and the blind Flemish viol players.","re:^15th/TININV\\d?$",'Tinctoris De inventione et usu musicae'),
 })
 
+# ---------------- Dance treatises of the 15th and 16th centuries
+BRU = "https://www.diamm.ac.uk/sources/787/"
+WORKS.update({
+"domenico":("Domenico da Piacenza","De arte saltandi et choreas ducendi",1450,"c. 1450","Ferrara","The first Italian dance treatise: the four misure (bassadanza, quaternaria, saltarello, piva) and the balli of the master of Ferrara.","",'Domenico da Piacenza De arte saltandi'),
+"brussels-bd":("Anonymous (court of Margaret of Austria)","Basses danses (Brussels, KBR, MS 9085)",1497,"c. 1495–1501","Burgundian Netherlands","Gold and silver on black parchment: an instruction in the basse danse and 58 dances, each a tenor in breves with its steps written beneath. Owned by Margaret of Austria.","",'Brussels basse danse manuscript 9085'),
+"toulouze":("Michel Toulouze","L’art et instruction de bien dancer",1490,"c. 1490","Paris","The first printed dance book: almost the same instruction as the Brussels manuscript, with its own basse danse tenors.","",'Toulouze art et instruction de bien dancer'),
+"copland":("Robert Copland","The maner of dauncynge of bace daunces",1521,"1521","London","An English version of the French basse danse instruction, printed at the end of Barcley's French grammar.","",'Copland maner of dauncynge of bace daunces'),
+"arbeau":("Thoinot Arbeau (Jehan Tabourot)","Orchésographie",1589,"1589","Langres","A dialogue teaching the dances of the late 16th century – basse danse, pavane, galliard, branles, volte – with their tunes, the drum rhythms and a step tablature.","",'Arbeau Orchesographie'),
+"caroso":("Fabritio Caroso","Il ballarino",1581,"1581","Venice","Rules and steps of the Italian court dance, with each ballo’s music in lute tablature.","",'Caroso Il ballarino'),
+"negri":("Cesare Negri","Le gratie d’amore",1602,"1602","Milan","The Milanese dancing master’s treatise: steps, galliard variations and balli with their music in tablature and melody.","",'Negri Le gratie d amore'),
+})
+
 # (parent id, id, label, aliases, description)
 NEW_NODES = [
 ("super-librum","rector","Leading the singers: the rector and his signs","rector chori, cantor, Vorsänger, signals, cheironomy, Leitung, organum purum",
@@ -74,6 +86,14 @@ NEW_NODES = [
   "The four levels of mensural organisation and the signs that show them."),
 ("improvisation","instrumental-improv-15","Improvising instrumentalists in the 15th century","Pietrobono, tenorista, leutum, viola, plectrum lute, Orbus, minstrels",
   "Lutenists and viol players who improvised a florid upper part over a tenor, or played several parts alone."),
+("performance","dance","Dance and its music","Tanz, danza, danse, choreography, dancing master",
+  "What the dance treatises say about the music: the tenors, the misure, and how steps and notes correspond."),
+("dance","basse-danse-steps","Steps and measures of the basse danse","basse danse, pas simple, pas double, desmarche, branle, reprise, congé, grande mesure",
+  "One step to each breve of the tenor; the large, middle and small measures."),
+("dance","misure","Misure: bassadanza, quaternaria, saltarello, piva","misura, tempo, Domenico, Guglielmo, Cornazano, proportions in dance",
+  "The four Italian dance measures, related as proportions of one another, and how a ballo changes from one to another."),
+("dance","dance-tunes-16","Dance tunes of the 16th century","pavane, galliard, branle, volte, tourdion, Arbeau, Caroso, Negri",
+  "The newer dances and the tunes printed with them, from Arbeau to Caroso and Negri."),
 ("instruments","harp","Harp","arpa, Harfe, harpe, arpa de dos órdenes, double harp",
   "Strings, tuning and the playing of chromatic notes on the harp."),
 ("tablature","intabulation","Intabulation","poner, cifrar, intavolatura, Intavolierung, arranging vocal works for keyboard and lute",
@@ -326,4 +346,21 @@ ADD = [
  ("Lib. IV, cap. 5 (Weinmann, p. 45)","Viola vero cum arculo: non solum ad hunc usum: sed etiam ad historiarum recitationem in plerisque partibus orbis assumitur.",TT("TININV"))]),
 ("voice-functions","tinctoris-inv","Book II: tenoristae, contratenoristae (bassi and alti) and supremi.",[
  ("Lib. II (Weinmann, p. 33)","Enimvero: alii dicuntur tenoriste: alii contratenoriste: et alii supremi. Preterea: tenoristarum et contratenoristarum alii sunt imi hoc est vulgo bassi: et alii alti.",TT("TININV"))]),
+
+# ---------------- dance
+("basse-danse-steps","brussels-bd","The instruction: three measures; each step fills one note of the tenor.",[
+ ("Instruction (transcription in The Letter of Dance 2)","Et si est a savore que deux pas simples; ung pas doubles done desmarche et ung branle occoupent autant de temp lun comme lautre. Cest a dire que chascun deulz doibt occuper une note de basse danse entiere …","https://www.pbm.com/~lindahl/lod/vol2/trans_brussels.html"),
+ ("Instruction (transcription in The Letter of Dance 2)","Note que toute basse danse se commenche par desmarche et se finne par branle et se nomme basse danse pour ce que on la joue selon maier par fait et pour ce que quant en la danse on va on paix sans soy demener le plus gracieusement que on peult.","https://www.pbm.com/~lindahl/lod/vol2/trans_brussels.html")]),
+("bassadanza","brussels-bd","58 tenors in black breves, the steps written beneath each note; the tenors are now in the Cantare library.",[]),
+("basse-danse-steps","toulouze","Almost the same instruction as the Brussels manuscript, with a key to the step letters.",[]),
+("bassadanza","toulouze","Its own basse danse tenors, among them 'Castille la nouvelle' (La Spagna).",[]),
+("basse-danse-steps","copland","The English version of the basse danse instruction (1521).",[]),
+("misure","domenico","The four misure – bassadanza, quaternaria, saltarello, piva – each faster than the last.",[]),
+("misure","cornazano","The misure and the tenors of the bassadanza, among them Re di Spagna.",[]),
+("misure","guglielmo","The six 'requisites' of the dancer, among them misura; balli changing their misura.",[]),
+("bassadanza","domenico","Bassadanze and balli, the music largely not written down.",[]),
+("dance-tunes-16","arbeau","The basse danse 'Jouissance vous donneray', pavanes, galliards and more than twenty branles, each tune with its drum rhythm.",[]),
+("dance-tunes-16","caroso","Balli and cascarde with the music in Italian lute tablature.",[]),
+("dance-tunes-16","negri","Galliard variations and balli with their music.",[]),
+("dance","arbeau","Dance taught in a dialogue between the old canon Arbeau and his pupil Capriol.",[]),
 ]

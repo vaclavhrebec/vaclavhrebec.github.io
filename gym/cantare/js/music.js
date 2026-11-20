@@ -197,10 +197,11 @@ export function pieceFrom(item, trail) {
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
-  const lines = kind === 'chant' ? 4 : 5;
+  /* a melody that is not really plainchant (a basse danse tenor, La Spagna) may ask for five lines though written in breves */
+  const lines = item.ln || (kind === 'chant' ? 4 : 5);
   if (kind === 'chant') {
     const steps = voices[0].notes.filter(n => !n.rest).map(n => n.step);
-    voices[0].clef = fitClef(steps, 4, voices[0].clef).id;
+    voices[0].clef = fitClef(steps, lines, voices[0].clef).id;
   }
   const out = { ...base, kind, lines, voices, end: Math.max(...voices.map(v => v.end)) };
   if (item.poly && !item.noficta) autoFicta(out);
