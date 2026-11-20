@@ -55,6 +55,8 @@ const S = {
   leaf: 0, leaves: [],
   playing: false, startAt: 0, sel: null, index: [], systems: null, edit: false,
 };
+/* organum purum: the chant is not measured; each note is held until the cantor gives the sign (a tap) to move on */
+const OP = { on: false, i: -1, list: [], h: null };
 /* the Du Fay easter egg (js/dufay-egg.js) counts only the time in which music is really sounding */
 window.cantareSounding = () => !!S.playing;
 
@@ -81,6 +83,22 @@ const TALEAE = [
   ['5th mode, three perfect longas and a perfect longa rest', 'L. L. L. rL.', 'ordo'],
   ['3rd mode tenor: perfect longa, brevis, brevis altera, perfect longa, perfect longa rest', 'L. B Ba L. rL.', 'ordo'],
   ['Maxima, longa, brevis, longa rest', 'Mx L B rL'],
+  /* tenor patterns typical of each century (generic patterns of the kind, not quotations of particular pieces) */
+  ['Franconian motet tenor: perfect longa, longa, brevis, perfect longa rest', 'L. L B rL.', '13'],
+  ['Franconian motet tenor: two perfect longas, longa, brevis, perfect longa rest', 'L. L. L B rL.', '13'],
+  ['Isorhythmic tenor (modus perfectus): perfect longa, perfect longa rest, longa, brevis, perfect longa, perfect longa rest', 'L. rL. L B L. rL.', '14'],
+  ['Isorhythmic tenor (modus imperfectus): longa, longa rest, longa, longa, longa rest', 'L rL L L rL', '14'],
+  ['Isorhythmic tenor in long values: longa, longa, longa rest, maxima, longa rest', 'L L rL Mx rL', '15'],
+  ['Cantus firmus in equal longas, as in the tenor of a cantus-firmus mass', 'L', '15'],
+];
+/* the Talea window lists them by period */
+const TALEA_GROUPS = [
+  [undefined, 'Basic patterns'],
+  ['Garlandia', 'Notre-Dame, c. 1200: the rhythmic modes (Garlandia)'],
+  ['ordo', 'Notre-Dame: tenor ordines of clausulae and early motets'],
+  ['13', '13th century: Franconian motet tenors'],
+  ['14', '14th century: Ars nova isorhythmic tenors'],
+  ['15', '15th century: isorhythmic and cantus-firmus tenors'],
 ];
 const TALEA_VAL = { B: ['B', false], Ba: ['B', false, true], L: ['L', false], 'L.': ['L', true], Mx: ['Mx', false], 'Mx.': ['Mx', true] };
 
@@ -260,6 +278,7 @@ function openItem(item, trail, opts = {}) {
 /* the shown piece derives from the base piece plus the Studio's choices */
 function rebuildPiece() {
   take.clear();
+  if (OP.on) opRelease(); OP.i = -1; OP.list = [];
   const b = S.base;
   const p = { ...b, voices: b.voices.map(v => ({ ...v, notes: v.notes.map(n => ({ ...n })) })) };
   if (S.tempus) p.tempus = S.tempus;
@@ -556,6 +575,7 @@ const parse = html => { const t = document.createElement('template'); t.innerHTM
 
 function collectNotes() {
   S.index = [...paper.querySelectorAll('.note')].map(e => ({ e, t: +e.dataset.t, end: +e.dataset.t + +e.dataset.len, v: +e.dataset.v, on: false }));
+  if (OP.on && OP.i >= 0) opMark(false);
 }
 
 /* ------------------------------------------------------------------ studio */
@@ -658,7 +678,8 @@ function buildTransform() {
     const looks = [['chant', tr('Chant notation')], ['mensural', tr('Mensural notation')]];
     card(tr('Talea'),
       el('div', { class: 'row' }, chip(tr('None'), S.talea < 0, () => { S.talea = -1; redo(); })),
-      ...TALEAE.map(([name], i) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }))),
+      ...TALEA_GROUPS.flatMap(([g, head]) => [el('h4', {}, tr(head)), ...TALEAE.map((t, i) => [t, i]).filter(([t]) => t[2] === g).map(([[name], i]) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); })))]),
+      el('p', { class: 'hint' }, tr('For organum purum, where the chant is not measured at all, choose Organum purum under the music: each note is then held until you give the sign.')),
       S.talea >= 0 ? chipRow(tr('Shown as'), looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
       el('p', { class: 'hint' }, tr('A talea lays a repeating rhythmic pattern over the chant. Perfect values last three; a brevis altera is written as a brevis and lasts two. The rhythmic modes follow Johannes de Garlandia (c. 1250); the ordines are tenor patterns with rests, as in Notre-Dame clausulae and motets.')));
   }
@@ -794,6 +815,7 @@ function buildStudio() {
   bar.replaceChildren(...[
     soundButton(),
     tactusButton(),
+    b.voices.length === 1 ? btn(tr('Organum purum'), OP.on, () => opToggle(), tr('The chant is not measured: each note is held until you give the sign to go on, as the cantor did in Notre-Dame organum purum')) : '',
     btn(tr('Hear notes while editing'), prefs.audition, () => { prefs.audition = !prefs.audition; savePrefs(); buildStudio(); }),
     multi ? btn(tr('Choir book'), prefs.view === 'book', () => setView(prefs.view === 'book' ? 'score' : 'book')) : '',
     btn(tr('One line'), !!prefs.roll, () => { prefs.roll = !prefs.roll; if (prefs.roll && prefs.view === 'book') prefs.view = 'score'; savePrefs(); render(true); buildStudio(); try { buildTransform(); } catch (e) {} }, tr('The whole piece on one long line that rolls by while it plays; the clefs stay at the left')),
@@ -1212,6 +1234,84 @@ function startPlayback() {
   frame();
 }
 
+
+/* ------------------------------------------------------------------ organum purum */
+/* In the organum purum of Notre-Dame (Leonin's Magnus liber, c. 1200) the chant in the tenor is not measured: each
+   note is held as long as the organal voice above needs for its melisma, and moves on only at the sign of the cantor.
+   Here the big button (or the space bar, Enter or →) is that sign; ← goes back one note. The voice holds each note as
+   one open-ended vowel, glides within a ligature and says the next syllable when the text moves on. */
+const opPanel = $('#opPanel');
+function opList() { return S.piece ? sounding().filter(e => e.vi === 0) : []; }
+function opRelease() {
+  if (OP.h) { try { OP.h.release(); } catch (e) { /* gone */ } OP.h = null; }
+  else snd.silence();
+}
+function opSound(e, fwd) {
+  const midi = midiOf(e.n, S.piece.bflat, S.shift);
+  if (prefs.timbre === 'voice') {
+    const fresh = !OP.h || !OP.h.alive;
+    if (fresh) OP.h = snd.hold({ a4: prefs.a4, level: .2 });
+    let ok = false;
+    if (OP.h) ok = fresh ? OP.h.sing(e.u, midi) : (e.tied && fwd ? OP.h.glide(midi) : OP.h.say(e.u, midi));
+    if (ok) return;
+    /* the voice is not ready yet: the note sounds on the organ meanwhile, and the voice loads */
+    if (OP.h) { try { OP.h.release(); } catch (x) { /* gone */ } OP.h = null; }
+    voiceReady();
+    snd.silence(); const ctx = snd.ensure();
+    playNote({ timbre: 'organ', midi, a4: prefs.a4, at: ctx.currentTime + .015, dur: 600, level: .2 });
+    return;
+  }
+  snd.silence();
+  const ctx = snd.ensure();
+  playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at: ctx.currentTime + .015, dur: 600, level: .2, text: e.syl, legato: true });
+}
+function opMark(scroll = true) {
+  S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } });
+  const e = OP.list[OP.i]; if (!e) return;
+  const x = S.index.find(x => x.v === 0 && Math.abs(x.t - e.n.t) < 1e-6);
+  if (!x) return;
+  x.e.classList.add('on'); x.on = true;
+  if (scroll) {
+    const r = paper.querySelector('.roll');
+    if (r) { const b = x.e.getBoundingClientRect(), rb = r.getBoundingClientRect(); r.scrollLeft += b.left - rb.left - r.clientWidth / 2; }
+    else { const st = $('#stage'), b = x.e.getBoundingClientRect(), sb = st.getBoundingClientRect(); if (b.top < sb.top + 40 || b.bottom > sb.bottom - 40) st.scrollTo({ top: st.scrollTop + b.top - sb.top - 90, behavior: 'smooth' }); }
+  }
+}
+function opLabel() {
+  const n = OP.list.length, i = OP.i, next = OP.list[i + 1];
+  const sub = i < 0 ? tr('Tap to sound the first note') : i >= n ? tr('The end: tap to begin again')
+    : (next ? tr('Next') + ': ' + ['C', 'C♯', 'D', 'E♭', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'B♭', 'B'][midiOf(next.n, S.piece.bflat, S.shift) % 12] + (next.n.text && !next.tied ? ' · ' + next.n.text : '') : tr('Last note: tap to end'));
+  $('#opBig').textContent = i < 0 || i >= n ? tr('Begin') : tr('Go on');
+  $('#opSub').textContent = sub;
+  $('#opCount').textContent = i >= 0 && i < n ? (i + 1) + ' / ' + n : n + '';
+  $('#opBack').disabled = i <= 0;
+}
+function opStep(dir) {
+  if (!OP.on || !S.piece) return;
+  if (S.playing) stopPlayback(true);
+  snd.ensure(); snd.setVolume(prefs.volume);
+  if (!OP.list.length) OP.list = opList();
+  if (OP.i >= OP.list.length && dir > 0) OP.i = -1;
+  const j = OP.i + dir;
+  if (j < 0) return;
+  if (j >= OP.list.length) { opRelease(); OP.i = OP.list.length; S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } }); opLabel(); return; }
+  OP.i = j; opSound(OP.list[j], dir > 0); opMark(); opLabel();
+}
+function opStop() { opRelease(); OP.i = -1; S.index.forEach(x => { if (x.on) { x.e.classList.remove('on'); x.on = false; } }); opLabel(); }
+function opToggle(on = !OP.on) {
+  if (!on) opStop();
+  OP.on = on; OP.i = -1; OP.list = [];
+  if (on) { stopPlayback(); voiceReady(); OP.list = opList(); opLabel(); }
+  opPanel.hidden = !on;
+  document.documentElement.classList.toggle('organum', on);
+  buildStudio();
+}
+/* the sign is given on pointerdown, the moment the finger touches, not when it lifts */
+$('#opNext').addEventListener('pointerdown', e => { if (e.button > 0) return; e.preventDefault(); opStep(1); });
+$('#opNext').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); if (!e.repeat) opStep(1); } });
+$('#opBack').addEventListener('click', () => opStep(-1));
+$('#opEnd').addEventListener('click', () => opToggle(false));
+
 /* jump to the previous or next note (of any voice) while playing, and play on from there */
 function seekStep(dir) {
   if (!S.playing || !clock) return;
@@ -1301,6 +1401,8 @@ paper.addEventListener('click', e => {
     select(vi, i); hear(bn); return;
   }
   const n = S.piece.voices[vi].notes[i];
+  /* in organum purum a tapped note becomes the held one */
+  if (OP.on && vi === 0 && !n.rest) { if (!OP.list.length) OP.list = opList(); const j = OP.list.findIndex(x => Math.abs(x.n.t - t) < 1e-6); if (j >= 0) { OP.i = j - 1; opStep(1); } return; }
   S.startAt = t;
   paper.querySelectorAll('.note.sel').forEach(x => x.classList.remove('sel'));
   g.classList.add('sel');
@@ -1309,7 +1411,8 @@ paper.addEventListener('click', e => {
 });
 
 /* play / pause: pausing keeps the place, play goes on from there; the button left of it goes back to the beginning */
-$('#play').addEventListener('click', () => {
+$('#play').addEventListener('click', e => {
+  if (OP.on) { e.stopImmediatePropagation(); if (OP.i >= 0 && OP.i < OP.list.length) opStop(); else { OP.i = -1; opStep(1); } return; }
   if (S.playing) { const pos = clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0; stopPlayback(); S.startAt = Math.max(0, Math.min(pos, S.piece.end - 1e-6)); }
   else { snd.ensure(); const b = $('#play'); b.classList.add('loading'); voiceReady().then(() => { b.classList.remove('loading'); if (!S.playing) startPlayback(); }); }
 });
@@ -1362,6 +1465,11 @@ $('#nextLeaf').addEventListener('click', () => { S.leaf = Math.min(S.leaves.leng
 document.addEventListener('keydown', e => {
   if (e.target.matches('input, select, textarea')) return;
   if (e.target.isContentEditable) return;
+  if (OP.on && !S.edit && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if (e.code === 'Space' || e.key === 'Enter' || e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); if (!e.repeat) opStep(1); return; }
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); if (!e.repeat) opStep(-1); return; }
+    if (e.key === 'Escape') { opStop(); return; }
+  }
   if (e.code === 'Space') { e.preventDefault(); $('#play').click(); return; }
   if (e.ctrlKey || e.metaKey || e.altKey) {
     if (S.edit && (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redoEdit(); else undo(); }

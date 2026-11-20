@@ -530,3 +530,21 @@ html.focus .zoomctl { top: 4px; margin-right: 96px; }
 .chip.soundbtn span:not(.caret) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .chip.soundbtn svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
 .chip.soundbtn .caret { flex: none; }
+
+/* organum purum: one big button, the cantor's sign, between the music and the dock; on a phone it is a large target */
+.op-panel { display: flex; align-items: stretch; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); background: var(--surface); z-index: 6; }
+.op-panel[hidden] { display: none; }
+.op-next { flex: 1; min-height: 96px; border: 0; border-radius: 16px; background: var(--accent); color: var(--accent-ink); font: inherit; cursor: pointer;
+  display: grid; place-content: center; justify-items: center; gap: 2px; position: relative; touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .25); transition: transform .06s; }
+.op-next:active { transform: scale(.985); filter: brightness(1.08); }
+.op-tag { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+.op-big { font-family: var(--serif, Georgia, serif); font-size: 30px; line-height: 1.1; }
+.op-sub { font-size: 14px; opacity: .9; }
+.op-count { position: absolute; right: 12px; bottom: 8px; font-size: 11px; opacity: .7; font-variant-numeric: tabular-nums; }
+.op-side { width: 56px; border: 1px solid var(--line); border-radius: 14px; background: transparent; color: var(--ink); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; }
+.op-side svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.op-side:disabled { opacity: .35; cursor: default; }
+@media (max-width: 700px) { .op-next { min-height: 26vh; } .op-big { font-size: 34px; } .op-side { width: 52px; } }
+@media (max-height: 500px) { .op-next { min-height: 34vh; } }
+.organum .tactus-hand, .organum .pendulum { display: none !important; }

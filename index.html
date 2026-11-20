@@ -129,6 +129,11 @@
   @media (max-width: 600px) { .btn.big { display: block; text-align: center; } }
   .btn.ghost { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
 
+  .lessons { list-style: none; padding: 0; margin: .9rem 0 1rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: .6rem; }
+  .lessons button { width: 100%; text-align: left; font: inherit; font-family: "EB Garamond", Georgia, serif; font-size: 1.2rem; line-height: 1.25;
+    color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: .85rem 1.1rem; cursor: pointer; }
+  .lessons button:hover, .lessons button:focus-visible { border-color: var(--accent); outline: none; }
+  .lessons button::after { content: " →"; color: var(--accent); }
   .links { display: flex; flex-wrap: wrap; gap: .6rem; }
   .videos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.2rem; margin-top: 1.4rem; }
   .video { margin: 0; }
@@ -239,6 +244,7 @@
   <nav>
     <div class="nav-site" aria-label="This page">
       <a href="#about" data-i18n>About</a>
+      <a href="#lessons" data-i18n>Lessons</a>
       <a href="#agenda" data-i18n>Agenda</a>
       <a href="#projects" data-i18n>Projects</a>
       <a href="#gallery" data-i18n>Gallery</a>
@@ -263,6 +269,20 @@
       <figure class="bio-fig"><img decoding="async" src="photos/w/lute-portrait-edoardo-gatta-960.webp" srcset="photos/w/lute-portrait-edoardo-gatta-480.webp 480w, photos/w/lute-portrait-edoardo-gatta-960.webp 960w" sizes="(max-width: 700px) 100vw, 320px" data-full="photos/lute-portrait-edoardo-gatta.jpg" width="1050" height="1400" alt="" loading="lazy"><figcaption class="credit" data-i18n>Photo: Edoardo Gatta</figcaption></figure>
       <p data-i18n>Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.</p>
     </div>
+  </section>
+
+  <section id="lessons">
+    <h2 data-i18n>Lessons</h2>
+    <p data-i18n>Would you like to study with me? I give lessons in:</p>
+    <ul class="lessons">
+      <li><button type="button" data-i18n>Music theory and composition in historical styles</button></li>
+      <li><button type="button" data-i18n>Organ improvisation</button></li>
+      <li><button type="button" data-i18n>Contrapunto alla mente – improvised counterpoint</button></li>
+      <li><button type="button" data-i18n>Lute improvisation</button></li>
+      <li><button type="button" data-i18n>Guitar improvisation</button></li>
+    </ul>
+    <p data-i18n>Tell me what you would like to work on, and we will find a time together.</p>
+    <div class="links"><a class="btn big" href="#contact" id="book-lesson" data-i18n>Book a lesson</a></div>
   </section>
 
   <!-- AGENDA
@@ -647,6 +667,16 @@
    anything without a translation simply stays in English. */
 const T = {
 de: {
+  "Lessons": "Unterricht",
+  "Would you like to study with me? I give lessons in:": "Möchten Sie bei mir lernen? Ich unterrichte:",
+  "Music theory and composition in historical styles": "Musiktheorie und Komposition in historischen Stilen",
+  "Organ improvisation": "Orgelimprovisation",
+  "Contrapunto alla mente – improvised counterpoint": "Contrapunto alla mente – improvisierter Kontrapunkt",
+  "Lute improvisation": "Lautenimprovisation",
+  "Guitar improvisation": "Gitarrenimprovisation",
+  "Tell me what you would like to work on, and we will find a time together.": "Schreiben Sie mir, woran Sie arbeiten möchten, und wir finden gemeinsam einen Termin.",
+  "Book a lesson": "Unterricht buchen",
+  "Lesson request": "Anfrage Unterricht",
   "All rights reserved": "Alle Rechte vorbehalten",
   "Online since 9 November 2026": "Online seit dem 9. November 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Diese Seite ist mitteltönig gestimmt. Bitte meiden Sie Gis-Dur.",
@@ -739,6 +769,16 @@ de: {
   "22–28 February 2027 · Reformed Church, Rheinfelden. A full week dedicated to the music of the 15th and 16th centuries: vocal and instrumental polyphony, cantare super librum, organ and lute improvisation. Course fee CHF 270 (reduced CHF 180).": "22.–28. Februar 2027 · Reformierte Kirche, Rheinfelden. Eine ganze Woche, der Musik des 15. und 16. Jahrhunderts gewidmet: vokale und instrumentale Polyphonie, cantare super librum, Improvisation an Orgel und Laute. Kursgebühr CHF 270 (reduziert CHF 180)."
 },
 fr: {
+  "Lessons": "Cours",
+  "Would you like to study with me? I give lessons in:": "Vous souhaitez travailler avec moi ? Je donne des cours de :",
+  "Music theory and composition in historical styles": "Théorie musicale et composition dans les styles historiques",
+  "Organ improvisation": "Improvisation à l’orgue",
+  "Contrapunto alla mente – improvised counterpoint": "Contrapunto alla mente – contrepoint improvisé",
+  "Lute improvisation": "Improvisation au luth",
+  "Guitar improvisation": "Improvisation à la guitare",
+  "Tell me what you would like to work on, and we will find a time together.": "Dites-moi sur quoi vous aimeriez travailler, et nous trouverons ensemble un moment.",
+  "Book a lesson": "Réserver un cours",
+  "Lesson request": "Demande de cours",
   "All rights reserved": "Tous droits réservés",
   "Online since 9 November 2026": "En ligne depuis le 9 novembre 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Cette page est accordée au tempérament mésotonique. Évitez sol dièse majeur, s’il vous plaît.",
@@ -842,6 +882,16 @@ fr: {
   "Open the atlas": "Ouvrir l’atlas"
 },
 cs: {
+  "Lessons": "Výuka",
+  "Would you like to study with me? I give lessons in:": "Chcete se u mě učit? Vyučuji:",
+  "Music theory and composition in historical styles": "Hudební teorii a kompozici v historických stylech",
+  "Organ improvisation": "Improvizaci na varhany",
+  "Contrapunto alla mente – improvised counterpoint": "Contrapunto alla mente – improvizovaný kontrapunkt",
+  "Lute improvisation": "Improvizaci na loutnu",
+  "Guitar improvisation": "Improvizaci na kytaru",
+  "Tell me what you would like to work on, and we will find a time together.": "Napište mi, na čem byste chtěli pracovat, a společně najdeme termín.",
+  "Book a lesson": "Domluvit si lekci",
+  "Lesson request": "Zájem o výuku",
   "All rights reserved": "Všechna práva vyhrazena",
   "Online since 9 November 2026": "Online od 9. listopadu 2026",
   "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Tato stránka je laděna středotónově. Vyhněte se prosím Gis dur.",
@@ -993,6 +1043,19 @@ document.querySelectorAll('.video .yt').forEach(b => b.addEventListener('click',
 
 /* CONTACT FORM — messages are delivered by FormSubmit (formsubmit.co) to the address below.
    The very first message triggers a one-time activation email from FormSubmit: click "Activate Form". */
+// lessons: a subject or the button fills the contact form and goes there
+(function () {
+  const ta = document.querySelector('#contact-form textarea[name=message]');
+  const tr = en => { const l = document.documentElement.lang; return (l !== 'en' && T[l] && T[l][en]) || en; };
+  const go = subj => {
+    const head = tr('Lesson request') + (subj ? ': ' + subj : '') + '\n\n';
+    if (!ta.value.trim() || /^[^\n]*:?[^\n]*\n\n$/.test(ta.value)) ta.value = head;
+    document.getElementById('contact').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(() => { ta.focus({ preventScroll: true }); ta.setSelectionRange(ta.value.length, ta.value.length); }, 700);
+  };
+  document.querySelectorAll('.lessons button').forEach(b => b.addEventListener('click', () => go(b.textContent.trim())));
+  document.getElementById('book-lesson').addEventListener('click', e => { e.preventDefault(); go(''); });
+})();
 const CONTACT_TO = 'vaclavhrebec2000@gmail.com';
 (function () {
   const sec = document.getElementById('contact');
