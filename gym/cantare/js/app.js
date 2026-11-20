@@ -1417,8 +1417,23 @@ paper.addEventListener('click', e => {
 $('#play').addEventListener('click', e => {
   if (OP.on) { e.stopImmediatePropagation(); if (OP.i >= 0 && OP.i < OP.list.length) opStop(); else { OP.i = -1; opStep(1); } return; }
   if (S.playing) { const pos = clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0; stopPlayback(); S.startAt = Math.max(0, Math.min(pos, S.piece.end - 1e-6)); }
-  else { snd.ensure(); const b = $('#play'); b.classList.add('loading'); voiceReady().then(() => { b.classList.remove('loading'); if (!S.playing) startPlayback(); }); }
+  else {
+    const b = $('#play');
+    /* a second tap while the sounds are still loading cancels, instead of starting a second wait */
+    if (playWait) { playWait = null; b.classList.remove('loading'); return; }
+    snd.ensure();
+    const me = playWait = {}; b.classList.add('loading');
+    voiceReady().catch(() => {}).then(() => {
+      if (playWait !== me) return;
+      playWait = null; b.classList.remove('loading');
+      if (!S.playing) { snd.ensure(); startPlayback(); }
+    });
+  }
 });
+let playWait = null;
+/* coming back to the page (after the lock screen or another app) the next tap wakes the sound again */
+document.addEventListener('visibilitychange', () => { if (document.hidden && S.playing) { const pos = clock ? clock.from + (snd.now() - clock.t0) / clock.k : 0; stopPlayback(); S.startAt = Math.max(0, Math.min(pos, S.piece.end - 1e-6)); } });
+document.addEventListener('touchend', () => snd.ensure(), { passive: true });
 $('#rewind').addEventListener('click', () => {
   const was = S.playing;
   if (was) stopPlayback(true);

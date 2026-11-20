@@ -242,10 +242,18 @@ function luteBuffer(f0, soft) {
   return b;
 }
 
+/* iPhone: Safari leaves the audio 'suspended' or 'interrupted' (after a call, the lock screen, another app) and
+   mutes Web Audio with the silent switch; so every tap that wants sound resumes the context and plays one silent
+   sample, and the page asks to be treated as music playback, which the silent switch does not mute */
+function unlock() {
+  try { const s = ctx.createBufferSource(); s.buffer = ctx.createBuffer(1, 1, 22050); s.connect(ctx.destination); s.start(0); } catch (e) { /* ignore */ }
+}
 export function ensure() {
-  if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return ctx; }
+  if (ctx) { if (ctx.state !== 'running') { try { const r = ctx.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) { /* ignore */ } unlock(); } return ctx; }
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { /* older Safari */ }
   const AC = window.AudioContext || window.webkitAudioContext;
   ctx = new AC();
+  unlock();
   master = ctx.createGain(); master.gain.value = .8;
   const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3;
   dry = ctx.createGain(); wet = ctx.createGain(); dry.gain.value = .75; wet.gain.value = roomLevel();
