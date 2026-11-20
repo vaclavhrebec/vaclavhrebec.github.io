@@ -15,6 +15,10 @@ WORKS = {
   "Manuscript thoroughbass treatise: every chord (Grieff) and dissonance named, with its preparation and resolution, by a pupil of Lully and Pasquini.","",'Muffat Regulae concentuum partiturae'),
 }
 
+SM = "https://imslp.org/index.php?title=Special:Search&search=" + "Arte de ta%C3%B1er fantas%C3%ADa Santa Mar%C3%ADa"
+WORKS["santamaria"] = ("Tomás de Santa María","Arte de tañer fantasía",1565,"1565","Valladolid",
+  "A Dominican organist's method, finished 1557, for keyboard and vihuela: technique, intabulation and, in Part II, improvising a fantasia in four voices. Passages after the transcriptions of the Lexique musical de la Renaissance (ATILF).","",'Santa Maria Arte de taner fantasia')
+
 # (parent id, id, label, aliases, description)
 NEW_NODES = [
 ("super-librum","rector","Leading the singers: the rector and his signs","rector chori, cantor, Vorsänger, signals, cheironomy, Leitung, organum purum",
@@ -35,6 +39,14 @@ NEW_NODES = [
   "Graces, passages, arpeggios and imitation added to the accompaniment, and when they are out of place."),
 ("ornamentation","redobles","Redobles and quiebros (Spain)","redoble, quiebro, glosa, Spanish keyboard ornaments, vihuela graces",
   "The trills and mordents of Spanish keyboard and vihuela players, and on which keys they belong."),
+("performance","inegalite","Unequal notes (ayre, inégalité)","ayre, notes inégales, Inegalität, swing, dotted pairs, corcheas desiguales",
+  "Playing written-equal notes in long–short (or short–long) pairs, as the 'good air' of the music."),
+("performance","practising","How to practise","ejercicio, estudio, Üben, exercitium, practice routines",
+  "Advice on daily practice: scales and fingering, learning works, transposing patterns into every key."),
+("fantasia","tanido-a-concierto","Fantasia in four voices by paired duos (tañer a concierto)","tañer a concierto, fantasía a concierto, duo pairs, responsiones",
+  "Santa María's method of improvising: the two lower and the two upper voices move as duos that answer each other with the same passo."),
+("instruments","clavichord","Clavichord (monacordio)","monacordio, clavicordio, Clavichord, Klavichord, practice instrument",
+  "The keyboard instrument on which players learned, with how to strike its keys and tune it."),
 ("instruments","harp","Harp","arpa, Harfe, harpe, arpa de dos órdenes, double harp",
   "Strings, tuning and the playing of chromatic notes on the harp."),
 ("tablature","intabulation","Intabulation","poner, cifrar, intavolatura, Intavolierung, arranging vocal works for keyboard and lute",
@@ -159,4 +171,51 @@ ADD = [
  ("p. 91","Cadentia major ist, in welcher der Baß quintweis herunter oder quartweis hinauf springt …",MUF),
  ("p. 91","Cadentia minima, wo der Baß staffelweis ab- oder aufsteigt oder unbeweglich bleibt.",MUF)]),
 ("german-17","muffat","Regulae concentuum partiturae (1699): the most systematic German thoroughbass manual of the century.",[]),
+
+# ---------------- Tomás de Santa María, Arte de tañer fantasía (Valladolid, 1565)
+("keyboard-technique","santamaria","Part I, chs. 13–18: the eight conditions of good playing, the hands, the striking of the keys and the fingers.",[
+ ("Lib. I, fol. 36v","Las condiciones que assi adornan la musica, se reduzen a ocho. La primera es tañer a Compas. La segunda poner bien las manos. La tercera herir bien las teclas. La quarta tañer con limpieça y distinction. La quinta correr bien las manos a vna parte y a otra … La sesta herir con dedos co[n]uenientes. La septima, tañer con bue[n] ayre. La octaua, hazer buenos redobles y quiebros.",SM),
+ ("Lib. I, fol. 39v","Quando con qualquiera de las dos manos se subieren o baxaren arreo, passos largos de Seminimas, o corcheas, los dedos con que se subieren o baxaren, tambien han de yr arreo, siguiendo se vno tras otro, sin dexar ningun intermedio.",SM)]),
+("inegalite","santamaria","Part I, ch. 19: 'buen ayre': semiminims and quavers played long–short, in three manners.",[
+ ("Lib. I, fol. 45v","Quanto al tañer con buen ayre … se advierta, que para esto se requiere tañer las Seminimas de vna manera, y las corcheas de tres. La manera que se ha de tener para tañer las Seminimas, es detenerse en la primera, y correr la segunda … lo qual se haze, como si la primera Seminima tuuiesse pu[n]tillo, y la segunda fuesse corchea … Y tengase auiso, que la Seminima q[ue] se corre, no ha de yr muy corrida, sino vn poco moderada.",SM),
+ ("Lib. I, fol. 45v","De las tres maneras de las corcheas, las dos se hazen quasi de vna mesma manera, que es deteniendose en vna corchea, y corriendo otra. … Esta manera sirue para las obras que son todas de contrapunto, y para passos largos.",SM)]),
+("redobles","santamaria","Part I, ch. 20: the new redobles and quiebros, better than the old ones; answered between the hands.",[
+ ("Lib. I, fol. 48v","Estas maneras de Redobles y Quiebros … son muy nueuos y galanos, los quales causan ta[n]ta gracia y melodia en la musica, que la leuantan en tantos grados … que paresce otra cosa distincta de lo que se tañe sin ellos, y por tanto, con mucha razon se deue vsar siempre dellos, y no de los otros, por quanto son antiguos y no graciosos.",SM),
+ ("Lib. I, fol. 51v","… es necessario q[ue] los Redobles y Quiebros de Minimas se hagan a vezes con las dos manos, esto es, vn redoble co[n] la vna mano, y otro quiebro con la otra, respondiendose a vezes desta manera.",SM)]),
+("intabulation","santamaria","Part I, chs. 21–22: putting polyphony on the clavichord is the source of the whole art.",[
+ ("Lib. I, fol. 52r","El poner obras de canto de Organo en el Monacordio, es el origen y fu[e]nte de donde nascen y proceden todos los frutos y prouechos, y todo el arte del tañer para los tañedores.",SM),
+ ("Lib. I, fol. 57v","Para sacar prouecho de las obras, quando se pusieren cinco cosas, se han de notar. La primera, es entender de rayz la inuencion y artificio que lleuaren los passos, y assi mesmo la respon[n]sion de las bozes … en lo qual consiste el arte de la fantasia.",SM)]),
+("tactus","santamaria","Part I: keep the compás with the foot.",[
+ ("Lib. I, fol. 57v","Tres cosas son necessarias para sugetar presto qualquier obra … La primera es tañer a Compas, lleuandole siempre co[n] vna mesma ygualdad de tiempo … para lo qual es necessario lleuar el Compas con el pie, y assi tener gran cuenta con el medio Compas.",SM)]),
+("tablature","santamaria","Part I: how vihuela tablature (cifra) works.",[
+ ("Lib. I, fol. 57r","La manera que agora se vsa de poner las obras en la Vihuela, es por cifra, para lo qual, es de saber, que esta cifra, es la quenta del guarismo, en esta quenta, la, o, da a entender que hieran en vazio …",SM)]),
+("lute","santamaria","Part I: the frets of the vihuela.",[
+ ("Lib. I, fol. 56v","En el cuello de la Vihuela, las cuerdas que rodean este mesmo cuello, se llaman Trastes, los quales estan puestos por tal medida, que del primero al tercero ay Tono, y del primero al segundo ay Semitono.",SM)]),
+("dim-16","santamaria","Part I, ch. 23: glosas taken from a table of figures for each interval.",[
+ ("Lib. I, fol. 59v","Quando fuere menester glosar Seminimas, que subieren y baxaren areo, se han de tomar de las glosas de Semibreue, que se han puesto para subir y baxar quinta.",SM)]),
+("fourth","santamaria","Part I: the diminished fourth and the tritone on the keyboard.",[
+ ("Lib. I, fol. 27v","La quarta menor, q[ue] por otro nombre se llama Remisa, y es de mi, a fa … es Disonancia de fa, contra mi, y puede se subir y baxar arreo, mas no de salto, porque de salto es incantable, y lo que es incantable no se puede tañer.",SM)]),
+("mi-contra-fa","santamaria","Part I: the tritone is forbidden so strictly that it even decides which key a trill may use.",[
+ ("Lib. I, fol. 27r","La quarta mayor, que por otro nombre llaman Tritono, y es de mi, a fa, o de fa, a mi, se compone de tres tonos … es Disonancia de fa, contra mi, y no se puede dar con vna voz sola arreo, ni de salto.",SM)]),
+("enharmonic","santamaria","Part I: the black keys as the chromatic 'order'.",[
+ ("Lib. I, fol. 13v","A la orden alta accidental, llaman genero Chromatico (que quiere dezir) lo accidental, que muda color, y procede por semitonos accidentales in cantables y cantables.",SM)]),
+("cadences","santamaria","Part I: every clausula is made with one or two dissonances, struck in syncopation.",[
+ ("Lib. I, fol. 62v–63r","Para fundamento destas clausulas, se ha de notar por regla general, que todas las Clausulas se hazen con vna o dos Dissonancias, pero co[n] tal condicion, que tras la Dissonancia, luego se de Consonancia, la qual Consonancia salua la Dissonancia … Estas dissonancias no se hieren de golpe con el Tiple, sino en Sincopa.",SM)]),
+("polyphonic-modes","santamaria","Part I: the accidental (transposed) tones and three ways of leaving the tone.",[
+ ("Lib. I, fol. 70v–71r","De tres maneras se sale del tono. La primera es mudando se la sequencia de la Solfa natural en accidental, o la accidental en natural … La segunda manera, es haziendo Clausulas fuera del tono primero començado.",SM)]),
+("whole-texture","santamaria","Part II, ch. 6: playing in consonances is four-voice playing, with outer and inner voices.",[
+ ("Lib. II, cap. 6, fol. 12r","… se ha de notar que el comun tañer a consonancias, es a quatro vozes, lo qual encierra y contiene en si, el tañer a duo y a tres.",SM)]),
+("tanido-a-concierto","santamaria","Part II, chs. 33–51: the lower and the upper duo answer each other with the same passo.",[
+ ("Lib. II, cap. 35, fol. 72r","En este tañer a concierto, comunmente el contrabaxo y el tenor (que son las dos vozes baxas) van juntos y conbinados por si, y ni mas ni menos el contra alto y el tiple … De donde se sigue, que el arte de tañer a concierto, va fundado en vn duo a la parte inferior, y otro a la parte superior.",SM),
+ ("Lib. II, cap. 37, fol. 83v","Es de saber, q[ue] en las responsiones de las dos vozes baxas a las dos vozes altas … por la mayor parte el contrabaxo y el contra alto se corresponden en octaua, y ni mas ni menos el tenor y el tiple.",SM)]),
+("improvised-fugue","santamaria","Part II, ch. 33: fugas with the passos 'trabados' or 'sueltos'.",[
+ ("Lib. II, cap. 33","Quanto a la otra manera de fuga, que se haze tañendo los passos sueltos … el remedio es tañer cada passo suelto, hazie[n]dole cada voz por si, siruiendo … de acompañamiento la voz que no hiziere el passo, a la otra voz que le hiziere.",SM)]),
+("fantasia","santamaria","Part II: the aim of the book, the art of the fantasia.",[
+ ("Lib. II, fol. 1v","Siguese agora, en esta segunda parte, cumplir del todo el principal intento que arriba diximos, que es enseñar el arte de la fantasia de la Musica, practica, para que en breue tiempo y con menos trabajo se pueda alcançar.",SM),
+ ("Lib. II, cap. 51, fol. 120v","Ya q[ue] se ha tratado de todos los medios necessarios, que para tañer fantasia a co[n]cierto y por arte se requieren, resta ahora solame[n]te tratar del modo que se ha de tener para proceder en ella.",SM)]),
+("practising","santamaria","Part I and Part II, ch. 52: practise with the passos you know, transpose them into every key, run the hands over the whole keyboard.",[
+ ("Lib. I, fol. 58r","Para que los nueuos aprouechen en la fantasia, es necessario que se exerciten siempre con los mesmos passos que saben, para que con este vso hagan habito del arte … Assi mesmo es cosa muy prouechosa mudar vn mesmo passo, por todos los signos que se pudieren hazer.",SM),
+ ("Lib. II, cap. 52, fol. 121r–v","… exercite se el nueuo tañedor, en correr las manos con dedos conuenientes, por todo el juego del monacordio, de abaxo arriba y de arriba abaxo … procure exercitarse, en mudar las obras por todos los signos acidentales que se pudieren tañer, y assi mesmo procure tomar dellas, los passos q[ue] fueren de solfa graciosa, y tenerlos en la memoria para despues tañer sobre ellos fantasia a concierto.",SM)]),
+("clavichord","santamaria","Part II, ch. 53: how to tune the clavichord, beginning from C.",[
+ ("Lib. II, cap. 53","Considerando la necessidad que los nueuos tienen, del instrumento bien te[m]plado, para que con mas aliuio pueda[n] lleuar el trabajo del estudio, me moui a poner aqui el modo que se ha de tener para templar el monacordio … entonces estara bien afinado el punto, qua[n]do las dos cuerdas del mesmo punto estuuieren en tan yguales en la entonacion, que suenen como si fuesse vna sola.",SM)]),
 ]
