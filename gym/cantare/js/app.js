@@ -1,5 +1,5 @@
 import { readScoreFile, toMusicXML, ACCEPT } from './scorefile.js';
-import { readTokens, pieceFrom, stamp, lengthOf, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
+import { readTokens, pieceFrom, stamp, lengthOf, gridOf, regionAt, CLEFS, CLEF_ORDER, CLEF_PALETTE, clefFor, fitClef, midiOf, hz, slug, stepName, VALUE_NAME } from './music.js';
 import { engraveSystems, buildColumns, systemSVG, styleOf, glyphIcon, setFont, headWidth, clefAt, setSpacing } from './engrave.js';
 import * as snd from './audio.js';
 import { syllablesOf } from './latin.js';
@@ -271,6 +271,8 @@ function rebuildPiece() {
   const p = { ...b, voices: b.voices.map(v => ({ ...v, notes: v.notes.map(n => ({ ...n })) })) };
   if (S.tempus) p.tempus = S.tempus;
   if (S.cut != null) p.cut = S.cut;
+  /* a mensuration chosen in Transform holds for the whole piece: the piece's own changes of mensuration are set aside */
+  if (S.tempus || S.cut != null) p.grid = null;
   if (S.talea >= 0 && b.kind === 'chant') {
     const pat = TALEAE[S.talea][1].split(' '), v = p.voices[0], out = [];
     let k = 0;
@@ -603,7 +605,13 @@ function toneStep(dir) {
   transposeExact(dir, c);
 }
 function scaleValues(dir) {
-  commit(() => S.base.voices.forEach(v => v.notes.forEach(n => { const i = VORDER.indexOf(n.v); if (i >= 0) n.v = VORDER[Math.max(0, Math.min(VORDER.length - 1, i + dir))]; })));
+  commit(() => {
+    S.base.voices.forEach(v => v.notes.forEach(n => { const i = VORDER.indexOf(n.v); if (i >= 0) n.v = VORDER[Math.max(0, Math.min(VORDER.length - 1, i + dir))]; }));
+    /* the tactus grid and the signs move with the values */
+    const k = 2 ** -dir;
+    if (S.base.grid) S.base.grid = S.base.grid.map(g => ({ ...g, t: g.t * k, bar: g.bar * k }));
+    S.base.voices.forEach(v => { if (v.signs) v.signs = v.signs.map(x => ({ ...x, t: x.t * k })); });
+  });
 }
 
 function buildTransform() {
@@ -1032,10 +1040,23 @@ $('#transformBtn').addEventListener('click', e => {
 document.addEventListener('click', e => { const pop = $('#transformPop'); if (!pop.hidden && e.target.isConnected && !pop.contains(e.target)) { pop.hidden = true; $('#transformBtn').setAttribute('aria-expanded', 'false'); } });
 
 /* ------------------------------------------------------------------ playback */
-/* the beat in minimae: a brevis holds six of them in tempus perfectum, a longa twice the brevis */
-/* triple time: tempus perfectum, or a piece that moves in threes (cantus fractus) */
-const isTriple = () => !!S.piece && !S.piece.talea && (S.piece.tempus === 'O' || (S.piece.ternary && S.piece.tempus === 'C'));
-const beatMinims = () => { const O = isTriple(); return { L: O ? 12 : 8, B: O ? 6 : 4, S: 2, M: 1 }[prefs.unit] || (O ? 6 : 4); };
+/* the beat in minimae, at the moment pos: the tactus counts the value chosen under Beat (by default the brevis); the
+   brevis is the bar of the region (six minims in tempus perfectum, four in tempus imperfectum), the semibrevis one part of it,
+   and the minim keeps one speed through every change of mensuration */
+const regionNow = (pos = S.startAt || 0) => regionAt(gridOf(S.piece), pos);
+const beatOf = r => ({ L: 2 * r.bar, B: r.bar, S: r.bar / r.parts, M: 1 }[prefs.unit] || r.bar);
+const beatMinims = pos => (S.piece ? beatOf(regionNow(pos)) : 4);
+/* triple time at pos: the brevis divides in three and the tactus counts the brevis */
+const isTriple = pos => !!S.piece && regionNow(pos).parts === 3;
+/* every beat of the tactus from a to b: [moment, first of a brevis] */
+function beatsBetween(a, b) {
+  const grid = gridOf(S.piece), out = [];
+  grid.forEach((g, i) => {
+    const next = grid[i + 1] ? grid[i + 1].t : Infinity, u = beatOf(g);
+    for (let t = g.t; t < Math.min(next, b) - 1e-6; t += u) if (t >= a - 1e-6) out.push([t, Math.abs(((t - g.t) / g.bar) % 1) < 1e-6]);
+  });
+  return out;
+}
 /* the tempo always counts semibreves: 60 means the semibrevis at 60, so a brevis tactus beats at 30 */
 const spm = () => (60 / prefs.tempo) / 2; /* seconds per minim */
 const tactusPerMin = () => Math.round(prefs.tempo * 2 / beatMinims() * 10) / 10;
@@ -1053,9 +1074,9 @@ function poseHand(lift) {
    in tempus perfectum, when the brevis is counted, unequal (tactus inaequalis): down on 1, still on 2, up on 3 */
 const ease = (a, b, x) => { const u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); };
 function beatHand(pos) {
-  const unit = beatMinims();
-  const ph = (((pos - (S.piece.beatOff || 0)) / unit) % 1 + 1) % 1;
-  const tri = isTriple() && unit === 6, up = tri ? 2 / 3 : 1 / 2;
+  const r = regionNow(pos), unit = beatOf(r);
+  const ph = (((pos - r.t) / unit) % 1 + 1) % 1;
+  const tri = r.parts === 3 && unit === r.bar, up = tri ? 2 / 3 : 1 / 2;
   /* in tempus perfectum the hand stays down through the first two semibreves and up through the third,
      moving only briefly into each position, so that the 2 + 1 is plain to see */
   const fall = tri ? .07 : Math.min(.18, (1 - up) * .6), rise = tri ? .07 : Math.min(.18, up * .45);
@@ -1066,8 +1087,8 @@ function beatHand(pos) {
 /* the pendulum swings once for each part of the tactus (each semibrevis under a brevis tactus: two in duple, three in triple time),
    reaching the end of its swing exactly on each part, as a real pendulum: a sine */
 function swingPendulum(pos) {
-  const unit = beatMinims(), parts = isTriple() && unit === 6 ? 3 : 2;
-  const x = (pos - (S.piece.beatOff || 0)) / (unit / parts);
+  const r = regionNow(pos), unit = beatOf(r), parts = r.parts === 3 && unit === r.bar ? 3 : 2;
+  const x = (pos - r.t) / (unit / parts);
   const ang = t => (16 * Math.cos(Math.PI * t)).toFixed(2);
   $('#pdArm').style.transform = `rotate(${ang(x)}deg)`;
   /* a trail of fading bobs behind the moving one: faster swing, longer trail */
@@ -1145,7 +1166,7 @@ function sounding() {
   const lists = new Map();
   out.forEach(e => { if (!lists.has(e.vi)) lists.set(e.vi, []); lists.get(e.vi).push(e); });
   lists.forEach(list => list.forEach((a, i) => {
-    const b = list[i + 1], q = (S.piece.beatOff || 0);
+    const b = list[i + 1], q = regionNow(a.n.t).t;
     if (!b || a.pairB || a.n.v !== 'Sm' || b.n.v !== 'Sm' || Math.abs(a.n.len - .5) > 1e-6 || Math.abs(b.n.len - .5) > 1e-6) return;
     if (Math.abs(a.n.t + a.n.len - b.n.t) > 1e-6 || Math.abs(((a.n.t - q) % 1 + 1) % 1) > 1e-6) return;
     a.pairA = true; b.pairB = true;
@@ -1193,13 +1214,12 @@ function startPlayback() {
   snd.setVolume(prefs.volume);
   const p = S.piece, from = S.startAt || 0, k = spm();
   const events = sounding().filter(e => e.n.t + e.n.len > from + 1e-6);
-  const off = p.beatOff || 0;
-  let ei = 0, bi = Math.ceil((from - off) / beatMinims() - 1e-9);
+  const beats = beatsBetween(from, p.end);
+  let ei = 0, bi = 0;
   const t0 = ctx.currentTime + .15;
   clock = { t0, from, k, end: p.end, ended: false };
   recHook(ctx, t0, from);
   singStart(from);
-  const beat = beatMinims();
   const pump = () => {
     const horizon = ctx.currentTime + 1.2;
     while (ei < events.length && t0 + (events[ei].n.t - from) * k < horizon) {
@@ -1217,7 +1237,7 @@ function startPlayback() {
       playNote({ timbre: prefs.timbre, midi, a4: prefs.a4, at, text: syl, tied: tie, legato: !!legato, value: n.len + (ev.extra || 0), joined: !!joined && cut === 0, dur, u: ev.u, last: ev.last, close, inWord: !!ev.inWord,
         swell: shaped && legato ? ev.swell : null, fade: shaped ? ev.fade : null, lift: !!ev.pairA, key: vi, level: .2 / Math.sqrt(Math.max(1, p.voices.length)) * (shaped ? ev.dyn || 1 : 1) });
     }
-    while (prefs.click && bi * beat + off < p.end && t0 + (bi * beat + off - from) * k < horizon) { snd.click(t0 + (bi * beat + off - from) * k, bi % 1 === 0 && bi % 3 === 0); bi++; }
+    while (prefs.click && bi < beats.length && t0 + (beats[bi][0] - from) * k < horizon) { snd.click(t0 + (beats[bi][0] - from) * k, beats[bi][1]); bi++; }
   };
   pump();
   timer = setInterval(pump, 150);

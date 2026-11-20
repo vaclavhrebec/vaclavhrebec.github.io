@@ -93,6 +93,7 @@ svg { display: block; }
 .system .vinit { font: 4.2px var(--serif); fill: var(--accent); }
 .system .clefnum { font: .9px var(--serif); fill: currentColor; }
 .system .brevenum { font: italic 1.05px var(--serif); fill: currentColor; opacity: .7; }
+.system .msign-num { font-family: var(--serif); font-weight: 600; }
 .system .hidden-note { font: italic 1.2px var(--serif); fill: var(--soft); }
 .system .hit { fill: transparent; stroke: none; cursor: pointer; }
 .system .muted { opacity: .45; }

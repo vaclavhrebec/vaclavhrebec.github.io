@@ -193,8 +193,22 @@ def convert(path):
     # walk rows; for each kern spine only the first sub-spine
     pending_txt = {}
     time = Fr(0)
-    for kind, row in allrows:
+    # every voice notes where a section begins and where its mensuration changes (sign and bar), by the index of its
+    # next event: the app beats the tactus afresh from each, with the minim kept constant
+    for v in V.values(): v['mchg'] = []
+    marked = []
+    for lab in seq:
+        marked.append(('S', lab))
+        marked.extend(secs[lab])
+    for kind, row in marked:
+        if kind == 'S':
+            for v in V.values(): v['mchg'].append((len(v['ev']), 'sec', row))
+            continue
         if kind == '*':
+            for sp, t in row:
+                if sp['type'] != '**kern' or sp.get('sub', 0): continue
+                if t.startswith('*met('): V[sp['id']]['mchg'].append((len(V[sp['id']]['ev']), 'met', t[5:-1]))
+                elif re.fullmatch(r'\*M\d+/\d+', t): V[sp['id']]['mchg'].append((len(V[sp['id']]['ev']), 'M', t[2:]))
             for sp, t in row:
                 if sp['type'] != '**kern' or sp.get('sub', 0): continue
                 v = V[sp['id']]
@@ -334,7 +348,80 @@ def build(path):
     met = next((V[k]['met'] for k in ids if V[k]['met']), '') or ''
     t = 'O' if met.startswith('O') else 'C'
     cut = '|' in met
-    return meta, {'t': t, 'cut': cut, 'b': gb, 'poly': poly}
+    item = {'t': t, 'cut': cut, 'b': gb, 'poly': poly}
+    grid, signs = mensurations(V, ids)
+    if grid: item['ms'] = grid
+    for k, pv in zip(ids, poly):
+        if signs.get(k): pv['ms'] = signs[k]
+    return meta, item
+
+
+def bar_of(sig):
+    """a time signature of the edition (*M3/1) as [minims in the bar, parts of the tactus]"""
+    a, b = sig.split('/')
+    one = recip_minims(b)
+    if not one or not int(a): return None
+    n = int(a)
+    bar = n * one
+    return [int(bar) if bar == int(bar) else float(bar), 3 if n in (3, 9) else 2]
+
+
+def mensurations(V, ids):
+    """The tactus grid and the signs. Returns (grid, signs): grid = [[time in minims, minims in the bar, parts], ...], from the
+    top voice's sections and time signatures, one entry wherever a section begins or the bar changes; signs = for each voice
+    [[time, sign], ...] wherever its mensuration sign is set. Times count the values as written out here (a section's final
+    long as a full long). Proportions (3, C|3, O/3 ...), and an O that the edition bars in 2/1, are written out as triplets
+    inside the usual bar: where every singing voice has such a sign, the bar beats in three."""
+    def at_of(k):
+        at = [Fr(0)]
+        for e in V[k]['ev']:
+            at.append(at[-1] + (8 if e.get('long') else e['u']))
+        return at
+    num = lambda t: int(t) if t == int(t) else float(t)
+    signs = {}
+    for k in ids:
+        at = at_of(k); out = []
+        for idx, kind, val in V[k]['mchg']:
+            if kind != 'met': continue
+            t = at[min(idx, len(at) - 1)]
+            if t >= at[-1] and out: continue
+            if out and out[-1][0] == num(t): out[-1][1] = val
+            elif not out or out[-1][1] != val or True: out.append([num(t), val])
+        signs[k] = out
+    def sign_at(k, t):
+        cur = ''
+        for tt, sg in signs[k]:
+            if tt <= t + 1e-9: cur = sg
+        return cur
+    ats = {k: at_of(k) for k in ids}
+    def sounds(k, t0, t1):
+        a = ats[k]
+        return any(not e['r'] and a[i] < t1 and a[i + 1] > t0 for i, e in enumerate(V[k]['ev']))
+    top = ids[0]
+    at = at_of(top)
+    grid = []
+    M = None
+    bykey = {}
+    for idx, kind, val in V[top]['mchg']:
+        bykey.setdefault(idx, []).append((kind, val))
+    for idx in sorted(bykey):
+        for kind, val in bykey[idx]:
+            if kind == 'M': M = val
+        t = at[min(idx, len(at) - 1)]
+        if t >= at[-1]: continue
+        b = bar_of(M) if M else None
+        bar0 = (bar_of(M) or [4])[0] if M else 4
+        sg = [sign_at(k, num(t)) for k in ids if sounds(k, t, t + bar0)]
+        sg = [x for x in sg if x]
+        if b is None:
+            b = [6, 3] if sg and all(x.startswith('O') for x in sg) else [4, 2]
+        if b[1] == 2 and int(M.split('/')[0] if M else 2) == 2 and sg and all('3' in x or x.startswith('O') for x in sg):
+            b = [b[0], 3]
+        e = [num(t), b[0], b[1]]
+        if grid and grid[-1][0] == e[0]: grid[-1] = e
+        else: grid.append(e)
+    if grid and grid[0][0] != 0: grid.insert(0, [0, grid[0][1], grid[0][2]])
+    return grid, signs
 
 
 if __name__ == '__main__':

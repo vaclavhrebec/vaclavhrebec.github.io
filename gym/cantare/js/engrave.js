@@ -1,5 +1,5 @@
 /* Engraving: turns a piece into SVG. Units are staff spaces (distance between two staff lines); y grows downward. */
-import { CLEFS, alterationOf, clefFor } from './music.js';
+import { CLEFS, alterationOf, clefFor, gridOf, breveNumber, breveStarts } from './music.js';
 import { BRAVURA } from './bravura.js';
 import { MS } from './manuscript.js';
 
@@ -245,7 +245,60 @@ function flatStep(bottom, lines) {
 }
 
 const hasSign = piece => piece.kind !== 'chant' && !piece.talea;
-const HEAD = (piece, clef) => clefWidth(clef, styleOf(piece)) + .5 + (piece.bflat ? 1.2 : 0) + (hasSign(piece) ? 2.1 : 0) + 1;
+/* ---------- mensuration signs ----------
+   A sign as the Josquin Research Project writes it: O or C (Cr: the reversed C), a dot for prolatio maior, a stroke
+   for diminution, and a proportion's number (3, 2, 3/2 …), alone or after the circle. */
+const SIGN_RE = /^(Cr|O|C|c)?(\.)?(\|)?(.*)$/;
+/* the voices' own signs are shown where the piece has its own tactus grid (not when a mensuration is chosen in Transform) */
+const ownSigns = (piece, vi) => !!(piece.grid && piece.voices[vi].signs && piece.voices[vi].signs.length && !piece.talea);
+const signAt = (voice, t) => { let s = ''; for (const x of voice.signs) { if (x.t <= t + 1e-6) s = x.s; else break; } return s; };
+function signWidth(sign) {
+  const m = SIGN_RE.exec(sign || '') || [];
+  const num = (m[4] || '').replace(/^\//, '');
+  return (m[1] ? 1.75 : 0) + (num ? (num.includes('/') ? 1.1 : .75 * num.length + .2) : 0) || 1.75;
+}
+/* the sign drawn with its left edge at x on a staff whose middle line is mid */
+function signSVG(sign, x, mid, style) {
+  const m = SIGN_RE.exec(sign || '') || [];
+  const base = m[1] === 'c' ? 'C' : m[1], dot = !!m[2], cut = !!m[3], num = (m[4] || '').replace(/^\//, '');
+  let g = '', w = 0;
+  if (base) {
+    const cx = x + .8;
+    if (base === 'O') {
+      if (ms(style) && !dot) g += cut ? mp('signCut', cx, mid, .75) : mp('signO', cx, mid, .78);
+      else { g += gc(dot ? 'E910' : cut ? 'E912' : 'E911', cx, mid, .78); if (dot && cut) g += gc('E925', cx, mid, .78); }
+    } else {
+      const c = gc(dot ? 'E914' : 'E915', cx, mid, .78);
+      g += base === 'Cr' ? `<g transform="translate(${f(2 * cx)} 0) scale(-1 1)">${c}</g>` : c;
+      if (cut) g += gc('E925', cx, mid, .78);
+    }
+    w = 1.75;
+  }
+  if (num) {
+    const [a, b] = num.split('/');
+    if (b) g += `<text x="${f(x + w + .5)}" y="${f(mid - .12)}" class="msign-num fill" text-anchor="middle" font-size="1.55">${esc(a)}</text><text x="${f(x + w + .5)}" y="${f(mid + 1.3)}" class="msign-num fill" text-anchor="middle" font-size="1.55">${esc(b)}</text>`;
+    else g += `<text x="${f(x + w + .1)}" y="${f(mid + .78)}" class="msign-num fill" font-size="2.2">${esc(a)}</text>`;
+  }
+  return g;
+}
+/* the widest sign any voice of the piece sets, for the room at the head of every line */
+const signRoom = piece => {
+  if (!hasSign(piece)) return 0;
+  const all = piece.grid ? piece.voices.flatMap(v => (v.signs || []).map(x => x.s)) : [];
+  return Math.max(2.1, ...all.map(s => signWidth(s) + .35));
+};
+const HEAD = (piece, clef) => clefWidth(clef, styleOf(piece)) + .5 + (piece.bflat ? 1.2 : 0) + signRoom(piece) + 1;
+/* a dot that only says what the sign already says is not written: under O (and O|, O.) a perfect brevis or longa, under a
+   dotted sign (prolatio maior) a perfect semibrevis, brevis or longa, as the original has them. The edition writes them
+   with the dot because it counts every value at its full length. */
+function impliedDot(piece, voice, n) {
+  if (!n.dot || !piece.grid || !voice.signs) return false;
+  const m = SIGN_RE.exec(signAt(voice, n.t)) || [];
+  if (m[4]) return false; /* a proportion: its values are written out as triplets */
+  if (m[1] === 'O' && (n.v === 'B' || n.v === 'L')) return true;
+  if (m[2] && (n.v === 'S' || n.v === 'B' || n.v === 'L')) return true;
+  return false;
+}
 export const headWidth = (piece, clef) => HEAD(piece, clef);
 
 /* Draw one staff for one voice over the given columns. Returns {svg, top, bottom} relative to the staff's top line. */
@@ -276,7 +329,11 @@ function drawStaff(piece, vi, cols, xs, opts) {
     const y = yOf(flatStep(clef.bottom, lines) ?? clef.bottom + 2);
     svg += accidental('b', cw + .5 + .9, y, false, style);
   }
-  if (hasSign(piece)) {
+  if (hasSign(piece) && ownSigns(piece, vi)) {
+    /* the sign in force where the line begins */
+    const sg = signAt(voice, cols.length ? cols[0].t : 0);
+    if (sg) svg += signSVG(sg, HEAD(piece, clef) - 1 - signRoom(piece) + .1, mid, style);
+  } else if (hasSign(piece)) {
     const sx = HEAD(piece, clef) - 1.2 - 1.6;
     const code = piece.tempus === 'O' ? (piece.cut ? 'E912' : 'E911') : 'E915';
     if (ms(style) && piece.tempus === 'O') svg += piece.cut ? mp('signCut', sx + .8, mid, .75) : mp('signO', sx + .8, mid, .78);
@@ -320,6 +377,12 @@ function drawStaff(piece, vi, cols, xs, opts) {
     if (!e) return;
     const { n, i } = e;
     const x = xs.at[k];
+    /* a change of mensuration in this voice, just before this note */
+    if (k > 0 && ownSigns(piece, vi)) {
+      const prevT = i > 0 ? voice.notes[i - 1].t : -1;
+      const ch = voice.signs.find(sg => sg.t > Math.max(prevT, cols[0].t) + 1e-6 && sg.t <= c.t + 1e-6);
+      if (ch) body += `<g class="msign">${signSVG(ch.s, x - 1 - signWidth(ch.s), mid, style)}</g>`;
+    }
     if (n.rest) {
       let g;
       if (restGroup.has(k)) {
@@ -350,7 +413,7 @@ function drawStaff(piece, vi, cols, xs, opts) {
     if (alt) g += n.ficta ? accidental(alt, x, y - 1.7, true, style) : accidental(alt, x - (style === 'chant' ? .6 : .75), y, false, style);
     const nx = x + (alt && !n.ficta ? 0 : 0);
     g += noteGlyph(n, nx, y, stemUp, style);
-    if (n.dot) g += `<circle cx="${f(nx + .95)}" cy="${f(Number.isInteger(y) ? y - .5 : y)}" r=".16" class="fill"/>`;
+    if (n.dot && !impliedDot(piece, voice, n)) g += `<circle cx="${f(nx + .95)}" cy="${f(Number.isInteger(y) ? y - .5 : y)}" r=".16" class="fill"/>`;
     const stems = n.v !== 'B' && n.v !== 'S' && style !== 'chant';
     top = Math.min(top, y - .7, stems && stemUp ? y - 3.6 : 99);
     const low = Math.max(y + .7, stems && !stemUp ? y + 3.6 : -99, style === 'chant' && n.v === 'L' ? y + 2.7 : -99);
@@ -466,6 +529,18 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
       cols[k - 1].need += room;
     });
   }
+  /* room before a change of mensuration */
+  if (vidx.some(v => ownSigns(piece, v))) cols.forEach((c, k) => {
+    if (!k) return;
+    let room = 0;
+    vidx.forEach(v => {
+      const e = c.notes[v]; if (!e || !ownSigns(piece, v)) return;
+      const ns = piece.voices[v].notes, prevT = e.i > 0 ? ns[e.i - 1].t : -1;
+      const ch = piece.voices[v].signs.find(sg => sg.t > prevT + 1e-6 && sg.t <= c.t + 1e-6);
+      if (ch) room = Math.max(room, signWidth(ch.s) + 1.1);
+    });
+    cols[k - 1].need += room;
+  });
   const headW = Math.max(...vidx.map(v => Math.max(HEAD(piece, clefOf(v)), ...(plans[v] ? [...new Set(plans[v])].map(c => HEAD(piece, c)) : []))));
   /* the voices are named by an initial, as in a choirbook: S, A, T, B before the first staff of each voice */
   const initials = opts.names !== false && vidx.some(v => piece.voices[v].name);
@@ -537,7 +612,7 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
        above its first staff; on the one long line, every fifth breve where it begins */
     let hh = h;
     if (opts.count !== false && slice.length) {
-      const bu = breveUnit(piece), off = piece.beatOff || 0, marks = [];
+      const grid = gridOf(piece), off = grid[0].t, marks = [];
       const xOf = t => { /* the place of a moment on this line */
         for (let i = 0; i < slice.length; i++) {
           if (Math.abs(slice[i].t - t) < 1e-6) return at[i] - .35;
@@ -546,8 +621,8 @@ export function engraveSystems(piece, vidx, width, opts = {}) {
         return null;
       };
       if (opts.count > 0) {
-        for (let k = opts.count; off + (k - 1) * bu < t1 - 1e-6; k += opts.count) { const x = xOf(off + (k - 1) * bu); if (x != null) marks.push([k, x + ind, 'start']); }
-      } else if (si > 0 && t0 >= off - 1e-6) marks.push([Math.floor((t0 - off) / bu + 1e-6) + 1, BR && staves.length > 1 ? ind - 1.6 : ind + .1, 'start']);
+        breveStarts(grid, t0, t1).forEach(t => { const k = breveNumber(grid, t); if (k % opts.count === 0 || (opts.count === 1)) { const x = xOf(t); if (x != null) marks.push([k, x + ind, 'start']); } });
+      } else if (si > 0 && t0 >= off - 1e-6) marks.push([breveNumber(grid, t0), BR && staves.length > 1 ? ind - 1.6 : ind + .1, 'start']);
       if (marks.length) {
         /* above the bracket of a score, else just above the staff */
         const lift = BR && staves.length > 1 && !(opts.count > 0) ? 1.75 : .75;

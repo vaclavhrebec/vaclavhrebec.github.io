@@ -163,6 +163,8 @@ export function pieceFrom(item, trail) {
   const base = { id: item.id, title: item.title, note, credit: item.cr || credit, trail, tempus, cut: !!item.cut, bflat: !!item.b,
     /* a measured piece whose long and short notes run in threes although written without the O (cantus fractus), and its upbeat in minims */
     ternary: !!item.tern, beatOff: item.up || 0,
+    /* the tactus grid of a piece that changes its mensuration (see gridOf) */
+    grid: item.ms ? item.ms.map(([t, bar, parts]) => ({ t, bar, parts })) : null,
     /* the Josquin collection is converted with every value already at its full length (a perfect brevis written B.),
        so its O must not lengthen breves, longs and maximas a second time */
     abs: !!(jm || item.jrp || item.abs) };
@@ -170,7 +172,9 @@ export function pieceFrom(item, trail) {
 
   if (item.poly) {
     kind = 'poly';
-    voices = item.poly.map((v, i) => ({ clef: v.c || 'c4', name: v.nm || '', notes: readTokens(v.n), lyrics: i === 0 ? item.lyr || v.lyr : v.lyr }));
+    voices = item.poly.map((v, i) => ({ clef: v.c || 'c4', name: v.nm || '', notes: readTokens(v.n), lyrics: i === 0 ? item.lyr || v.lyr : v.lyr,
+      /* the mensuration signs this voice sets, and where */
+      signs: v.ms ? v.ms.map(([t, s]) => ({ t, s })) : null }));
   } else if (item.n != null) {
     kind = item.fr ? 'fractus' : 'mensural';
     voices = [{ clef: item.c || 'c4', name: '', notes: readTokens(item.n), lyrics: item.lyr }];
@@ -195,7 +199,6 @@ export function pieceFrom(item, trail) {
   }
   nameVoices(voices);
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
-  if (base.abs && voices.length > 1) holdSectionEnds(voices, tempus === 'O' ? 6 : 4);
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
   /* a melody that is not really plainchant (a basse danse tenor, La Spagna) may ask for five lines though written in breves */
@@ -209,34 +212,40 @@ export function pieceFrom(item, trail) {
   return out;
 }
 
-/* A section of a Josquin Research Project piece (Patrem … then Crucifixus) ends on a final long in every voice; the edition
-   writes it as a short value, which may fall on the second half of a brevis, and the converter shows it as the long it stands for.
-   The singers hold that long and start the next section afresh on a tactus, so the long is held on to the next brevis:
-   otherwise everything after it would run half a tactus out, the hand beating the upbeat as the downbeat. */
-function holdSectionEnds(voices, unit) {
-  const end = () => Math.max(...voices.map(v => v.end));
-  for (let guard = 0; guard < 64; guard++) {
-    let T = Infinity;
-    voices.forEach(v => v.notes.forEach(n => {
-      const e = n.t + n.len;
-      if (n.rest || n.v !== 'L' || e >= end() - 1e-6 || e % unit < 1e-6 || unit - (e % unit) < 1e-6 || e >= T) return;
-      /* every voice either ends a long here or is silent across it */
-      const all = voices.every(w => {
-        const c = w.notes.find(x => x.t < e - 1e-6 && e - 1e-6 < x.t + x.len);
-        return !c || c.rest || (c.v === 'L' && Math.abs(c.t + c.len - e) < 1e-6);
-      });
-      if (all) T = e;
-    }));
-    if (T === Infinity) return;
-    const pad = unit - (T % unit);
-    voices.forEach(w => {
-      w.notes.forEach(x => {
-        if (x.t >= T - 1e-6) x.t += pad;
-        else if (x.t + x.len > T - 1e-6) x.len += pad; /* the long itself, or a rest across it */
-      });
-      w.end = w.notes.length ? w.notes.at(-1).t + w.notes.at(-1).len : 0;
-    });
+/* ---------- the tactus grid ----------
+   A piece of the Josquin Research Project can change its mensuration (O, then C, then a proportion …) and begins each
+   section afresh. Its grid lists, from each such moment, the minims in one brevis (the bar of the edition) and how the
+   tactus divides it: two parts (down, up) or three (tactus inaequalis: down on 1, still on 2, up on 3). The minim keeps
+   one speed throughout. Other pieces have one region, from their tempus. */
+export function gridOf(piece) {
+  if (piece.grid && piece.grid.length && !piece.talea) return piece.grid;
+  const three = !piece.talea && (piece.tempus === 'O' || (piece.ternary && piece.tempus === 'C'));
+  return [{ t: piece.beatOff || 0, bar: three ? 6 : 4, parts: three ? 3 : 2 }];
+}
+export function regionAt(grid, t) {
+  let r = grid[0];
+  for (const g of grid) { if (g.t <= t + 1e-6) r = g; else break; }
+  return r;
+}
+/* the number of the brevis (counted from 1) that holds the moment t; each region counts its own breves on */
+export function breveNumber(grid, t) {
+  let n = 0;
+  for (let i = 0; i < grid.length; i++) {
+    const g = grid[i], next = grid[i + 1] ? grid[i + 1].t : Infinity;
+    if (t < g.t - 1e-6) break;
+    if (t < next - 1e-6) return n + Math.floor((t - g.t) / g.bar + 1e-6) + 1;
+    n += Math.ceil((next - g.t) / g.bar - 1e-6);
   }
+  return Math.max(1, n);
+}
+/* the moments where the breves begin, from a to b */
+export function breveStarts(grid, a, b) {
+  const out = [];
+  grid.forEach((g, i) => {
+    const next = grid[i + 1] ? grid[i + 1].t : Infinity;
+    for (let t = g.t; t < Math.min(next, b) - 1e-6; t += g.bar) if (t >= a - 1e-6) out.push(t);
+  });
+  return out;
 }
 
 /* ---------- pitch ---------- */
