@@ -195,6 +195,7 @@ export function pieceFrom(item, trail) {
   }
   nameVoices(voices);
   voices.forEach(v => { putText(v.notes, v.lyrics); stamp(v.notes, base.abs ? 'C' : tempus); v.end = v.notes.length ? v.notes.at(-1).t + v.notes.at(-1).len : 0; });
+  if (base.abs && voices.length > 1) holdSectionEnds(voices, tempus === 'O' ? 6 : 4);
 
   /* staff conventions: plainchant on four lines in a clef that holds it, everything mensural on five */
   /* a melody that is not really plainchant (a basse danse tenor, La Spagna) may ask for five lines though written in breves */
@@ -206,6 +207,36 @@ export function pieceFrom(item, trail) {
   const out = { ...base, kind, lines, voices, end: Math.max(...voices.map(v => v.end)) };
   if (item.poly && !item.noficta) autoFicta(out);
   return out;
+}
+
+/* A section of a Josquin Research Project piece (Patrem … then Crucifixus) ends on a final long in every voice; the edition
+   writes it as a short value, which may fall on the second half of a brevis, and the converter shows it as the long it stands for.
+   The singers hold that long and start the next section afresh on a tactus, so the long is held on to the next brevis:
+   otherwise everything after it would run half a tactus out, the hand beating the upbeat as the downbeat. */
+function holdSectionEnds(voices, unit) {
+  const end = () => Math.max(...voices.map(v => v.end));
+  for (let guard = 0; guard < 64; guard++) {
+    let T = Infinity;
+    voices.forEach(v => v.notes.forEach(n => {
+      const e = n.t + n.len;
+      if (n.rest || n.v !== 'L' || e >= end() - 1e-6 || e % unit < 1e-6 || unit - (e % unit) < 1e-6 || e >= T) return;
+      /* every voice either ends a long here or is silent across it */
+      const all = voices.every(w => {
+        const c = w.notes.find(x => x.t < e - 1e-6 && e - 1e-6 < x.t + x.len);
+        return !c || c.rest || (c.v === 'L' && Math.abs(c.t + c.len - e) < 1e-6);
+      });
+      if (all) T = e;
+    }));
+    if (T === Infinity) return;
+    const pad = unit - (T % unit);
+    voices.forEach(w => {
+      w.notes.forEach(x => {
+        if (x.t >= T - 1e-6) x.t += pad;
+        else if (x.t + x.len > T - 1e-6) x.len += pad; /* the long itself, or a rest across it */
+      });
+      w.end = w.notes.length ? w.notes.at(-1).t + w.notes.at(-1).len : 0;
+    });
+  }
 }
 
 /* ---------- pitch ---------- */
