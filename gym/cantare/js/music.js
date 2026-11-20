@@ -165,7 +165,7 @@ export function pieceFrom(item, trail) {
     ternary: !!item.tern, beatOff: item.up || 0,
     /* the Josquin collection is converted with every value already at its full length (a perfect brevis written B.),
        so its O must not lengthen breves, longs and maximas a second time */
-    abs: !!(jm || item.jrp) };
+    abs: !!(jm || item.jrp || item.abs) };
   let kind, voices;
 
   if (item.poly) {
