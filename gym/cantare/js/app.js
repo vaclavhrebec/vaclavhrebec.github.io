@@ -127,11 +127,12 @@ const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
 
 async function loadLibrary() {
   const [lib, tags] = await Promise.all([fetch('data/library.json').then(r => r.json()), fetch('data/taglines.json').then(r => r.json())]);
-  /* the Josquin Research Project sits inside Polyphonic models under plain names; far too much to carry at once,
+  /* the Josquin Research Project (with The 1520s Project, CRIM and Measuring Polyphony) sits inside Polyphonic models under plain names; far too much to carry at once,
      so it is fetched piece by piece, only when opened. Its credit appears under each piece once it is opened. */
   const poly = lib.find(g => g.group === 'Polyphonic models');
   (poly.subs ||= []).push(
-    { group: 'Masses, motets and songs, 1420–1540', note: 'By Josquin, Ockeghem, La Rue, Busnoys, Du Fay and many more, in all their voices, sorted by composer.', lazy: 'index.json', count: 1379 },
+    { group: 'Ars antiqua and Ars nova', note: 'Motets of the thirteenth and fourteenth centuries: the Montpellier Codex, the Roman de Fauvel, and the isorhythmic motets of Philippe de Vitry and his contemporaries, at the original pitch.', lazy: 'c/Med.json', count: 63 },
+    { group: 'Masses, motets and songs, 1420–1600', note: 'By Josquin, Ockeghem, La Rue, Du Fay, Gombert, Willaert, Morales, Lassus, Palestrina, Victoria, Guerrero and many more, in all their voices, sorted by composer.', lazy: 'index.json', count: 2224 },
     { group: 'Canons', note: 'Every piece here that contains a canon, sorted by the interval of the answer. Each entry says which voice follows which: use Hide on the following voice and improvise it yourself.', lazy: 'canons.json', count: 216 });
   /* Gregorian chant: about eleven hundred scores from GregoBase (CC0), fetched by kind of chant only when opened */
   const planus = lib.find(g => g.group === 'Cantus planus');
@@ -199,7 +200,7 @@ function renderTree(filter = '') {
     if (first || q || openGroups.has(key)) d.open = true;
     d.addEventListener('toggle', () => { if (d.open) { openGroups.add(key); if (g.lazy && !g.loaded) fillLazy(g, trail); } else openGroups.delete(key); });
     if (g.note && !q) d.append(el('p', { class: 'gnote' }, g.note));
-    items.forEach(it => d.append(el('button', { class: 'item', 'data-id': it.id, 'aria-current': S.base && S.base.id === it.id ? 'true' : 'false', onclick: () => { openItem(it, [...trail, g.group]); if (innerWidth < 1100) closeDrawer('library'); } }, el('b', {}, it.title))));
+    items.forEach(it => d.append(el('button', { class: 'item', 'data-id': it.id, 'aria-current': S.base && S.base.id === it.id ? 'true' : 'false', onclick: async () => { let x = it; if (it.jrp && !it.poly) { try { x = Object.assign(await jrpGet('p/' + it.jrp + '.json'), { id: it.id }); } catch (e) { toast(tr('Could not load that piece (offline?).')); return; } } openItem(x, [...trail, g.group]); if (innerWidth < 1100) closeDrawer('library'); } }, el('b', {}, it.title))));
     subs.forEach(x => d.append(x));
     if (g.lazy && !g.loaded) d.append(el('p', { class: 'more' }, g.failed ? tr('Could not load this part of the collection (offline?).') : g.loading || d.open ? tr('Loading…') : tr('Open to load.')));
     return d;
@@ -314,7 +315,7 @@ function render(resetLeaf) {
   $('#note').hidden = !S.noteOpen;
   $('#noteToggle').setAttribute('aria-expanded', String(!!S.noteOpen));
   $('#credit').hidden = !p.credit;
-  $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>').replace('gregobase.selapa.net', '<a href="https://gregobase.selapa.net" target="_blank" rel="noopener">gregobase.selapa.net</a>') : '';
+  $('#credit').innerHTML = p.credit ? esc(p.credit).replace('josquin.stanford.edu', '<a href="https://josquin.stanford.edu" target="_blank" rel="noopener">josquin.stanford.edu</a>').replace('gregobase.selapa.net', '<a href="https://gregobase.selapa.net" target="_blank" rel="noopener">gregobase.selapa.net</a>').replace('1520s-project.org', '<a href="https://1520s-project.org" target="_blank" rel="noopener">1520s-project.org</a>').replace('crimproject.org', '<a href="https://crimproject.org" target="_blank" rel="noopener">crimproject.org</a>').replace('measuringpolyphony.org', '<a href="https://measuringpolyphony.org" target="_blank" rel="noopener">measuringpolyphony.org</a>') : '';
   const useBook = prefs.view === 'book' && p.voices.length > 1;
   syncLayoutSw(p);
   $('#pager').hidden = !useBook;
