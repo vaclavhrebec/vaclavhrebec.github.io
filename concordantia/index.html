@@ -94,7 +94,7 @@ input[type=search]{width:100%;font:16px var(--sans);padding:11px 13px;border:1px
 <body>
 <header>
   <h1>Concordantia<small>A topical concordance of music treatises, with their sources and their world</small></h1>
-  <div class="sketch"><a href="../">← vaclavhrebec.github.io</a> · summaries are editorial paraphrase; Latin passages are quoted from the Thesaurus Musicarum Latinarum</div>
+  <div class="sketch"><a href="../">← vaclavhrebec.github.io</a> · summaries are editorial paraphrase; Latin passages are quoted from the Thesaurus Musicarum Latinarum, passages in Spanish, Italian and German from the original prints, checked against the scans</div>
 </header>
 <nav><div class="in" id="nav"></div></nav>
 <main id="app"></main>
@@ -108,7 +108,7 @@ const NODES={}, PARENT={};
 const META={}; TML.forEach(o=>META[o.c+"/"+o.id]=o);
 const FILE2WORK={}; Object.entries(WORKS).forEach(([id,w])=>w.tml.forEach(k=>FILE2WORK[k]=id));
 const CENTS=["3rd-5th","6th-8th","9th-11th","12th","13th","14th","15th","16th","17th"];
-const WORKREFS={}; Object.values(NODES).forEach(n=>n.s.forEach(([w,note])=>{(WORKREFS[w]=WORKREFS[w]||[]).push([n.id,note])}));
+const WORKREFS={}; Object.values(NODES).forEach(n=>n.s.forEach(([w,note,qs])=>{(WORKREFS[w]=WORKREFS[w]||[]).push([n.id,note,qs])}));
 const LANES={treatise:["Treatise","--l-treatise"],ms:["Manuscript / print","--l-ms"],sci:["Science, medicine, letters","--l-sci"],event:["Event","--l-event"]};
 const CONTEXT=[
  {lane:"ms",y:1400,date:"c. 1400",title:"Faenza Codex",n:"Keyboard intabulations of sacred and secular pieces."},
@@ -176,6 +176,13 @@ function quotes(key,node){
 /* nodes of this subtree that have passages in a given TML file */
 function hitsIn(key,ids){const h=(IDX||{})[key]||{};return ids.filter(i=>h[i])}
 function toggleBtn(k,label){const open=OPEN.has(k);return `<button class="more" data-open="${esc(k)}">${open?"Hide passages":label}</button>`}
+/* passages quoted from a work on a topic (vernacular treatises and chosen Latin passages), each linked to its page */
+function vquotes(wid,nid,qs){
+  if(!qs||!qs.length) return "";
+  const k="v|"+wid+"|"+nid, open=OPEN.has(k);
+  const body=open?qs.map(([loc,tx,url])=>`<div class="q"><div class="w"><b>${esc(loc)}</b>${url?` · <a href="${esc(url)}" target="_blank" rel="noopener">see the page ↗</a>`:""}</div><blockquote>${esc(tx)}</blockquote></div>`).join(""):"";
+  return body+toggleBtn(k,(qs.length===1?"Passage":"Passages")+" from the text ("+qs.length+")");
+}
 function workPassages(wid,nodeIds,tag){
   const w=WORKS[wid]; if(!w||!w.tml.length||!IDX) return "";
   const per=w.tml.map(k=>[k,hitsIn(k,nodeIds)]).filter(x=>x[1].length);
@@ -236,9 +243,9 @@ function topicsView(r){
   const sub=[n.id,...descendants(n.id)];
   if(n.s.length){
     html+=`<h3 class="sec">What the treatises say</h3>`;
-    html+=n.s.slice().sort((a,b)=>(WORKS[a[0]].y-WORKS[b[0]].y)).map(([wid,note])=>{const w=WORKS[wid];return `<div class="card">
+    html+=n.s.slice().sort((a,b)=>(WORKS[a[0]].y-WORKS[b[0]].y)).map(([wid,note,qs])=>{const w=WORKS[wid];return `<div class="card">
       <div class="loc">${esc(w.d)} · ${esc(w.p)}</div><h3><a href="#w-${wid}">${esc(w.a)}, <i>${esc(w.t)}</i></a></h3>
-      <p class="note">${esc(note)}</p>${workPassages(wid,sub.filter(i=>NODES[i].hasq),n.id)}${repoLinks(w)}</div>`}).join("");
+      <p class="note">${esc(note)}</p>${vquotes(wid,n.id,qs)}${workPassages(wid,sub.filter(i=>NODES[i].hasq),n.id)}${repoLinks(w)}</div>`}).join("");
   }
   // sources of the subtopics
   const seen=new Set(n.s.map(x=>x[0])); const below=[];
@@ -277,8 +284,8 @@ function workView(id){
   let html=`<div class="crumbs"><a href="#treatises">Treatises</a></div><div class="loc">${esc(w.d)} · ${esc(w.p)}</div>
    <h2><i>${esc(w.t)}</i></h2><div class="meta" style="font-size:15px">${esc(w.a)}</div><div class="ctx">${esc(w.ctx)}</div>${repoLinks(w)}`;
   if(refs.length){
-    html+=`<h3 class="sec">Topics</h3>`+refs.map(([nid,note])=>`<div class="card"><div class="crumbs" style="margin:0 0 4px">${path(nid).map(p=>`<a href="#t-${p}">${esc(NODES[p].l)}</a>`).join("<i>›</i>")}</div>
-      <p class="note">${esc(note)}</p>${workPassages(id,[nid,...descendants(nid)].filter(i=>NODES[i].hasq),nid)}</div>`).join("");
+    html+=`<h3 class="sec">Topics</h3>`+refs.map(([nid,note,qs])=>`<div class="card"><div class="crumbs" style="margin:0 0 4px">${path(nid).map(p=>`<a href="#t-${p}">${esc(NODES[p].l)}</a>`).join("<i>›</i>")}</div>
+      <p class="note">${esc(note)}</p>${vquotes(id,nid,qs)}${workPassages(id,[nid,...descendants(nid)].filter(i=>NODES[i].hasq),nid)}</div>`).join("");
   }
   if(w.tml.length&&IDX){
     const listed=new Set(refs.flatMap(([nid])=>[nid,...descendants(nid)]));
