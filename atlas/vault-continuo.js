@@ -34,3 +34,28 @@
   add('high-baroque', ['transitus-irregularis', 'passing-seventh', 'theatrical-resolution', 'full-voiced-continuo', 'all-keys-cycle', 'transitus']);
   add('galant', ['transitus-irregularis', 'theatrical-resolution']);
 })(window.VAULT);
+
+/* From Tinctoris (1470s–80s) and Santa María (1565) */
+(function (V) {
+  const add = (style, ids) => { const s = V.styles.find(x => x.id === style); if (s) ids.forEach(i => s.elements.includes(i) || s.elements.push(i)); };
+  V.elements.push(
+    {id: 'varietas', title: 'Varietas: avoiding repeated figures (redictae)', folder: 'counterpoint', first: 1440, common: 1460, fade: 1500,
+      scope: 'Ockeghem’s masses (Missa Mi-mi, Missa prolationum); Busnois; codified by Tinctoris, De arte contrapuncti III.6 and III.8 (1477)',
+      text: 'The ideal of constant variety: no figure repeated, least of all over a repeating tenor, except to imitate bells or trumpets. It explains the seamless, non-repetitive lines of the [[ockeghem]] generation; the next generation turns the other way, to sequence, ostinato and [[pervasive-imitation]].'},
+    {id: 'regulated-dissonance', title: 'Regulated dissonance: small, on weak parts or syncopated', folder: 'counterpoint', first: 1430, common: 1460, fade: 1600,
+      scope: 'Du Fay’s late works, Ockeghem, Busnois; Tinctoris, De arte contrapuncti II.23–34 (1477); the Palestrina style',
+      text: 'Discords are kept out of simple counterpoint and allowed in florid counterpoint only as small ornaments: passing on the weaker part of the beat, or in syncopation ([[suspension]]). Tinctoris scorns the older habit of long discords “to make the following concord sweeter”. The norm that [[palestrina]] perfects.'},
+    {id: 'plectrum-improvisation', title: 'Plectrum lute and tenorista: an improvised upper part over a tenor', folder: 'practice', first: 1400, common: 1450, fade: 1520,
+      scope: 'Pietrobono of Ferrara and his tenorista; the blind brothers Charles and Jean Fernandes on viols (Bruges); Tinctoris, De inventione IV.5 (c. 1481–83); Faenza Codex as a written trace',
+      text: 'A soloist with a plectrum improvises a florid upper part over a tenor played by a partner, the tenorista. Tinctoris praises this beside the harder art of playing three or four parts alone, which leads to [[lute-polyphony]] with the fingers.'},
+    {id: 'keyboard-paired-duos', title: 'Keyboard fantasia in paired duos (tañer a concierto)', folder: 'practice', first: 1550, common: 1560, fade: 1630,
+      scope: 'Tomás de Santa María, Arte de tañer fantasía II (1565); Cabezón’s tientos; Correa de Arauxo (1626)',
+      text: 'The four voices of an improvised fantasia move as two duos, bass with tenor and alto with soprano, answering each other with the same passo at the fourth, fifth or octave – [[paired-imitation]] as a method for the hands.'}
+  );
+  add('ockeghem', ['varietas', 'regulated-dissonance']);
+  add('burgundian', ['regulated-dissonance']);
+  add('josquin', ['regulated-dissonance']);
+  add('palestrina', ['regulated-dissonance']);
+  add('medieval-instrumental', ['plectrum-improvisation']);
+  add('spanish-instrumental', ['keyboard-paired-duos', 'redobles', 'notes-inegales']);
+})(window.VAULT);

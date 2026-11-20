@@ -19,6 +19,23 @@ SM = "https://imslp.org/index.php?title=Special:Search&search=" + "Arte de ta%C3
 WORKS["santamaria"] = ("Tomás de Santa María","Arte de tañer fantasía",1565,"1565","Valladolid",
   "A Dominican organist's method, finished 1557, for keyboard and vihuela: technique, intabulation and, in Part II, improvising a fantasia in four voices. Passages after the transcriptions of the Lexique musical de la Renaissance (ATILF).","",'Santa Maria Arte de taner fantasia')
 
+# ---------------- Johannes Tinctoris: all his treatises in the TML
+TB = "https://lightseagreen-dog-349934.hostingersite.com/tml/15th/"
+def TT(k): return TB + k
+WORKS.update({
+"tinctoris":("Johannes Tinctoris","Liber de arte contrapuncti",1477,"1477","Naples","Written at the Aragonese court in Naples and dedicated to King Ferrante; three books: the concords, the discords, and the eight general rules.","re:^15th/TINC(ON|PT)\\d$"),
+"tinctoris-prop":("Johannes Tinctoris","Proportionale musices",1473,"c. 1473","Naples","Proportions in mensural music; its prologue praises the English and Dunstaple.","re:^15th/TINPROM?$"),
+"tinctoris-eff":("Johannes Tinctoris","Complexus effectuum musices",1475,"c. 1475","Naples","Twenty effects of music, from pleasing God to healing the sick; dedicated to Beatrice of Aragon.","re:^15th/TINCOM\\d?$"),
+"tinctoris-exp":("Johannes Tinctoris","Expositio manus",1472,"c. 1472","Naples","The Guidonian hand, its letters, syllables, hexachords and mutations, written for the young Johannes de Lotinis.","re:^15th/TIN(EM|EXP)$",'Tinctoris Expositio manus'),
+"tinctoris-ton":("Johannes Tinctoris","Liber de natura et proprietate tonorum",1476,"1476","Naples","The eight tones in chant and polyphony, their mixture and commixture; dedicated to Ockeghem and Busnois.","re:^15th/TIN(LDN|NAT)$",'Tinctoris Liber de natura et proprietate tonorum'),
+"tinctoris-not":("Johannes Tinctoris","Tractatus de notis et pausis",1474,"c. 1472–75","Naples","The note shapes and rests of mensural music; dedicated to Martin Hanard, papal singer and canon of Cambrai.","re:^15th/TIN(TDN|TRAN)$",'Tinctoris Tractatus de notis et pausis'),
+"tinctoris-val":("Johannes Tinctoris","Tractatus de regulari valore notarum",1474,"c. 1472–75","Naples","Modus, tempus and prolation, and the regular value of each note under them.","re:^15th/TIN(TDR|TRAR)$",'Tinctoris De regulari valore notarum'),
+"tinctoris-imp":("Johannes Tinctoris","Liber imperfectionum notarum musicalium",1474,"c. 1472–75","Naples","The rules of imperfection, written for the young Jacobus Frontin.","re:^15th/TIN(LIB|LIMP)$",'Tinctoris Liber imperfectionum notarum'),
+"tinctoris-alt":("Johannes Tinctoris","Tractatus alterationum",1474,"c. 1472–75","Naples","Alteration in eight general rules; dedicated to Guillaume Guignant, first chaplain of the Duke of Milan.","re:^15th/TIN(TRAL|TRALT)$",'Tinctoris Tractatus alterationum'),
+"tinctoris-pun":("Johannes Tinctoris","Scriptum super punctis musicalibus",1474,"c. 1472–75","Naples","The dots of division, augmentation and perfection.","re:^15th/TIN(TDP|TRAP)$",'Tinctoris Scriptum super punctis musicalibus'),
+"tinctoris-inv":("Johannes Tinctoris","De inventione et usu musicae",1482,"c. 1481–83","Naples","A history of music, its singers and instruments, surviving only in extracts sent to Johannes Stokem; names Pietrobono and the blind Flemish viol players.","re:^15th/TININV\\d?$",'Tinctoris De inventione et usu musicae'),
+})
+
 # (parent id, id, label, aliases, description)
 NEW_NODES = [
 ("super-librum","rector","Leading the singers: the rector and his signs","rector chori, cantor, Vorsänger, signals, cheironomy, Leitung, organum purum",
@@ -47,6 +64,16 @@ NEW_NODES = [
   "Santa María's method of improvising: the two lower and the two upper voices move as duos that answer each other with the same passo."),
 ("instruments","clavichord","Clavichord (monacordio)","monacordio, clavicordio, Clavichord, Klavichord, practice instrument",
   "The keyboard instrument on which players learned, with how to strike its keys and tune it."),
+("counterpoint","varietas","Varietas and the avoidance of redictae","varietas, diversitas, redicta, repetition, Abwechslung, variety",
+  "Variety as a rule of composition and of singing super librum, and the ban on repeating a figure, except in imitation of bells or trumpets."),
+("counterpoint","genres","Genres: mass, motet, chanson","missa, motetum, cantilena, cantus magnus, mediocris, parvus, Gattungen, genera",
+  "The kinds of composed music, defined by size, text and use."),
+("modes","mode-mixture","Mixture and commixture of the modes","mixtio, commixtio, tonus mixtus, tonus commixtus, Modusmischung",
+  "A melody that exceeds its mode's range into the neighbouring one (mixture) or uses another mode's species (commixture); and how to name the mode of a polyphonic work."),
+("rhythm","mensuration","Mensuration: modus, tempus and prolation","modus maior, modus minor, tempus perfectum, prolatio maior, Mensur, mensuration signs",
+  "The four levels of mensural organisation and the signs that show them."),
+("improvisation","instrumental-improv-15","Improvising instrumentalists in the 15th century","Pietrobono, tenorista, leutum, viola, plectrum lute, Orbus, minstrels",
+  "Lutenists and viol players who improvised a florid upper part over a tenor, or played several parts alone."),
 ("instruments","harp","Harp","arpa, Harfe, harpe, arpa de dos órdenes, double harp",
   "Strings, tuning and the playing of chromatic notes on the harp."),
 ("tablature","intabulation","Intabulation","poner, cifrar, intavolatura, Intavolierung, arranging vocal works for keyboard and lute",
@@ -218,4 +245,85 @@ ADD = [
  ("Lib. II, cap. 52, fol. 121r–v","… exercite se el nueuo tañedor, en correr las manos con dedos conuenientes, por todo el juego del monacordio, de abaxo arriba y de arriba abaxo … procure exercitarse, en mudar las obras por todos los signos acidentales que se pudieren tañer, y assi mesmo procure tomar dellas, los passos q[ue] fueren de solfa graciosa, y tenerlos en la memoria para despues tañer sobre ellos fantasia a concierto.",SM)]),
 ("clavichord","santamaria","Part II, ch. 53: how to tune the clavichord, beginning from C.",[
  ("Lib. II, cap. 53","Considerando la necessidad que los nueuos tienen, del instrumento bien te[m]plado, para que con mas aliuio pueda[n] lleuar el trabajo del estudio, me moui a poner aqui el modo que se ha de tener para templar el monacordio … entonces estara bien afinado el punto, qua[n]do las dos cuerdas del mesmo punto estuuieren en tan yguales en la entonacion, que suenen como si fuesse vna sola.",SM)]),
+
+# ---------------- Tinctoris
+("res-facta","tinctoris","Book II, ch. 20: written counterpoint is res facta, counterpoint made in the mind is sung super librum.",[
+ ("Lib. II, cap. 20 (CSM 22/2, p. 107)","Contrapunctus qui scripto fit communiter res facta nominatur. At istum quem mentaliter conficimus absolute contrapunctum vocamus, et hunc qui faciunt super librum cantare vulgariter dicuntur. In hoc autem res facta a contrapuncto potissimum differt, quod omnes partes rei factae sive tres sive quatuor sive plures sint, sibi mutuo obligentur …",TT("TINCPT2"))]),
+("super-librum","tinctoris","Book II, ch. 20: when several sing super librum, each need only agree with the tenor; but it is praiseworthy if they agree among themselves.",[
+ ("Lib. II, cap. 20 (CSM 22/2, p. 110)","… duobus aut tribus, quatuor aut pluribus super librum concinentibus alter alteri non subiicitur. Enimvero cuilibet eorum circa ea, quae ad legem ordinationemque concordantiarum pertinent, tenori consonare sufficit. Non tamen vituperabile immo plurimum laudabile censeo si concinentes similitudinem assumptionis ordinationisque concordantiarum inter se prudenter cantaverint. Sic enim concentum eorum multo repletiorem suavioremque efficient.",TT("TINCPT2"))]),
+("history-in-treatises","tinctoris","Prologue: nothing written more than forty years ago is worth hearing.",[
+ ("Prologus (CSM 22/2, p. 12)","Neque quod satis admirari nequeo quippiam compositum nisi citra annos quadraginta extat quod auditu dignum ab eruditis existimetur. Hac vero tempestate … infiniti florent compositores, ut Johannes Okeghem, Johannes Regis, Anthonius Busnois, Firminus Caron, Guillermus Faugues …",TT("TINCPT1"))]),
+("rules","tinctoris","Book I, ch. 1: what counterpoint is; Book III, ch. 1: begin and end on a perfect concord.",[
+ ("Lib. I, cap. 1 (CSM 22/2, p. 14)","Contrapunctus itaque est moderatus ac rationabilis concentus per positionem unius vocis contra aliam effectus, diciturque contrapunctus a contra et punctus, eo quod una nota contra aliam posita tamquam uno puncto contra alium constituatur.",TT("TINCPT1")),
+ ("Lib. III, cap. 1 (CSM 22/2, p. 146)","… omnis contrapunctus per concordantiam perfectam et incipere et finire debet.",TT("TINCPT3"))]),
+("parallels","tinctoris","Book III, ch. 2: move with the tenor by imperfect, not by perfect concords of the same kind.",[
+ ("Lib. III, cap. 2 (CSM 22/2, p. 147)","Secunda regula est quod per concordantias imperfectas non autem perfectas eiusdem speciei cum tenore ascendere descendereque debemus …",TT("TINCPT3"))]),
+("approach","tinctoris","Book III, ch. 4: counterpoint as close to the tenor as possible – except for singers super librum, who may go further to vary it.",[
+ ("Lib. III, cap. 4 (CSM 22/2, p. 149)","Quarta regula est quod quam proximus et quam ordinatissimus poterit contrapunctus fieri debebit … Sed ab hac regula eximuntur, qui magis contrapuncto dulciori ac venustiori student quam propinquiori. Quique pluribus super librum canentibus ut contrapunctum diversificent, eum cum moderatione instar quodammodo compositorum longinquum efficiunt.",TT("TINCPT3"))]),
+("dissonance-treatment","tinctoris","Book II, chs. 23–31: no discords in simple counterpoint; in diminished counterpoint only small ones, on the weaker parts or in syncopation, as ornaments.",[
+ ("Lib. II, cap. 23 (CSM 22/2, p. 121)","In ipso autem simplici contrapuncto discordantiae simpliciter et absolute prohibentur, sed in diminuto cum ratione moderata interdum permittuntur.",TT("TINCPT2")),
+ ("Lib. II, cap. 30 (CSM 22/2, p. 139–140)","Et nonnulli sunt qui talis integrae discordantiae admissionem probant, eo quod concordantia immediate sequens suavior appareat … O firmissima ratio! Num quid vitium aliquod ab homine praedicto virtute committendum est, quo virtus eius clarius enitescat?",TT("TINCPT2")),
+ ("Lib. II, cap. 31 (CSM 22/2, p. 140)","Verumtamen … discordantiae parvae a musicis, sicut figurae rationabiles a grammaticis ornatus necessitatisve causa assumi permittuntur. Ornatur enim cantus, quando fit ascensus vel descensus ab una concordantia ad aliam per media compatibilia et per syncopas quae interdum sine discordantiis fieri non possunt.",TT("TINCPT2"))]),
+("varietas","tinctoris","Book III, chs. 6 and 8: avoid redictae; seek variety in everything.",[
+ ("Lib. III, cap. 6 (CSM 22/2, p. 152)","Sexta regula est quod super cantum planum canentes in quantum possumus redictas evitare debemus maxime si aliquae fuerint in tenore … Et quamvis ex omni parte in re facta regulariter etiam prohibeantur, aliquando tamen sonum campanarum aut tubarum imitando, ubique tollerantur.",TT("TINCPT3")),
+ ("Lib. III, cap. 8 (CSM 22/2, p. 155)","Octava siquidem et ultima regula haec est quod in omni contrapuncto varietas accuratissime exquirenda est, nam, ut Horatius in sua Poetica dicit, \"Cytharedus ridetur corda si semper oberrat eadem.\"",TT("TINCPT3")),
+ ("Lib. III, cap. 8 (CSM 22/2, p. 155)","Hanc autem diversitatem optimi quisque ingenii compositor aut concentor efficiet, si nunc per unam quantitatem, nunc per aliam, nunc per unam perfectionem … nunc cum syncopis, nunc sine syncopis, nunc cum fugis, nunc sine fugis, nunc cum pausis, nunc sine pausis, nunc diminutive, nunc plane …",TT("TINCPT3"))]),
+("practising","tinctoris","Book III, ch. 9: only constant practice in composing and in singing super librum makes a musician, and it must begin in childhood.",[
+ ("Lib. III, cap. 9 (CSM 22/2, p. 156)","Siquidem assiduitas sola et unica est quae post vocum, notarum, quantitatum atque concordantiarum generalem quandam cognitionem … numerosos cantores et eos praecipue quos superius expressi compositores praestatissimos ac celeberrimos effecit. … neminem prorsus cognovi qui si a vicesimo anno aetatis eius aut supra sive componere sive super librum canere inceperit, eminentem …",TT("TINCPT3"))]),
+("contrapunctus-diminutus","tinctoris-dif","Diffinitorium: diminished counterpoint, 'which some call florid'.",[
+ ("CS IV, p. 180","Contrapunctus diminutus est dum plures notae contra unam per proportionem aequalitatis aut inaequalitatis ponuntur, qui a quibusdam floridus nominatur.",TT("TINDIF")),
+ ("CS IV, p. 182","Diminutio est alicujus grossi cantus in minutum redactio.",TT("TINDIF"))]),
+("imitation","tinctoris-dif","Diffinitorium: fuga.",[
+ ("CS IV, p. 184","Fuga est identitas partium cantus quo ad valorem, nomen, formam, et interdum quo ad locum notarum et pausarum suarum.",TT("TINDIF"))]),
+("genres","tinctoris-dif","Diffinitorium: cantus magnus, mediocris and parvus – mass, motet and cantilena.",[
+ ("CS IV, p. 185","Missa est cantus magnus cui verba Kyrie, et In terra, Patrem, Sanctus et Agnus, et interdum caeterae partes a pluribus canendae supponuntur, quae ab aliis officium dicitur.",TT("TINDIF")),
+ ("CS IV, p. 185","Motetum est cantus mediocris cui verba cujusvis materiae, sed frequentius divinae supponuntur.",TT("TINDIF")),
+ ("CS IV, p. 179","Cantilena est cantus parvus cui verba cujuslibet materiae sed frequentius amatoriae supponuntur.",TT("TINDIF"))]),
+("voice-functions","tinctoris-dif","Diffinitorium: tenor, contratenor and supremum.",[
+ ("CS IV, p. 189","Tenor est cujusque cantus compositi fundamentum relationis.",TT("TINDIF")),
+ ("CS IV, p. 180","Contratenor est pars illa cantus compositi quae principaliter contra tenorem facta inferior est supremo, altior autem aut aequalis aut etiam ipso tenore inferior.",TT("TINDIF")),
+ ("CS IV, p. 189","Supremum est pars cantus compositi altitudine caeteras excedens.",TT("TINDIF"))]),
+("cadences","tinctoris-dif","Diffinitorium: the clausula.",[
+ ("CS IV, p. 180","Clausula est cujuslibet partis cantus particula in fine cujus vel quies generalis vel perfectio reperitur.",TT("TINDIF"))]),
+("ligatures","tinctoris-dif","Diffinitorium: the ligature.",[
+ ("CS IV, p. 185","Ligatura est duarum aut plurium notarum ad invicem continua junctura.",TT("TINDIF"))]),
+("hand","tinctoris-exp","Expositio manus, ch. 1: why the doctrine is called a 'hand'.",[
+ ("Cap. 1 (CS IV, p. 1)","Manus est brevis et utilis doctrina ostendens compendiose qualitates vocum musicae. Dicitur autem hic manus ut continens pro contento; namque manus quaelibet … doctrinam istam continet suorum digitorum summitatibus et juncturis.",TT("TINEXP"))]),
+("hexachords","tinctoris-exp","Expositio manus: the deductions (hexachords) and their properties.",[]),
+("mutation","tinctoris-exp","Expositio manus: the mutations.",[]),
+("history-in-treatises","tinctoris-ton","Dedicated to Ockeghem, first chaplain of the King of France, and Busnois, singer of the Duke of Burgundy.",[
+ ("Prologus (CS IV, p. 16)","Praestantissimis ac celeberrimis artis musicae professoribus Domino Johanni Okeghem, christianissimi regis Francorum Protho-capellano ac Magistro Antonio Busnois, illustrissimi Burgondorum ducis cantori …",TT("TINNAT"))]),
+("mode-mixture","tinctoris-ton","Chs. 13–25: commixture and mixture of the tones, in chant and in polyphony.",[
+ ("Cap. 13 (CS IV, p. 24)","Si vero aliquis octo tonorum praedictorum a principio usque ad finem ex speciebus diapenthe ac diatessaron sibi … attributis non fuerit formatus, immo speciebus unus alterius aut plurium commiscatur hujusmodi tonus commixtus vocabitur …",TT("TINNAT")),
+ ("Cap. 24 (CS IV, p. 29)","Denique notandum est quod commixtio et mixtio tonorum non solum fiunt in simplici cantu, verum etiam in composito, tali que modo ut si cantus sit cum duabus, tribus, quatuor aut pluribus partibus compositus, una pars erit unius toni altera alterius …",TT("TINNAT"))]),
+("polyphonic-modes","tinctoris-ton","Ch. 24: the mode of a polyphonic work is the mode of its tenor – 'Le Serviteur' as example.",[
+ ("Cap. 24 (CS IV, p. 29)","… si quis peteret absolute cujus toni talis compositio esset, interrogatus, debet absolute respondere secundum qualitatem tenoris eo quod omnis compositionis sit pars principalis et fundamentum totius relationis … Verbi gratia si quis universaliter mihi diceret: Tinctoris, peto abs te cujus toni sit carmen \"Le Serviteur\", responderem universaliter primi toni irregularis, quoniam tenor pars principalis ipsius carminis sit hujusmodi toni.",TT("TINNAT"))]),
+("mi-contra-fa","tinctoris-ton","Ch. 10: in polyphony a tritone may be needed, and the square b then shows where mi must be sung.",[
+ ("CS IV, p. 22","Non tamen ignorandum est quod in cantu composito a fa contra mi in concordantia perfecta fiat interdum tritono uti necessarium sit, et tunc ad significandum ubi fa evitandi tritoni gratia cantari deberet ibi mi esse canendum, duri signum hoc est quadrum ipsi mi censeo praeponendum.",TT("TINNAT"))]),
+("eight","tinctoris-ton","The eight tones, their species of fifth and fourth, ambitus and finals.",[]),
+("ethos","tinctoris-ton","Ch. 1: Aristotle's harmonies – Mixolydian plaintive, Lydian relaxed, Phrygian severe, Dorian moderate.",[]),
+("national-styles","tinctoris-prop","Prologue: the English 'jubilate', the French 'sing'; the English keep repeating the same composition.",[
+ ("Prohemium (CS IV, p. 154)","… novae artis fons et origo, apud Anglicos quorum caput Dunstaple exstitit, fuisse perhibetur, et huic contemporanei fuerunt in Gallia Dufay et Binchois quibus immediate successerunt moderni Okeghem, Busnois, Regis et Caron … Illi etenim in dies novos cantus novissime inveniunt, ac isti (quod miserrimi signum est ingenii) una semper et eadem compositione utuntur.",TT("TINPRO"))]),
+("effects","tinctoris-eff","The twenty effects listed in the prologue.",[
+ ("Prologus (p. 165–166)","Deum delectare, Dei laudes decorare, Gaudia beatorum amplificare, Ecclesiam militantem triumphanti assimilare, … Tristitiam depellere, Duritiam cordis resolvere, Diabolum fugare, Extasim causare, … Aegrotos sanare, Labores temperare, Animos ad praelium incitare, Amorem allicere, Iocunditatem convivii augmentare, Peritos in ea glorificare, Animas beatificare.",TT("TINCOM"))]),
+("franconian","tinctoris-not","De notis et pausis: notes of certain and of uncertain value.",[
+ ("Cap. 1 (CS IV, p. 41)","Nota est signum vocis certi vel incerti valoris. … aliae sunt certo valore ac regulari limitate secundum quantitates quibus supponuntur … et talibus in cantu figurato solum utimur; aliae pro voluntate canentium, nunc majoris nunc minoris valoris efficiuntur …",TT("TINTRAN"))]),
+("mensuration","tinctoris-val","De regulari valore notarum: modus maior and minor, tempus and prolation, each containing the smaller.",[
+ ("CS IV, p. 47","Sed ubi modus major ibi et minor, ubi modus minor ibi et tempus, ubi tempus ibi et prolatio, quoniam majori semper quantitati minorem inesse necesse est.",TT("TINTRAR"))]),
+("ars-nova","tinctoris-val","The four quantities of mensural music.",[]),
+("imperfection","tinctoris-alt","Tractatus alterationum; with the Liber imperfectionum and the Scriptum super punctis, Tinctoris' three treatises on the finer points of perfect mensuration.",[
+ ("Tractatus alterationum (CS IV, p. 67)","Alteratio est proprii valoris alicujus notae duplicatio. Notam etenim alterari nihil aliud est quam cum suo proprio valoris alterius similis effici.",TT("TINTRALT"))]),
+("imperfection","tinctoris-pun","Scriptum super punctis: three kinds of dot.",[
+ ("Cap. 1 (CS IV, p. 70)","Punctus est minimum signum quod notae appositum eam dividit, aut augmentat aut perficit. Triplex igitur est punctus notae accidens, videlicet punctus divisionis, punctus augmentationis et punctus perfectionis.",TT("TINTRAP"))]),
+("imperfection","tinctoris-imp","Liber imperfectionum: the rules of imperfection, for Jacobus Frontin.",[]),
+("instrumental-improv-15","tinctoris-inv","Book IV, ch. 5: lutenists who improvise the upper part of any song; Pietrobono; the blind Flemish brothers on the viol.",[
+ ("Lib. IV, cap. 5 (Weinmann, p. 45)","Usus autem ipsius lyrae quam leutum vulgo nuncupari prediximus: festis: choreis: et conviviis: privatisque recreationibus apud nos inservit. In qua plurimi precipue germani eximie sunt eruditi. Siquidem: nonnulli associati: supremam partem cujusvis compositi cantus: cum admirandis modulorum superinventionibus: adeo eleganter ea personant: ut profecto nihil prestantius. Inter quos: Petrus bonus Herculis Ferrarie ducis incliti lyricen (mea quidem sententia) ceteris est preferendus.",TT("TININV")),
+ ("Lib. IV, cap. 5 (Weinmann, p. 45)","… duos fratres Orbos natione Flamingos … quorum uni Carolus: alteri Johannes nomina sunt. Brugis audiverim: illum supremam partem et hunc tenorem plurium cantilenarum: tam perite: tamque venuste hujusmodi viola consonantes: ut in ulla nunquam melodia: me profecto magis oblectaverim.",TT("TININV"))]),
+("lute","tinctoris-inv","Book IV, chs. 4–5: the lute and the instruments derived from it; players who play three and four parts alone.",[
+ ("Lib. IV, cap. 5 (Weinmann, p. 45)","Alii (quod multo difficilius est) soli: cantus non modo duarum partium: verum etiam trium et quatuor: artificiosissime promunt. Ut Orbus ille germanus: ac Henricus Carolo Burgundionum duci fortissimo nuper serviens.",TT("TININV")),
+ ("Lib. IV, cap. 4 (p. 270)","… quinque et aliquando sex principalium ordinatio ea subtilitate a posteris (ut reor) Germanis inventa est: ut duabus mediis ad ditonum: ceteris vero ad diatessaron temperatis: lyra sit perfectissima.",TT("TININV4"))]),
+("bowed","tinctoris-inv","Book IV, ch. 5: the viola with and without the bow, the rebec; Tinctoris' own favourite instruments.",[
+ ("Lib. IV, cap. 5 (Weinmann, p. 45)","Viola vero cum arculo: non solum ad hunc usum: sed etiam ad historiarum recitationem in plerisque partibus orbis assumitur.",TT("TININV"))]),
+("voice-functions","tinctoris-inv","Book II: tenoristae, contratenoristae (bassi and alti) and supremi.",[
+ ("Lib. II (Weinmann, p. 33)","Enimvero: alii dicuntur tenoriste: alii contratenoriste: et alii supremi. Preterea: tenoristarum et contratenoristarum alii sunt imi hoc est vulgo bassi: et alii alti.",TT("TININV"))]),
 ]
