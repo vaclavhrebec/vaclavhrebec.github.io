@@ -158,39 +158,27 @@ async function fillLazy(g, trail) {
   renderTree($('#search').value);
 }
 
-/* a random piece: first a category at random, then a piece within it.
-   Polyphony is drawn twice as often as each of the other three. */
-const RANDOM_GROUPS = [['Cantus planus', 1], ['Cantus fractus', 1], ['Cantus mensurabilis', 1], ['Polyphonic models', 2]];
+/* a random piece: every piece of the whole library equally likely, whatever its category –
+   the pieces carried here, the whole Josquin collection and every chant from GregoBase */
 async function randomPick() {
-  const pools = RANDOM_GROUPS.map(([g, w]) => ({ w, p: S.flat.filter(f => f.trail[0] === g) })).filter(x => x.p.length);
-  let r = Math.random() * pools.reduce((a, x) => a + x.w, 0), pool = S.flat;
-  for (const x of pools) { if ((r -= x.w) < 0) { pool = x.p; break; } }
-  /* the polyphonic models also hold the whole Josquin collection: draw from all of it */
-  if (pool[0]?.trail[0] === 'Polyphonic models') {
-    try {
-      const all = jrpTitles || (jrpTitles = await jrpGet('search.json'));
-      const k = Math.floor(Math.random() * (pool.length + all.length));
-      if (k >= pool.length) {
-        const [id, , c] = all[k - pool.length];
-        const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid;
-        return { item: it, trail: ['Polyphonic models', c] };
-      }
-      return pool[k];
-    } catch (e) { /* offline: one of the models carried here */ }
-  }
-  if (pool[0]?.trail[0] === 'Cantus planus') {
-    try {
-      const all = chantTitles || (chantTitles = await jrpGet('chant/search.json'));
-      const k = Math.floor(Math.random() * (pool.length + all.length));
-      if (k >= pool.length) {
-        const [u, i] = all[k - pool.length];
-        const data = await jrpGet('chant/' + u + '.json'), it = data.items[i]; it.id ??= ++uid;
-        return { item: it, trail: ['Cantus planus', 'Gregorian chant from GregoBase', CHANT_KINDS[u]] };
-      }
-      return pool[k];
-    } catch (e) { /* offline: one of the chants carried here */ }
-  }
-  return pool[Math.floor(Math.random() * pool.length)];
+  const here = S.flat;
+  let jrp = [], chant = [];
+  try { jrp = jrpTitles || (jrpTitles = await jrpGet('search.json')); } catch (e) { /* offline */ }
+  try { chant = chantTitles || (chantTitles = await jrpGet('chant/search.json')); } catch (e) { /* offline */ }
+  let k = Math.floor(Math.random() * (here.length + jrp.length + chant.length));
+  if (k < here.length) return here[k];
+  k -= here.length;
+  try {
+    if (k < jrp.length) {
+      const [id, , c] = jrp[k];
+      const it = await jrpGet('p/' + id + '.json'); it.id ??= ++uid;
+      return { item: it, trail: ['Polyphonic models', c] };
+    }
+    k -= jrp.length;
+    const [u, i] = chant[k];
+    const data = await jrpGet('chant/' + u + '.json'), it = data.items[i]; it.id ??= ++uid;
+    return { item: it, trail: ['Cantus planus', 'Gregorian chant from GregoBase', CHANT_KINDS[u]] };
+  } catch (e) { return here[Math.floor(Math.random() * here.length)]; }
 }
 
 const countIn = g => g.lazy && g.count ? g.count : (g.items || []).length + (g.subs || []).reduce((a, s) => a + countIn(s), 0);
