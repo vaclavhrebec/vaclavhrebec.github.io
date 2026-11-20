@@ -211,7 +211,7 @@ svg.glyph .fill { fill: currentColor; } svg.glyph .hollow { fill: none; stroke: 
 .edit-tools[hidden] { display: none; }
 .edit-tools { display: contents; }
 .edit-hint { font-size: 12px; color: var(--soft); white-space: nowrap; padding: 0 8px; }
-.pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100vw - 24px)); max-height: min(80vh, 640px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); padding: 10px; display: grid; gap: 10px; z-index: 30; }
+.pop { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(380px, calc(100vw - 24px)); max-height: min(80vh, 640px); overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 14px 40px rgba(0, 0, 0, .28); padding: 10px; display: grid; gap: 10px; z-index: 50; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 .pop[hidden] { display: none; }
 .pop .card { background: var(--raised); }
 

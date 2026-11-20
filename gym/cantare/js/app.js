@@ -831,6 +831,9 @@ function buildStudio() {
     { const box = $('#optPop .cards'); if (box) { box.textContent = ''; buildSection(optOpen, box); } }
   }
 }
+/* the pop-up windows live in the body, not inside the scrolling toolbar: on iPhone (Safari) a fixed window inside a
+   horizontally scrolling bar is clipped by it and never shows */
+document.querySelectorAll('#toolbar > .pop').forEach(p => document.body.append(p));
 document.addEventListener('pointerdown', e => { const pop = $('#optPop'); if (pop && !pop.hidden && !pop.contains(e.target) && !e.target.closest('#optbar')) closeOpt(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && optOpen) closeOpt(); });
 
