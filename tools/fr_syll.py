@@ -4,7 +4,7 @@ V = 'aeiouyàâäéèêëîïôöùûüœæ'
 VOWEL = re.compile(f'[{V}]', re.I)
 # vowel groups that are one syllable by default; the alternative splits them (diaeresis)
 GROUPS = ['eau', 'où', 'où', 'oeu', 'œu', 'ieu', 'iou', 'ueu', 'ai', 'ay', 'ei', 'ey', 'au', 'eu', 'ou', 'oi', 'oy', 'ui', 'uy', 'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ée', 'oe', 'œ']
-SPLITTABLE = {'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ui', 'oi', 'ieu', 'iou', 'ée', 'oe', 'ay', 'oy', 'uy'}
+SPLITTABLE = {'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ui', 'oi', 'ée', 'oe', 'ay', 'oy', 'uy'}
 
 
 def vowel_units(w):
