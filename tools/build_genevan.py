@@ -18,19 +18,25 @@ for i in range(7, d.page_count):
     t = ptext(i)
     m = re.search(r'Based on (Psalm \d+|Exodus|Luke 2|Luke 1)', t)
     if m:
+        if cur: tunes.append(cur)
         cur = {'head': m.group(1), 'systems': [], 'page': i + 1}
     if cur is None: continue
     cur['systems'].extend(soprano3(d[i]))
     f = re.search(r'Music:\s*Genevan Psalter,\s*(\d{4})', t)
     g = re.search(r'\n?([^\n\[]*?)\s*\[GENEVAN\s*([^\]]+)\]', t) or re.search(r'(GENEVAN MAGNIFICAT)', t)
-    if f or g:
-        if f: cur['year'] = f.group(1)
-        if g and g.lastindex == 2:
-            cur['incipit'] = g.group(1).strip(); cur['tune'] = g.group(2).strip()
-        elif g:
-            cur['tune'] = 'MAGNIFICAT'; cur['incipit'] = ''
+    if f: cur['year'] = f.group(1)
+    if g and g.lastindex == 2:
+        cur['incipit'] = g.group(1).strip(); cur['tune'] = g.group(2).strip()
+    elif g:
+        cur['tune'] = 'MAGNIFICAT'; cur['incipit'] = ''
+    final = False
+    for dr in d[i].get_drawings():
+        if (dr.get('width') or 0) > 2:
+            for it in dr['items']:
+                if it[0] == 'l' and abs(it[1].x - it[2].x) < 0.05 and abs(it[2].y - it[1].y) > 15 and it[1].x > 200: final = True
+    if final:
         tunes.append(cur); cur = None
-
+if cur: tunes.append(cur)
 print(len(tunes), file=sys.stderr)
 json.dump([{k: v for k, v in t.items()} for t in tunes], open('/home/claude/src/gen/tunes_raw.json', 'w'), ensure_ascii=False, default=float)
 
@@ -42,7 +48,8 @@ existing = {}
 def walk(n):
     for x in n:
         if x.get('group') == 'Genevan Psalms':
-            for it in x['items']: existing[int(re.search(r'Psalm (\d+)', it['title']).group(1))] = it
+            for it in x['items']:
+                if it['title'].startswith('Psalm') and 'genevanpsalter.com' not in it.get('desc', ''): existing[int(re.search(r'Psalm (\d+)', it['title']).group(1))] = it
         walk(x.get('subs', []))
 walk(lib if isinstance(lib, list) else lib['library'])
 
