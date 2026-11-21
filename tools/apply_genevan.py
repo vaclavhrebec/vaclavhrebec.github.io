@@ -49,12 +49,14 @@ g['items'] = items
 
 def opts(l):
     o = []
+    line_options.cost = 0
     for op in line_options(l):
+        cost = getattr(line_options, 'cost', 0) if o else 0
         flat = []
         for ss in op:
             for k, s in enumerate(ss): flat.append(s + ('-' if k < len(ss) - 1 and not s.endswith('-') else ''))
-        if all(len(flat) != len(x) for x in o): o.append(flat)
-        if len(o) >= 3: break
+        if all(len(flat) != len(x[0]) for x in o): o.append((flat, cost))
+        if len(o) >= 4: break
     return o
 
 def fit_phrases(lines, phrases):
@@ -64,13 +66,14 @@ def fit_phrases(lines, phrases):
         if pi == len(phrases): return () if li == len(lines) else None
         for lj in range(li + 1, min(len(lines), li + 4) + 1):
             def rec(k, rem):
-                if k == lj: return [] if rem == 0 else None
-                for f in O[k]:
+                if k == lj: return (0, []) if rem == 0 else None
+                best = None
+                for f, c in O[k]:
                     if len(f) <= rem:
                         r = rec(k + 1, rem - len(f))
-                        if r is not None: return [f] + r
-                return None
-            r = rec(li, phrases[pi])
+                        if r is not None and (best is None or c + r[0] < best[0]): best = (c + r[0], [f] + r[1])
+                return best
+            r = rec(li, phrases[pi]); r = r[1] if r else None
             if r is not None:
                 rest = go(lj, pi + 1)
                 if rest is not None: return tuple(r) + rest

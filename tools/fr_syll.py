@@ -4,7 +4,7 @@ V = 'aeiouyàâäéèêëîïôöùûüœæ'
 VOWEL = re.compile(f'[{V}]', re.I)
 # vowel groups that are one syllable by default; the alternative splits them (diaeresis)
 GROUPS = ['eau', 'où', 'où', 'oeu', 'œu', 'ieu', 'iou', 'ueu', 'ai', 'ay', 'ei', 'ey', 'au', 'eu', 'ou', 'oi', 'oy', 'ui', 'uy', 'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ée', 'oe', 'œ']
-SPLITTABLE = {'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ui', 'oi', 'ée', 'oe', 'ay', 'oy', 'uy'}
+SPLITTABLE = {'ieu', 'ie', 'ié', 'iè', 'io', 'ia', 'ue', 'ua', 'uo', 'ui', 'oi', 'ée', 'oe', 'ay', 'oy', 'uy'}
 
 
 def vowel_units(w):
@@ -34,12 +34,14 @@ def word_sylls(w, split_set=()):
     # (keeping muta cum liquida together)
     cuts = []
     for (a1, b1, g1), (a2, b2, g2) in zip(u2, u2[1:]):
-        cons = w[b1:a2]
+        cons = w[b1:a2].replace("qu'", 'Q').replace('qu', 'Q').replace('gu', 'G').replace('Qu', 'Q').replace('Gu', 'G')
         if len(cons) <= 1: cuts.append(b1)
         else:
             lc = cons.lower()
-            if len(lc) >= 2 and lc[-2] in 'bcdfgptv' and lc[-1] in 'lr': cuts.append(a2 - 2)
-            elif lc[-2:] in ('ch', 'gn', 'ph', 'th', 'qu'): cuts.append(a2 - 2)
+            raw = w[b1:a2]
+            if cons[-1] in 'QG': cuts.append(a2 - (3 if raw.endswith(("qu'",)) else 2))
+            elif len(lc) >= 2 and lc[-2] in 'bcdfgptv' and lc[-1] in 'lr': cuts.append(a2 - 2)
+            elif lc[-2:] in ('ch', 'gn', 'ph', 'th'): cuts.append(a2 - 2)
             else: cuts.append(a2 - 1)
     parts = []; prev = 0
     for c in cuts:
@@ -50,7 +52,9 @@ def word_sylls(w, split_set=()):
 
 def mute_final(w):
     lw = w.lower().rstrip('.,;:!?')
-    return bool(re.search(r'[^aeiouyéè]e$|[^aeiouyéè]es$|[^aeiouyé]ent$', lw)) and len(vowel_units(lw)) >= 2 or lw in ('que', 'ne', 'le', 'se', 'ce', 'me', 'te', 'de', 'je')
+    us = vowel_units(lw)
+    if len(us) >= 2 and us[-1][2] == 'e' and re.search(r'(e|es|ent)$', lw) and not lw.endswith(('ée', 'ées')): return True
+    return lw in ('que', 'ne', 'le', 'se', 'ce', 'me', 'te', 'de', 'je')
 
 
 def line_options(line):
@@ -62,9 +66,10 @@ def line_options(line):
         core = w
         us = vowel_units(core)
         for k, (a, b, g) in enumerate(us):
-            if g in SPLITTABLE: amb.append((wi, k))
+            if g in SPLITTABLE and not (g == 'ieu' and not re.search(r'[cg]ieux?$', core.lower().rstrip('.,;:!?'))): amb.append((wi, k))
     def build(splits):
         sy = []
+        carry = {}
         for wi, w in enumerate(words):
             ss = word_sylls(w, {k for (i, k) in splits if i == wi})
             nxt = words[wi + 1] if wi + 1 < len(words) else None
@@ -72,15 +77,21 @@ def line_options(line):
             if len(ss) > 1 and mute_final(w):
                 # final mute e: elided before a vowel or h, kept before a consonant and at the end of the line (feminine ending)
                 if nxt and re.match(f'[{V}hH]', nxt) and not w.lower().rstrip('.,;:!?').endswith(('es', 'ent')):
-                    ss = ss[:-2] + [ss[-2] + ss[-1]]
+                    ss = ss[:-1]; carry[wi + 1] = w[len(''.join(ss)):]; ss[-1] = ss[-1] + '-'
             elif len(ss) == 1 and nxt and w.lower() in ('que', 'ne', 'le', 'se', 'ce', 'me', 'te', 'de', 'je') and re.match(f'[{V}hH]', nxt):
                 pass
+            if wi in carry and ss:
+                ss = [carry[wi] + '_' + ss[0]] + ss[1:]
             sy.append(ss)
         return sy
+    PRI = {'ieu': 0, 'io': 0, 'ia': 1, 'ie': 2, 'ié': 2, 'iè': 2, 'ue': 3, 'ua': 3, 'uo': 3, 'ui': 4, 'ée': 4, 'oe': 5, 'oi': 6, 'ay': 7, 'oy': 7, 'uy': 7}
+    amb.sort(key=lambda a: PRI.get(vowel_units(words[a[0]])[a[1]][2], 9))
     yield build(())
     for r in range(1, min(3, len(amb)) + 1):
         for comb in itertools.combinations(amb, r):
-            yield build(comb)
+            b = build(comb)
+            line_options.cost = sum(1 + PRI.get(vowel_units(words[a[0]])[a[1]][2], 9) for a in comb)
+            yield b
 
 
 def fit(line, n):
