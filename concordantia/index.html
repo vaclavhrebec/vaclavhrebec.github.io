@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <script src="/theme.js"></script>
-<meta name="copyright" content="© 2026 Václav Hřebec. All rights reserved. Online since 2026-11-15.">
+<meta name="copyright" content="© 2026 Václav Hřebec. Online since 2026-11-15.">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Concordantia — a topical concordance of music treatises</title>
 <meta name="description" content="Music treatises organised in a tree of topics, from Augustine to Riemann: what each treatise says on improvisation, diminution, ornaments, basso continuo, modes, counterpoint and more, with Latin passages, folio and chapter, and links to the sources.">
@@ -361,7 +361,7 @@ function render(){
   document.getElementById("nav").innerHTML=VIEWS.map(([v,l,h])=>`<a href="#${h}" class="${(r.v===v||(r.v==="work"&&v==="treatises"))?'on':''}">${l}</a>`).join("");
   const app=document.getElementById("app");
   const html=r.v==="topics"?topicsView(r):r.v==="work"?workView(r.work):r.v==="treatises"?treatisesView():r.v==="sources"?sourcesView():r.v==="timeline"?timelineView():aboutView();
-  app.innerHTML=html+`<div class="foot">© 2026 Václav Hřebec · All rights reserved · Online since 15 November 2026 · <a href="../">vaclavhrebec.github.io</a> · <a href="../atlas/">Atlas of Musical Style</a> · <a href="../fiorire/">Fiorire</a> · Texts and images remain with their repositories.</div>`;
+  app.innerHTML=html+`<div class="foot">© 2026 Václav Hřebec · Online since 15 November 2026 · <a href="../">vaclavhrebec.github.io</a> · <a href="../atlas/">Atlas of Musical Style</a> · <a href="../fiorire/">Fiorire</a> · Texts and images remain with their repositories.</div>`;
   app.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{const k=b.dataset.open;OPEN.has(k)?OPEN.delete(k):OPEN.add(k);render()});
   app.querySelectorAll("[data-more]").forEach(b=>b.onclick=()=>{const k="lim-"+b.dataset.more;STATE[k]=(STATE[k]||60)+100;render()});
   app.querySelectorAll("[data-cent]").forEach(b=>b.onclick=()=>{STATE.cent=b.dataset.cent;render()});
