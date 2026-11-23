@@ -1,0 +1,5 @@
+Salamander Grand Piano V3 (Yamaha C5), recorded by Alexander Holm.
+Licence: Creative Commons Attribution 3.0 (CC BY 3.0), https://creativecommons.org/licenses/by/3.0/
+Source: https://github.com/Tonejs/audio/tree/master/salamander (mp3 versions, one note every minor third).
+The files are named by MIDI note number. map.json gives the measured deviation of each recording from
+equal temperament in cents (c), so every note can be retuned exactly.

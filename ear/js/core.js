@@ -125,9 +125,49 @@ window.E = (function () {
   E.timbres = ['piano', 'organ', 'reed', 'sine'];
   E.mtof = m => (E.settings.a4 || 440) * Math.pow(2, (m - 69) / 12);   // a′ is a setting (default 440 Hz)
   /* one tone. f in Hz, t0 = absolute ctx time, d = seconds */
+  /* Piano: recordings of a Yamaha C5 (Salamander Grand Piano V3, Alexander Holm, CC BY 3.0), one note every minor third.
+     Each note is retuned from its measured pitch (audio/piano/map.json) to the a' of the settings. They are fetched and
+     decoded as soon as the page is open, so that the first note already sounds like a piano. Until they are there
+     (or if they cannot be fetched) the synthesised piano is used. */
+  const PIANO = A.piano = { bufs: {}, notes: [], started: false, ready: false };
+  A.loadPiano = function () {
+    if (PIANO.started) return PIANO.promise;
+    PIANO.started = true;
+    const base = new URL('audio/piano/', document.baseURI).href;
+    PIANO.promise = fetch(base + 'map.json').then(r => r.json()).then(map => {
+      const Off = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      const dec = new Off(2, 44100, 44100);
+      return Promise.all(map.notes.map(n => fetch(base + n.m + '.mp3').then(r => r.arrayBuffer())
+        .then(a => new Promise((ok, no) => { const p = dec.decodeAudioData(a, ok, no); if (p && p.catch) p.catch(no); }))
+        .then(buf => { PIANO.bufs[n.m] = buf; PIANO.notes.push(n); }).catch(() => {})))
+        .then(() => { PIANO.ready = PIANO.notes.length > 8; });
+    }).catch(() => { PIANO.started = false; });
+    return PIANO.promise;
+  };
+  function pianoTone(ctx, f, t0, d, o) {
+    const midi = 69 + 12 * Math.log2(f / (E.settings.a4 || 440));
+    let n = null;
+    PIANO.notes.forEach(x => { if (!n || Math.abs(x.m - midi) < Math.abs(n.m - midi)) n = x; });
+    if (!n) return false;
+    const src = ctx.createBufferSource(), g = ctx.createGain();
+    src.buffer = PIANO.bufs[n.m];
+    // the recording sounds at (a' * 2^((m-69)/12)) * 2^(c/1200); bring it to f
+    const f0 = (E.settings.a4 || 440) * Math.pow(2, (n.m - 69) / 12) * Math.pow(2, n.c / 1200);
+    src.playbackRate.value = f / f0;
+    const v = (o.vol || .32) * 4.2, rel = Math.min(.45, .12 + d * .1);
+    g.gain.setValueAtTime(v, t0);
+    g.gain.setValueAtTime(v, t0 + d);                       // the damper falls when the key is let go
+    g.gain.exponentialRampToValueAtTime(.0008, t0 + d + rel);
+    src.connect(g); g.connect(A.out);
+    src.start(t0); src.stop(t0 + d + rel + .05);
+    const nn = { g, o: [src] }; A.live.add(nn);
+    src.onended = () => A.live.delete(nn);
+    return true;
+  }
   A.tone = function (f, t0, d, o) {
     o = o || {};
     const ctx = A.get(), tim = o.timbre || E.settings.timbre || 'piano';
+    if (tim === 'piano') { if (!PIANO.started) A.loadPiano(); if (PIANO.ready && pianoTone(ctx, f, t0, d, o)) return; }
     const g = ctx.createGain(), osc = ctx.createOscillator();
     if (tim === 'sine') osc.type = 'sine'; else osc.setPeriodicWave(wave(ctx, tim));
     osc.frequency.value = f;
@@ -170,6 +210,7 @@ window.E = (function () {
 
   /* global listening settings */
   E.settings = Object.assign({ timbre: 'piano', a4: 440 }, E.load('settings', {}));
+  setTimeout(() => { if (E.settings.timbre === 'piano' && E.audio && E.audio.loadPiano) E.audio.loadPiano(); }, 0);
   E.saveSettings = () => E.save('settings', E.settings);
 
   /* ---------- pitch spelling & names ---------- */
@@ -366,7 +407,7 @@ window.E = (function () {
   };
   E.timbreField = () => E.selectField(E.t('Sound'), E.settings.timbre,
     [{ v: 'piano', l: E.t('Piano-like') }, { v: 'organ', l: E.t('Organ (principal)') }, { v: 'reed', l: E.t('Reed') }, { v: 'sine', l: E.t('Sine tone') }],
-    v => { E.settings.timbre = v; E.saveSettings(); });
+    v => { E.settings.timbre = v; E.saveSettings(); if (v === 'piano') E.audio.loadPiano(); });
 
   /* ---------- rooms & router ---------- */
   E.rooms = [];

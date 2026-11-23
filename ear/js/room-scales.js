@@ -99,13 +99,29 @@
   const cfg = Object.assign({ on: ['major', 'natmin', 'harmin', 'melmin'], dir: 'up', tempo: 150 }, E.load('cfg.scales', {}));
   const save = () => E.save('cfg.scales', cfg);
 
+  /* the order in which the notes sound; a random choice is made once per question, so that “again” repeats it */
+  function order(q, key, sc) {
+    const up = sc.cents.slice(), deg = sc.cents.slice(0, -1);
+    const shuffle = a => { const r = a.slice(); for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [r[i], r[j]] = [r[j], r[i]]; } return r; };
+    const cache = q._seq = q._seq || {};
+    const k = key + '|' + cfg.dir;
+    if (cache[k]) return cache[k];
+    let dir = cfg.dir;
+    if (dir === 'random') dir = ['up', 'down', 'both'][Math.floor(Math.random() * 3)];
+    let seq;
+    if (dir === 'down') seq = up.slice().reverse();
+    else if (dir === 'both') seq = up.concat(deg.slice().reverse());
+    else if (dir === 'shuffle') {
+      seq = shuffle(deg);
+      for (let g = 0; g < 8 && seq.every((c, i) => c === deg[i]); g++) seq = shuffle(deg);
+    } else seq = up;
+    return (cache[k] = seq);
+  }
   function play(q, id) {
     const sc = BY[id || q.sc.id];
     const A = E.audio; A.stop();
     const t0 = A.now(), d = 60 / cfg.tempo;
-    let seq = sc.cents.slice();
-    if (cfg.dir === 'down') seq = seq.reverse();
-    if (cfg.dir === 'both') seq = seq.concat(sc.cents.slice(0, -1).reverse());
+    const seq = order(q, id || q.sc.id, sc);
     const base = E.mtof(q.tonic);
     seq.forEach((c, i) => A.tone(base * Math.pow(2, c / 1200), t0 + i * d, d * (i === seq.length - 1 ? 2.2 : 1.05), { vol: .28 }));
   }
@@ -144,7 +160,7 @@
         if (g.id === 'india') el.append(h('p', { class: 'note' }, T('Thaats and ragas are played in equal temperament; ragas are defined by melodic movement as much as by their notes.')));
       });
       el.append(
-        E.selectField(T('Direction'), cfg.dir, [{ v: 'up', l: T('ascending') }, { v: 'down', l: T('descending') }, { v: 'both', l: T('ascending and descending') }], v => { cfg.dir = v; save(); }),
+        E.selectField(T('Direction'), cfg.dir, [{ v: 'up', l: T('ascending') }, { v: 'down', l: T('descending') }, { v: 'both', l: T('ascending and descending') }, { v: 'random', l: T('random direction') }, { v: 'shuffle', l: T('notes in random order') }], v => { cfg.dir = v; save(); }),
         E.rangeField(T('Tempo'), cfg.tempo, 60, 300, 10, v => v + ' ' + T('notes per minute'), v => { cfg.tempo = v; save(); }));
     }
   };
