@@ -99,8 +99,19 @@ const TALEA_GROUPS = [
   ['13', '13th century: Franconian motet tenors'],
   ['14', '14th century: Ars nova isorhythmic tenors'],
   ['15', '15th century: isorhythmic and cantus-firmus tenors'],
+  ['mine', 'Your taleae'],
 ];
 const TALEA_VAL = { B: ['B', false], Ba: ['B', false, true], L: ['L', false], 'L.': ['L', true], Mx: ['Mx', false], 'Mx.': ['Mx', true] };
+
+/* The visitor's own taleae: built in the Talea card, kept in this browser, and (only if the visitor chooses) proposed to Václav for the list.
+   A pattern is the same text as above: B L L. Mx Mx. Ba, with r in front for a rest. */
+const MYTAL_KEY = 'cantare-taleae';
+const TAL_NAME = { B: 'Brevis', L: 'Longa', 'L.': 'Perfect longa', Mx: 'Maxima', 'Mx.': 'Perfect maxima', Ba: 'Brevis altera' };
+const talPlain = p => p.split(' ').map(t => (t.startsWith('r') ? tr('Rest') + ' ' : '') + tr(TAL_NAME[t.replace(/^r/, '')])).join(', ');
+const validTalea = p => typeof p === 'string' && p.length < 400 && p.split(' ').every(t => TALEA_VAL[t.replace(/^r/, '')] && t !== 'rBa') && p.split(' ').some(t => !t.startsWith('r'));
+function saveMyTaleae() { try { localStorage.setItem(MYTAL_KEY, JSON.stringify(TALEAE.filter(t => t[2] === 'mine').map(t => [t[0], t[1]]))); } catch (e) { /* ignore */ } }
+try { JSON.parse(localStorage.getItem(MYTAL_KEY) || '[]').forEach(([n, p]) => { if (validTalea(p)) TALEAE.push([String(n).slice(0, 80), p, 'mine']); }); } catch (e) { /* ignore */ }
+const talDraft = { toks: [], rest: false, name: '' };
 
 const T = { get hidden() { return tr('improvise this voice'); } };
 
@@ -675,7 +686,15 @@ function buildTransform() {
     const looks = [['chant', tr('Chant notation')], ['mensural', tr('Mensural notation')]];
     card(tr('Talea'),
       el('div', { class: 'row' }, chip(tr('None'), S.talea < 0, () => { S.talea = -1; redo(); })),
-      ...TALEA_GROUPS.flatMap(([g, head]) => [el('h4', {}, tr(head)), ...TALEAE.map((t, i) => [t, i]).filter(([t]) => t[2] === g).map(([[name], i]) => el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); })))]),
+      ...TALEA_GROUPS.flatMap(([g, head]) => {
+        const rows = TALEAE.map((t, i) => [t, i]).filter(([t]) => t[2] === g);
+        if (!rows.length) return [];
+        return [el('h4', {}, tr(head)), ...rows.map(([[name], i]) => el('div', { class: 'row' },
+          chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }),
+          g === 'mine' ? chip(tr('Propose to the collection'), false, () => askProposeTalea(i)) : '',
+          g === 'mine' ? chip(tr('Delete'), false, () => { TALEAE.splice(i, 1); if (S.talea === i) S.talea = -1; else if (S.talea > i) S.talea--; saveMyTaleae(); redo(); }) : ''))];
+      }),
+      taleaBuilder(redo),
       el('p', { class: 'hint' }, tr('For organum purum, where the chant is not measured at all, choose Organum purum under the music: each note is then held until you give the sign.')),
       S.talea >= 0 ? chipRow(tr('Shown as'), looks.map(([k, n]) => chip(n, S.taleaLook === k, () => { S.taleaLook = k; redo(); }))) : '',
       el('p', { class: 'hint' }, tr('A talea lays a repeating rhythmic pattern over the chant. Perfect values last three; a brevis altera is written as a brevis and lasts two. The rhythmic modes follow Johannes de Garlandia (c. 1250); the ordines are tenor patterns with rests, as in Notre-Dame clausulae and motets.')));
@@ -692,6 +711,60 @@ function slider(label, min, max, value, fn, step = 1, unit = '', done, quiet) {
 function setSound(o) { snd.setSound(o); prefs.sound = { ...snd.SOUND }; savePrefs(); }
 /* a short note to hear what a setting does */
 function testTone() { if (S.playing) return; const ctx = snd.ensure(); playNote({ timbre: prefs.timbre, midi: 57, a4: prefs.a4, at: ctx.currentTime + .02, dur: .7, text: 'a' }); }
+
+/* Make your own talea: tap values in order (a rest toggle puts "r" before the next value), name it, use it */
+function taleaBuilder(redo) {
+  const d = talDraft, again = () => buildTransform();
+  const vals = [['B', 'Brevis'], ['L', 'Longa'], ['L.', 'Perfect longa'], ['Mx', 'Maxima'], ['Mx.', 'Perfect maxima'], ['Ba', 'Brevis altera']];
+  const name = el('input', { type: 'text', class: 'nm-in', maxlength: 80, value: d.name, placeholder: tr('Name of your talea (optional)'), 'aria-label': tr('Name of your talea (optional)'), oninput: e => { d.name = e.target.value; } });
+  const ok = validTalea(d.toks.join(' '));
+  return el('div', { class: 'tal-build' },
+    el('h4', {}, tr('Make your own talea')),
+    chipRow(tr('Add a value'), vals.map(([k, n]) => chip(tr(n), false, () => { if (d.rest && k === 'Ba') return; d.toks.push((d.rest ? 'r' : '') + k); again(); }))),
+    chipRow('', [chip(tr('Rest'), d.rest, () => { d.rest = !d.rest; again(); }, { title: tr('On: the next value you add is a rest, which takes no chant note') }),
+      chip(tr('Remove the last value'), false, () => { d.toks.pop(); again(); }), chip(tr('Clear the pattern'), false, () => { d.toks = []; again(); })]),
+    el('p', { class: 'hint' }, d.toks.length ? talPlain(d.toks.join(' ')) : tr('Tap the values in the order you want. The pattern repeats over the chant, one value for each chant note; a rest takes none.')),
+    el('div', { class: 'row' }, name),
+    el('div', { class: 'row' }, chip(tr('Use this talea'), true, () => {
+      if (!ok) return;
+      const pat = d.toks.join(' ');
+      TALEAE.push([(d.name.trim() || tr('My talea') + ' ' + (TALEAE.filter(t => t[2] === 'mine').length + 1) + ': ' + talPlain(pat)).slice(0, 80), pat, 'mine']);
+      d.toks = []; d.name = ''; d.rest = false; saveMyTaleae(); S.talea = TALEAE.length - 1; redo();
+    }, { disabled: !ok })),
+    el('p', { class: 'hint' }, tr('Your own taleae are kept in this browser. Use Propose to the collection beside one if you would like Václav to add it to the list for everyone.')));
+}
+/* Propose a talea of your own: sent only when the visitor presses Submit */
+function askProposeTalea(i) {
+  const t = TALEAE[i]; if (!t) return;
+  const pop = $('#clefPop');
+  let whoV = ''; try { whoV = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
+  const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, value: whoV, placeholder: tr('Your name'), 'aria-label': tr('Your name') });
+  const mail = el('input', { type: 'email', class: 'nm-in', maxlength: 120, placeholder: tr('Your email (optional, if you want an answer)'), 'aria-label': tr('Your email (optional, if you want an answer)') });
+  const msg = el('textarea', { class: 'nm-in tx-in', rows: 4, maxlength: 2000, placeholder: tr('Where does this pattern come from? A treatise, a piece, or your own idea'), 'aria-label': tr('Write a short message to Václav') });
+  const go = async () => {
+    if (!who.value.trim()) { who.focus(); who.classList.add('need'); return; }
+    try { localStorage.setItem('cantare-next:who', who.value.trim()); } catch (e) { /* ignore */ }
+    const body = { _subject: 'Cantare – a TALEA proposed for the collection: ' + t[0], _template: 'table', _captcha: 'false',
+      About: 'Cantare super librum – a visitor proposes this talea for the list', Talea: t[0], Pattern: t[1], Values: talPlain(t[1]), Name: who.value.trim(), Message: msg.value.trim() || '—' };
+    if (mail.value.trim()) { body.Email = mail.value.trim(); body._replyto = mail.value.trim(); }
+    sendBtn.disabled = true; sendBtn.textContent = tr('Sending…');
+    let ok = false;
+    try { const r = await fetch('https://formsubmit.co/ajax/vaclavhrebec2000@gmail.com', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) }); ok = r.ok; } catch (e) { ok = false; }
+    if (!ok) { sendBtn.disabled = false; sendBtn.textContent = tr('Submit'); toast(tr('Could not send: are you online? Please try again.')); return; }
+    pop.hidden = true; toast(tr('Thank you! Václav will look at it for the collection.'));
+  };
+  const sendBtn = el('button', { type: 'button', class: 'chip primary', onclick: go }, tr('Submit'));
+  pop.replaceChildren(
+    el('div', { class: 'clefpop-head' }, el('h3', {}, tr('Propose this talea for the collection')), el('button', { type: 'button', 'aria-label': tr('Close'), onclick: () => { pop.hidden = true; } }, '×')),
+    el('div', { class: 'nm' },
+      el('p', { class: 'hint' }, tr('Václav Hřebec, who looks after the library, will see this talea and may add it to the list for everyone. Nothing is sent unless you press Submit.')),
+      el('p', { class: 'sb-what' }, el('strong', {}, t[0]), ' · ' + talPlain(t[1])),
+      el('label', {}, tr('Your name'), who),
+      el('label', {}, tr('Your email (optional, if you want an answer)'), mail),
+      el('label', { class: 'msg-l' }, el('strong', {}, tr('Write a short message to Václav')), msg),
+      el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')), sendBtn)));
+  pop.hidden = false; setTimeout(() => who.focus(), 30);
+}
 
 function buildSection(which, c) {
   const b = S.base;
@@ -1588,7 +1661,7 @@ function newMelody(title, words = '') {
 const SENDPREF = 'cantare-next:send';
 function askNewMelody() {
   const pop = $('#clefPop');
-  let send = true; try { send = localStorage.getItem(SENDPREF) !== 'no'; } catch (e) { /* ignore */ }
+  let send = false; try { send = localStorage.getItem(SENDPREF) === 'yes'; } catch (e) { /* ignore */ }
   const name = el('input', { type: 'text', class: 'nm-in', maxlength: 120, placeholder: tr('e.g. My cantus firmus in the first mode'), 'aria-label': tr('Name of the melody') });
   const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, placeholder: tr('Your name (optional)'), 'aria-label': tr('Your name (optional)') });
   const words = el('textarea', { class: 'nm-in tx-in', rows: 2, maxlength: 4000, spellcheck: 'false', placeholder: tr('e.g. A-ve ma-ris stel-la'), 'aria-label': tr('Text (optional)') });
@@ -1607,7 +1680,7 @@ function askNewMelody() {
       el('label', {}, tr('Name of the melody'), name),
       el('label', {}, tr('Your name (optional)'), who),
       el('label', {}, tr('Text (optional): a hyphen between syllables; it can also be added later with the Text button'), words),
-      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the melodies people write here (title, notes, text and your name if given).'))),
+      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Propose this melody for the collection: Václav Hřebec, who looks after the library, will see it (title, notes, text and your name if given) and may add it for everyone. Optional: if you leave this unticked, nothing is sent.'))),
       el('p', { class: 'hint' }, tr('Your melody is saved in this browser under Your melodies in the library.')),
       el('div', { class: 'nm-go' }, el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),
         el('button', { type: 'button', class: 'chip', onclick: () => singIn(name.value.trim()) }, tr('Sing a chant instead')),
@@ -1650,7 +1723,7 @@ let sendT = null;
 function sendMine(b = S.base) {
   clearTimeout(sendT);
   if (!b || !b.mine) return;
-  try { if (localStorage.getItem(SENDPREF) === 'no') return; } catch (e) { /* ignore */ }
+  try { if (localStorage.getItem(SENDPREF) !== 'yes') return; } catch (e) { /* ignore */ }
   const notes = b.voices.reduce((a, v) => a + v.notes.filter(n => !n.rest).length, 0);
   if (notes < 3) return;
   const it = itemOf(b), key = JSON.stringify(it);
@@ -2296,7 +2369,7 @@ $('#addVoiceBtn')?.addEventListener('click', e => { e.stopPropagation(); askAddV
 
 /* Open: a score from the computer (MuseScore, MusicXML, MIDI) becomes a piece among Your melodies */
 function sendUpload(file, b) {
-  try { if (localStorage.getItem(SENDPREF) === 'no') return; } catch (e) { /* ignore */ }
+  try { if (localStorage.getItem(SENDPREF) !== 'yes') return; } catch (e) { /* ignore */ }
   let who = ''; try { who = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
   const it = itemOf(b), fd = new FormData();
   fd.append('_subject', 'Cantare – an uploaded score: ' + b.title); fd.append('_template', 'table'); fd.append('_captcha', 'false');
@@ -2308,7 +2381,7 @@ function sendUpload(file, b) {
 }
 function askUpload() {
   const pop = $('#clefPop');
-  let send = true; try { send = localStorage.getItem(SENDPREF) !== 'no'; } catch (e) { /* ignore */ }
+  let send = false; try { send = localStorage.getItem(SENDPREF) === 'yes'; } catch (e) { /* ignore */ }
   const box = el('input', { type: 'checkbox', checked: send });
   const who = el('input', { type: 'text', class: 'nm-in', maxlength: 80, placeholder: tr('Your name (optional)'), 'aria-label': tr('Your name (optional)') });
   try { who.value = localStorage.getItem('cantare-next:who') || ''; } catch (e) { /* ignore */ }
@@ -2334,7 +2407,7 @@ function askUpload() {
     el('div', { class: 'nm' },
       el('p', { class: 'hint' }, tr('MuseScore (.mscz, .mscx), MusicXML (.musicxml, .xml, .mxl) or MIDI (.mid). Each part becomes a voice, a whole note a semibrevis; the text comes along. It is kept in this browser under Your melodies.')),
       el('label', {}, tr('Your name (optional)'), who),
-      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the pieces people bring here (the file, its title and your name if given).'))),
+      el('label', { class: 'nm-send' }, box, el('span', {}, tr('Propose this piece for the collection: Václav Hřebec, who looks after the library, will see it (the file, its title and your name if given) and may add it for everyone. Optional: if you leave this unticked, nothing is sent.'))),
       status, input,
       el('div', { class: 'nm-go' },
         el('button', { type: 'button', class: 'chip', onclick: () => { pop.hidden = true; } }, tr('Cancel')),

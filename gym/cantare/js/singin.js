@@ -199,7 +199,7 @@ export function openSingIn(app) {
   const view = el('div', { class: 'si-view' }, el('p', { class: 'hint' }, tr('Sing the chant on a vowel or with its words. The notes appear here when you stop.')));
   const sylView = el('p', { class: 'hint si-syl' });
   const actions = el('div', { class: 'nm-go' });
-  let send = true; try { send = localStorage.getItem('cantare-next:send') !== 'no'; } catch (e) { /* ignore */ }
+  let send = false; try { send = localStorage.getItem('cantare-next:send') === 'yes'; } catch (e) { /* ignore */ }
   const sendBox = el('input', { type: 'checkbox', checked: send });
 
   const item = () => {
@@ -276,7 +276,7 @@ export function openSingIn(app) {
       sylView,
       el('label', { class: 'nm-send' }, keep, el('span', {}, tr('Keep the pitch I sang (otherwise the chant is moved to where the modes lie, on the white keys)'))),
       SR ? el('label', { class: 'nm-send' }, listen, el('span', {}, tr('Also listen for the words while I sing (experimental: the browser hears Latin as Italian; correct the text afterwards)'))) : '',
-      el('label', { class: 'nm-send' }, sendBox, el('span', {}, tr('Send a copy to Václav Hřebec, who collects the chants people add here (the notes, the text, and a link that opens the score).'))),
+      el('label', { class: 'nm-send' }, sendBox, el('span', {}, tr('Propose this chant for the collection: Václav Hřebec, who looks after the library, will see it (the notes, the text and a link that opens the score) and may add it for everyone. Optional: if you leave this unticked, nothing is sent.'))),
       el('p', { class: 'hint' }, tr('Your chant is saved in this browser under Your melodies in the library; there you can correct it with Edit and save it as a PDF.')),
       actions));
   pop.hidden = false;
