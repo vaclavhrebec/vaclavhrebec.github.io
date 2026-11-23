@@ -206,6 +206,22 @@ window.E = (function () {
     osc.connect(g); g.connect(A.out); osc.start(t0); osc.stop(t0 + .08);
     const n = { g, o: [osc] }; A.live.add(n); osc.onended = () => A.live.delete(n);
   };
+  /* a click without a pitch: a short burst of filtered noise (f = centre of the band; high for one hand, low for the other) */
+  A.tick = function (t0, o) {
+    o = o || {};
+    const ctx = A.get();
+    if (!A.noise || A.noise.sampleRate !== ctx.sampleRate) {
+      const n = Math.floor(ctx.sampleRate * .08), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      A.noise = b;
+    }
+    const src = ctx.createBufferSource(), bp = ctx.createBiquadFilter(), g = ctx.createGain();
+    src.buffer = A.noise; bp.type = 'bandpass'; bp.frequency.value = o.f || 3200; bp.Q.value = o.q || .7;
+    const v = o.vol || .7, d = o.d || .04;
+    g.gain.setValueAtTime(0, t0); g.gain.linearRampToValueAtTime(v, t0 + .0015); g.gain.exponentialRampToValueAtTime(.001, t0 + d);
+    src.connect(bp); bp.connect(g); g.connect(A.out); src.start(t0); src.stop(t0 + d + .03);
+    const n = { g, o: [src] }; A.live.add(n); src.onended = () => A.live.delete(n);
+  };
   A.now = () => A.get().currentTime + .06;
 
   /* global listening settings */

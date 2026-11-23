@@ -100,16 +100,27 @@
      event = { rest:bool, v:'w'|'h'|'q'|'8'|'16'|'32', dot:0|1, tie:bool (to next),
                beam:id|null, tup:{id,n,m}|null, t: start time in quarters (absolute), d: real duration } */
   const LEVELS = { w: 0, h: 0, q: 0, '8': 1, '16': 2, '32': 3 };
+  /* Bars may carry a second line (ev2, the left hand). The events of both lines are spaced by their onset times, so
+     that notes sounding together stand above each other. The heads get the ids h0, h1… (line 1) and bh0, bh1… (line 2). */
   N.rhythmSVG = function (ex, width) {
     const SP = 9;
     const W = Math.max(300, width);
-    const lineGap = SP * 12;
-    // natural widths
-    const adv = e => SP * (1.5 + 3.0 * Math.pow(e.d, .62)) + (e.dot ? SP * .6 : 0);
+    const two = ex.bars.some(b => b.ev2 && b.ev2.length);
+    const vGap = SP * 11;
+    const lineGap = SP * 12 + (two ? vGap + SP : 0);
+    const key = t => Math.round(t * 1e5);
     const bars = ex.bars.map((b, i) => {
       const lead = SP * 1.6 + (b.showTs ? SP * 3.2 : 0);
-      const ws = b.ev.map(adv);
-      return { b, i, lead, ws, nat: lead + ws.reduce((a, c) => a + c, 0) + SP * .6 };
+      const all = b.ev.concat(two && b.ev2 ? b.ev2 : []);
+      const on = [...new Set(all.map(e => key(e.t)))].sort((a, c) => a - c);
+      const endT = all.reduce((m, e) => Math.max(m, key(e.t + e.d)), 0);
+      const dotted = {}; all.forEach(e => { if (e.dot) dotted[key(e.t)] = 1; });
+      const ws = on.map((k, n) => {
+        const gap = ((n + 1 < on.length ? on[n + 1] : endT) - k) / 1e5;
+        return SP * (1.5 + 3.0 * Math.pow(Math.max(gap, .05), .62)) + (dotted[k] ? SP * .6 : 0);
+      });
+      const idx = {}; on.forEach((k, n) => idx[k] = n);
+      return { b, i, lead, ws, idx, nat: lead + ws.reduce((a, c) => a + c, 0) + SP * .6 };
     });
     // break into lines
     const lines = []; let cur = [], curW = 0;
@@ -119,8 +130,9 @@
     });
     if (cur.length) lines.push(cur);
     let s = '';
-    const heads = [];
+    const heads = [], heads2 = [];
     let y = SP * 6;
+    const ys = two ? [0, vGap] : [0];
     lines.forEach((ln, li) => {
       const nat = ln.reduce((a, B) => a + B.nat, 0);
       const last = li === lines.length - 1;
@@ -130,37 +142,47 @@
       const k = 1 + extra / flex;
       let x = SP * .5;
       const x0 = x;
+      const bl = (xx, w) => N.line(xx, y - 2 * SP, xx, y + 2 * SP + (two ? vGap : 0), w, 'stl');
       ln.forEach(B => {
         const b = B.b;
-        // barline before (except very first)
         x += SP * .4;
         if (b.showTs) {
           const tx = x + SP * 1.2;
-          s += `<text class="ts" x="${f(tx)}" y="${f(y - SP * .25)}" font-size="${f(SP * 2.3)}" text-anchor="middle">${b.ts[0]}</text>`;
-          s += `<text class="ts" x="${f(tx)}" y="${f(y + SP * 1.85)}" font-size="${f(SP * 2.3)}" text-anchor="middle">${b.ts[1]}</text>`;
+          ys.forEach(dy => {
+            s += `<text class="ts" x="${f(tx)}" y="${f(y + dy - SP * .25)}" font-size="${f(SP * 2.3)}" text-anchor="middle">${b.ts[0]}</text>`;
+            s += `<text class="ts" x="${f(tx)}" y="${f(y + dy + SP * 1.85)}" font-size="${f(SP * 2.3)}" text-anchor="middle">${b.ts[1]}</text>`;
+          });
           x += SP * 3.2;
         }
         x += SP * 1.2;
-        b.ev.forEach((e, j) => { e._x = x + SP * .2; e._y = y; x += B.ws[j] * k; });
+        const xs = []; let acc = x;
+        B.ws.forEach(w => { xs.push(acc); acc += w * k; });
+        const place = (evs, dy) => evs.forEach(e => { e._x = xs[B.idx[key(e.t)]] + SP * .2; e._y = y + dy; });
+        place(b.ev, 0); if (two && b.ev2) place(b.ev2, vGap);
+        x = acc;
         x += SP * .6 - SP * .4;
         const end = (B === ln[ln.length - 1]) && last;
-        if (end) { s += N.line(x - SP * .7, y - 2 * SP, x - SP * .7, y + 2 * SP, SP * .12, 'stl') + N.line(x - SP * .15, y - 2 * SP, x - SP * .15, y + 2 * SP, SP * .45, 'stl'); }
-        else s += N.line(x, y - 2 * SP, x, y + 2 * SP, SP * .12, 'stl');
+        if (end) { s += bl(x - SP * .7, SP * .12) + bl(x - SP * .15, SP * .45); }
+        else s += bl(x, SP * .12);
       });
-      s = N.line(x0, y, x, y, SP * .1, 'stl') + s;
-      // draw events of this line
-      ln.forEach(B => s += drawEvents(B.b.ev, SP, heads));
+      ys.forEach(dy => s = N.line(x0, y + dy, x, y + dy, SP * .1, 'stl') + s);
+      if (two) s += N.line(x0, y - 2 * SP, x0, y + 2 * SP + vGap, SP * .12, 'stl');
+      ln.forEach(B => {
+        s += drawEvents(B.b.ev, SP, heads, '');
+        if (two && B.b.ev2) s += drawEvents(B.b.ev2, SP, heads2, 'b');
+      });
       y += lineGap;
     });
     // ties may cross lines: draw as two halves
-    ex.bars.forEach(b => b.ev.forEach(e => {
+    const tieAll = evs => evs.forEach(e => {
       if (!e.tie || !e._next) return;
       const a = e, z = e._next;
       if (Math.abs(a._y - z._y) < 1) s += tieArc(a._x + SP * .5, z._x - SP * .5, a._y + SP * .75, SP);
       else { s += tieArc(a._x + SP * .5, a._x + SP * 3, a._y + SP * .75, SP); s += tieArc(z._x - SP * 3, z._x - SP * .5, z._y + SP * .75, SP); }
-    }));
-    const H = y - lineGap + SP * 5;
-    return { svg: `<svg class="score rhythm" viewBox="0 0 ${f(W)} ${f(H)}" width="${f(W)}" height="${f(H)}" role="img">${s}</svg>`, heads };
+    });
+    ex.bars.forEach(b => { tieAll(b.ev); if (two && b.ev2) tieAll(b.ev2); });
+    const H = y - lineGap + SP * 5 + (two ? vGap : 0);
+    return { svg: `<svg class="score rhythm" viewBox="0 0 ${f(W)} ${f(H)}" width="${f(W)}" height="${f(H)}" role="img">${s}</svg>`, heads, heads2 };
   };
   function tieArc(x1, x2, y, SP) {
     const h = Math.min(SP * 1.1, (x2 - x1) * .18 + SP * .3);
@@ -174,7 +196,7 @@
     }
     return s;
   }
-  function drawEvents(evs, SP, heads) {
+  function drawEvents(evs, SP, heads, pre) {
     let s = '';
     const stemLen = SP * 3.4, hw = SP * .62;
     // rests and heads
@@ -191,7 +213,7 @@
         if (e.dot) s += `<circle cx="${f(x + SP * 1.1)}" cy="${f(y - SP * .5)}" r="${f(SP * .2)}"/>`;
         return;
       }
-      const id = 'h' + heads.length;
+      const id = (pre || '') + 'h' + heads.length;
       heads.push({ id, t: e.t });
       s += `<g id="${id}" class="nh">` + N.head(x, y, SP, e.v === 'h' || e.v === 'w') + '</g>';
       if (e.dot) s += `<circle cx="${f(x + SP * 1.25)}" cy="${f(y - SP * .5)}" r="${f(SP * .2)}"/>`;
