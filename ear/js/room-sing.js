@@ -410,7 +410,7 @@
   function setLevel(L, box) { cfg.level = Math.max(1, Math.min(100, L)); cfg.best = Math.max(cfg.best, cfg.level); save(); newMelody(box); }
 
   E.room({
-    id: 'sing', num: 'VII', title: 'Sing the next note',
+    id: 'sing', num: 'VI', title: 'Sing the next note',
     desc: 'Atonal melodies in 100 levels. You hear the first note and sing each next one, checked by the microphone to within a few cents. From white keys to scrambled chords.',
     meta: '100 levels · microphone · equal temperament',
     lede: 'The first note is played. Look at the second and sing it: when you hold it in tune for a moment, the staff moves on. No key signature, random clefs, and from level 9 more and more chromatic notes, wide leaps and scrambled chords.',

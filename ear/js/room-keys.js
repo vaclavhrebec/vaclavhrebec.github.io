@@ -59,7 +59,7 @@
   };
 
   E.room({
-    id: 'keys', num: 'III', title: 'Key signatures',
+    id: 'keys', num: 'II', title: 'Key signatures',
     desc: 'Read a key signature at a glance, in treble, bass, soprano, alto and tenor clef.',
     meta: '5 clefs · up to 7 sharps or flats',
     lede: 'A key signature appears in a random clef. Name the key. A silent exercise for the eye: speed comes with practice.',

@@ -106,7 +106,7 @@
   };
 
   E.room({
-    id: 'chords', num: 'V', title: 'Chords',
+    id: 'chords', num: 'IV', title: 'Chords',
     desc: 'Triads, seventh chords, jazz harmony and famous sonorities such as the Tristan and Prometheus chords.',
     meta: '{n} chord types · inversions', metaVars: { n: C.length },
     lede: 'A chord sounds, broken and then together. Choose its type. In the settings you can add seventh chords, jazz chords and special chords, and switch inversions on.',

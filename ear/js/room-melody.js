@@ -391,7 +391,7 @@
   let ro = null;
   E._melody = { make: makeMelody, cfg, LEVELS, midi, dia };   // for testing
   E.room({
-    id: 'melody', num: 'VIII', title: 'Melodic dictation',
+    id: 'melody', num: 'VII', title: 'Melodic dictation',
     desc: 'Hear a short melody and write it on the staff. From four stepwise notes to long modal melodies with rhythm and chromatic notes.',
     meta: '8 levels · 5 clefs · major, minor and modes',
     lede: 'A melody plays, after its key chord. The first note is written. Tap the staff to write the others, then press Check. Tap a written note to move it, or use ▲▼ and the accidentals.',

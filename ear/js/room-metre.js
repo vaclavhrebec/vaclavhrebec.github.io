@@ -98,7 +98,7 @@
     }
   };
   E.room({
-    id: 'metre', num: 'X', title: 'Metre',
+    id: 'metre', num: 'IX', title: 'Metre',
     desc: 'Hear a few bars and name the metre: duple, triple, compound and irregular time, or the mensuration signs of Renaissance music.',
     meta: '9 time signatures · 4 mensuration signs',
     lede: 'A few bars play, a melody over a bass that changes with each bar. Name the metre. In the settings you can add irregular metres, make the accents subtle, or answer with mensuration signs.',

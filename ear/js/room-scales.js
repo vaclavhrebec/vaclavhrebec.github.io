@@ -150,7 +150,7 @@
   };
 
   E.room({
-    id: 'scales', num: 'VI', title: 'Scales and modes',
+    id: 'scales', num: 'V', title: 'Scales and modes',
     desc: 'Major and minor, church modes, jazz scales, Messiaen’s modes, Gypsy scales, Indian thaats, Japanese scales and Arabic maqamat with quarter tones.',
     meta: '{n} scales · quarter tones', metaVars: { n: S.length },
     lede: 'A scale is played from a random tonic. Choose its name. Scales that contain exactly the same notes (for example Aeolian and natural minor) count as the same answer.',

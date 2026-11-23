@@ -170,7 +170,7 @@
     }
   };
   E.room({
-    id: 'cadences', num: 'IX', title: 'Cadences and progressions',
+    id: 'cadences', num: 'VIII', title: 'Cadences and progressions',
     desc: 'Cadences, common progressions, ground basses such as the romanesca, folia and passamezzo, and the clausulae of Renaissance counterpoint.',
     meta: '{n} cadences and models · four voices', metaVars: { n: ITEMS.length },
     lede: 'A short passage plays in four voices (the clausulae in two or three). Name the cadence, the progression or the model. In the settings you can add progressions, ground basses and clausulae.',

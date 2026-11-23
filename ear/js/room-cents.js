@@ -79,7 +79,7 @@
   };
 
   E.room({
-    id: 'cents', num: 'II', title: 'Intonation',
+    id: 'cents', num: 'X', title: 'Intonation',
     desc: 'Four tones of the same pitch, but one is slightly higher or lower. Nine levels, from 10 cents down to half a cent.',
     meta: '9 levels · 10 to ½ cent',
     lede: 'You hear four tones. Three are identical; one is raised or lowered by a few cents (a cent is a hundredth of an equal-tempered semitone). Find the odd one out.',

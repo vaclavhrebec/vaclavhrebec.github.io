@@ -215,7 +215,7 @@
   }
 
   E.room({
-    id: 'rhythm', num: 'IV', title: 'Rhythm',
+    id: 'rhythm', num: 'III', title: 'Rhythm',
     desc: 'Graded reading and dictation examples of about fifty notes: from simple metres to 7/8 and 11/8, syncopation, and tuplets from triplets to septuplets.',
     meta: '8 levels · count-in and metronome',
     lede: 'Read and clap the example, then play it to check yourself. For dictation, hide the notation, listen, write, and compare. Every press of “New example” creates a new one at the chosen level.',
