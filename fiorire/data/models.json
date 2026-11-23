@@ -1,11 +1,11 @@
 [
  {
-  "title": "Oncques amour (Bassano, five voices)",
+  "title": "Oncques amour",
   "t": "C",
   "b": false,
   "c": "treble",
   "id": 2001,
-  "desc": "Giovanni Bassano, Motetti, madrigali et canzoni francese (Venice, 1591), the keyboard version of “Oncques amour”, transcribed from a scan of the print (53 bars, the second half written out twice as in the print). The plain top part (Cantus 1, the original canto) keeps its own staff; the harpsichord/organ part is taken apart into its four voices (Cantus 2, Altus, Tenor, Bassus), one staff each, so that five voices sound together. Each voice has a speaker button in the voice list: silence Cantus 1 to improvise the top part yourself. The florid top part is left out. Some crowded places are uncertain, above all bars 39, 40, 49 and 50; voices cross and share notes in several bars. The print names Crecquillon; RISM, as quoted on IMSLP, links it to Clemens non Papa.",
+  "desc": "Giovanni Bassano, Motetti, madrigali et canzoni francese (Venice, 1591).",
   "poly": [
    {
     "nm": "Cantus 1",
