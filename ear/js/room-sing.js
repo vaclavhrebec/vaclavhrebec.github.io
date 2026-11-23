@@ -27,10 +27,10 @@
   const DN = [[0, 0], [1, -1], [1, 0], [2, -1], [2, 0], [3, 0], [4, -1], [4, 0], [5, -1], [5, 0], [6, -1], [6, 0]];   // and with flats
   const CLEFMID = { treble: 71, bass: 50, alto: 60, tenor: 57, soprano: 64 };
 
-  const cfg = Object.assign({ level: 1, best: 1, done: 0, voice: 'baritone', tol: 10.5, tolv: 2, hold: .5, live: true, anyOct: false, tim: 'organ' }, E.load('cfg.sing', {}));
+  const cfg = Object.assign({ level: 1, best: 1, done: 0, voice: 'baritone', tol: 7, hold: .5, live: true, anyOct: false, tim: 'organ' }, E.load('cfg.sing', {}));
   const save = () => E.save('cfg.sing', cfg);
 
-  if (cfg.tolv !== 2) { cfg.tol = Math.min(45, Math.round(cfg.tol * 3) / 2); cfg.tolv = 2; E.save('cfg.sing', cfg); }   // the tolerance was widened by 50 %
+  if (cfg.tolv) { cfg.tol = Math.max(3, Math.min(30, Math.round(cfg.tol / 1.5))); delete cfg.tolv; E.save('cfg.sing', cfg); }   // undo the short-lived widening
   function params(L) {
     return {
       n: Math.min(16, 6 + Math.floor(L / 8)),
@@ -384,7 +384,7 @@
       h('summary', null, T('Settings')),
       h('div', { class: 'setbody' },
         E.selectField(T('Voice'), cfg.voice, Object.keys(VOICES).map(k => ({ v: k, l: T(VOICES[k][0]) + ' (' + midiName(VOICES[k][1]) + '–' + midiName(VOICES[k][1] + 16) + ')' })), v => { cfg.voice = v; save(); newMelody(box); }),
-        E.rangeField(T('Tolerance'), cfg.tol, 3, 45, .5, v => '± ' + v + ' ¢', v => { cfg.tol = v; save(); const z = box.querySelector('.zone'); if (z) { z.style.left = (50 - v) + '%'; z.style.width = (2 * v) + '%'; } }),
+        E.rangeField(T('Tolerance'), cfg.tol, 3, 30, 1, v => '± ' + v + ' ¢', v => { cfg.tol = v; save(); const z = box.querySelector('.zone'); if (z) { z.style.left = (50 - v) + '%'; z.style.width = (2 * v) + '%'; } }),
         E.rangeField(T('Hold time of a quarter note'), cfg.hold, .2, 1, .05, v => v.toFixed(2) + ' s', v => { cfg.hold = v; save(); }),
         E.checkField(T('Show my pitch live'), cfg.live, v => { cfg.live = v; save(); }),
         E.checkField(T('Accept any octave (sing in the octave that suits you)'), cfg.anyOct, v => { cfg.anyOct = v; save(); }),
