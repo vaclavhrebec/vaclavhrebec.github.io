@@ -56,6 +56,7 @@ async function loadIndex() {
   S.index_ = search.map(([id, title, comp]) => ({ id, title, comp }));
   const poly = lib.find(g => g.group === 'Polyphonic models');
   (poly.subs || []).forEach(sub => (sub.items || []).forEach(it => { if (it.poly) S.models.push({ item: it, title: it.title, trail: ['Polyphonic models', sub.group] }); }));
+  try { const extra = await fetch('data/models.json').then(r => r.ok ? r.json() : []); extra.forEach(it => { if (it.poly) S.models.push({ item: it, title: it.title, trail: ['Polyphonic models', 'Keyboard arrangements'] }); }); } catch { /* Fiorire-only models are optional */ }
   const comps = [...new Set(S.index_.map(x => x.comp))].sort((a, b) => a.localeCompare(b));
   $('#selComp').innerHTML = `<option value="@models">Polyphonic models</option>` + comps.map(c => `<option>${esc(c)}</option>`).join('');
   fillPieces();
