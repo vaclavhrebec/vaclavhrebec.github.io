@@ -689,10 +689,13 @@ function buildTransform() {
       ...TALEA_GROUPS.flatMap(([g, head]) => {
         const rows = TALEAE.map((t, i) => [t, i]).filter(([t]) => t[2] === g);
         if (!rows.length) return [];
-        return [el('h4', {}, tr(head)), ...rows.map(([[name], i]) => el('div', { class: 'row' },
-          chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }),
-          g === 'mine' ? chip(tr('Propose to the collection'), false, () => askProposeTalea(i)) : '',
-          g === 'mine' ? chip(tr('Delete'), false, () => { TALEAE.splice(i, 1); if (S.talea === i) S.talea = -1; else if (S.talea > i) S.talea--; saveMyTaleae(); redo(); }) : ''))];
+        return [el('h4', {}, tr(head)), ...rows.map(([[name], i]) => g !== 'mine'
+          ? el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }))
+          : el('div', { class: 'tal-mine' },
+            el('div', { class: 'row' }, chip(`${i + 1}. ${name}`, S.talea === i, () => { S.talea = i; redo(); }),
+              chip(tr('Delete'), false, () => { TALEAE.splice(i, 1); if (S.talea === i) S.talea = -1; else if (S.talea > i) S.talea--; saveMyTaleae(); redo(); })),
+            el('p', { class: 'tal-ask' }, tr('Would you like this talea in the collection, for everyone to use?')),
+            el('button', { type: 'button', class: 'tal-propose', onclick: () => askProposeTalea(i) }, tr('Propose this talea to the collection'))))];
       }),
       taleaBuilder(redo),
       el('p', { class: 'hint' }, tr('For organum purum, where the chant is not measured at all, choose Organum purum under the music: each note is then held until you give the sign.')),
@@ -731,7 +734,7 @@ function taleaBuilder(redo) {
       TALEAE.push([(d.name.trim() || tr('My talea') + ' ' + (TALEAE.filter(t => t[2] === 'mine').length + 1) + ': ' + talPlain(pat)).slice(0, 80), pat, 'mine']);
       d.toks = []; d.name = ''; d.rest = false; saveMyTaleae(); S.talea = TALEAE.length - 1; redo();
     }, { disabled: !ok })),
-    el('p', { class: 'hint' }, tr('Your own taleae are kept in this browser. Use Propose to the collection beside one if you would like Václav to add it to the list for everyone.')));
+    el('p', { class: 'hint' }, tr('Your own taleae are kept in this browser. Under each one you can propose it to the collection if you would like Václav to add it to the list for everyone.')));
 }
 /* Propose a talea of your own: sent only when the visitor presses Submit */
 function askProposeTalea(i) {
