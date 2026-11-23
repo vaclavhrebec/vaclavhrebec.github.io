@@ -22,16 +22,7 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #c2a07a; --fg: #1f170f; --muted: #4a3a28;
-    --line: #a88760; --accent: #ff5160; --card: #f1e6d1;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg: #141210; --fg: #ece6dc; --muted: #9c948a;
-      --line: #2c2824; --accent: #e5394f; --card: #1b1916;
-    }
-  }
-  :root[data-theme="dark"] {
+    color-scheme: dark;
     --bg: #141210; --fg: #ece6dc; --muted: #9c948a;
     --line: #2c2824; --accent: #e5394f; --card: #1b1916;
   }
@@ -150,9 +141,6 @@
 
   footer { border-top: 1px solid var(--line); padding: 1.5rem 0 3rem; color: var(--muted);
     font-size: .9rem; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
-  .quip { flex-basis: 100%; margin: .6rem 0 0; font: italic .95rem var(--serif, Georgia, serif); color: var(--muted); opacity: .85; }
-  #theme { background: none; border: 1px solid var(--line); color: var(--muted);
-    border-radius: 6px; padding: .2rem .6rem; cursor: pointer; font: inherit; }
 
   /* lightbox */
   dialog { border: 0; padding: 0; background: transparent; max-width: 96vw; max-height: 94vh; }
@@ -561,9 +549,6 @@
 
   <footer>
     <span>© 2026 Václav Hřebec · <span data-i18n>Online since 9 November 2026</span> · <span data-i18n>Photos</span> © Edoardo Gatta, Marie Štefanová, Valentin Richter</span>
-    <button id="theme" type="button" data-i18n>Light / dark</button>
-    <p class="quip" id="quip" data-i18n>Built on a cantus firmus.</p>
-    <script>(function(){ const q = ["This page is tuned in quarter-comma meantone. Please avoid G♯ major.", "Best viewed with a pure major third.", "Built on a cantus firmus.", "Tactus: one semibreve per click.", "The wolf fifth lives elsewhere."]; document.getElementById('quip').textContent = q[Math.floor(Math.random() * q.length)]; })();</script>
   </footer>
 </div>
 
@@ -572,13 +557,6 @@
 
 <script>
   const root = document.documentElement;
-  try { const t = localStorage.getItem('theme'); if (t) root.dataset.theme = t; } catch (e) {}
-  document.getElementById('theme').addEventListener('click', () => {
-    const dark = root.dataset.theme ? root.dataset.theme === 'dark'
-      : matchMedia('(prefers-color-scheme: dark)').matches;
-    root.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
-  });
   const lb = document.getElementById('lb'), lbImg = lb.querySelector('img'), lbDl = lb.querySelector('.lb-dl');
   document.querySelectorAll('.gallery button, button.poster, .event .thumb, .bio-fig').forEach(b => b.addEventListener('click', () => {
     const i = b.querySelector('img'), full = i.dataset.full || i.currentSrc || i.src;
@@ -678,11 +656,6 @@ de: {
   "Book a lesson": "Unterricht buchen",
   "Lesson request": "Anfrage Unterricht",
   "Online since 9 November 2026": "Online seit dem 9. November 2026",
-  "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Diese Seite ist mitteltönig gestimmt. Bitte meiden Sie Gis-Dur.",
-  "Best viewed with a pure major third.": "Am besten mit einer reinen großen Terz zu betrachten.",
-  "Built on a cantus firmus.": "Über einem Cantus firmus gebaut.",
-  "Tactus: one semibreve per click.": "Tactus: eine Semibrevis pro Klick.",
-  "The wolf fifth lives elsewhere.": "Die Wolfsquinte wohnt woanders.",
   "The newest upload": "Das neueste Video",
   "Download in full resolution": "Herunterladen in voller Auflösung",
   "Six rooms for the ear: intervals, intonation down to half a cent, key signatures in five clefs, graded rhythm reading and dictation, chords from triads to the Prometheus chord, and scales from the church modes to Arabic maqamat with quarter tones. In English, German, French and Czech.": "Sechs Räume für das Gehör: Intervalle, Intonation bis auf einen halben Cent, Vorzeichen in fünf Schlüsseln, gestufte Rhythmuslektüre und -diktate, Akkorde vom Dreiklang bis zum Prometheus-Akkord und Skalen von den Kirchentonarten bis zu arabischen Maqamat mit Vierteltönen. Auf Englisch, Deutsch, Französisch und Tschechisch.",
@@ -706,7 +679,6 @@ de: {
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Musiktheorie · Improvisation · Contrapunto alla mente · Orgel · Laute",
   "About": "Über mich", "Agenda": "Termine", "Gallery": "Galerie", "Projects": "Projekte", "Socials": "Soziale Medien", "Popular": "Beliebt", "Latest video": "Neuestes Video", "All videos on YouTube": "Alle Videos auf YouTube",
   "Upcoming": "Demnächst", "Past": "Rückblick", "Show all past events": "Alle vergangenen Termine zeigen", "New dates coming soon.": "Neue Termine folgen in Kürze.",
-  "Light / dark": "Hell / dunkel",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
     "Václav Hřebec ist ein tschechischer Musiktheoretiker und Organist mit Wohnsitz in Basel. Er studierte klassische Gitarre an den Konservatorien in Pilsen und Prag. Sein Interesse an Alter Musik führte ihn 2023 nach Basel, wo er derzeit an der Schola Cantorum Basiliensis einen Master in historischer Musiktheorie mit Schwerpunkt auf Contrapunto alla mente und Improvisation absolviert und daneben Orgel und Laute studiert. Er ist als Kirchenorganist tätig und gibt Konzerte, Vorträge und Workshops zur Alten Musik.",
   "Launch of <em>Rhytune</em> magazine with a contrapunto performance": "Vorstellung der Zeitschrift <em>Rhytune</em> mit einer Contrapunto-Darbietung",
@@ -779,11 +751,6 @@ fr: {
   "Book a lesson": "Réserver un cours",
   "Lesson request": "Demande de cours",
   "Online since 9 November 2026": "En ligne depuis le 9 novembre 2026",
-  "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Cette page est accordée au tempérament mésotonique. Évitez sol dièse majeur, s’il vous plaît.",
-  "Best viewed with a pure major third.": "À consulter de préférence avec une tierce majeure pure.",
-  "Built on a cantus firmus.": "Construit sur un cantus firmus.",
-  "Tactus: one semibreve per click.": "Tactus : une semi-brève par clic.",
-  "The wolf fifth lives elsewhere.": "La quinte du loup habite ailleurs.",
   "The newest upload": "La dernière vidéo",
   "Download in full resolution": "Télécharger en pleine résolution",
   "Contact": "Contact",
@@ -813,7 +780,6 @@ fr: {
   "Upcoming": "À venir",
   "Past": "Passé", "Show all past events": "Afficher tous les événements passés",
   "New dates coming soon.": "De nouvelles dates suivront bientôt.",
-  "Light / dark": "Clair / sombre",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.": "Václav Hřebec est un théoricien de la musique et organiste tchèque établi à Bâle, en Suisse. Il a étudié la guitare classique aux conservatoires de Plzeň et de Prague. Son intérêt pour la musique ancienne l’a conduit à Bâle en 2023, où il prépare actuellement un master en théorie historique de la musique à la Schola Cantorum Basiliensis, consacré au contrapunto alla mente et à l’improvisation, tout en étudiant l’orgue et le luth. Il est organiste d’église et donne des concerts, des conférences et des ateliers sur la musique ancienne.",
   "Launch of <em>Rhytune</em> magazine with a contrapunto performance": "Lancement du magazine <em>Rhytune</em> avec une performance de contrepoint improvisé",
   "Guitar and lute recital": "Récital de guitare et de luth",
@@ -891,11 +857,6 @@ cs: {
   "Book a lesson": "Domluvit si lekci",
   "Lesson request": "Zájem o výuku",
   "Online since 9 November 2026": "Online od 9. listopadu 2026",
-  "This page is tuned in quarter-comma meantone. Please avoid G♯ major.": "Tato stránka je laděna středotónově. Vyhněte se prosím Gis dur.",
-  "Best viewed with a pure major third.": "Nejlépe se prohlíží s čistou velkou tercií.",
-  "Built on a cantus firmus.": "Postaveno na cantu firmu.",
-  "Tactus: one semibreve per click.": "Tactus: jedna semibrevis na kliknutí.",
-  "The wolf fifth lives elsewhere.": "Vlčí kvinta bydlí jinde.",
   "The newest upload": "Nejnovější video",
   "Download in full resolution": "Stáhnout v plném rozlišení",
   "Six rooms for the ear: intervals, intonation down to half a cent, key signatures in five clefs, graded rhythm reading and dictation, chords from triads to the Prometheus chord, and scales from the church modes to Arabic maqamat with quarter tones. In English, German, French and Czech.": "Šest místností pro sluch: intervaly, intonace až na půl centu, předznamenání v pěti klíčích, odstupňované rytmické čtení a diktáty, akordy od kvintakordu po Prométheův akord a stupnice od církevních modů po arabské makamy se čtvrttóny. Anglicky, německy, francouzsky a česky.",
@@ -919,7 +880,6 @@ cs: {
   "Music theory · improvisation · contrapunto alla mente · organ · lute": "Hudební teorie · improvizace · contrapunto alla mente · varhany · loutna",
   "About": "O mně", "Agenda": "Kalendář", "Gallery": "Galerie", "Projects": "Projekty", "Socials": "Sociální sítě", "Popular": "Oblíbené", "Latest video": "Nejnovější video", "All videos on YouTube": "Všechna videa na YouTube",
   "Upcoming": "Nadcházející", "Past": "Proběhlé", "Show all past events": "Zobrazit všechny proběhlé akce", "New dates coming soon.": "Nové termíny budou brzy doplněny.",
-  "Light / dark": "Světlý / tmavý",
   "Václav Hřebec is a Czech music theorist and organist based in Basel, Switzerland. He studied classical guitar at the conservatories in Pilsen and Prague. His interest in early music brought him to Basel in 2023, where he is currently pursuing a Master’s degree in historical music theory at the Schola Cantorum Basiliensis, focusing on contrapunto alla mente and improvisation, alongside his studies in organ and lute. He works as a church organist and gives concerts, lectures, and workshops on early music.":
     "Václav Hřebec je český hudební teoretik a varhaník žijící ve švýcarské Basileji. Vystudoval klasickou kytaru na konzervatořích v Plzni a v Praze. Zájem o starou hudbu ho v roce 2023 přivedl do Basileje, kde nyní na Schola Cantorum Basiliensis studuje magisterský obor historická hudební teorie se zaměřením na contrapunto alla mente a improvizaci; vedle toho se věnuje hře na varhany a loutnu. Působí jako kostelní varhaník, koncertuje, přednáší a vede workshopy o staré hudbě.",
   "Launch of <em>Rhytune</em> magazine with a contrapunto performance": "Křest časopisu <em>Rhytune</em> s ukázkou improvizovaného kontrapunktu",
@@ -1096,6 +1056,5 @@ const CONTACT_TO = 'vaclavhrebec2000@gmail.com';
 
 <!-- Visitor statistics (GoatCounter: no cookies, no personal data) -->
 <script data-goatcounter="https://vaclavhrebec.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
-<script src="lang/help.js" data-help="start" defer></script>
 </body>
 </html>
