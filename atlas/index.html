@@ -111,6 +111,20 @@ button { font: inherit; color: inherit; }
 .il.style { font-weight: 600; }
 .ext { display: inline-flex; align-items: center; gap: 6px; margin-top: 4px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 7px; text-decoration: none; color: var(--fg); font-size: 14px; }
 .ext:hover { border-color: var(--accent); color: var(--accent); }
+/* bridges: pieces to hear (the Cantare player, embedded), the treatises, Fiorire */
+.bridge { margin: 10px 0; font-size: 14px; }
+.bridge .ext { margin: 2px 4px 2px 0; padding: 3px 10px; font-size: 13px; }
+.hearrow { margin: 6px 0; }
+.hearline { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.hearbtn { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg2); color: var(--fg); cursor: pointer; font-size: 14px; text-align: left; }
+.hearbtn:hover, .hearbtn[aria-expanded="true"] { border-color: var(--accent); color: var(--accent); }
+.hearbtn svg { width: 18px; height: 18px; flex: none; fill: currentColor; }
+.hearbtn[aria-expanded="true"] svg { transform: rotate(90deg); }
+.hearopen { font-size: 12.5px; color: var(--muted); text-decoration: none; }
+.hearopen:hover { color: var(--accent); }
+.hearbox { margin: 8px 0 4px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg2); }
+.hearbox iframe { display: block; width: 100%; height: min(430px, 70vh); border: 0; }
+.hearnote { margin: 0; padding: 6px 12px; font-size: 12.5px; color: var(--muted); border-top: 1px solid var(--line); }
 .note h2 { font-size: 1.15rem; margin: 28px 0 10px; }
 .chk { list-style: none; padding: 0; margin: 0; columns: 2; column-gap: 24px; }
 .chk li { break-inside: avoid; margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
@@ -352,6 +366,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
 <script src="vault-treatises.js"></script>
 <script src="vault-sources.js"></script>
 <script src="vault-forces.js"></script>
+<script src="vault-bridges.js"></script>
 <script>
 (function () {
   'use strict';
@@ -520,6 +535,31 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       <div class="callout"><b>Dates</b> are approximate, drawn from the standard literature and primary theory, and refer to surviving written sources: improvised practice (<a class="il" href="#note/super-librum" data-id="super-librum">cantare super librum</a>, ficta) often reaches further back. The vault is a working tool and grows over time – corrections and suggestions are welcome through the <b>Feedback</b> button below.</div>
       <p class="small" style="color:var(--faint)">${V.elements.length} elements · ${V.styles.length} styles · ${edges.length} links · last updated November 2026 · © 2026 Václav Hřebec</p>`;
   }
+  /* ---------- bridges: pieces to hear, the treatises, Fiorire ---------- */
+  const curTheme = () => document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  const refHash = ref => '#' + (ref.startsWith('lib:') ? ref.slice(4) : ref);
+  function bridgeHtml(id) {
+    const B = V.bridges; if (!B) return '';
+    const ex = B.examples[id] || [], ts = B.topics[id] || [], fio = B.fiorire.includes(id);
+    if (!ex.length && !ts.length && !fio) return '';
+    let h = '<h2>Hear it, read it, try it</h2>';
+    h += ex.map(x => `<div class="hearrow"><div class="hearline"><button type="button" class="hearbtn" data-ref="${esc(x.ref)}" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg><span>${esc(x.label)}</span></button>` +
+      `<a class="hearopen" href="../gym/cantare/${refHash(x.ref)}" target="_blank" rel="noopener">open in Cantare ↗</a></div><div class="hearbox" hidden></div></div>`).join('');
+    if (ts.length) h += `<p class="bridge"><b>In the treatises</b> (Concordantia): ${ts.map(t => `<a class="ext" href="../concordantia/#t-${t}">${esc(B.labels[t])}</a>`).join('')}</p>`;
+    if (fio) h += `<p class="bridge"><b>Try it</b> in <a class="ext" href="../fiorire/">Fiorire</a>, where diminutions can be applied to polyphonic models and taken away again.</p>`;
+    return h;
+  }
+  /* the player is the Cantare page itself, embedded: opened only when asked for, one at a time, so that nothing loads or sounds before */
+  $('#note').addEventListener('click', e => {
+    const b = e.target.closest('.hearbtn'); if (!b) return;
+    const box = b.closest('.hearrow').querySelector('.hearbox'), open = b.getAttribute('aria-expanded') !== 'true';
+    document.querySelectorAll('#note .hearbtn[aria-expanded="true"]').forEach(o => { o.setAttribute('aria-expanded', 'false'); const bx = o.closest('.hearrow').querySelector('.hearbox'); bx.hidden = true; bx.textContent = ''; });
+    if (!open) return;
+    const lang = document.documentElement.lang, q = '?embed=1&theme=' + curTheme() + (/^(en|de|fr|cs)$/.test(lang) ? '&lang=' + lang : '');
+    const f = document.createElement('iframe');
+    f.src = '../gym/cantare/' + q + refHash(b.dataset.ref); f.title = b.textContent.trim(); f.allow = 'autoplay'; f.loading = 'lazy';
+    box.append(f); box.hidden = false; b.setAttribute('aria-expanded', 'true');
+  });
   function renderNote(id) {
     const el = $('#note');
     document.querySelectorAll('#tree .file').forEach(f => f.classList.toggle('on', f.dataset.id === id));
@@ -544,6 +584,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
         </dl></details>
         ${n.text.split(/\n\n/).map(p => `<p>${md(p)}</p>`).join('')}
         ${n.link ? `<p><a class="ext" href="${esc(n.link.href)}">↗ ${esc(n.link.label)}</a></p>` : ''}
+        ${bridgeHtml(id)}
         <h2>On the timeline</h2><div class="minitl">${miniTimeline([id].concat([...n.out].filter(x => byId[x] && byId[x].kind === 'el')))}</div>`;
     } else {
       const els = n.elements.slice().sort((a, b) => byId[a].first - byId[b].first);
@@ -582,6 +623,7 @@ dialog.fb h2 { font-family: var(--sans) !important; font-weight: 700 !important;
       </dl></details>
       <p>${md(t.note)}</p>
       ${(t.sources || []).length ? `<h2>Hear it in the music of its time</h2><ul class="chk">${t.sources.map(x => `<li>${x.href ? `<a class="wk" href="${x.href}" target="_blank" rel="noopener" title="Open on ${x.where === 'diamm' ? 'DIAMM' : 'IMSLP'}">${esc(x.label)}</a> <span class="d">${x.where === 'diamm' ? 'DIAMM' : 'IMSLP'}</span>` : esc(x.label)}</li>`).join('')}</ul>` : ''}
+      ${V.bridges && V.bridges.works[t.id] ? `<p><a class="ext" href="../concordantia/#w-${V.bridges.works[t.id]}">↗ What it says, by topic, in Concordantia</a></p>` : ''}
       ${t.href ? `<p><a class="ext" href="${t.href}" target="_blank" rel="noopener">↗ Read it on IMSLP</a></p>` : `<p class="small" style="color:var(--faint)">${t.year < 1480 ? 'A manuscript treatise: no printed edition of the time to link to.' : 'Not on IMSLP (still in copyright or not a music print).'}</p>`}
       <h2>On the timeline</h2><div class="minitl">${miniTimeline(els.filter(e => byId[e].kind === 'el'), t.year - 60, t.year + 60)}</div>
       <p class="small" style="color:var(--faint);font-size:13px">The shaded band is the 120 years around the treatise.</p>`;
