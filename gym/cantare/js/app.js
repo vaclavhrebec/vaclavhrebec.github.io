@@ -19,6 +19,10 @@ const el = (tag, attrs = {}, ...kids) => {
 };
 
 /* ------------------------------------------------------------------ state */
+/* embedded in another page of the site (the Atlas plays its examples this way): only the music and the player */
+const QS = new URLSearchParams(location.search);
+const EMBED = QS.get('embed') === '1';
+if (EMBED) document.documentElement.classList.add('embed');
 const STORE = 'cantare-next:v1';
 const prefs = { bookKind: 'it', theme: 'dark', tempo: 60, timbre: 'voice', a4: 440, zoom: 13, spacing: 1, view: 'score', click: false, hand: true, pendulum: false, handStyle: 'palm', handSize: 1, pendSize: 1, volume: .8, names: true, font: 'bravura', lang: '',
   /* singing: the dot follows the exact pitch; what is sung is written out; with speakers the organ is filtered out */
@@ -35,12 +39,14 @@ if (!prefs.voiceDefault) { prefs.timbre = 'voice'; prefs.voiceDefault = true; tr
 if (!prefs.palmDefault) { prefs.handStyle = 'palm'; prefs.palmDefault = true; try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } }
 setSpacing(prefs.spacing);
 snd.setSound(prefs.sound || {});
+if (EMBED && (QS.get('theme') === 'dark' || QS.get('theme') === 'light')) prefs.theme = QS.get('theme');
+if (EMBED) prefs.zoom = Math.max(5, Math.min(prefs.zoom, 10, innerWidth / 70)); /* a small window: the music a little smaller, so that a short piece does not break into two lines */
 { /* the language is shared with the other pages of the site: ?lang=, then the site-wide choice, then this app's own */
   let shared = ''; try { shared = new URL(location.href).searchParams.get('lang') || localStorage.getItem('lang') || ''; } catch (e) { /* none */ }
   if (LANGS.some(x => x[0] === shared)) { prefs.lang = shared; try { localStorage.setItem('lang', shared); } catch (e) { /* none */ } }
   setLang(prefs.lang || guessLang());
 }
-const savePrefs = () => { try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
+const savePrefs = () => { if (EMBED) return; /* an embedded player never changes the visitor's own settings */ try { localStorage.setItem(STORE, JSON.stringify(prefs)); } catch (e) { /* ignore */ } };
 
 const S = {
   library: [], flat: [],
@@ -269,7 +275,7 @@ function openItem(item, trail, opts = {}) {
   document.querySelectorAll('.tree .item').forEach(b => b.setAttribute('aria-current', String(+b.dataset.id === item.id)));
   /* a piece of the Josquin collection is addressed by its number, which a link can open again */
   const jrpId = item.jrp || (item.desc || '').match(/josquin\.stanford\.edu, (\w+)\)/)?.[1];
-  try { history.replaceState(null, '', item.mine ? location.pathname : '#' + (jrpId ? 'jrp:' + jrpId : slug(item.title))); } catch (e) { /* ignore */ }
+  try { history.replaceState(null, '', item.mine ? location.pathname + location.search : '#' + (item.hash || (jrpId ? 'jrp:' + jrpId : slug(item.title)))); } catch (e) { /* ignore */ }
   syncTitleEdit();
   $('#stage').scrollTop = 0;
   if (opts.toast) toast(opts.toast);
@@ -895,7 +901,7 @@ function buildStudio() {
     btn(tr('View') + ' ▾', null, more('view')),
     btn(tr(themeName), null, () => { const i = THEMES.findIndex(t => t[0] === prefs.theme); prefs.theme = THEMES[(i + 1) % THEMES.length][0]; savePrefs(); applyTheme(); buildStudio(); }, tr('Theme')),
     btn(tr('Focus'), false, () => setFocus(true), tr('Only the music: everything else is put away')),
-    btn(tr('Copy link'), null, async () => { const url = linkOf(b); try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); } }, tr('Copy a link that opens this exact melody')),
+    btn(tr('Copy link'), null, async () => { const url = shareUrl(); try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); } }, tr('Copy a link that opens this exact melody')),
     b.mine
       ? btn(tr('Delete this melody'), null, async () => { mine = mine.filter(x => x.id !== b.id); saveMineList(); mineGroup(); renderTree($('#search').value); const pick = await randomPick(); openItem(pick.item, pick.trail); })
       : btn(tr('Keep as my melody'), null, () => { const it = itemOf(b); it.title = b.title; adoptMine(it); toast(tr('Kept under Your melodies.')); }, tr('Keep this melody, as it is now, among your own, to change and send')),
@@ -2427,8 +2433,57 @@ addEventListener('drop', async e => {
   catch (err) { toast(tr('This file could not be read. Try MusicXML (.musicxml or .mxl), exported from your notation program.')); }
 });
 
+/* A link carries the whole setup, not only the piece: piece;key=value;key=value.
+   t tempo · u tactus unit · s transposition (steps) · c clefs per voice · l lines · m tempus · k cut sign · ta talea · tl talea look
+   v voices (o on, m muted, h hidden) · vw layout · bk choir-book kind · ro one line · x sound. Only what differs from the defaults is written. */
+const VOICE_CODE = { on: 'o', mute: 'm', hide: 'h' };
+function setupParams() {
+  const p = [];
+  if (!S.base) return p;
+  if (prefs.tempo !== 60) p.push('t=' + prefs.tempo);
+  if (prefs.unit !== 'B') p.push('u=' + prefs.unit);
+  if (S.shift) p.push('s=' + S.shift);
+  if (S.clefs.some(Boolean)) p.push('c=' + S.base.voices.map((_, i) => S.clefs[i] || '-').join('.'));
+  if (S.lines) p.push('l=' + S.lines);
+  if (S.tempus) p.push('m=' + S.tempus);
+  if (S.cut != null) p.push('k=' + (S.cut ? 1 : 0));
+  const tal = S.talea >= 0 ? TALEAE[S.talea] : null;
+  if (tal && tal[2] !== 'mine') { p.push('ta=' + tal[1].replace(/ /g, '_')); if (S.taleaLook !== 'chant') p.push('tl=' + S.taleaLook); }
+  if (S.voice.some(v => v !== 'on')) p.push('v=' + S.voice.map(v => VOICE_CODE[v] || 'o').join(''));
+  if (S.base.voices.length > 1) {
+    if (prefs.view === 'book') p.push('vw=book');
+    if (prefs.view === 'book' && prefs.bookKind === 'de') p.push('bk=de');
+  }
+  if (prefs.roll) p.push('ro=1');
+  if (prefs.timbre !== 'voice' && snd.TIMBRES[prefs.timbre]) p.push('x=' + prefs.timbre);
+  return p;
+}
+function applySetup(parts) {
+  if (!parts || !parts.length || !S.base) return;
+  const kv = {};
+  parts.forEach(q => { const i = q.indexOf('='); if (i > 0) kv[q.slice(0, i)] = q.slice(i + 1); });
+  const int = (k, lo, hi) => { const v = parseInt(kv[k], 10); return Number.isFinite(v) && v >= lo && v <= hi ? v : null; };
+  const nv = S.base.voices.length;
+  let v;
+  if ((v = int('s', -28, 28)) != null) S.shift = v;
+  if (kv.c) kv.c.split('.').forEach((id, i) => { if (CLEFS[id] && i < nv) S.clefs[i] = id; });
+  if ((v = int('l', 0, 6)) != null && (v === 0 || v >= 4)) S.lines = v;
+  if (kv.m === 'C' || kv.m === 'O') { S.tempus = kv.m; S.cut = kv.k === '1'; }
+  if (kv.ta) { const pat = kv.ta.replace(/_/g, ' '), i = TALEAE.findIndex(t => t[2] !== 'mine' && t[1] === pat); if (i >= 0 && S.base.kind === 'chant') { S.talea = i; if (kv.tl === 'mensural') S.taleaLook = 'mensural'; } }
+  if (kv.v && /^[omh]+$/.test(kv.v)) S.voice = S.base.voices.map((_, i) => ({ o: 'on', m: 'mute', h: 'hide' }[kv.v[i]] || 'on'));
+  if (nv > 1 && (kv.vw === 'book' || kv.vw === 'score')) prefs.view = kv.vw;
+  if (kv.bk === 'de' || kv.bk === 'it') prefs.bookKind = kv.bk;
+  if (kv.ro === '1') prefs.roll = true;
+  if (kv.x && snd.TIMBRES[kv.x] && kv.x !== 'custom') { prefs.timbre = kv.x; voiceReady(); }
+  if ((v = int('t', 10, 300)) != null) prefs.tempo = v;
+  if (['L', 'B', 'S', 'M'].includes(kv.u)) prefs.unit = kv.u;
+  $('#tempo').value = prefs.tempo; buildUnits();
+  rebuildPiece(); render(true); buildStudio(); buildTransform(); buildVoiceChips(); syncLoop?.();
+}
+const shareUrl = () => (S.base.mine ? linkOf(S.base) : location.origin + location.pathname + '#' + (location.hash.slice(1).split(';')[0] || '')) + setupParams().map(q => ';' + q).join('');
+
 $('#footShare').addEventListener('click', async () => {
-  const url = location.href.split('#')[0] + location.hash, title = 'Cantare super librum';
+  const url = shareUrl(), title = 'Cantare super librum';
   try { if (navigator.share) { await navigator.share({ title, url }); return; } } catch (e) { return; }
   try { await navigator.clipboard.writeText(url); toast(tr('Link copied')); } catch (e) { toast(url); }
 });
@@ -2464,8 +2519,16 @@ new ResizeObserver(() => {
   mineGroup(); renderTree();
   /* a refresh always brings a new random piece; a link someone opens (with #piece) still opens that piece */
   const reload = performance.getEntriesByType?.('navigation')[0]?.type === 'reload';
-  const want = reload ? '' : decodeURIComponent(location.hash.slice(1));
+  const [want, ...setupParts] = (reload ? '' : decodeURIComponent(location.hash.slice(1))).split(';');
   let opened = false;
+  /* a short example written for the Atlas of Musical Style (data/atlas-examples.json): #atlas:<id> */
+  if (/^atlas:[\w-]+$/.test(want)) {
+    try {
+      const all = await (await fetch('data/atlas-examples.json', { cache: 'no-cache' })).json();
+      const ex = all.find(x => x.id === want.slice(6));
+      if (ex) { openItem({ ...ex, id: ++uid, hash: want }, ['Atlas of Musical Style']); opened = true; }
+    } catch (e) { /* not there or offline: a random piece instead */ }
+  }
   if (want.startsWith('w=')) {
     const it = itemFromLink(want.slice(2));
     if (it) {
@@ -2486,6 +2549,15 @@ new ResizeObserver(() => {
     const hit = want && S.flat.find(f => slug(f.item.title) === want);
     const pick = hit || await randomPick();
     openItem(pick.item, pick.trail);
+    opened = !!hit;
+  }
+  /* the rest of the link: tempo, transposition, voices … as the sender had them */
+  if (opened) applySetup(setupParts);
+  /* embedded: a small way out to the whole app, with the same setup */
+  if (EMBED) {
+    const a = el('a', { class: 'embed-open', href: location.pathname + location.hash, target: '_blank', rel: 'noopener' }, tr('Open in Cantare') + ' ↗');
+    a.addEventListener('click', () => { a.href = shareUrl(); });
+    $('.piece-head').append(a);
   }
   /* the lyrics are measured in their own font: draw again once it has arrived */
   document.fonts?.ready.then(() => S.piece && !S.playing && render());

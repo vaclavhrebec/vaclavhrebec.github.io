@@ -1,0 +1,36 @@
+[
+  {
+    "id": "parallel-organum",
+    "title": "Parallel organum at the fourth (constructed example)",
+    "desc": "An illustration written for the Atlas of Musical Style, not taken from a source: the principal voice (Cantus) sings a plain melody and the organal voice (Tenor) follows it throughout a perfect fourth below, as Musica enchiriadis (c. 870) describes. The melody avoids B so that no tritone arises. The treatise writes it in unmeasured daseian signs; here every note has the same length.",
+    "t": "C",
+    "noficta": true,
+    "poly": [
+      { "c": "c1", "nm": "Cantus", "n": "32B 33B 35B 33B 32B 33B 31B 32L" },
+      { "c": "c3", "nm": "Tenor", "n": "29B 30B 32B 30B 29B 30B 28B 29L" }
+    ]
+  },
+  {
+    "id": "free-organum",
+    "title": "Free organum with occursus (constructed example)",
+    "desc": "An illustration written for the Atlas of Musical Style, not taken from a source: the organal voice (Tenor) begins on the unison, moves obliquely and in parallel to the fourth, and returns to the unison by a second (the occursus), as Guido of Arezzo teaches in the Micrologus (c. 1026). Thirds and seconds are allowed beside the fourth. Every note has the same length here.",
+    "t": "C",
+    "noficta": true,
+    "poly": [
+      { "c": "c2", "nm": "Cantus", "n": "29B 31B 32B 33B 32B 31B 30B 29L" },
+      { "c": "c3", "nm": "Tenor", "n": "29B 29B 29B 30B 29B 29B 29B 29L" }
+    ]
+  },
+  {
+    "id": "fauxbourdon",
+    "title": "Fauxbourdon (constructed example)",
+    "desc": "An illustration written for the Atlas of Musical Style, not taken from a source: the Cantus is a plain tune; the Tenor runs a sixth below it and the middle voice, the fauxbourdon itself, a fourth below the Cantus, so every chord is a triad in first inversion. At the cadence the sixth opens to the octave: Cantus and middle voice rise a step, the Tenor falls a step. A fauxbourdon was written as Cantus and Tenor only; the middle voice was sung by ear.",
+    "t": "C",
+    "noficta": true,
+    "poly": [
+      { "c": "c1", "nm": "Cantus", "n": "33B 35B 36B 35B 33B 32B 33B 35B 36L" },
+      { "c": "c2", "nm": "Fauxbourdon", "n": "30B 32B 33B 32B 30B 29B 30B 32B 33L" },
+      { "c": "c3", "nm": "Tenor", "n": "28B 30B 31B 30B 28B 27B 28B 30B 29L" }
+    ]
+  }
+]

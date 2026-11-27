@@ -158,6 +158,9 @@ Object.assign(D.cs, { 'Voice sung by': 'Hlas zpívá', ', a physical voice synth
 Object.assign(D.de, { 'Share this piece': 'Dieses Stück teilen' });
 Object.assign(D.fr, { 'Share this piece': 'Partager cette pièce' });
 Object.assign(D.cs, { 'Share this piece': 'Sdílet tuto skladbu' });
+Object.assign(D.de, { 'Open in Cantare': 'In Cantare öffnen' });
+Object.assign(D.fr, { 'Open in Cantare': 'Ouvrir dans Cantare' });
+Object.assign(D.cs, { 'Open in Cantare': 'Otevřít v Cantare' });
 Object.assign(D.de, { 'New': 'Neu' });
 Object.assign(D.fr, { 'New': 'Nouveau' });
 Object.assign(D.cs, { 'New': 'Nový' });
